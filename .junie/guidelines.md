@@ -464,4 +464,128 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
 - Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test` with a specific filename or filter.
+
+== architecture rules ==
+
+## General Architecture
+
+- Use **Laravel 11** following **SOLID principles** across all layers.
+- Apply **Clean Architecture** (Controllers → Services → Repositories → Models).
+- Business logic must live inside **Service classes**, not controllers.
+- Use **Repository Pattern** for all database interactions.
+- Use **DTOs (Data Transfer Objects)** for safe data passing between layers.
+- Follow **RESTful API standards** for endpoints.
+- Keep MySQL schema **PostgreSQL-compatible** for future migration.
+- Use **UUIDs or auto-increment IDs** consistently across all tables.
+- Always use **UTC timestamps** and rely on Laravel timezone management.
+
+
+== database rules ==
+
+## Database & Models
+
+- Database: **MySQL (Phase 1)**, prepared for **PostgreSQL (Phase 2)**.
+- Use **soft deletes**, **timestamps**, and **foreign key constraints**.
+- Core tables: users, categories, breeds, pet\_posts, comments, likes, reports.
+- Each breed belongs to one category.
+- Follow **Laravel naming conventions** (singular model names, plural table names).
+- Use **morph relations** for likes and comments if shared across models.
+- Keep migrations modular and versioned.
+- Use **indexing** for search-heavy columns (e.g., pet name, category\_id, breed\_id).
+
+
+== laravel rules ==
+
+## Laravel Best Practices
+
+- Use **Form Requests** for validation.
+- Use **Policies** for authorization.
+- Use **Gates** for simple permission checks.
+- Use **Observers** for model lifecycle events.
+- Implement **Custom Exceptions** for better error handling.
+- Return responses via **API Resource Collections**.
+- Cache frequent queries using **Laravel Cache** or **Redis**.
+- Use **Jobs/Queues** for long-running tasks (uploads, notifications).
+- Store all files on **AWS S3** using environment-configured disks.
+
+== auth rules ==
+
+## Authentication & Authorization
+
+- Use **Laravel Sanctum** for token-based authentication.
+- Separate routes for **guests** and **authenticated users**.
+- Protect routes using middleware like auth:sanctum, role:admin.
+- Restrict admin panel access with can:access-admin policy.
+- All sensitive actions require authentication and CSRF protection.
+
+
+== admin rules ==
+
+## Admin Dashboard (Laravel Nova)
+
+- Use **Laravel Nova** for admin management in Phase 1.
+- Create Nova Resources for:
+- User, PetPost, Category, Breed, Report.
+- Use **Nova Metrics** for platform insights (users, posts, reports).
+- Add **Nova Actions** for moderation (approve/reject posts, delete reports).
+- Limit access to admins and moderators only.
+- Keep all Nova-related files namespaced for future migration to a standalone dashboard.
+
+== seo rules ==
+
+## SEO & URL Design
+
+- /posts/{id}-{slugified-title}Example: /posts/329702837200-lost-golden-retriever-in-cairo
+- Generate slugs automatically from the post title and update when title changes.
+- Make public posts crawlable for SEO.
+- Restrict private actions (like/comment/message) to logged-in users only.
+
+== frontend rules ==
+
+## Frontend (Vue + Inertia + Tailwind)
+
+- Use **Vue.js 3** with **Inertia.js** for reactive UI.
+- Follow a **modular component structure**.
+- Use **TailwindCSS** (light mode default).
+- Pages to include:
+- Home (Posts Feed)
+- Post Details
+- User Profile
+- Login / Register
+- Admin Dashboard (Nova)
+- Ensure full responsiveness and accessibility (WCAG compliant).
+- Optimize media with lazy loading and compression.
+
+== workflow rules ==
+
+## Development Workflow
+
+- Follow **Git Flow**: main, develop, feature.
+- Write **unit tests** and **feature tests** for all major logic.
+- Use **PHPStan/Larastan** for static analysis.
+- Enforce style using **PHP CS Fixer**.
+- Maintain .env.example for setup reference.
+- Commit migrations, seeds, Nova resources, and tests with version control.
+
+
+== performance rules ==
+
+## Performance & Scalability
+
+- Use **Eager Loading** to prevent N+1 queries.
+- Cache heavy queries and repeated results.
+- Use **pagination** for all list endpoints.
+- Serve images via **S3 + CloudFront CDN**.
+- Use **Redis** for caching and queues.
+- Design backend to support **horizontal scaling**.
+
+== migration rules ==
+
+## Migration & Future Planning
+
+- Avoid MySQL-specific features (e.g., ENUM types).
+- Use standard SQL and compatible data types.
+- Keep seeder and migration files reusable and versioned.
+- Plan PostgreSQL migration scripts early.
+- In Phase 2, decouple the admin system into a **standalone panel** via APIs.
 </laravel-boost-guidelines>
