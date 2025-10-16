@@ -77,29 +77,29 @@
     --card-foreground: hsl(220 13% 26%);
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(220 13% 26%);
-    --primary: hsl(271 76% 53%); /* #8B5CF6 - Purple primary color */
+    --primary: hsl(262 83% 58%); /* #7C3AED - Violet primary color */
     --primary-foreground: hsl(0 0% 100%);
     --secondary: hsl(220 13% 96%); /* #F9FAFB - Light gray */
     --secondary-foreground: hsl(220 13% 26%);
     --muted: hsl(220 13% 97%); /* #FAFBFC - Very light gray */
     --muted-foreground: hsl(215 14% 45%); /* #6B7280 - Medium gray */
-    --accent: hsl(271 100% 97%); /* #F5F3FF - Very light purple */
+    --accent: hsl(262 100% 97%); /* #F5F3FF - Very light violet */
     --accent-foreground: hsl(271 76% 53%);
     --destructive: hsl(0 84% 60%); /* #EF4444 - Red for destructive actions */
     --destructive-foreground: hsl(0 0% 100%);
     --border: hsl(220 13% 91%); /* #E5E7EB - Light gray border */
     --input: hsl(220 13% 96%); /* #F9FAFB - Light gray input background */
-    --ring: hsl(271 76% 53%); /* Purple focus ring */
+    --ring: hsl(262 83% 58%); /* Violet focus ring */
     --radius: 0.75rem; /* Slightly more rounded (12px) */
 
     --sidebar-background: hsl(0 0% 100%);
     --sidebar-foreground: hsl(220 13% 26%);
-    --sidebar-primary: hsl(271 76% 53%);
+    --sidebar-primary: hsl(262 83% 58%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(271 100% 97%);
+    --sidebar-accent: hsl(262 100% 97%);
     --sidebar-accent-foreground: hsl(220 13% 26%);
     --sidebar-border: hsl(220 13% 91%);
-    --sidebar-ring: hsl(271 76% 53%);
+    --sidebar-ring: hsl(262 83% 58%);
 }
 
 /* ============================================================

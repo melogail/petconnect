@@ -214,7 +214,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Home, Dog, Cat, Bird, Trophy, MapPin, Filter } from 'lucide-vue-next';
+import { Dog, Cat, Bird, Trophy, MapPin, Filter } from 'lucide-vue-next';
 
 const categories = [
     { id: 'dogs', label: 'Dogs', icon: Dog, count: 124 },

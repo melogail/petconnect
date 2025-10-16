@@ -24,12 +24,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <nav class="border-b border-gray-200 bg-white px-6 py-3">
+    <nav class="sticky top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-3 backdrop-blur-md transition-all duration-200">
         <div class="mx-auto flex max-w-7xl items-center justify-between">
             <!-- Logo Section -->
             <div class="flex items-center gap-2.5">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-500"
+                    class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500"
                 >
                     <div class="h-6 w-6 rounded-full bg-white"></div>
                 </div>
@@ -82,7 +82,7 @@ onUnmounted(() => {
                         />
                     </svg>
                     <span
-                        class="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-[10px] font-semibold text-white"
+                        class="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[10px] font-semibold text-white"
                     >
                         3
                     </span>
@@ -107,7 +107,7 @@ onUnmounted(() => {
                         />
                     </svg>
                     <span
-                        class="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-[10px] font-semibold text-white"
+                        class="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[10px] font-semibold text-white"
                     >
                         5
                     </span>
@@ -140,7 +140,7 @@ onUnmounted(() => {
                         <img
                             src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
                             alt="User Avatar"
-                            class="h-8 w-8 rounded-full border-2 border-purple-500"
+                            class="h-8 w-8 rounded-full border-2 border-violet-500"
                         />
                         <svg
                             class="h-3.5 w-3.5 text-gray-600 transition-transform"
@@ -174,13 +174,13 @@ onUnmounted(() => {
                         >
                             <a
                                 href="#profile"
-                                class="block px-3.5 py-2 text-sm text-gray-700 transition hover:bg-purple-50 hover:text-purple-600"
+                                class="block px-3.5 py-2 text-sm text-gray-700 transition hover:bg-violet-50 hover:text-violet-600"
                             >
                                 Profile
                             </a>
                             <a
                                 href="#dashboard"
-                                class="block px-3.5 py-2 text-sm text-gray-700 transition hover:bg-purple-50 hover:text-purple-600"
+                                class="block px-3.5 py-2 text-sm text-gray-700 transition hover:bg-violet-50 hover:text-violet-600"
                             >
                                 Dashboard
                             </a>
