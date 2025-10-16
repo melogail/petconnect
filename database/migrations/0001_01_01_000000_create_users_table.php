@@ -14,9 +14,23 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('username')->unique();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('country')->nullable();
+            $table->string('state')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address')->nullable();
+            $table->decimal('lat', 10, 8)->nullable();
+            $table->decimal('lng', 10, 8)->nullable();
+            $table->string('timezone')->nullable(); // this will be used to set the timezone of the user
+            $table->string('locale')->default('en');    // this will be used to set the language of the user
+            $table->timestamp('is_verified')->nullable();
+            $table->boolean('is_active')->default(1);
+            $table->timestamp('last_seen_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
