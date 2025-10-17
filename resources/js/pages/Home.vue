@@ -7,7 +7,7 @@ import { Plus } from 'lucide-vue-next';
 const petData = {
     name: 'Bella',
     age: '1 Year',
-    gender: 'Female',
+    gender: 1,
     location: 'Perth, Australia',
     description: 'Affectionate cat, loves to be around people.',
     image: 'https://placekittens.com/400/400',
