@@ -1,35 +1,43 @@
 <template>
     <article
-        class="pet-card group w-[300px] cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-2xl hover:border-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500"
+        class="pet-card group relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary-400/50 dark:border-gray-700/60 dark:bg-gray-800/80 dark:hover:border-primary-500/50 hover:shadow-primary-100 dark:hover:shadow-primary-900/20"
         itemscope
         itemtype="https://schema.org/Pet"
     >
-        <!-- Pet Image -->
+        <!-- Pet Image with Gradient Overlay -->
         <figure
-            class="relative h-[280px] overflow-hidden"
+            class="relative h-64 overflow-hidden bg-gray-100 dark:bg-gray-700/50"
             itemprop="image"
             itemscope
         >
-            <img
-                :src="pet.image"
-                :alt="`Photo of ${pet.name}, a ${pet.age} ${pet.gender === 1 ? 'Male' : 'Female'} from ${pet.location}`"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
-            />
+            <!-- Enhanced gradient overlay with better transition -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-in-out"></div>
+            <div class="h-full w-full overflow-hidden">
+                <img
+                    :src="pet.image"
+                    :alt="`Photo of ${pet.name}, a ${pet.age} ${pet.gender === 1 ? 'Male' : 'Female'} from ${pet.location}`"
+                    class="h-full w-full object-cover transition-all duration-700 group-hover:scale-110"
+                    loading="lazy"
+                    @error="$event.target.src = '/images/pet-placeholder.jpg'"
+                    :style="{'view-transition-name': `pet-image-${pet.id || 'default'}`}"
+                />
+            </div>
 
             <!-- Overlay -->
 
-            <!-- Favorite Button -->
+            <!-- Favorite Button with Animation -->
             <button
-                class="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none dark:bg-gray-800/90 dark:hover:bg-gray-700"
+                class="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:bg-gray-800/80 dark:hover:bg-gray-700/90"
                 :aria-pressed="pet.isFavorite"
                 :aria-label="pet.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
                 @click.stop="toggleFavorite"
             >
                 <svg
                     :class="[
-                        'h-5 w-5 transition-colors',
-                        pet.isFavorite ? 'fill-red-500 stroke-red-500' : 'fill-none stroke-gray-600'
+                        'h-4.5 w-4.5 transition-all duration-300',
+                        pet.isFavorite
+                            ? 'fill-red-500 stroke-red-500 scale-125'
+                            : 'fill-white/0 stroke-gray-600 group-hover:stroke-gray-700 dark:stroke-gray-300 dark:group-hover:stroke-gray-200'
                     ]"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -41,95 +49,250 @@
                 </svg>
             </button>
 
-            <!-- For Sale Badge -->
+            <!-- Status Badge -->
             <div
-                v-if="pet.forSale"
-                class="absolute top-4 right-4 z-10 rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white"
+                v-if="pet.status === 'sale' || pet.status === 'adoption'"
+                class="absolute top-4 right-4 z-10 group"
             >
-                For Sale
+                <div class="relative">
+                    <!-- Animated background glow -->
+                    <div
+                        class="absolute -inset-1 rounded-full opacity-75 group-hover:opacity-100 blur transition-all duration-500 animate-pulse group-hover:animate-none"
+                        :class="{
+                            'bg-gradient-to-r from-amber-400 to-rose-500': pet.status === 'sale',
+                            'bg-gradient-to-r from-teal-400 to-emerald-500': pet.status === 'adoption'
+                        }"
+                    ></div>
+
+                    <!-- Main badge -->
+                    <div
+                        class="relative flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl"
+                        :class="{
+                            'bg-gradient-to-r from-amber-400 to-rose-500 shadow-amber-500/30 group-hover:shadow-amber-500/40': pet.status === 'sale',
+                            'bg-gradient-to-r from-teal-400 to-emerald-500 shadow-teal-500/30 group-hover:shadow-teal-500/40': pet.status === 'adoption'
+                        }"
+                    >
+                        <span class="text-white/95 font-semibold tracking-wide">
+                            {{ pet.status === 'sale' ? 'For Sale' : 'For Adoption' }}
+                        </span>
+
+                        <!-- Subtle shine effect on hover -->
+                        <span class="absolute inset-0 overflow-hidden rounded-full">
+                            <span class="absolute top-0 left-0 w-1/2 h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-in-out"></span>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <!-- Status Icons with Tooltips -->
-            <TooltipProvider>
-                <div class="absolute right-4 bottom-4 flex items-center gap-2">
-                    <!-- Vaccinated -->
-                    <Tooltip v-if="pet.vaccinated">
-                        <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 p-1.5 text-green-600 shadow-sm transition-colors hover:bg-white">
-                            <Syringe class="h-4 w-4" />
-                        </TooltipTrigger>
-                        <TooltipContent><p>Vaccinated</p></TooltipContent>
-                    </Tooltip>
+            <!-- Enhanced status bar with better visibility -->
+            <div class="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 pt-10 opacity-0 transition-all duration-500 ease-out group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
+                <TooltipProvider>
+                    <div class="flex items-center justify-center gap-3">
+                        <!-- Vaccinated -->
+                        <Tooltip v-if="pet.vaccinated">
+                            <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 p-1.5 text-green-600 shadow-sm backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white">
+                                <Syringe class="h-4 w-4" />
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-gray-800 text-white border-0 text-xs">
+                                <p>Vaccinated</p>
+                            </TooltipContent>
+                        </Tooltip>
 
-                    <!-- Serialized -->
-                    <Tooltip v-if="pet.serialized">
-                        <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 p-1.5 text-blue-600 shadow-sm transition-colors hover:bg-white">
-                            <HeartCrack class="h-4 w-4" />
-                        </TooltipTrigger>
-                        <TooltipContent><p>Serialized</p></TooltipContent>
-                    </Tooltip>
-                </div>
-            </TooltipProvider>
+                        <!-- Serialized -->
+                        <Tooltip v-if="pet.serialized">
+                            <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 p-1.5 text-blue-600 shadow-sm backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white">
+                                <HeartCrack class="h-4 w-4" />
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-gray-800 text-white border-0 text-xs">
+                                <p>Microchipped</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <!-- Age -->
+                        <Tooltip>
+                            <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 p-1.5 text-amber-600 shadow-sm backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-gray-800 text-white border-0 text-xs">
+                                <p>{{ pet.age }} old</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <!-- Location -->
+                        <Tooltip>
+                            <TooltipTrigger class="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 p-1.5 text-purple-600 shadow-sm backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-gray-800 text-white border-0 text-xs">
+                                <p>Located in {{ pet.location }}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </TooltipProvider>
+            </div>
         </figure>
 
-        <!-- Card Content -->
-        <div class="p-5">
-            <!-- Pet Name -->
-            <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2" itemprop="name">{{ pet.name }}</h3>
-
-            <!-- Pet Details -->
-            <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                        <path d="M12 6v6l4 2" stroke-width="2" stroke-linecap="round"/>
+        <!-- Card Content with subtle animation on hover -->
+        <div class="p-5 pt-4 transition-all duration-300 group-hover:bg-white/95 dark:group-hover:bg-gray-800/95">
+            <!-- Pet Name and Gender with enhanced typography -->
+            <div class="flex items-center justify-between mb-2.5">
+                <h3
+                    class="text-xl font-extrabold text-gray-900 dark:text-white truncate pr-2 transition-colors duration-300 group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                    itemprop="name"
+                >
+                    {{ pet.name }}
+                </h3>
+                <span class="flex-shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                      :class="pet.gender === 1
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                        : 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'">
+                    <svg v-if="pet.gender === 1" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                        <path d="M16 3h5v5"/>
+                        <path d="m21 3-6.75 6.75"/>
+                        <circle cx="10" cy="14" r="6"/>
                     </svg>
-                    <span itemprop="age">{{ pet.age }}</span>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                        <path d="M12 15v7"/>
+                        <path d="M9 19h6"/>
+                        <circle cx="12" cy="9" r="6"/>
+                    </svg>
+                    {{ pet.gender === 1 ? 'Male' : 'Female' }}
+                </span>
+            </div>
+
+            <!-- Breed and Age -->
+            <div class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                <div class="flex items-center gap-1.5">
+                    <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ pet.breed || 'Mixed Breed' }}</span>
                 </div>
-                <div class="flex items-center gap-0.5">
-                    <svg v-if="pet.gender === 1" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mars-icon lucide-mars"><path d="M16 3h5v5"/><path d="m21 3-6.75 6.75"/><circle cx="10" cy="14" r="6"/></svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-venus-icon lucide-venus"><path d="M12 15v7"/><path d="M9 19h6"/><circle cx="12" cy="9" r="6"/></svg>
-                    <span itemprop="gender">{{ pet.gender === 1 ? "Male" : "Female" }}</span>
+                <div class="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+                <div class="flex items-center gap-1.5">
+                    <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300" itemprop="age">{{ pet.age }}</span>
                 </div>
             </div>
 
-            <!-- Location -->
-            <div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 mb-3">
-                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
-                    <circle cx="12" cy="10" r="3" stroke-width="2"/>
-                </svg>
-                <span itemprop="address">{{ pet.location }}</span>
+            <!-- Enhanced description with smoother reveal -->
+            <div class="relative mb-4">
+                <div class="relative overflow-hidden">
+                    <p
+                        class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed transition-all duration-500 ease-in-out"
+                        :class="showFullDescription ? 'max-h-[500px]' : 'max-h-[4.5rem] overflow-hidden'"
+                        itemprop="description"
+                    >
+                        {{ pet.description || 'No description available for this pet.' }}
+                    </p>
+                    <div v-if="pet.description && pet.description.length > 120" class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent dark:from-gray-800 dark:to-transparent flex items-end justify-center pb-1" v-show="!showFullDescription">
+                        <button
+                            @click.stop="showFullDescription = true"
+                            class="text-xs font-medium bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 focus:outline-none border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow transition-all"
+                        >
+                            Read more
+                        </button>
+                    </div>
+                </div>
+                <button
+                    v-if="showFullDescription && pet.description && pet.description.length > 120"
+                    @click.stop="showFullDescription = false"
+                    class="mt-2 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 focus:outline-none flex items-center mx-auto transition-all duration-200 hover:underline"
+                >
+                    Show less
+                    <svg class="ml-1 w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
             </div>
 
-            <!-- Description -->
-            <p class="text-sm text-gray-600 mb-4 line-clamp-2" itemprop="description">{{ pet.description }}</p>
-
-            <!-- Divider -->
-            <div class="my-4 border-t border-gray-300"></div>
+            <!-- Divider with Pattern -->
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center">
+                    <span class="bg-white px-2 text-xs text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
 
             <!-- Action Buttons -->
             <div class="mb-4 flex items-center justify-between text-gray-500 dark:text-gray-400">
-                <!-- Likes -->
-                <button class="group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <Heart class="h-5 w-5 group-hover:fill-red-500 group-hover:text-red-500" />
-                    <span class="text-sm font-medium">{{ pet.likes || 0 }}</span>
+                <!-- Likes with Animation -->
+                <button
+                    @click.stop="toggleLike"
+                    class="group relative flex items-center gap-1.5 overflow-hidden rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                    :class="{ 'text-red-500': isLiked }"
+                >
+                    <span class="relative">
+                        <Heart
+                            class="h-5 w-5 transition-all duration-300"
+                            :class="{
+                                'fill-red-500 text-red-500 scale-110': isLiked,
+                                'group-hover:fill-red-500/20 group-hover:text-red-500': !isLiked
+                            }"
+                        />
+                        <transition
+                            enter-active-class="transition-all duration-300 ease-out"
+                            leave-active-class="transition-all duration-300 ease-in absolute inset-0"
+                            enter-from-class="transform scale-0 opacity-0"
+                            enter-to-class="transform scale-100 opacity-100"
+                            leave-from-class="transform scale-100 opacity-100"
+                            leave-to-class="transform scale-150 opacity-0"
+                        >
+                            <Heart
+                                v-if="isLiked"
+                                class="absolute inset-0 h-5 w-5 fill-red-500 text-red-500"
+                            />
+                        </transition>
+                    </span>
+                    <span class="text-sm font-medium transition-colors duration-300">
+                        {{ likeCount }}
+                    </span>
                 </button>
 
-                <!-- Comments -->
-                <CommentsDialog 
-                  :pet-id="pet.id" 
-                  :pet-name="pet.name" 
-                  :comments-count="pet.comments || 0"
-                  :current-user-id="user?.id"
-                  @comment-added="handleCommentAdded"
-                  @comment-deleted="handleCommentDeleted"
-                />
+                <!-- Comments with Animation -->
+                <div class="group relative">
+                    <CommentsDialog
+                        :pet-id="pet.id"
+                        :pet-name="pet.name"
+                        :comments-count="pet.comments || 0"
+                        :current-user-id="user?.id"
+                        @comment-added="handleCommentAdded"
+                        @comment-deleted="handleCommentDeleted"
+                    >
+                        <template #trigger="{ open }">
+                            <button
+                                @click.stop="open"
+                                class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:bg-gray-100 hover:text-primary-500 dark:hover:bg-gray-700/50 dark:hover:text-primary-400"
+                            >
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                <span class="text-sm font-medium">{{ pet.comments || 0 }}</span>
+                            </button>
+                        </template>
+                    </CommentsDialog>
+                    <div class="absolute -bottom-1 left-1/2 h-0.5 w-0 -translate-x-1/2 bg-primary-500 transition-all duration-300 group-hover:w-4/5"></div>
+                </div>
 
-                <!-- Share Dropdown -->
-                <div class="relative">
+                <!-- Share Dropdown with Animation -->
+                <div class="group relative">
                     <button
                         @click.stop="toggleShareDropdown"
-                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 hover:text-primary-500 dark:hover:bg-gray-700"
+                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:bg-gray-100 hover:text-primary-500 dark:hover:bg-gray-700/50 dark:hover:text-primary-400"
                         aria-label="Share"
                         aria-haspopup="true"
                         :aria-expanded="isShareOpen"
@@ -137,6 +300,7 @@
                     >
                         <Share2 class="h-5 w-5" />
                     </button>
+                    <div class="absolute -bottom-1 left-1/2 h-0.5 w-0 -translate-x-1/2 bg-primary-500 transition-all duration-300 group-hover:w-4/5"></div>
 
                     <!-- Animated Dropdown -->
                     <transition name="fade-slide">
@@ -240,11 +404,11 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-3 mt-4">
+            <div class="flex items-center gap-2 mt-5">
                 <!-- Quick Message Dialog Trigger -->
-                <QuickMessageDialog 
+                <QuickMessageDialog
                     v-model:open="showMessageDialog"
-                    :owner-name="pet.ownerName || 'the owner'" 
+                    :owner-name="pet.ownerName || 'the owner'"
                     :pet-name="pet.name"
                     :pet-id="pet.id"
                     @message-sent="handleMessageSent"
@@ -267,7 +431,7 @@
                         </Tooltip>
                     </TooltipProvider>
                 </QuickMessageDialog>
-                
+
                 <!-- View Details Button -->
                 <button
                     @click="$emit('view-details')"
@@ -281,15 +445,64 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { HeartCrack, Syringe, Share2, Heart, Copy, Mail } from 'lucide-vue-next';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { HeartCrack, Syringe, Share2, Heart, Copy, Mail, MessageCircle } from 'lucide-vue-next';
 import CommentsDialog from './CommentsDialog.vue';
 import QuickMessageDialog from './QuickMessageDialog.vue';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Define props
+const props = defineProps({
+    pet: {
+        type: Object,
+        required: true,
+        default: () => ({
+            name: '',
+            age: '',
+            gender: 1,
+            location: '',
+            description: '',
+            image: '',
+            status: '',
+            isFavorite: false,
+            vaccinated: false,
+            serialized: false,
+            likes: 0,
+            comments: 0,
+            id: ''
+        })
+    },
+    user: {
+        type: Object,
+        default: null
+    }
+});
+
+// Define emits
+const emit = defineEmits([
+    'favorite-toggle',
+    'comment-added',
+    'comment-deleted',
+    'message-sent',
+    'view-details'
+]);
+
+// Component state
+const showFullDescription = ref(false);
+const isLiked = ref(false);
+const likeCount = ref(props.pet?.likes || 0);
 const shareButton = ref(null);
 const isShareOpen = ref(false);
 const showMessageDialog = ref(false);
+const commentsCount = ref(props.pet?.comments || 0);
+const showComments = ref(false);
+
+// Toggle like with animation
+const toggleLike = () => {
+    isLiked.value = !isLiked.value;
+    likeCount.value += isLiked.value ? 1 : -1;
+    // Here you would typically make an API call to update the like status
+};
 
 const toggleShareDropdown = (event) => {
     event.stopPropagation();
@@ -331,49 +544,49 @@ const copyToClipboard = async () => {
     }
 };
 
-onMounted(() => {
-    document.addEventListener('click', closeShareDropdown);
-    document.addEventListener('keydown', (e) => e.key === 'Escape' && (isShareOpen.value = false));
-});
-onUnmounted(() => document.removeEventListener('click', closeShareDropdown));
-
-const props = defineProps({
-    pet: {
-        type: Object,
-        required: true,
-    },
-    user: {
-        type: Object,
-        default: null,
-    },
-    onViewDetails: {
-        type: Function,
-        default: () => {}
-    },
-});
-
-const toggleFavorite = () => (props.pet.isFavorite = !props.pet.isFavorite);
-
-const handleCommentAdded = (comment) => {
-    // Increment comments count
-    if (!props.pet.comments) {
-        props.pet.comments = 0;
+const toggleFavorite = () => {
+    if (props.pet) {
+        props.pet.isFavorite = !props.pet.isFavorite;
+        emit('favorite-toggle', props.pet.isFavorite);
     }
-    props.pet.comments++;
+};
+
+// Event handlers
+const handleCommentAdded = (comment) => {
+    if (props.pet) {
+        if (!props.pet.comments) {
+            props.pet.comments = 0;
+        }
+        props.pet.comments++;
+        emit('comment-added', comment);
+    }
 };
 
 const handleCommentDeleted = (commentId) => {
-    // Decrement comments count
-    if (props.pet.comments > 0) {
+    if (props.pet?.comments > 0) {
         props.pet.comments--;
+        emit('comment-deleted', commentId);
     }
 };
 
 const handleMessageSent = () => {
-    // You can add any additional logic here when a message is sent
-    // For example, show a success toast or update UI
-    console.log('Message sent successfully');
+    showMessageDialog.value = false;
+    emit('message-sent');
 };
+
+// Lifecycle hooks
+onMounted(() => {
+    document.addEventListener('click', closeShareDropdown);
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && (isShareOpen.value = false));
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', closeShareDropdown);
+    document.removeEventListener('keydown', (e) => e.key === 'Escape' && (isShareOpen.value = false));
+});
+
+
+
 </script>
 
 <style scoped>
