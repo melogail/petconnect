@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    <footer class="bg-gray-50 border-t border-gray-200">
+    <footer class="bg-gray-50 border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
         <!-- Main Footer Content -->
         <div class="max-w-7xl mx-auto px-6 py-12">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -17,16 +17,16 @@
                                     d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                             </svg>
                         </div>
-                        <span class="text-xl font-bold text-gray-800">PetConnect</span>
+                        <span class="text-xl font-bold text-gray-800 dark:text-white">PetConnect</span>
                     </div>
-                    <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
                         Connecting pet lovers and breeders worldwide. Find your perfect companion or help a pet find
                         their forever home.
                     </p>
                     <!-- Social Media Icons -->
                     <div class="flex items-center gap-3">
                         <a href="#"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors">
+                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-gray-700 hover:text-violet-600 hover:border-violet-200 dark:hover:border-violet-500 transition-colors">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                  viewBox="0 0 24 24">
                                 <path
@@ -34,7 +34,7 @@
                             </svg>
                         </a>
                         <a href="#"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors">
+                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-gray-700 hover:text-violet-600 hover:border-violet-200 dark:hover:border-violet-500 transition-colors">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                  viewBox="0 0 24 24">
                                 <path
@@ -42,7 +42,7 @@
                             </svg>
                         </a>
                         <a href="#"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors">
+                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-gray-700 hover:text-violet-600 hover:border-violet-200 dark:hover:border-violet-500 transition-colors">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                  viewBox="0 0 24 24">
                                 <path
@@ -50,7 +50,7 @@
                             </svg>
                         </a>
                         <a href="#"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors">
+                           class="w-9 h-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-violet-50 dark:hover:bg-gray-700 hover:text-violet-600 hover:border-violet-200 dark:hover:border-violet-500 transition-colors">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                  viewBox="0 0 24 24">
                                 <path
@@ -62,69 +62,69 @@
 
                 <!-- Quick Links -->
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-800 mb-4">Quick Links</h3>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Quick Links</h3>
                     <ul class="space-y-2.5">
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Browse
+                        <li><a href="#" class="text-sm dark:text-gray-400 text-gray-600 hover:text-violet-600 transition-colors">Browse
                             Pets</a></li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Post a
+                        <li><a href="#" class="text-sm dark:text-gray-400 text-gray-600 hover:text-violet-600 transition-colors">Post a
                             Pet</a></li>
                         <li><a href="#"
-                               class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Dashboard</a></li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Adoption
+                               class="text-sm dark:text-gray-400 text-gray-600 hover:text-violet-600 transition-colors">Dashboard</a></li>
+                        <li><a href="#" class="text-sm dark:text-gray-400 text-gray-600 hover:text-violet-600 transition-colors">Adoption
                             Guide</a></li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Breeding
+                        <li><a href="#" class="text-sm dark:text-gray-400 text-gray-600 hover:text-violet-600 transition-colors">Breeding
                             Resources</a></li>
                     </ul>
                 </div>
 
                 <!-- Pet Categories -->
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-800 mb-4">Pet Categories</h3>
-                    <ul class="space-y-2.5">
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Dogs</a>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Pet Categories</h3>
+                    <ul class="space-y-2.5 ">
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">Dogs</a>
                         </li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Cats</a>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">Cats</a>
                         </li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Birds</a>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">Birds</a>
                         </li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Horses</a>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">Horses</a>
                         </li>
-                        <li><a href="#" class="text-sm text-gray-600 hover:text-violet-600 transition-colors">Other
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">Other
                             Pets</a></li>
                     </ul>
                 </div>
 
                 <!-- Contact Us -->
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-800 mb-4">Contact Us</h3>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Contact Us</h3>
                     <ul class="space-y-3">
                         <li class="flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <rect x="2" y="4" width="20" height="16" rx="2" stroke-linecap="round"
                                       stroke-linejoin="round" />
                                 <path d="m2 7 10 6 10-6" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <a href="mailto:support@petconnect.com"
-                               class="text-sm text-gray-600 hover:text-violet-600 transition-colors">support@petconnect.com</a>
+                               class="text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors">support@petconnect.com</a>
                         </li>
                         <li class="flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path
                                     d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
                                     stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <span class="text-sm text-gray-600">+1 (234) 567-890</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">+1 (234) 567-890</span>
                         </li>
                         <li class="flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-linecap="round"
                                       stroke-linejoin="round" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            <span class="text-sm text-gray-600">123 Pet Street, Animal City, AC 12345</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">123 Pet Street, Animal City, AC 12345</span>
                         </li>
                     </ul>
                 </div>
@@ -132,7 +132,7 @@
         </div>
 
         <!-- Bottom Footer -->
-        <div class="border-t border-gray-200">
+        <div class="border-t border-gray-200 dark:border-gray-800">
             <div class="max-w-7xl mx-auto px-6 py-4">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-3">
                     <p class="text-sm text-gray-500">© 2025 PetConnect. All rights reserved.</p>

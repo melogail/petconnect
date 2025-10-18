@@ -1,13 +1,13 @@
 <template>
   <Dialog>
     <DialogTrigger as-child>
-      <button class="group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 hover:text-blue-500">
+      <button class="group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-500">
         <MessageSquare class="h-5 w-5 group-hover:fill-blue-500 group-hover:text-blue-500" />
         <span class="text-sm font-medium">{{ commentsCount || 0 }}</span>
       </button>
     </DialogTrigger>
 
-    <DialogContent class="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+    <DialogContent class="sm:max-w-[600px] max-h-[80vh] flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <DialogHeader>
         <DialogTitle class="text-xl">Comments for {{ petName }}</DialogTitle>
         <DialogDescription>
@@ -21,116 +21,30 @@
           <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500"></div>
         </div>
 
-        <div v-else-if="comments.length === 0" class="py-8 text-center text-gray-500">
+        <div v-else-if="comments.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
           No comments yet. Be the first to comment!
         </div>
 
         <div v-else class="space-y-6">
-          <div v-for="comment in comments" :key="comment.id" class="group relative">
-            <div class="flex items-start gap-3">
-              <div class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
-                {{ comment.user.name.charAt(0).toUpperCase() }}
-              </div>
-              
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <p class="font-medium text-sm">{{ comment.user.name }}</p>
-                  <span class="text-xs text-gray-500">• {{ formatDate(comment.created_at) }}</span>
-                </div>
-                
-                <p class="mt-1 text-gray-800">{{ comment.content }}</p>
-                
-                <!-- Comment Actions -->
-                <div class="mt-1.5 flex items-center gap-4 text-xs text-gray-500">
-                  <button @click="toggleLike(comment)" class="flex items-center gap-1 hover:text-blue-500">
-                    <Heart :class="['h-3.5 w-3.5', comment.isLiked ? 'fill-red-500 text-red-500' : '']" />
-                    <span>{{ comment.likes || 0 }}</span>
-                  </button>
-                  <button @click="toggleReply(comment.id)" class="hover:text-blue-500">
-                    Reply
-                  </button>
-                </div>
-                
-                <!-- Reply Form -->
-                <div v-if="activeReply === comment.id" class="mt-3 pl-4 border-l-2 border-gray-200">
-                  <div class="flex gap-2">
-                    <Input
-                      v-model="replyText"
-                      placeholder="Write a reply..."
-                      class="flex-1 text-sm h-9"
-                      @keyup.enter="addReply(comment)"
-                    />
-                    <Button size="sm" @click="addReply(comment)">
-                      <SendHorizontal class="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <!-- Replies -->
-                <div v-if="comment.replies?.length > 0" class="mt-3 space-y-4 pl-4 border-l-2 border-gray-100">
-                  <div v-for="reply in comment.replies" :key="reply.id" class="group relative">
-                    <div class="flex items-start gap-3">
-                      <div class="h-8 w-8 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium">
-                        {{ reply.user.name.charAt(0).toUpperCase() }}
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                          <p class="text-sm font-medium">{{ reply.user.name }}</p>
-                          <span class="text-xs text-gray-500">• {{ formatDate(reply.created_at) }}</span>
-                        </div>
-                        <p class="mt-0.5 text-sm text-gray-800">{{ reply.content }}</p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 -mr-1">
-                          <MoreHorizontal class="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="w-40">
-                          <DropdownMenuItem v-if="reply.user.id === currentUserId" @click="editReply(reply)">
-                            <Edit2 class="mr-2 h-4 w-4" />
-                            <span>Edit</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem v-if="reply.user.id === currentUserId" @click="deleteReply(comment, reply.id)" class="text-red-600">
-                            <Trash2 class="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem v-if="reply.user.id !== currentUserId" @click="reportContent('reply', reply.id)">
-                            <Flag class="mr-2 h-4 w-4" />
-                            <span>Report</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Comment Options -->
-              <DropdownMenu>
-                <DropdownMenuTrigger class="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 -mr-1">
-                  <MoreHorizontal class="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" class="w-40">
-                  <DropdownMenuItem v-if="comment.user.id === currentUserId" @click="editComment(comment)">
-                    <Edit2 class="mr-2 h-4 w-4" />
-                    <span>Edit</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem v-if="comment.user.id === currentUserId" @click="deleteComment(comment.id)" class="text-red-600">
-                    <Trash2 class="mr-2 h-4 w-4" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem v-if="comment.user.id !== currentUserId" @click="reportContent('comment', comment.id)">
-                    <Flag class="mr-2 h-4 w-4" />
-                    <span>Report</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          <!-- Comment Component (recursive) -->
+          <div v-for="comment in comments" :key="comment.id" class="space-y-3">
+            <CommentItem
+              :comment="comment"
+              :current-user-id="currentUserId"
+              :active-reply="activeReply"
+              @toggle-reply="toggleReply"
+              @add-reply="addReply"
+              @edit-comment="editComment"
+              @delete-comment="deleteComment"
+              @report-content="openReportDialog"
+              @toggle-like="toggleLike"
+            />
           </div>
         </div>
       </div>
 
       <!-- Add Comment Form -->
-      <form @submit.prevent="addComment" class="mt-4 border-t pt-4">
+      <form @submit.prevent="addComment" class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
         <div class="flex gap-2">
           <Input
             v-model="newComment"
@@ -138,27 +52,35 @@
             class="flex-1"
             required
           />
-          <Button type="submit" :disabled="isSubmitting">
-            <SendHorizontal class="h-4 w-4 mr-1" />
-            {{ isSubmitting ? 'Posting...' : 'Post' }}
+          <Button
+            type="submit"
+            size="sm"
+            class="h-9 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white"
+            :disabled="!newComment.trim()"
+            :class="{ 'opacity-75 cursor-not-allowed': !newComment.trim() }"
+          >
+            <span>Comment</span>
           </Button>
         </div>
       </form>
     </DialogContent>
   </Dialog>
+
+  <!-- Report Dialog -->
+  <ReportDialog
+    :is-open="reportDialogOpen"
+    :content-type="reportContentType"
+    :content-id="reportContentId"
+    @close="closeReportDialog"
+    @submit="handleReportSubmit"
+  />
+
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { 
-  MessageSquare, 
-  Trash2, 
-  SendHorizontal, 
-  MoreHorizontal, 
-  Edit2, 
-  Flag,
-  Heart
-} from 'lucide-vue-next';
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { MessageSquare } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -169,12 +91,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import ReportDialog from '@/components/web/ReportDialog.vue';
+import CommentItem from '@/components/web/CommentItem.vue';
+
+import axios from 'axios';
 
 const props = defineProps({
   petId: {
@@ -192,57 +112,237 @@ const props = defineProps({
   currentUserId: {
     type: [String, Number],
     default: null,
-  },
+  }
 });
+
 const emit = defineEmits(['comment-added', 'comment-deleted']);
 
 const comments = ref([
   {
     id: 1,
-    content: 'This pet is absolutely adorable! How old is it?',
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    likes: 3,
-    isLiked: false,
     user: {
-      id: 2,
-      name: 'Sarah Johnson',
+      name: 'Alex Johnson',
+      id: 1,
       avatar: null
     },
+    content: 'This pet is absolutely adorable! How old is it?',
+    created_at: '2025-10-17T14:30:00Z',
+    likes: 5,
+    isLiked: false,
     replies: [
       {
         id: 101,
-        content: 'Thank you! He\'s about 2 years old according to the shelter.',
+        content: 'Thank you! Max is about 2 years old according to the shelter records.',
         created_at: new Date(Date.now() - 3600000).toISOString(),
         user: {
-          id: 1,
-          name: 'Alex Chen',
+          id: 2,
+          name: 'Pet Owner',
           avatar: null
-        }
+        },
+        likes: 3,
+        isLiked: false,
+        replies: [
+          {
+            id: 1001,
+            content: 'That\'s a great age! Is he already neutered?',
+            created_at: new Date(Date.now() - 3000000).toISOString(),
+            user: {
+              id: 3,
+              name: 'Mike Peterson',
+              avatar: null
+            },
+            likes: 1,
+            isLiked: false,
+            replies: [
+              {
+                id: 10001,
+                content: 'Yes, he was neutered before we got him from the shelter.',
+                created_at: new Date(Date.now() - 2900000).toISOString(),
+                user: {
+                  id: 2,
+                  name: 'Pet Owner',
+                  avatar: null
+                },
+                likes: 2,
+                isLiked: false
+              }
+            ]
+          }
+        ]
       },
       {
         id: 102,
-        content: 'He looks so playful!',
+        content: 'He looks so playful! Does he get along well with other dogs?',
         created_at: new Date(Date.now() - 1800000).toISOString(),
         user: {
           id: 3,
           name: 'Mike Peterson',
           avatar: null
-        }
+        },
+        likes: 2,
+        isLiked: true,
+        replies: []
+      },
+      {
+        id: 103,
+        content: 'Yes, he\'s great with other dogs! We have regular playdates at the local dog park.',
+        created_at: new Date(Date.now() - 900000).toISOString(),
+        user: {
+          id: 2,
+          name: 'Pet Owner',
+          avatar: null
+        },
+        likes: 1,
+        isLiked: false,
+        replies: [
+          {
+            id: 1002,
+            content: 'That\'s great to hear! What days do you usually go to the park?',
+            created_at: new Date(Date.now() - 800000).toISOString(),
+            user: {
+              id: 4,
+              name: 'Emma Wilson',
+              avatar: null
+            },
+            likes: 0,
+            isLiked: false
+          }
+        ]
       }
     ]
   },
   {
     id: 2,
-    content: 'What breed is this? So cute!',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    likes: 1,
-    isLiked: true,
     user: {
-      id: 4,
       name: 'Emma Wilson',
+      id: 4,
       avatar: null
     },
-    replies: []
+    content: 'What breed is Max? His coat is absolutely stunning!',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    likes: 8,
+    isLiked: true,
+    replies: [
+      {
+        id: 201,
+        content: 'Max is a Golden Retriever mix! The shelter thinks he might have some Border Collie in him too.',
+        created_at: new Date(Date.now() - 82800000).toISOString(),
+        user: {
+          id: 2,
+          name: 'Pet Owner',
+          avatar: null
+        },
+        likes: 4,
+        isLiked: false,
+        replies: [
+          {
+            id: 2001,
+            content: 'I thought I saw some Border Collie in him! That explains his energy levels.',
+            created_at: new Date(Date.now() - 82000000).toISOString(),
+            user: {
+              id: 5,
+              name: 'Sarah Chen',
+              avatar: null
+            },
+            likes: 2,
+            isLiked: true
+          }
+        ]
+      },
+      {
+        id: 202,
+        content: 'That explains his beautiful golden coat and those intelligent eyes!',
+        created_at: new Date(Date.now() - 81000000).toISOString(),
+        user: {
+          id: 5,
+          name: 'Sarah Chen',
+          avatar: null
+        },
+        likes: 2,
+        isLiked: true,
+        replies: []
+      }
+    ]
+  },
+  {
+    id: 3,
+    user: {
+      name: 'James Wilson',
+      id: 6,
+      avatar: null
+    },
+    content: 'Is Max house-trained? Looking for a dog that\'s already trained.',
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    likes: 3,
+    isLiked: false,
+    replies: [
+      {
+        id: 301,
+        content: 'Yes, Max is fully house-trained! He also knows basic commands like sit, stay, and paw.',
+        created_at: new Date(Date.now() - 165600000).toISOString(),
+        user: {
+          id: 2,
+          name: 'Pet Owner',
+          avatar: null
+        },
+        likes: 5,
+        isLiked: true,
+        replies: [
+          {
+            id: 3001,
+            content: 'That\'s impressive! How long did it take to train him?',
+            created_at: new Date(Date.now() - 165000000).toISOString(),
+            user: {
+              id: 7,
+              name: 'David Kim',
+              avatar: null
+            },
+            likes: 1,
+            isLiked: false,
+            replies: [
+              {
+                id: 30001,
+                content: 'He came to us knowing the basics, but we\'ve been working on more advanced commands for about 3 months now.',
+                created_at: new Date(Date.now() - 164900000).toISOString(),
+                user: {
+                  id: 2,
+                  name: 'Pet Owner',
+                  avatar: null
+                },
+                likes: 3,
+                isLiked: false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 302,
+        content: 'That\'s impressive! How is he with cats?',
+        created_at: new Date(Date.now() - 158400000).toISOString(),
+        user: {
+          id: 6,
+          name: 'James Wilson',
+          avatar: null
+        },
+        likes: 1,
+        isLiked: false,
+        replies: []
+      },
+      {
+        id: 303,
+        content: 'He gets along well with cats! We have a resident cat and they\'re best friends.',
+        created_at: new Date(Date.now() - 151200000).toISOString(),
+        user: {
+          id: 2,
+          name: 'Pet Owner',
+          avatar: null
+        },
+        likes: 3,
+        isLiked: false,
+        replies: []
+      }
+    ]
   }
 ]);
 
@@ -252,11 +352,18 @@ const activeReply = ref(null);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 
+// Fetch comments from API
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fetchComments = async () => {
   try {
     isLoading.value = true;
-    const response = await axios.get(`/api/pets/${props.petId}/comments`);
-    comments.value = response.data.data;
+    // In a real implementation, this would fetch comments from the API
+    // const response = await axios.get(`/api/pets/${props.petId}/comments`);
+    // comments.value = response.data.data;
+
+    // For demo purposes, we're using the sample data
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
   } catch (error) {
     console.error('Error fetching comments:', error);
   } finally {
@@ -278,6 +385,25 @@ const addComment = async () => {
     emit('comment-added', response.data.data);
   } catch (error) {
     console.error('Error adding comment:', error);
+
+    // Create a dummy comment when the API call fails
+    const dummyComment = {
+      id: Date.now(),
+      content: newComment.value.trim(),
+      created_at: new Date().toISOString(),
+      user: {
+        id: props.currentUserId || 999,
+        name: 'Current User',
+        avatar: null
+      },
+      likes: 0,
+      isLiked: false,
+      replies: []
+    };
+
+    comments.value.unshift(dummyComment);
+    newComment.value = '';
+    emit('comment-added', dummyComment);
   } finally {
     isSubmitting.value = false;
   }
@@ -292,6 +418,10 @@ const deleteComment = async (commentId) => {
     emit('comment-deleted', commentId);
   } catch (error) {
     console.error('Error deleting comment:', error);
+
+    // Proceed with the deletion even if the API call fails
+    comments.value = comments.value.filter(comment => comment.id !== commentId);
+    emit('comment-deleted', commentId);
   }
 };
 
@@ -303,8 +433,11 @@ const toggleLike = (comment) => {
 
 // Toggle reply input
 const toggleReply = (commentId) => {
-  activeReply.value = activeReply.value === commentId ? null : commentId;
   if (activeReply.value === commentId) {
+    activeReply.value = null;
+    replyText.value = '';
+  } else {
+    activeReply.value = commentId;
     replyText.value = '';
   }
 };
@@ -312,22 +445,25 @@ const toggleReply = (commentId) => {
 // Add a new reply
 const addReply = (comment) => {
   if (!replyText.value.trim()) return;
-  
+
   const newReply = {
     id: Date.now(),
     content: replyText.value,
     created_at: new Date().toISOString(),
     user: {
-      id: currentUserId.value,
+      id: props.currentUserId || 999, // Use props.currentUserId or a default value
       name: 'Current User', // This would come from your auth state
       avatar: null
-    }
+    },
+    likes: 0,
+    isLiked: false,
+    replies: [] // Initialize empty replies array for nested replies
   };
-  
+
   if (!comment.replies) {
     comment.replies = [];
   }
-  
+
   comment.replies.push(newReply);
   replyText.value = '';
   activeReply.value = null;
@@ -341,55 +477,35 @@ const editComment = (comment) => {
   }
 };
 
-// Edit a reply
-const editReply = (reply) => {
-  const newContent = prompt('Edit your reply:', reply.content);
-  if (newContent !== null && newContent.trim() !== '') {
-    reply.content = newContent.trim();
-  }
+// Report dialog state
+const reportDialogOpen = ref(false);
+const reportContentType = ref('');
+const reportContentId = ref<string | number | null>(null);
+
+// Open report dialog
+const openReportDialog = (type: string, id: string | number) => {
+  reportContentType.value = type;
+  reportContentId.value = id;
+  reportDialogOpen.value = true;
 };
 
-// Delete a reply
-const deleteReply = (comment, replyId) => {
-  if (confirm('Are you sure you want to delete this reply?')) {
-    comment.replies = comment.replies.filter(reply => reply.id !== replyId);
-  }
+// Close report dialog
+const closeReportDialog = () => {
+  reportDialogOpen.value = false;
+  reportContentType.value = '';
+  reportContentId.value = null;
 };
 
-// Report content
-const reportContent = (type, id) => {
-  const reason = prompt('Please specify the reason for reporting:');
-  if (reason) {
-    console.log(`Reported ${type} ${id} for:`, reason);
-    // In a real app, you would send this to your backend
-    alert('Thank you for your report. We will review it shortly.');
-  }
+// Handle report submission
+const handleReportSubmit = (reportData: any) => {
+  console.log('Report submitted:', reportData);
+  // In a real app, you would send this to your backend
+  // await axios.post('/api/reports', reportData);
+
+  alert('Thank you for your report. We will review it shortly.');
+  closeReportDialog();
 };
 
-const formatDate = (dateString) => {
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffInSeconds = Math.floor((now - date) / 1000);
-  
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  
-  // For older dates, show the actual date
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-// Fetch comments when dialog is opened
-const onOpenChange = (isOpen) => {
-  if (isOpen) {
-    fetchComments();
-  }
-};
+// Note: formatDate function is defined in the CommentItem component
+// and used there for displaying dates in the comment template
 </script>

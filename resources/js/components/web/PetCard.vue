@@ -1,6 +1,6 @@
 <template>
     <article
-        class="pet-card group w-[300px] cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-2xl hover:border-primary-500"
+        class="pet-card group w-[300px] cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-2xl hover:border-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500"
         itemscope
         itemtype="https://schema.org/Pet"
     >
@@ -18,13 +18,10 @@
             />
 
             <!-- Overlay -->
-            <div
-                class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            ></div>
 
             <!-- Favorite Button -->
             <button
-                class="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none"
+                class="absolute top-4 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none dark:bg-gray-800/90 dark:hover:bg-gray-700"
                 :aria-pressed="pet.isFavorite"
                 :aria-label="pet.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
                 @click.stop="toggleFavorite"
@@ -47,7 +44,7 @@
             <!-- For Sale Badge -->
             <div
                 v-if="pet.forSale"
-                class="absolute top-4 right-4 z-10 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white"
+                class="absolute top-4 right-4 z-10 rounded-full bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white"
             >
                 For Sale
             </div>
@@ -77,10 +74,10 @@
         <!-- Card Content -->
         <div class="p-5">
             <!-- Pet Name -->
-            <h3 class="text-lg font-bold text-gray-800 mb-2" itemprop="name">{{ pet.name }}</h3>
+            <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2" itemprop="name">{{ pet.name }}</h3>
 
             <!-- Pet Details -->
-            <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+            <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 mb-3">
                 <div class="flex items-center gap-1.5">
                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <circle cx="12" cy="12" r="10" stroke-width="2"/>
@@ -96,7 +93,7 @@
             </div>
 
             <!-- Location -->
-            <div class="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
+            <div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 mb-3">
                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
                     <circle cx="12" cy="10" r="3" stroke-width="2"/>
@@ -111,9 +108,9 @@
             <div class="my-4 border-t border-gray-300"></div>
 
             <!-- Action Buttons -->
-            <div class="mb-4 flex items-center justify-between text-gray-500">
+            <div class="mb-4 flex items-center justify-between text-gray-500 dark:text-gray-400">
                 <!-- Likes -->
-                <button class="group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100">
+                <button class="group flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
                     <Heart class="h-5 w-5 group-hover:fill-red-500 group-hover:text-red-500" />
                     <span class="text-sm font-medium">{{ pet.likes || 0 }}</span>
                 </button>
@@ -132,7 +129,7 @@
                 <div class="relative">
                     <button
                         @click.stop="toggleShareDropdown"
-                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 hover:text-violet-500"
+                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 hover:text-primary-500 dark:hover:bg-gray-700"
                         aria-label="Share"
                         aria-haspopup="true"
                         :aria-expanded="isShareOpen"
@@ -145,7 +142,7 @@
                     <transition name="fade-slide">
                         <div
                             v-if="isShareOpen"
-                            class="absolute right-0 z-10 mt-2 flex gap-3 rounded-lg bg-white px-4 py-3 shadow-lg ring-1 ring-black/5"
+                            class="absolute right-0 z-10 mt-2 flex gap-3 rounded-lg bg-white dark:bg-gray-800 px-4 py-3 shadow-lg ring-1 ring-black/5 dark:ring-gray-700"
                             role="menu"
                             aria-orientation="horizontal"
                         >
