@@ -43,7 +43,23 @@
         @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         @inertiaHead
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
         @inertia
+        
+        <script>
+            // Add smooth transitions for dark mode
+            document.documentElement.classList.add('transition-colors');
+            
+            // Watch for system color scheme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if ('{{ $appearance ?? "system" }}' === 'system') {
+                    if (e.matches) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            });
+        </script>
     </body>
 </html>

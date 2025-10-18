@@ -1,6 +1,6 @@
 <template>
     <aside
-        class="sticky pl-6 py-4 top-20 h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden border-r bg-card/50 backdrop-blur-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/30 scrollbar-thumb-rounded-full transition-colors duration-200"
+        class="sticky pl-6 py-4 h-[calc(100vh)] overflow-y-auto overflow-x-hidden border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full transition-colors duration-200"
         style="scrollbar-gutter: stable"
     >
         <div class="space-y-8">
@@ -12,7 +12,7 @@
                     </h2>
                     <button
                         @click="clearAllFilters"
-                        class="rounded-md px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
+                        class="rounded-md px-3 py-1 text-xs text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                         Clear all
                     </button>
@@ -23,7 +23,7 @@
                 <!-- Animal Type -->
                 <div class="mt-6">
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase"
                     >
                         Animal Type
                     </h3>
@@ -31,28 +31,27 @@
                         <label
                             v-for="category in categories"
                             :key="category.id"
-                            class="group flex cursor-pointer items-center justify-between rounded-xl p-3 transition-colors hover:bg-muted/50"
+                            class="group flex cursor-pointer items-center justify-between rounded-xl p-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                         >
                             <div class="flex items-center gap-3">
                                 <input
                                     type="checkbox"
                                     :id="category.id"
                                     v-model="selectedCategories"
-                                    :value="category.id"
                                     class="checkbox-custom"
                                 />
                                 <div class="flex items-center gap-2">
                                     <component
                                         :is="category.icon"
-                                        class="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary"
+                                        class="h-4 w-4   transition-colors group-hover:border-primary-500"
                                     />
-                                    <span class="text-sm font-medium">{{
+                                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{
                                         category.label
                                     }}</span>
                                 </div>
                             </div>
                             <span
-                                class="rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground"
+                                class="rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-200"
                             >
                                 {{ category.count }}
                             </span>
@@ -65,24 +64,23 @@
                 <!-- Age Range -->
                 <div>
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="mb-4 text-sm font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase"
                     >
                         Age Range
                     </h3>
                     <div class="px-2">
                         <div class="relative flex h-8 w-full items-center">
                             <!-- Track -->
-                            <div
-                                class="absolute h-1.5 w-full rounded-full bg-muted"
-                            ></div>
-                            <!-- Active range -->
-                            <div
-                                class="pointer-events-none absolute h-1.5 rounded-full bg-primary"
-                                :style="{
-                                    left: `${(ageRange[0] / 15) * 100}%`,
-                                    right: `${100 - (ageRange[1] / 15) * 100}%`,
-                                }"
-                            ></div>
+                            <div class="relative">
+                                <div class="track"></div>
+                                <div
+                                    class="range"
+                                    :style="{
+                                        left: `${(ageRange[0] / 15) * 100}%`,
+                                        right: `${100 - (ageRange[1] / 15) * 100}%`,
+                                    }"
+                                ></div>
+                            </div>
 
                             <!-- Min value slider -->
                             <input
@@ -361,7 +359,9 @@ const clearAllFilters = () => {
     height: 24px;
     position: absolute;
     top: 0;
+    left: 0;
     margin: 0;
+    background: transparent;
     pointer-events: none;
 }
 
@@ -369,21 +369,46 @@ const clearAllFilters = () => {
 .range-input::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 17px;
-    height: 17px;
+    top:  -7px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: white;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     pointer-events: auto;
     position: relative;
-    top: 3px;
     z-index: 10;
-    border-radius: 12px;
-    border: 3px solid  #8A2CE2FF;
-    transition:
-        background 0.2s,
-        transform 0.2s;
+    border: 3px solid #8A2CE2;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.range-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(138, 44, 226, 0.2);
+}
+
+/* Active range track */
+.relative {
+    position: relative;
+    width: 100%;
+    height: 8px;
+}
+
+.track {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+}
+
+.range {
+    position: absolute;
+    height: 100%;
+    background-color: #8A2CE2;
+    border-radius: 4px;
+    z-index: 2;
 }
 
 
