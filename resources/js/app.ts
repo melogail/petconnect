@@ -4,10 +4,11 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
-import { Toaster } from 'vue-sonner'; // Revert to vue-sonner import
+import { ZiggyVue } from 'ziggy-js';
+import { Toaster } from 'vue-sonner';
 import { initializeTheme } from './composables/useAppearance';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'PetConnect';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -17,19 +18,21 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-                const app = createApp({ 
-            render: () => [
-                h(App, props),
-                h(Toaster, { position: 'top-center' })
-            ]
+        const app = createApp({
+            render: () => h(App, props),
         });
-        
-        app.use(plugin).mount(el);
+
+        // Register Toaster as a global component
+        app.component('Toaster', Toaster);
+
+        app.use(plugin)
+            .use(ZiggyVue)
+            .mount(el);
     },
     progress: {
-        color: '#4B5563',
+        color: '#8B5CF6', // Changed to violet/purple to match your theme
     },
 });
 
-// This will set light / dark mode on page load...
+// Initialize theme on page load
 initializeTheme();
