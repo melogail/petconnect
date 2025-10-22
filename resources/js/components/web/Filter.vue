@@ -3,7 +3,7 @@
         class="sticky pl-6 py-4 h-[calc(100vh)] overflow-y-auto overflow-x-hidden border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full transition-colors duration-200"
         style="scrollbar-gutter: stable"
     >
-        <div class="space-y-8">
+        <div class="space-y-8 mt-8">
             <div>
                 <div class="mb-6 flex items-center justify-between">
                     <h2 class="flex items-center gap-2 text-lg font-bold">
