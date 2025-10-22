@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import Filter from '@/components/web/Filter.vue';
 import PetCard from '@/components/web/PetCard.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Filter as FilterIcon } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import Filter from '@/components/web/Filter.vue';
 
 const petData = {
     name: 'Bella',
@@ -22,35 +30,35 @@ const petData = {
 
 <template>
     <MainLayout>
-        <div class="content grid grid-cols-12">
-            <!-- Filter -->
-            <div
-                class="col-span-12 border-r border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 lg:col-span-3 transition-colors duration-200"
-            >
-                <Filter />
+        <div class="container mx-auto px-4 py-6">
+            <!-- Filter Button for All Devices -->
+            <div class="mb-6">
+                <Sheet>
+                    <SheetTrigger as-child>
+                        <Button variant="outline" class="gap-2">
+                            <FilterIcon class="h-4 w-4" />
+                            <span>Filters</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" class="w-[350px] sm:w-[400px] p-0">
+                        <div class="h-full overflow-y-auto">
+                            <Filter />
+                        </div>
+                    </SheetContent>
+                </Sheet>
             </div>
-
-            <!-- Cards -->
-            <div
-                class="col-span-12 bg-white dark:bg-gray-900 px-6 py-4 lg:col-span-9 transition-colors duration-200"
-            >
-                <section
-                    id="petsCard"
-                    class="flex items-center justify-between my-8"
-                >
+            <div class="w-full">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                     <h2 class="text-2xl font-bold text-primary dark:text-primary-400">
                         Discover Pets
                     </h2>
-                    <!-- Create post button -->
-                    <button class="flex items-center gap-2 px-12 cursor-pointer bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-semibold py-3 rounded-full hover:from-violet-600 hover:to-fuchsia-600 transition-colors shadow-lg">
+                    <Button class="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600">
                         <Plus class="h-5 w-5" />
                         Create Post
-                    </button>
-                </section>
-                <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <PetCard :pet="petData" />
-                    <PetCard :pet="petData" />
-                    <PetCard :pet="petData" />
+                    </Button>
+                </div>
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <PetCard v-for="(pet, index) in Array(12).fill(petData)" :key="index" :pet="pet" />
                 </section>
             </div>
         </div>
