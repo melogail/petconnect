@@ -74,7 +74,7 @@ import {
 const props = defineProps({
     isOpen: {
         type: Boolean,
-        required: true
+        required: true,
     },
     contentType: {
         type: String,

@@ -3,12 +3,16 @@ import MainLayout from '@/layouts/MainLayout.vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Separator } from '@/components/ui/separator';
-import { Heart, MessageSquare, MoreHorizontal, Send, ThumbsUp, Reply, Edit, Trash2, Flag } from 'lucide-vue-next';
+import { Heart, MessageSquare, MoreHorizontal, MoreVertical, Send, ThumbsUp, Reply, Edit, Trash2, Flag } from 'lucide-vue-next';
+import ReportDialog from '@/components/web/ReportDialog.vue';
+
 
 const pet = defineProps({
   pet: {
@@ -16,6 +20,106 @@ const pet = defineProps({
     required: true
   }
 });
+
+defineEmits(['toggle-reply', 'add-reply', 'edit-comment', 'delete-comment', 'report-content', 'toggle-like']);
+
+
+// Dialog states
+const showMessageDialog = ref(false);
+const reportReason = ref('');
+const messageContent = ref('');
+const selectedComment = ref(null);
+const isEditing = ref(false);
+const editContent = ref('');
+
+// Report dialog state
+const reportDialogOpen = ref(false);
+const reportContentType = ref('');
+const reportContentId = ref<string | number | null>(null);
+
+// Open report dialog
+const openReportDialog = (type: string, id: string | number) => {
+    reportContentType.value = type;
+    reportContentId.value = id;
+    reportDialogOpen.value = true;
+};
+
+// Close report dialog
+const closeReportDialog = () => {
+    reportDialogOpen.value = false;
+    reportContentType.value = '';
+    reportContentId.value = null;
+};
+
+// Handle report submission
+const handleReportSubmit = (reportData: any) => {
+    console.log('Report submitted:', reportData);
+    // In a real app, you would send this to your backend
+    // await axios.post('/api/reports', reportData);
+
+    alert('Thank you for your report. We will review it shortly.');
+    closeReportDialog();
+};
+
+
+
+// Handle comment actions
+const onCommentAction = (action, comment) => {
+  selectedComment.value = comment;
+
+  switch (action) {
+    case 'edit':
+      isEditing.value = true;
+      editContent.value = comment.content;
+      break;
+    case 'delete':
+      if (confirm('Are you sure you want to delete this comment?')) {
+        // Handle delete comment
+        const index = comments.value.findIndex(c => c.id === comment.id);
+        if (index !== -1) {
+          comments.value.splice(index, 1);
+        }
+      }
+      break;
+    case 'report':
+      showReportDialog.value = true;
+      break;
+  }
+};
+
+// Handle report submission
+const submitReport = () => {
+  if (reportReason.value.trim()) {
+    // Here you would typically make an API call to report the comment
+    console.log('Reported comment:', selectedComment.value.id, 'Reason:', reportReason.value);
+    showReportDialog.value = false;
+    reportReason.value = '';
+    // Show success message
+    alert('Thank you for your report. We will review it shortly.');
+  }
+};
+
+// Handle sending a message
+const sendMessage = () => {
+  if (messageContent.value.trim()) {
+    // Here you would typically make an API call to send the message
+    console.log('Message to owner:', messageContent.value);
+    showMessageDialog.value = false;
+    messageContent.value = '';
+    // Show success message
+    alert('Your message has been sent!');
+  }
+};
+
+// Save edited comment
+const saveEditedComment = () => {
+  if (editContent.value.trim() && selectedComment.value) {
+    selectedComment.value.content = editContent.value;
+    isEditing.value = false;
+    editContent.value = '';
+    selectedComment.value = null;
+  }
+};
 
 // Sample data - replace with actual data from props
 const owner = {
@@ -174,7 +278,7 @@ const submitReply = (commentId) => {
 
 <template>
   <MainLayout>
-    <div class="container mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto w-full px-6 py-8">
       <!-- Back to listing link -->
       <div class="mb-6">
         <a href="#" class="text-primary hover:underline flex items-center">
@@ -610,9 +714,37 @@ const submitReply = (commentId) => {
                         </div>
                         <div class="flex items-center gap-2">
                           <span class="text-xs text-muted-foreground">{{ comment.timestamp }}</span>
-                          <Button variant="ghost" size="icon" class="h-6 w-6">
-                            <MoreHorizontal class="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                              <Button variant="ghost" size="icon" class="h-6 w-6">
+                                <MoreHorizontal class="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-40">
+                              <DropdownMenuItem
+                                v-if="comment.user.id === currentUser?.id"
+                                @click="onCommentAction('edit', comment)"
+                              >
+                                <Edit class="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                v-if="comment.user.id === currentUser?.id"
+                                @click="onCommentAction('delete', comment)"
+                                class="text-red-600"
+                              >
+                                <Trash2 class="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                v-else
+                                @click="$emit('report-content', 'comment', comment.id)"
+                              >
+                                <Flag class="mr-2 h-4 w-4" />
+                                <span>Report</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                       <p class="text-sm">{{ comment.content }}</p>
@@ -631,7 +763,10 @@ const submitReply = (commentId) => {
                           <Reply class="h-3.5 w-3.5" />
                           <span>Reply</span>
                         </button>
-                        <button class="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                        <button
+                            class="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                            @click="openReportDialog"
+                        >
                           <Flag class="h-3.5 w-3.5" />
                           <span>Report</span>
                         </button>
@@ -805,7 +940,11 @@ const submitReply = (commentId) => {
                     </svg>
                     Call Now
                   </Button>
-                  <Button variant="outline" class="h-12 rounded-xl border-2 border-muted-foreground/20 hover:border-primary/50 transition-all duration-200 group">
+                  <Button
+                    variant="outline"
+                    class="h-12 rounded-xl border-2 border-muted-foreground/20 hover:border-primary/50 transition-all duration-200 group"
+                    @click="showMessageDialog = true"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500 group-hover:text-blue-600 transition-colors" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
                     </svg>
@@ -882,6 +1021,46 @@ const submitReply = (commentId) => {
         </div>
       </div>
     </div>
+      <!-- Report Dialog -->
+      <ReportDialog
+          :is-open="reportDialogOpen"
+          :content-type="reportContentType"
+          :content-id="reportContentId"
+          @close="closeReportDialog"
+          @submit="handleReportSubmit"
+      />
+
+    <!-- Quick Message Dialog -->
+    <Dialog v-model:open="showMessageDialog">
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Message {{ owner.name }}</DialogTitle>
+          <DialogDescription>
+            Send a message to the pet owner about this listing.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-foreground">Your Message</label>
+            <textarea
+              v-model="messageContent"
+              class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[120px]"
+              placeholder="Type your message here..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showMessageDialog = false">Cancel</Button>
+          <Button
+            @click="sendMessage"
+            :disabled="!messageContent.trim()"
+            class="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Send Message
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </MainLayout>
 </template>
 
