@@ -30,7 +30,7 @@ const petData = {
 
 <template>
     <MainLayout>
-        <div class="container mx-auto px-4 py-6">
+        <div class="max-w-7xl mx-auto w-full px-6 py-8">
             <!-- Filter Button for All Devices -->
             <div class="mb-6">
                 <Sheet>

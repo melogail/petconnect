@@ -7,13 +7,16 @@ import { Toaster } from 'vue-sonner';
 </script>
 
 <template>
-    <NavBar />
-    <slot />
-    <Footer />
-    <!-- Toaster component -->
-    <Toaster
-        position="top-center"
-        :toastOptions="{
+    <div class="min-h-screen flex flex-col">
+        <NavBar />
+        <main class="flex-grow">
+            <slot />
+        </main>
+        <Footer />
+        <!-- Toaster component -->
+        <Toaster
+            position="top-center"
+            :toastOptions="{
                 duration: 3000,
                 classNames: {
                     toast: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg',
@@ -30,7 +33,8 @@ import { Toaster } from 'vue-sonner';
                 actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
                 cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
             }"
-    />
+        />
+    </div>
 </template>
 
 <style scoped>
