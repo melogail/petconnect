@@ -2,22 +2,22 @@
 
 namespace App\Nova;
 
+use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
 use Illuminate\Http\Request;
+use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Slug;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Http\Requests\NovaRequest;
-use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
 
-
-class Category extends Resource
+class Breed extends Resource
 {
     /**
      * The model the resource corresponds to.
      *
-     * @var class-string<\App\Models\Category>
+     * @var class-string<\App\Models\Breed>
      */
-    public static $model = \App\Models\Category::class;
+    public static $model = \App\Models\Breed::class;
 
     /**
      * The single value that should be used to represent the resource when being displayed.
@@ -44,18 +44,30 @@ class Category extends Resource
     {
         return [
             ID::make()->sortable(),
+            BelongsTo::make('Category')
+                ->rules(['required'])
+                ->required()
+                ->showCreateRelationButton(),
+
             Text::make('Name')
                 ->required()
-                ->rules(['required', 'max:255'])
+                ->rules(['required', 'string', 'max:255'])
                 ->sortable(),
 
             Slug::make('Slug')
-                ->from('name'),
+                ->from('name')
+                ->immutable()
+                ->rules(['required', 'string', 'max:255'])
+                ->required()
+                ->hideFromIndex(),
 
-            Images::make('Category image', 'image')
-            ->rules('required'),
+            Images::make('Breed image', 'image')
+                ->required()
+                ->rules(['required'])
+                ->rules('required'),
 
-            Text::make('Description')->sortable(),
+            Text::make('Description')
+            ->hideFromIndex(),
         ];
     }
 
