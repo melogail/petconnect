@@ -9,10 +9,7 @@ use Inertia\Inertia;
 
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('home');
-// Pet details page
-Route::get('pets/{pet}', [PetController::class, 'show'])->name('pets.show');
-// Pet create page
-Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
+
 
 // Support and Help Routes
 Route::get('/support', function () {
@@ -27,7 +24,13 @@ Route::get('/help', function () {
 Route::middleware('auth')->group(function () {
     Route::resource('profile', ProfileController::class)
         ->except(['index', 'create', 'store'])->names('user-profile');
+    // Pet create page
+    Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
+
 });
+
+// Pet details page
+Route::get('pets/{pet}', [PetController::class, 'show'])->name('pets.show');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

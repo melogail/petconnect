@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
+use App\Models\Category;
 use App\Models\Pet;
 
 class PetController extends Controller
@@ -22,7 +23,9 @@ class PetController extends Controller
      */
     public function create()
     {
-        //
+        return inertia('pet/Create', [
+            'categories' => Category::with('breeds')->pluck('name', 'id'),
+        ]);
     }
 
     /**
