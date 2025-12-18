@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
+use App\Http\Resources\CreatePetPostResource;
+use App\Models\Category;
 use App\Models\Pet;
 
 class PetController extends Controller
@@ -22,7 +24,11 @@ class PetController extends Controller
      */
     public function create()
     {
-        //
+        $petCategories = CreatePetPostResource::collection(Category::with('breeds')->get());
+
+        return inertia('pet/Create', [
+            'petCategories' => $petCategories,
+        ]);
     }
 
     /**
@@ -30,7 +36,7 @@ class PetController extends Controller
      */
     public function store(StorePetRequest $request)
     {
-        //
+        dd($request->validated());
     }
 
     /**
