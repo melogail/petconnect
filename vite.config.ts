@@ -1,8 +1,9 @@
-import { wayfinder } from '@laravel/vite-plugin-wayfinder';
-import tailwindcss from '@tailwindcss/vite';
-import vue from '@vitejs/plugin-vue';
-import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url'; 
+import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 
 export default defineConfig({
     plugins: [
@@ -10,10 +11,6 @@ export default defineConfig({
             input: ['resources/js/app.ts'],
             ssr: 'resources/js/ssr.ts',
             refresh: true,
-        }),
-        tailwindcss(),
-        wayfinder({
-            formVariants: true,
         }),
         vue({
             template: {
@@ -23,5 +20,18 @@ export default defineConfig({
                 },
             },
         }),
+        tailwindcss(),
+        wayfinder({
+            formVariants: true,
+        }),
     ],
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
+            '~': fileURLToPath(new URL('./node_modules', import.meta.url)),
+        },
+    },
+    optimizeDeps: {
+        include: ['vue', '@inertiajs/vue3'],
+    },
 });

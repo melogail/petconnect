@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
         ->except(['index', 'create', 'store'])->names('user-profile');
     // Pet create page
     Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
+    Route::post('pets/store', [PetController::class, 'store'])->name('pets.store');
 
 });
 
