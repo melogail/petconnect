@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileReqeuest;
+use App\Http\Resources\ProfileResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class ProfileController extends Controller
     public function show(User $user)
     {
         return inertia('profile/Show', [
-            'user' => $user
+            'user' => ProfileResource::make($user),
         ]);
     }
 

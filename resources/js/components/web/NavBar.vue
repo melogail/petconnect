@@ -154,8 +154,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 
                 <!-- If logged out -->
                 <template v-if="!isLoggedIn">
-                    <Link href="/login" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-violet-600">Log in</Link>
-                    <Link href="/register" class="rounded-lg bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600">Sign up</Link>
+                    <Link :href="route('login')" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-violet-600">Log in</Link>
+                    <Link :href="route('register')" class="rounded-lg bg-violet-500 px-4 py-2 text-sm font-medium text-white hover:bg-violet-600">Sign up</Link>
                 </template>
 
                 <!-- If logged in -->

@@ -3,12 +3,25 @@ import { Head, Link } from '@inertiajs/vue3';
 import MainLayout from '@/layouts/MainLayout.vue';
 import {
   User, Mail, Phone, MapPin, Calendar, Edit2, Trash2, Eye, MessageSquare, FileText,
-  Star, MessageCircle, Share2, Plus, Settings, Bell, EyeOff, MoreVertical, BadgeCheck, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight
+  Star, MessageCircle, Info, Plus, Settings, Bell, EyeOff, MoreVertical, BadgeCheck, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight
 } from 'lucide-vue-next';
 import { ref, computed, onMounted, watch  } from 'vue';
 import { route } from 'ziggy-js';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 
+const props = defineProps({
+  user: Object
+});
+
+const userLocation = computed(() => {
+  if (!props.user.data.city && !props.user.data.state && !props.user.data.country) {
+    return 'N/A';
+  }
+
+  return [props.user.data.city, props.user.data.state, props.user.data.country]
+    .filter(Boolean)
+    .join(', ');
+});
 
 // Tabs state
 const activeTab = ref('Posts');
@@ -29,17 +42,17 @@ const updateTabCounts = () => {
 };
 
 // Mock user data - replace with actual data from your backend
-const user = {
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  phone: '+1 (555) 123-4567',
-  location: 'San Francisco, CA',
-  joinDate: '2023-01-15',
-  bio: 'Pet lover and animal rights advocate. Proud parent of two adorable cats and one energetic golden retriever.',
-  profile_photo_path: 'https://randomuser.me/api/portraits/men/1.jpg',
-  rating: 4.7,
-  reviewCount: 23
-};
+// const user = {
+//   name: 'John Doe',
+//   email: 'john.doe@example.com',
+//   phone: '+1 (555) 123-4567',
+//   location: 'San Francisco, CA',
+//   joinDate: '2023-01-15',
+//   bio: 'Pet lover and animal rights advocate. Proud parent of two adorable cats and one energetic golden retriever.',
+//   profile_photo_path: 'https://randomuser.me/api/portraits/men/1.jpg',
+//   rating: 4.7,
+//   reviewCount: 23
+// };
 
 // Mock reviews data
 const reviews = ref([
@@ -354,20 +367,29 @@ watch([posts, reviews], () => {
   <MainLayout class="bg-gray-50 dark:bg-gray-900 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Enhanced Profile Header -->
-      <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
-
+      <div class="bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+        {{ user }}
         <div class="relative px-6 py-8 sm:p-10">
           <div class="flex flex-col lg:flex-row items-start gap-8">
             <!-- Profile Picture with Decorative Border -->
             <div class="relative group">
-              <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-500 transform rotate-3 scale-105 opacity-60 group-hover:opacity-80 transition-all duration-300"></div>
-              <div class="relative h-36 w-36 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
-                <img
-                  :src="user.profile_photo_path"
-                  :alt="user.name"
+              <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 transform rotate-3 scale-105 opacity-60 group-hover:opacity-80 transition-all duration-300"></div>
+              <div v-if="user.data.avatar" class="relative h-36 w-36 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl">
+                <img 
+                  :src="user.data.avatar"
+                  :alt="user.data.name"
                   class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <div v-else>
+                <div class="relative h-36 w-36 rounded-2xl overflow-hidden border-4 border-white dark:border-gray-800 shadow-xl flex items-center justify-center">
+                  <div class="absolute inset-0 bg-gradient-to-br from-indigo-400 to-violet-500 transform rotate-3 scale-105 opacity-60 group-hover:opacity-80 transition-all duration-300"></div>
+                  <span class="relative text-4xl font-bold text-white uppercase">
+                    {{ user.data.name.slice(0, 2) }}
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
               </div>
               <button
                 class="absolute -bottom-3 -right-3 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 p-2 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 border-2 border-white dark:border-gray-700"
@@ -383,11 +405,11 @@ watch([posts, reviews], () => {
                 <div class="space-y-1">
                   <div class="flex items-center gap-3">
                     <div class="flex items-center gap-2">
-                      <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 dark:from-indigo-400 dark:to-blue-400 bg-clip-text text-transparent">
-                        {{ user.name }}
+                      <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">
+                        {{ user.data.name }}
                       </h1>
-                      <span class="text-blue-500 dark:text-blue-400" title="Verified account">
-                        <BadgeCheck class="w-6 h-6" :size="24" />
+                      <span v-if="!user.data.is_verified" class="text-violet-500 dark:text-violet-400" title="Verified account">
+                        <BadgeCheck class="w-6 h-6 text-green-500" :size="24" />
                       </span>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
@@ -397,7 +419,7 @@ watch([posts, reviews], () => {
                   </div>
                   <p class="text-indigo-500 dark:text-indigo-400 text-sm flex items-center">
                     <Calendar class="h-4 w-4 mr-1.5" />
-                    Member since {{ formatDate(user.joinDate) }}
+                    Member since {{ user.data.created_at }}
                   </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
@@ -410,7 +432,7 @@ watch([posts, reviews], () => {
                   </Link>
                   <Link
                     :href="'#'"
-                    class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 border-0 text-sm font-medium text-white hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:shadow-lg hover:-translate-y-0.5 rounded-xl"
+                    class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 border-0 text-sm font-medium text-white hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:shadow-lg hover:-translate-y-0.5 rounded-xl"
                   >
                     <Edit2 class="h-4 w-4 mr-2 text-white/90" />
                     Edit Profile
@@ -427,18 +449,18 @@ watch([posts, reviews], () => {
                     </div>
                     <div>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Email</p>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ user.email }}</p>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ user.data.email }}</p>
                     </div>
                   </div>
                 </div>
                 <div class="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-3 rounded-xl border border-gray-100/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-700/70 transition-colors">
                   <div class="flex items-center">
-                    <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg mr-3">
-                      <Phone class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div class="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg mr-3">
+                      <Phone class="h-5 w-5 text-violet-600 dark:text-violet-400" />
                     </div>
                     <div>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Phone</p>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.phone }}</p>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.data.phone ?? 'N/A' }}</p>
                     </div>
                   </div>
                 </div>
@@ -449,7 +471,7 @@ watch([posts, reviews], () => {
                     </div>
                     <div>
                       <p class="text-xs text-gray-500 dark:text-gray-400">Location</p>
-                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user.location }}</p>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">{{ userLocation }}</p>
                     </div>
                   </div>
                 </div>
@@ -458,8 +480,14 @@ watch([posts, reviews], () => {
               <!-- Bio -->
               <div class="mt-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl border border-gray-100/50 dark:border-gray-700/50">
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">About</h3>
-                <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {{ user.bio }}
+                <p v-if="user.data.about" class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                  {{ user.data.about }}
+                </p>
+                <p v-else class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                  <span class="flex items-center italic text-gray-400 dark:text-gray-500">
+                    <Info class="h-4 w-4 mr-2" />
+                    No bio information provided yet.
+                  </span>
                 </p>
               </div>
             </div>
@@ -667,7 +695,7 @@ watch([posts, reviews], () => {
                   id="review-content"
                   v-model="newReview.content"
                   rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Share your experience..."
                   required
                 ></textarea>
@@ -675,7 +703,7 @@ watch([posts, reviews], () => {
               <div class="flex justify-end">
                 <button
                   type="submit"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                 >
                   Submit Review
                 </button>
@@ -755,9 +783,9 @@ watch([posts, reviews], () => {
                           <div class="flex items-center space-x-2">
                             <button
                               @click="toggleLike(review.id, 'like')"
-                              class="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                              class="flex items-center text-xs text-gray-500 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-400"
                             >
-                              <ThumbsUp :class="['h-4 w-4 mr-1', review.userLiked ? 'fill-blue-500 text-blue-500' : '']" />
+                              <ThumbsUp :class="['h-4 w-4 mr-1', review.userLiked ? 'fill-violet-500 text-violet-500' : '']" />
                               <span>{{ review.likes }}</span>
                             </button>
                           </div>

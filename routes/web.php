@@ -23,7 +23,8 @@ Route::get('/help', function () {
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
     Route::resource('profile', ProfileController::class)
-        ->except(['index', 'create', 'store'])->names('user-profile');
+        ->except(['index', 'create', 'store'])
+        ->parameters(['profile' => 'user']);
     // Pet create page
     Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
     Route::post('pets/store', [PetController::class, 'store'])->name('pets.store');
@@ -33,5 +34,5 @@ Route::middleware('auth')->group(function () {
 // Pet details page
 Route::get('pets/{pet}', [PetController::class, 'show'])->name('pets.show');
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

@@ -7,7 +7,7 @@ use App\Http\Traits\HasComments;
 use App\Http\Traits\HasLikes;
 use App\Http\Traits\HasSaves;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
 
 class Pet extends Model implements HasMedia
