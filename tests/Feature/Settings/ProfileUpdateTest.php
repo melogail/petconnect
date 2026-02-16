@@ -72,14 +72,14 @@ test('correct password must be provided to delete account', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from(route('profile.edit'))
+        ->from(route('settings.profile.edit'))
         ->delete(route('profile.destroy'), [
             'password' => 'wrong-password',
         ]);
 
     $response
         ->assertSessionHasErrors('password')
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect(route('settings.profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
 });

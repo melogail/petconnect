@@ -15,22 +15,20 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('breed_id')->nullable()->constrained()->nullOnDelete();
-            
+
             // Basic Information
             $table->string('name');
-            $table->string('type'); // dog, cat, bird, etc.
-            $table->string('breed')->nullable();
             $table->string('age'); // Store as string to allow "3 months", "2 years", etc.
             $table->string('gender'); // Backend will handle validation
             $table->string('color');
             $table->decimal('weight', 8, 2)->nullable(); // Support decimal weights
             $table->text('description'); // Use text instead of string for longer descriptions
-            
+
             // Listing Information
             $table->string('listing_type')->default('adoption'); // Backend will handle validation
             $table->decimal('price', 10, 2)->nullable();
             $table->string('status')->default('available'); // Backend will handle validation
-            
+
             // Location Information
             $table->string('address')->nullable();
             $table->text('detailed_address')->nullable(); // Use text for potentially long addresses
@@ -40,34 +38,30 @@ return new class extends Migration {
             $table->string('country');
             $table->decimal('latitude', 10, 8)->nullable(); // Proper precision for coordinates
             $table->decimal('longitude', 11, 8)->nullable(); // Proper precision for coordinates
-            
-            // Images - Store paths as JSON array
-            $table->string('featured_image'); // Path to main image
-            $table->json('gallery_images')->nullable(); // Array of additional image paths
-            
+
             // Health Information (Basic)
             $table->string('health_status')->default('healthy'); // Backend will handle validation
             $table->boolean('vaccinated')->default(false);
             $table->boolean('spayed_neutered')->default(false);
             $table->text('special_needs')->nullable();
             $table->date('last_vet_visit')->nullable();
-            
+
             // Healthcare Information (Detailed) - Store as JSON for flexibility
             $table->json('vaccinations')->nullable(); // [{date: '2024-01-01', name: 'Rabies'}]
             $table->json('medications')->nullable(); // [{name: 'Heartgard', usage: 'Monthly heartworm prevention'}]
             $table->json('allergies')->nullable(); // ['Chicken', 'Pollen']
             $table->string('vet_name')->nullable();
             $table->string('vet_phone', 20)->nullable();
-            
+
             // Personality & Traits
             $table->json('traits')->nullable(); // Array of trait IDs or strings
-            
+
             // Additional Information - Store as JSON key-value pairs
             $table->json('additional_info')->nullable(); // [{key: 'House Trained', value: 'Yes'}]
-            
+
             $table->timestamps();
             $table->softDeletes(); // Add soft deletes for safety
-            
+
             // Indexes for better query performance
             $table->index('user_id');
             $table->index('category_id');

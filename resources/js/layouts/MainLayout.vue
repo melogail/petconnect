@@ -1,13 +1,11 @@
 <script setup lang="ts">
-
 import NavBar from '@/components/web/NavBar.vue';
 import Footer from '@/components/web/Footer.vue';
 import { Toaster } from 'vue-sonner';
-
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col">
+    <div class="flex min-h-screen flex-col">
         <NavBar />
         <main class="flex-grow">
             <slot />
@@ -30,13 +28,13 @@ import { Toaster } from 'vue-sonner';
                 unstyled: false,
                 class: 'group',
                 description: 'group-[.toaster]:text-sm',
-                actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-                cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+                actionButton:
+                    'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                cancelButton:
+                    'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
             }"
         />
     </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -22,6 +22,7 @@ interface Props {
     form: any;
     categories: Array<{ id: string; name: string }>;
     breeds: Record<string, Array<{ id: string; name: string }>>;
+    listingTypes: Array<{ value: number; label: string }>;
 }
 
 const props = defineProps<Props>();
@@ -35,20 +36,20 @@ const filteredBreeds = computed(() => {
 <template>
     <div id="step-1" class="step-container animate-fade-in">
         <Card
-            class="group border-primary-100/50 dark:border-primary-900/30 hover:border-primary-300 dark:hover:border-primary-700 relative overflow-hidden border-2 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-2xl dark:bg-gray-800/70"
+            class="group relative overflow-hidden border-2 border-primary-100/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:border-primary-300 hover:shadow-2xl dark:border-primary-900/30 dark:bg-gray-800/70 dark:hover:border-primary-700"
         >
             <!-- Animated Background Gradient -->
             <div
-                class="from-primary-50/30 dark:from-primary-900/20 absolute inset-0 -z-10 bg-gradient-to-br via-purple-50/20 to-pink-50/10 opacity-0 transition-opacity duration-700 group-hover:opacity-100 dark:via-purple-900/10 dark:to-pink-900/5"
+                class="absolute inset-0 -z-10 bg-gradient-to-br from-primary-50/30 via-purple-50/20 to-pink-50/10 opacity-0 transition-opacity duration-700 group-hover:opacity-100 dark:from-primary-900/20 dark:via-purple-900/10 dark:to-pink-900/5"
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="from-primary-100/20 dark:from-primary-900/10 absolute top-0 right-0 h-32 w-32 rounded-bl-full bg-gradient-to-br to-transparent opacity-50"
+                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-primary-100/20 to-transparent opacity-50 dark:from-primary-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-start space-x-4 sm:items-center">
                     <div
-                        class="from-primary-500 relative rounded-2xl bg-gradient-to-br to-purple-600 p-3 text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
+                        class="relative rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 p-3 text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
                     >
                         <div
                             class="absolute inset-0 animate-pulse rounded-2xl bg-white/20"
@@ -145,7 +146,12 @@ const filteredBreeds = computed(() => {
 
                 <div class="space-y-2">
                     <Label for="color" is-required>Pet Color</Label>
-                    <Input id="color" v-model="form.color" required placeholder="Ex: Gray with white color" />
+                    <Input
+                        id="color"
+                        v-model="form.color"
+                        required
+                        placeholder="Ex: Gray with white color"
+                    />
                     <InputError :message="form.errors.color" />
                 </div>
 
@@ -180,26 +186,24 @@ const filteredBreeds = computed(() => {
 
                 <div class="space-y-2">
                     <Label is-required>Listing Type</Label>
-                    <div class="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
-                        <div class="flex items-center space-x-2">
+                    <div
+                        class="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
+                    >
+                        <div
+                            v-for="type in listingTypes"
+                            :key="type.value"
+                            class="flex items-center space-x-2"
+                        >
                             <input
-                                id="adoption"
+                                :id="`type-${type.value}`"
                                 v-model="form.listing_type"
                                 type="radio"
-                                value="adoption"
+                                :value="type.value"
                                 class="h-4 w-4"
                             />
-                            <Label for="adoption">For Adoption</Label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input
-                                id="for-sale"
-                                v-model="form.listing_type"
-                                type="radio"
-                                value="for_sale"
-                                class="h-4 w-4"
-                            />
-                            <Label for="for-sale">For Sale</Label>
+                            <Label :for="`type-${type.value}`">{{
+                                type.label
+                            }}</Label>
                         </div>
                     </div>
                     <InputError :message="form.errors.listing_type" />
@@ -214,8 +218,11 @@ const filteredBreeds = computed(() => {
                         min="0"
                         step="0.01"
                         placeholder="0.00"
-                        :disabled="form.listing_type !== 'for_sale'"
-                        :class="{ 'opacity-50 cursor-not-allowed': form.listing_type !== 'for_sale' }"
+                        :disabled="form.listing_type !== 2"
+                        :class="{
+                            'cursor-not-allowed opacity-50':
+                                form.listing_type !== 2,
+                        }"
                     />
                     <InputError :message="form.errors.price" />
                 </div>

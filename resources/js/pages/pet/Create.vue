@@ -29,27 +29,32 @@ import PhotosStep from '@/components/web/pet/form/PhotosStep.vue';
 import ReviewStep from '@/components/web/pet/form/ReviewStep.vue';
 import StepperProgress from '@/components/web/pet/form/StepperProgress.vue';
 
-const props = defineProps({
-    petCategories: {
-        type: Object,
-        required: true,
-    },
-});
+interface Props {
+    petCategories: { data: any[] };
+    listingTypes: Array<{ value: number; label: string }>;
+}
+
+const props = defineProps<Props>();
 
 console.log(props.petCategories.data);
 
 // Pet categories and breeds
 const categories = computed(() =>
-    (props.petCategories.data || []).map((cat) => ({
+    (props.petCategories.data || []).map((cat: any) => ({
         id: cat.id,
         name: cat.name,
     })),
 );
 
+// Type definition for breeds map
+interface BreedsMap {
+    [key: string]: Array<{ id: string; name: string }>;
+}
+
 const breeds = computed(() => {
-    const result = {};
-    (props.petCategories.data || []).map((cat) => {
-        result[cat.id] = cat.breeds.map((breed) => ({
+    const result: BreedsMap = {};
+    (props.petCategories.data || []).forEach((cat: any) => {
+        result[cat.id] = cat.breeds.map((breed: any) => ({
             id: breed.id,
             name: breed.name,
         }));
@@ -88,7 +93,7 @@ const form = useForm({
     color: '',
     gender: '',
     description: '',
-    listing_type: 'adoption',
+    listing_type: props.listingTypes[0]?.value || 1, // Default to first available type
     price: '',
     status: 'available',
     location: {
@@ -114,7 +119,7 @@ const form = useForm({
         medications: [] as { name: string; usage: string }[],
         allergies: [] as string[],
         vetName: '',
-        vetPhone: ''
+        vetPhone: '',
     },
     traits: [] as string[],
     additionalInfo: [{ key: '', value: '' }],
@@ -126,7 +131,10 @@ const MAX_TOTAL_SIZE_MB = 0.5;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
 // Function to compress image with intelligent sizing
-const compressImage = async (file: File, targetSizeKB: number): Promise<File> => {
+const compressImage = async (
+    file: File,
+    targetSizeKB: number,
+): Promise<File> => {
     const options = {
         maxSizeMB: targetSizeKB / 1024,
         maxWidthOrHeight: 1920,
@@ -183,7 +191,8 @@ const invalidSteps = computed(() => {
                 'gender',
                 'color',
                 'weight',
-                'description',
+                'listing_type',
+                'price',
             ].includes(key)
         ) {
             stepsWithErrors.add(1);
@@ -203,23 +212,43 @@ const invalidSteps = computed(() => {
             stepsWithErrors.add(3);
         }
 
-        // Step 4: Health
-        if (key.startsWith('health.')) {
+        // Step 4: Health (Basic Status)
+        if (
+            [
+                'health.status',
+                'health.vaccinated',
+                'health.spayedNeutered',
+                'health.specialNeeds',
+                'health.lastVetVisit',
+            ].includes(key)
+        ) {
             stepsWithErrors.add(4);
         }
 
         // Step 5: Personality
-        if (key === 'traits') {
+        if (key === 'traits' || key === 'description') {
             stepsWithErrors.add(5);
         }
 
         // Step 6: Additional Info
-        if (key === 'additionalInfo') {
+        if (key === 'additionalInfo' || key.startsWith('additionalInfo.')) {
             stepsWithErrors.add(6);
+        }
+
+        // Step 7: Healthcare (Detailed)
+        if (
+            key.startsWith('health.vaccinations') ||
+            key.startsWith('health.medications') ||
+            key.startsWith('health.allergies') ||
+            key === 'health.vetName' ||
+            key === 'health.vetPhone'
+        ) {
+            stepsWithErrors.add(7);
         }
     });
 
-    return Array.from(stepsWithErrors);
+    const invalidStepsArray = Array.from(stepsWithErrors);
+    return invalidStepsArray;
 });
 
 // Methods
@@ -241,7 +270,8 @@ const handleFileUpload = async (event: Event) => {
     }
 
     // Calculate total images (including featured image)
-    const totalImages = files.length + form.images.length + (form.featuredImage ? 1 : 0);
+    const totalImages =
+        files.length + form.images.length + (form.featuredImage ? 1 : 0);
     const targetSizeKB = calculateTargetSize(totalImages);
 
     for (const file of files) {
@@ -345,9 +375,9 @@ const validateStep = (step: number): boolean => {
                 form.gender &&
                 form.color
             );
-            
+
             // Price validation if listing type is for sale
-            if (form.listing_type === 'for_sale' && !form.price) {
+            if (form.listing_type === 2 && !form.price) {
                 return false;
             }
 
@@ -361,8 +391,8 @@ const validateStep = (step: number): boolean => {
                 form.location.country
             );
         case 3:
-            // Photos - featured image required
-            return !!form.featuredImage;
+        // Photos - featured image required
+        // return !!form.featuredImage;
         case 4:
             return true;
         case 5:
@@ -468,7 +498,7 @@ onMounted(() => {
     // Set default location (e.g., US center)
     mapCenter.value = { lat: 39.8283, lng: -98.5795 };
     mapMarker.value = { lat: 39.8283, lng: -98.5795 };
-    
+
     // Auto-fetch current location
     getCurrentLocation();
 });
@@ -478,21 +508,6 @@ const submit = () => {
     if (!validateForm()) {
         return;
     }
-
-    const formData = new FormData();
-
-    // Append all form data
-    Object.entries(form).forEach(([key, value]) => {
-        if (key === 'images') {
-            form.images.forEach((file) => {
-                formData.append('images[]', file);
-            });
-        } else if (typeof value === 'object' && value !== null) {
-            formData.append(key, JSON.stringify(value));
-        } else {
-            formData.append(key, value as string);
-        }
-    });
 
     form.post(route('pets.store'), {
         preserveScroll: true,
@@ -505,7 +520,7 @@ const submit = () => {
 
 <template>
     <MainLayout class="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div class="relative container mx-auto max-w-4xl px-4 py-8">
+        <div class="container relative mx-auto max-w-4xl px-4 py-8">
             <!-- Stepper Progress -->
             <StepperProgress
                 :steps="steps"
@@ -523,6 +538,7 @@ const submit = () => {
                     :form="form"
                     :categories="categories"
                     :breeds="breeds"
+                    :listing-types="listingTypes"
                 />
 
                 <!-- Step 2: Location -->
@@ -573,6 +589,9 @@ const submit = () => {
                     v-show="currentStep === 8"
                     :form="form"
                     :pet-traits="petTraits"
+                    :categories="categories"
+                    :breeds="breeds"
+                    :listing-types="listingTypes"
                 />
 
                 <!-- Modern Form Navigation -->
@@ -587,8 +606,12 @@ const submit = () => {
                             <Button
                                 type="button"
                                 variant="ghost"
-                                @click="$inertia.visit(route('profile.edit'))"
-                                class="group w-full rounded-xl px-6 py-3 text-sm font-medium transition-all duration-200 hover:bg-gray-100 sm:w-auto dark:hover:bg-gray-700/50"
+                                @click="
+                                    $inertia.visit(
+                                        route('settings.profile.edit'),
+                                    )
+                                "
+                                class="group w-full rounded-xl px-6 py-3 text-sm font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 sm:w-auto"
                             >
                                 <ArrowLeft
                                     class="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -606,7 +629,7 @@ const submit = () => {
                                     type="button"
                                     variant="outline"
                                     @click="prevStep"
-                                    class="flex-1 rounded-xl border-2 border-gray-300 px-6 py-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md sm:flex-none dark:border-gray-600 dark:hover:bg-gray-700/50"
+                                    class="flex-1 rounded-xl border-2 border-gray-300 px-6 py-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md dark:border-gray-600 dark:hover:bg-gray-700/50 sm:flex-none"
                                 >
                                     <ArrowLeft class="mr-2 h-4 w-4" />
                                     Previous
@@ -618,7 +641,7 @@ const submit = () => {
                                     type="button"
                                     @click="nextStep"
                                     :disabled="!validateStep(currentStep)"
-                                    class="relative flex-1 overflow-hidden rounded-xl px-8 py-3 text-sm font-medium shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-md"
+                                    class="relative flex-1 overflow-hidden rounded-xl px-8 py-3 text-sm font-medium shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-md sm:flex-none"
                                 >
                                     <span
                                         class="relative z-10 flex items-center justify-center font-semibold text-white"
@@ -627,12 +650,17 @@ const submit = () => {
                                         <ArrowRight class="ml-2 h-4 w-4" />
                                     </span>
                                     <span
-                                        class="from-primary-600 absolute inset-0 bg-gradient-to-r via-purple-600 to-pink-600"
-                                        :class="{ 'opacity-50': !validateStep(currentStep) }"
+                                        class="absolute inset-0 bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600"
+                                        :class="{
+                                            'opacity-50':
+                                                !validateStep(currentStep),
+                                        }"
                                     ></span>
                                     <span
-                                        class="from-primary-500 absolute inset-0 bg-gradient-to-r via-purple-500 to-pink-500 opacity-0 transition-opacity duration-300 hover:opacity-100"
-                                        :class="{ 'hidden': !validateStep(currentStep) }"
+                                        class="absolute inset-0 bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500 opacity-0 transition-opacity duration-300 hover:opacity-100"
+                                        :class="{
+                                            hidden: !validateStep(currentStep),
+                                        }"
                                     ></span>
                                 </Button>
 
@@ -651,7 +679,7 @@ const submit = () => {
                                             class="flex items-center"
                                         >
                                             <svg
-                                                class="mr-2 -ml-1 h-5 w-5 animate-spin"
+                                                class="-ml-1 mr-2 h-5 w-5 animate-spin"
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
@@ -699,7 +727,7 @@ const submit = () => {
                                     {{ totalSteps }} steps completed</span
                                 >
                                 <span
-                                    class="text-primary-600 dark:text-primary-400 font-semibold"
+                                    class="font-semibold text-primary-600 dark:text-primary-400"
                                 >
                                     {{
                                         Math.round(

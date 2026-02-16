@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Pet;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PetResource extends JsonResource
+class PetDetailResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

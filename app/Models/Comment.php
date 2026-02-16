@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Http\Traits\HasLikes;
+use App\Traits\HasLikes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

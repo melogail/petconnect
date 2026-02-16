@@ -8,9 +8,17 @@ use App\Http\Requests\UpdatePetRequest;
 use App\Http\Resources\CreatePetPostResource;
 use App\Models\Category;
 use App\Models\Pet;
+use App\Services\PetService;
+use App\Enums\ListingType;
 
 class PetController extends Controller
 {
+
+    public function __construct(protected PetService $petService)
+    {
+        //
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -28,6 +36,7 @@ class PetController extends Controller
 
         return inertia('pet/Create', [
             'petCategories' => $petCategories,
+            'listingTypes' => ListingType::options(),
         ]);
     }
 
@@ -36,13 +45,15 @@ class PetController extends Controller
      */
     public function store(StorePetRequest $request)
     {
-        dd($request->validated());
+        $this->petService->createPet($request);
+
+        return redirect()->route('home')->with('success', 'Pet created successfully');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show( $pet)
+    public function show($pet)
     {
         return inertia('pet/Show', [
             'pet' => $pet,

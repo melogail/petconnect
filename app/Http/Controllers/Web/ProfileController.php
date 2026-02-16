@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\UpdateUserProfileAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UpdateProfileReqeuest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\ProfileResource;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Enums\ReportReason;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
+
+    public function __construct(
+        protected UpdateUserProfileAction $updateUserProfileAction,
+    ) {
+        //
+    }
 
     /**
      * Display the specified resource.
@@ -17,7 +25,8 @@ class ProfileController extends Controller
     public function show(User $user)
     {
         return inertia('profile/Show', [
-            'user' => ProfileResource::make($user),
+            'user' => ProfileResource::make($user->load(['pets', 'reviews.user'])),
+            'reportReasons' => ReportReason::options(),
         ]);
     }
 
@@ -26,17 +35,22 @@ class ProfileController extends Controller
      */
     public function edit(User $user)
     {
-        inertia('profile/Edit', [
-            'user' => $user
+        $this->authorize('update', $user);
+
+        return inertia('profile/Edit', [
+            'user' => ProfileResource::make($user->load('media'))
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProfileReqeuest $request, User $user)
+    public function update(UpdateProfileRequest $request, User $user)
     {
-        $user->update($request->validated());
+        $this->authorize('update', $user);
+
+        $this->updateUserProfileAction->execute($request, $user);
+
         return to_route('profile.show', $user)->with('success', 'Profile updated successfully');
     }
 

@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ListingType;
-use App\Http\Traits\HasComments;
-use App\Http\Traits\HasLikes;
-use App\Http\Traits\HasSaves;
+use App\Traits\HasComments;
+use App\Traits\HasLikes;
+use App\Traits\HasSaves;
+use Carbon\Carbon;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
@@ -18,15 +19,15 @@ class Pet extends Model implements HasMedia
 
     protected $casts = [
         'category_id' => 'integer',
+        'views' => 'integer',
+        'created_at' => 'datetime',
         'breed_id' => 'integer',
         'listing_type' => ListingType::class,
     ];
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('pets')
-            ->multipleFiles()
-            ->useDisk('public');
+        $this->addMediaCollection('pets');
     }
 
     /**
