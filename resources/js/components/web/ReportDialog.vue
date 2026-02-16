@@ -4,7 +4,8 @@
             <DialogHeader>
                 <DialogTitle>Report Content</DialogTitle>
                 <DialogDescription>
-                    Please provide a reason for reporting this content. Our moderation team will review it.
+                    Please provide a reason for reporting this content. Our
+                    moderation team will review it.
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submitReport">
@@ -16,11 +17,12 @@
                                 <SelectValue placeholder="Select a reason" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
-                                <SelectItem value="spam">Spam</SelectItem>
-                                <SelectItem value="harassment">Harassment</SelectItem>
-                                <SelectItem value="misinformation">Misinformation</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
+                                <SelectItem
+                                    v-for="reason in reportReasons"
+                                    :key="reason.value"
+                                    :value="reason.value"
+                                    >{{ reason.label }}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -36,11 +38,13 @@
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="button" variant="outline" @click="cancel">Cancel</Button>
+                    <Button type="button" variant="outline" @click="cancel"
+                        >Cancel</Button
+                    >
                     <Button
                         type="submit"
                         :disabled="!reportReason || isSubmitting"
-                        class="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90 text-white"
+                        class="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:opacity-90"
                     >
                         {{ isSubmitting ? 'Submitting...' : 'Submit Report' }}
                     </Button>
@@ -61,29 +65,30 @@ import {
     DialogDescription,
     DialogFooter,
     DialogHeader,
-    DialogTitle
+    DialogTitle,
 } from '@/components/ui/dialog';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue
+    SelectValue,
 } from '@/components/ui/select';
+import axios from 'axios';
 
 const props = defineProps({
     isOpen: {
         type: Boolean,
         required: true,
     },
-    contentType: {
-        type: String,
-        required: true
-    },
     contentId: {
         type: [String, Number],
-        required: true
-    }
+        required: true,
+    },
+    reportReasons: {
+        type: Array,
+        required: true,
+    },
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -105,25 +110,25 @@ const submitReport = async () => {
 
     try {
         // In a real app, you would send this to your backend
-        // await axios.post('/api/reports', {
-        //   content_type: props.contentType,
-        //   content_id: props.contentId,
-        //   reason: reportReason.value,
-        //   details: reportDetails.value,
-        // });
-
-        // For now, we'll just simulate a successful submission
-        console.log(`Reported ${props.contentType} ${props.contentId} for:`, {
-            reason: reportReason.value,
-            details: reportDetails.value
-        });
-
-        emit('submit', {
-            contentType: props.contentType,
-            contentId: props.contentId,
-            reason: reportReason.value,
-            details: reportDetails.value
-        });
+        await axios
+            .post('/reports', {
+                reason: reportReason.value,
+                details: reportDetails.value,
+                content_id: props.contentId,
+            })
+            .then(() => {
+                emit('submit', {
+                    reason: reportReason.value,
+                    details: reportDetails.value,
+                    content_id: props.contentId,
+                });
+            })
+            .catch((error) => {
+                console.error('Error submitting report:', error);
+            })
+            .finally(() => {
+                isSubmitting.value = false;
+            });
 
         // Reset form
         reportReason.value = '';

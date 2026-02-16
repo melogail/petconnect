@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Resources\Pet\PetCardResource;
+use App\Models\Pet;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        return inertia('Home');
+        $pets = PetCardResource::collection(Pet::all());
+
+        return inertia('Home', [
+            'pets' => $pets
+        ]);
     }
 }

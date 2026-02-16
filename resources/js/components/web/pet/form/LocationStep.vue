@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,7 +50,7 @@ const handleGetCurrentLocation = () => {
                     const newPos = { lat: latitude, lng: longitude };
                     map.panTo(newPos);
                     map.setZoom(13);
-                    
+
                     if (marker) {
                         marker.setPosition(newPos);
                     } else {
@@ -59,7 +65,7 @@ const handleGetCurrentLocation = () => {
             (error) => {
                 console.error('Error getting location', error);
                 isLoading.value = false;
-            }
+            },
         );
     } else {
         console.error('Geolocation is not supported by this browser.');
@@ -74,11 +80,15 @@ onMounted(async () => {
             script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap`;
             script.async = true;
             script.defer = true;
-            
+
             // Define the initMap callback
             (window as any).initMap = async () => {
-                const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-                const { Marker } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+                const { Map } = (await google.maps.importLibrary(
+                    'maps',
+                )) as google.maps.MapsLibrary;
+                const { Marker } = (await google.maps.importLibrary(
+                    'marker',
+                )) as google.maps.MarkerLibrary;
 
                 const mapOptions: google.maps.MapOptions = {
                     center: {
@@ -99,7 +109,10 @@ onMounted(async () => {
                     // Add initial marker if coordinates exist
                     if (props.mapMarker.lat && props.mapMarker.lng) {
                         marker = new Marker({
-                            position: { lat: props.mapMarker.lat, lng: props.mapMarker.lng },
+                            position: {
+                                lat: props.mapMarker.lat,
+                                lng: props.mapMarker.lng,
+                            },
                             map: map,
                         });
                     }
@@ -148,23 +161,31 @@ watch(
             nextTick(() => {
                 google.maps.event.trigger(map, 'resize');
                 if (props.mapCenter.lat && props.mapCenter.lng) {
-                    map?.setCenter({ lat: props.mapCenter.lat, lng: props.mapCenter.lng });
+                    map?.setCenter({
+                        lat: props.mapCenter.lat,
+                        lng: props.mapCenter.lng,
+                    });
                 }
             });
         }
-    }
+    },
 );
 
 // Watch for center changes (e.g. from Geolocation)
 watch(
     () => props.mapCenter,
     (newCenter) => {
-        if (map && newCenter && typeof newCenter.lat === 'number' && typeof newCenter.lng === 'number') {
+        if (
+            map &&
+            newCenter &&
+            typeof newCenter.lat === 'number' &&
+            typeof newCenter.lng === 'number'
+        ) {
             map.panTo({ lat: newCenter.lat, lng: newCenter.lng });
             map.setZoom(13);
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Watch for marker changes
@@ -175,7 +196,11 @@ watch(
             const position = { lat: newMarker.lat, lng: newMarker.lng };
             if (marker) {
                 marker.setPosition(position);
-            } else if (newMarker && typeof newMarker.lat === 'number' && typeof newMarker.lng === 'number') {
+            } else if (
+                newMarker &&
+                typeof newMarker.lat === 'number' &&
+                typeof newMarker.lng === 'number'
+            ) {
                 marker = new google.maps.Marker({
                     position: position,
                     map: map,
@@ -183,7 +208,7 @@ watch(
             }
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 onUnmounted(() => {
@@ -199,20 +224,36 @@ onUnmounted(() => {
 
 <template>
     <div id="step-2" class="step-container animate-fade-in">
-        <Card class="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl dark:bg-gray-800/70 backdrop-blur-md border-2 border-blue-100/50 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 shadow-lg">
+        <Card
+            class="group relative overflow-hidden border-2 border-blue-100/50 shadow-lg backdrop-blur-md transition-all duration-500 hover:border-blue-300 hover:shadow-2xl dark:border-blue-900/30 dark:bg-gray-800/70 dark:hover:border-blue-700"
+        >
             <!-- Animated Background Gradient -->
-            <div class="absolute -z-10 inset-0 bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-sky-50/10 dark:from-blue-900/20 dark:via-cyan-900/10 dark:to-sky-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <div
+                class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50/30 via-cyan-50/20 to-sky-50/10 opacity-0 transition-opacity duration-700 group-hover:opacity-100 dark:from-blue-900/20 dark:via-cyan-900/10 dark:to-sky-900/5"
+            ></div>
             <!-- Decorative Corner -->
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100/20 to-transparent dark:from-blue-900/10 rounded-bl-full opacity-50"></div>
+            <div
+                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-blue-100/20 to-transparent opacity-50 dark:from-blue-900/10"
+            ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
-                    <div class="relative p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                        <div class="absolute inset-0 bg-white/20 rounded-2xl animate-pulse"></div>
-                        <MapPin class="h-6 w-6 relative z-10" />
+                    <div
+                        class="relative rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 p-3 text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl"
+                    >
+                        <div
+                            class="absolute inset-0 animate-pulse rounded-2xl bg-white/20"
+                        ></div>
+                        <MapPin class="relative z-10 h-6 w-6" />
                     </div>
                     <div>
-                        <CardTitle class="text-xl font-semibold text-gray-800 dark:text-white">Location</CardTitle>
-                        <CardDescription class="text-gray-500 dark:text-gray-400">Where is your pet located?</CardDescription>
+                        <CardTitle
+                            class="text-xl font-semibold text-gray-800 dark:text-white"
+                            >Location</CardTitle
+                        >
+                        <CardDescription
+                            class="text-gray-500 dark:text-gray-400"
+                            >Where is your pet located?</CardDescription
+                        >
                     </div>
                 </div>
             </CardHeader>
@@ -224,47 +265,83 @@ onUnmounted(() => {
                         variant="outline"
                         @click="handleGetCurrentLocation"
                         :disabled="isLoading"
-                        class="group relative overflow-hidden border-2 border-primary-200 dark:border-primary-800 hover:border-primary-400 dark:hover:border-primary-600 transition-all duration-300"
+                        class="group relative overflow-hidden border-2 border-primary-200 transition-all duration-300 hover:border-primary-400 dark:border-primary-800 dark:hover:border-primary-600"
                     >
                         <span class="relative z-10 flex items-center">
-                            <MapPin class="w-5 h-5 mr-2 transition-transform group-hover:scale-110" :class="{ 'animate-pulse': isLoading }" />
-                            {{ isLoading ? 'Getting Location...' : 'Use My Current Location' }}
+                            <MapPin
+                                class="mr-2 h-5 w-5 transition-transform group-hover:scale-110"
+                                :class="{ 'animate-pulse': isLoading }"
+                            />
+                            {{
+                                isLoading
+                                    ? 'Getting Location...'
+                                    : 'Use My Current Location'
+                            }}
                         </span>
-                        <span class="absolute inset-0 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span
+                            class="absolute inset-0 bg-gradient-to-r from-primary-50 to-purple-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-primary-900/20 dark:to-purple-900/20"
+                        ></span>
                     </Button>
                 </div>
 
                 <!-- Google Map -->
-                <div class="relative rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-lg h-64 z-0">
-                    <div ref="mapContainer" class="h-full w-full z-0"></div>
+                <div
+                    class="relative z-0 h-64 overflow-hidden rounded-xl border-2 border-gray-200 shadow-lg dark:border-gray-700"
+                >
+                    <div ref="mapContainer" class="z-0 h-full w-full"></div>
 
                     <!-- Coordinates Display -->
-                    <div class="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs font-mono z-[1000]">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Coordinates:</span>
-                            <span class="text-gray-800 dark:text-gray-200 font-semibold">
-                                {{ mapMarker.lat.toFixed(6) }}, {{ mapMarker.lng.toFixed(6) }}
+                    <div
+                        class="absolute bottom-3 left-3 right-3 z-[1000] rounded-lg bg-white/90 px-3 py-2 font-mono text-xs backdrop-blur-sm dark:bg-gray-800/90"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-400"
+                                >Coordinates:</span
+                            >
+                            <span
+                                class="font-semibold text-gray-800 dark:text-gray-200"
+                            >
+                                {{ mapMarker.lat.toFixed(6) }},
+                                {{ mapMarker.lng.toFixed(6) }}
                             </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Address Display -->
-                <div v-if="form.location.address" class="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                <div
+                    v-if="form.location.address"
+                    class="rounded-lg border border-primary-200 bg-primary-50 p-4 dark:border-primary-800 dark:bg-primary-900/20"
+                >
                     <div class="flex items-start space-x-3">
-                        <MapPin class="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+                        <MapPin
+                            class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-600 dark:text-primary-400"
+                        />
                         <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Detected Address</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ form.location.address }}</p>
+                            <p
+                                class="text-sm font-medium text-gray-800 dark:text-gray-200"
+                            >
+                                Detected Address
+                            </p>
+                            <p
+                                class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                            >
+                                {{ form.location.address }}
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Detailed Address Input -->
                 <div class="space-y-2">
-                    <Label for="detailedAddress" class="flex items-center space-x-2">
+                    <Label
+                        for="detailedAddress"
+                        class="flex items-center space-x-2"
+                    >
                         <span>Detailed Address</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400"
+                            >(Optional)</span
+                        >
                     </Label>
                     <Textarea
                         id="detailedAddress"
@@ -273,12 +350,13 @@ onUnmounted(() => {
                         class="min-h-[80px] resize-none"
                     />
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Add specific details to help people find your location easily
+                        Add specific details to help people find your location
+                        easily
                     </p>
                 </div>
 
                 <!-- Location Details Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div class="space-y-2">
                         <Label for="city" is-required>City</Label>
                         <Input
@@ -313,7 +391,9 @@ onUnmounted(() => {
                             placeholder="Enter country"
                             required
                         />
-                        <InputError :message="form.errors['location.country']" />
+                        <InputError
+                            :message="form.errors['location.country']"
+                        />
                     </div>
                 </div>
             </CardContent>
@@ -333,9 +413,9 @@ onUnmounted(() => {
 }
 
 /* Prevent text blur on transform elements */
-[class*="transition"],
-[class*="transform"],
-[class*="scale"] {
+[class*='transition'],
+[class*='transform'],
+[class*='scale'] {
     will-change: transform;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);

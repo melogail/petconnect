@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum ListingType: int
 {
-    case Adoption = 0;
-    case Sale     = 1;
-    case Mating  = 2;
+    case Adoption = 1;
+    case Sale = 2;
+    case Mating = 3;
 
     public function label(): string
     {

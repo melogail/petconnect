@@ -1,4 +1,4 @@
-import { ref, onMounted, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 
 export function useDarkMode() {
     const isDark = ref(false);
@@ -9,13 +9,15 @@ export function useDarkMode() {
         if ('theme' in localStorage) {
             return localStorage.theme;
         }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        return window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
     };
 
     // Apply theme class to document element
     const applyTheme = (theme) => {
         const root = window.document.documentElement;
-        
+
         if (theme === 'dark') {
             root.classList.add('dark');
             root.style.colorScheme = 'dark';

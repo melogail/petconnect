@@ -1,9 +1,9 @@
 <template>
     <aside
-        class="sticky pl-6 py-4 h-[calc(100vh)] overflow-y-auto overflow-x-hidden border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full transition-colors duration-200"
+        class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full sticky h-[calc(100vh)] overflow-y-auto overflow-x-hidden border-r border-gray-200 bg-white py-4 pl-6 transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900"
         style="scrollbar-gutter: stable"
     >
-        <div class="space-y-8 mt-8">
+        <div class="mt-8 space-y-8">
             <div>
                 <div class="mb-6 flex items-center justify-between">
                     <h2 class="flex items-center gap-2 text-lg font-bold">
@@ -12,7 +12,7 @@
                     </h2>
                     <button
                         @click="clearAllFilters"
-                        class="rounded-md px-3 py-1 text-xs text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="rounded-md px-3 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                     >
                         Clear all
                     </button>
@@ -23,7 +23,7 @@
                 <!-- Animal Type -->
                 <div class="mt-6">
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
                     >
                         Animal Type
                     </h3>
@@ -43,15 +43,16 @@
                                 <div class="flex items-center gap-2">
                                     <component
                                         :is="category.icon"
-                                        class="h-4 w-4   transition-colors group-hover:border-primary-500"
+                                        class="h-4 w-4 transition-colors group-hover:border-primary-500"
                                     />
-                                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{
-                                        category.label
-                                    }}</span>
+                                    <span
+                                        class="text-sm font-medium text-gray-800 dark:text-gray-200"
+                                        >{{ category.label }}</span
+                                    >
                                 </div>
                             </div>
                             <span
-                                class="rounded-md bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-200"
+                                class="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200"
                             >
                                 {{ category.count }}
                             </span>
@@ -59,12 +60,12 @@
                     </div>
                 </div>
 
-                <div class="border-t border-border"></div>
+                <div class="border-border border-t"></div>
 
                 <!-- Age Range -->
                 <div>
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-gray-500 dark:text-gray-400 uppercase"
+                        class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
                     >
                         Age Range
                     </h3>
@@ -103,10 +104,9 @@
                                 class="range-input max-value"
                                 @input="adjustMaxRange"
                             />
-
                         </div>
                         <div
-                            class="mt-3 flex justify-between text-xs text-muted-foreground"
+                            class="text-muted-foreground mt-3 flex justify-between text-xs"
                         >
                             <span
                                 >{{ ageRange[0] }} year{{
@@ -122,12 +122,12 @@
                     </div>
                 </div>
 
-                <div class="border-t border-border"></div>
+                <div class="border-border border-t"></div>
 
                 <!-- Adoption Type -->
                 <div>
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="text-muted-foreground mb-4 text-sm font-semibold uppercase tracking-wide"
                     >
                         Adoption Type
                     </h3>
@@ -135,7 +135,7 @@
                         <label
                             v-for="type in adoptionTypes"
                             :key="type"
-                            class="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50"
+                            class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors"
                         >
                             <input
                                 type="checkbox"
@@ -149,12 +149,12 @@
                     </div>
                 </div>
 
-                <div class="border-t border-border"></div>
+                <div class="border-border border-t"></div>
 
                 <!-- Location -->
                 <div>
                     <h3
-                        class="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="text-muted-foreground mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide"
                     >
                         <MapPin class="h-4 w-4" />
                         Location
@@ -163,7 +163,7 @@
                         <label
                             v-for="location in locations"
                             :key="location"
-                            class="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                            class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors"
                         >
                             <input
                                 type="checkbox"
@@ -177,12 +177,12 @@
                     </div>
                 </div>
 
-                <div class="border-t border-border"></div>
+                <div class="border-border border-t"></div>
 
                 <!-- Vaccination Status -->
                 <div>
                     <h3
-                        class="mb-4 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                        class="text-muted-foreground mb-4 text-sm font-semibold uppercase tracking-wide"
                     >
                         Vaccination Status
                     </h3>
@@ -190,7 +190,7 @@
                         <label
                             v-for="status in vaccinationStatuses"
                             :key="status"
-                            class="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50"
+                            class="hover:bg-muted/50 flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors"
                         >
                             <input
                                 type="checkbox"
@@ -272,7 +272,7 @@ const clearAllFilters = () => {
     -webkit-appearance: none;
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(42, 57, 81, 0.50);
+    border: 2px solid rgba(42, 57, 81, 0.5);
     border-radius: 0.5rem;
     cursor: pointer;
     position: relative;
@@ -282,12 +282,12 @@ const clearAllFilters = () => {
 }
 
 .checkbox-custom:hover {
-    border-color: #8A2CE2FF;
+    border-color: #8a2ce2ff;
 }
 
 .checkbox-custom:checked {
-    background-color: #8A2CE2FF;
-    border-color: #8A2CE2FF;
+    background-color: #8a2ce2ff;
+    border-color: #8a2ce2ff;
 }
 
 .checkbox-custom:checked::after {
@@ -369,7 +369,7 @@ const clearAllFilters = () => {
 .range-input::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    top:  -7px;
+    top: -7px;
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -378,7 +378,7 @@ const clearAllFilters = () => {
     pointer-events: auto;
     position: relative;
     z-index: 10;
-    border: 3px solid #8A2CE2;
+    border: 3px solid #8a2ce2;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -406,11 +406,10 @@ const clearAllFilters = () => {
 .range {
     position: absolute;
     height: 100%;
-    background-color: #8A2CE2;
+    background-color: #8a2ce2;
     border-radius: 4px;
     z-index: 2;
 }
-
 
 /* Transparent tracks */
 .range-input::-webkit-slider-runnable-track {

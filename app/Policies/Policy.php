@@ -17,7 +17,7 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
+        }, function () {
             return false;
         });
     }
@@ -28,7 +28,7 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
+        }, function () {
             return false;
         });
     }
@@ -39,7 +39,7 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
+        }, function () {
             return false;
         });
     }
@@ -50,8 +50,8 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
-            return false;
+        }, function () use ($auth, $model) {
+            return $auth->id === $model->user_id;
         });
     }
 
@@ -61,8 +61,8 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
-            return false;
+        }, function () use ($auth, $model) {
+            return $auth->id === $model->user_id;
         });
     }
 
@@ -72,8 +72,8 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
-            return false;
+        }, function () use ($auth, $model) {
+            return $auth->id === $model->user_id;
         });
     }
 
@@ -83,8 +83,8 @@ abstract class Policy
             if ($auth instanceof Admin) {
                 return true;
             }
-        }, function(){
-            return false;
+        }, function () use ($auth, $model) {
+            return $auth->id === $model->user_id;
         });
     }
 

@@ -1,36 +1,28 @@
 <script setup lang="ts">
 import PetCard from '@/components/web/PetCard.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { Link } from '@inertiajs/vue3';
 import { Plus, Filter as FilterIcon } from 'lucide-vue-next';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
 } from '@/components/ui/sheet';
 import Filter from '@/components/web/Filter.vue';
+import { route } from 'ziggy-js';
 
-const petData = {
-    name: 'Bella',
-    age: '1 Year',
-    gender: 0,
-    location: 'Perth, Australia',
-    description: 'Affectionate cat, loves to be around people.',
-    image: 'https://placekittens.com/400/400',
-    status: 'adoption',
-    isFavorite: false,
-    vaccinated: true,
-    serialized: true,
-    likes: 34,
-    comments: 10,
-};
+const props = defineProps({
+    pets: Object,
+});
 </script>
 
 <template>
     <MainLayout>
-        <div class="max-w-7xl mx-auto w-full px-6 py-8">
+        <div class="mx-auto w-full max-w-7xl px-6 py-8">
             <!-- Filter Button for All Devices -->
             <div class="mb-6">
                 <Sheet>
@@ -40,7 +32,10 @@ const petData = {
                             <span>Filters</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" class="w-[350px] sm:w-[400px] p-0">
+                    <SheetContent
+                        side="left"
+                        class="w-[350px] p-0 sm:w-[400px]"
+                    >
                         <div class="h-full overflow-y-auto">
                             <Filter />
                         </div>
@@ -48,17 +43,40 @@ const petData = {
                 </Sheet>
             </div>
             <div class="w-full">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-                    <h2 class="text-2xl font-bold text-primary dark:text-primary-400">
+                <div
+                    class="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
+                >
+                    <h2
+                        class="text-2xl font-bold text-primary dark:text-primary-400"
+                    >
                         Discover Pets
                     </h2>
-                    <Button class="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600">
+                    <Link
+                        :href="route('pets.create')"
+                        :class="
+                            cn(
+                                buttonVariants(),
+                                'cursor-pointer gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600',
+                            )
+                        "
+                    >
                         <Plus class="h-5 w-5" />
                         Create Post
-                    </Button>
+                    </Link>
                 </div>
-                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <PetCard v-for="(pet, index) in Array(12).fill(petData)" :key="index" :pet="pet" />
+                <section
+                    class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                >
+                    <div v-if="pets.data.length > 0">
+                        <PetCard
+                            v-for="(pet, index) in pets.data"
+                            :key="index"
+                            :pet="pet"
+                        />
+                    </div>
+                    <div v-else>
+                        <p>No pets found</p>
+                    </div>
                 </section>
             </div>
         </div>

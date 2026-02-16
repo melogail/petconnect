@@ -4,8 +4,8 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
-import { ZiggyVue } from 'ziggy-js';
 import { Toaster } from 'vue-sonner';
+import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PetConnect';
@@ -25,9 +25,7 @@ createInertiaApp({
         // Register Toaster as a global component
         app.component('Toaster', Toaster);
 
-        app.use(plugin)
-            .use(ZiggyVue)
-            .mount(el);
+        app.use(plugin).use(ZiggyVue).mount(el);
     },
     progress: {
         color: '#8B5CF6', // Changed to violet/purple to match your theme
