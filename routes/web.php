@@ -1,18 +1,23 @@
 <?php
 
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\Web\ConversationController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\MessageController;
 use App\Http\Controllers\Web\PetController;
 use App\Http\Controllers\Web\ProfileController;
-use App\Http\Controllers\Web\ReviewController;
 use App\Http\Controllers\Web\ReportController;
-use App\Http\Controllers\Web\SupportController;
-
+use App\Http\Controllers\Web\ReviewController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Home page
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/auto-login', function () {
+    auth()->loginUsingId(1);
 
+    return redirect('/pets/1/edit');
+});
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Support and Help Routes
 Route::get('/support', function () {
@@ -24,7 +29,7 @@ Route::get('/help', function () {
 })->name('help');
 
 // Authenticated Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // USER PROFILE ROUTES
     Route::get('profile/{user}/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('profile/{user}', [ProfileController::class, 'show'])->name('profile.show')->withoutMiddleware('auth');
@@ -32,9 +37,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('profile/{user}', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // PETS ROUTES
-    Route::get('pets/{pet}', [PetController::class, 'show'])->name('pets.show')->withoutMiddleware('auth');
     Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
     Route::post('pets/store', [PetController::class, 'store'])->name('pets.store');
+    Route::get('pets/{pet}', [PetController::class, 'show'])->name('pets.show')->withoutMiddleware(['auth', 'verified']);
+    Route::get('pets/{pet}/edit', [PetController::class, 'edit'])->name('pets.edit');
+    Route::put('pets/{pet}', [PetController::class, 'update'])->name('pets.update');
+    Route::delete('pets/{pet}', [PetController::class, 'destroy'])->name('pets.destroy');
 
     // REVIEWS ROUTES
     Route::post('reviews/store/{type}/{reviewable_id}', [ReviewController::class, 'store'])->name('reviews.store');
@@ -43,7 +51,23 @@ Route::middleware('auth')->group(function () {
 
     // REPORT ROUTE
     Route::post('reports', ReportController::class)->name('reports.store');
+
+    // MESSAGING
+    Route::get('conversations', [ConversationController::class, 'index'])->name('conversations.index');
+    Route::post('conversations', [ConversationController::class, 'store'])->name('conversations.store');
+    Route::get('conversations/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
+    Route::post('conversations/{conversation}/read', [ConversationController::class, 'markAsRead'])->name('conversations.read');
+    Route::post('conversations/{conversation}/messages', [MessageController::class, 'store'])->name('conversations.messages.store');
+    Route::put('messages/{message}', [MessageController::class, 'update'])->name('messages.update');
+    Route::delete('messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // COMMENTS ROUTES
+    Route::post('comments/{commentable_type}/{commentable_id}', [CommentController::class, 'store'])
+        ->whereNumber('commentable_id')
+        ->name('comments.store');
+    Route::put('comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('comments/{comment}', [CommentController::class, 'delete'])->name('comments.delete');
 });
 
-// require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';

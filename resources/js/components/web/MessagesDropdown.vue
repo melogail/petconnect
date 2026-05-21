@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { TransitionGroup } from 'vue';
+import { useAuthUser } from '@/composables/useAuthUser';
+import { fallbackAvatar, messagePreview } from '@/lib/utils';
+import type { MessagingPreviewItem } from '@/types';
+import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { route } from 'ziggy-js';
 
 defineProps<{
-    messages: Array<{
-        id: number;
-        sender: { name: string; avatar: string };
-        preview: string;
-        time: string;
-        read: boolean;
-    }>;
+    previews: MessagingPreviewItem[];
     unreadCount: number;
     isOpen: boolean;
 }>();
 
-const emit = defineEmits(['toggle', 'markAsRead']);
-const markAsRead = (id: number) => emit('markAsRead', id);
+const currentUser = useAuthUser();
+const currentUserId = computed(() => currentUser.value?.id ?? null);
+const emit = defineEmits(['toggle']);
 </script>
 
 <template>
     <div class="relative">
         <button
+            type="button"
             @click.stop="emit('toggle')"
             class="relative rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800"
             :aria-expanded="isOpen"
@@ -43,8 +44,7 @@ const markAsRead = (id: number) => emit('markAsRead', id);
             </svg>
             <span
                 v-if="unreadCount > 0"
-                class="absolute right-1 top-1 flex h-4 w-4 animate-bounce items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow-sm"
-                :class="{ 'animate-ping': unreadCount > 0 && !isOpen }"
+                class="absolute right-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white shadow-sm"
             >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
@@ -78,6 +78,7 @@ const markAsRead = (id: number) => emit('markAsRead', id);
                         </span>
                     </h3>
                     <button
+                        type="button"
                         @click.stop="emit('toggle')"
                         class="text-xs font-medium text-violet-600 transition-colors hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
                     >
@@ -87,31 +88,35 @@ const markAsRead = (id: number) => emit('markAsRead', id);
 
                 <div class="max-h-96 overflow-y-auto">
                     <TransitionGroup
+                        v-if="previews.length"
                         name="list"
                         tag="div"
-                        v-if="messages.length"
                     >
-                        <div
-                            v-for="msg in messages"
-                            :key="msg.id"
-                            @click.stop="markAsRead(msg.id)"
-                            class="group relative cursor-pointer border-b border-gray-100 px-4 py-3 transition-colors duration-150 hover:bg-gray-50 dark:border-gray-700/50 dark:hover:bg-gray-700/50"
+                        <Link
+                            v-for="item in previews"
+                            :key="item.conversation_id"
+                            :href="route('conversations.show', item.conversation_id)"
+                            class="group relative block border-b border-gray-100 px-4 py-3 transition-colors duration-150 hover:bg-gray-50 dark:border-gray-700/50 dark:hover:bg-gray-700/50"
                             :class="{
-                                'bg-violet-50 dark:bg-violet-900/20': !msg.read,
+                                'bg-violet-50 dark:bg-violet-900/20': item.unread,
                             }"
+                            @click="emit('toggle')"
                         >
                             <div class="flex items-start gap-3">
                                 <div class="relative flex-shrink-0">
                                     <img
-                                        :src="msg.sender.avatar"
-                                        :alt="msg.sender.name"
+                                        :src="
+                                            item.peer.avatar ||
+                                            fallbackAvatar(item.peer.name)
+                                        "
+                                        :alt="item.peer.name"
                                         class="h-10 w-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700"
                                         :class="{
-                                            'ring-violet-400': !msg.read,
+                                            'ring-violet-400': item.unread,
                                         }"
                                     />
                                     <span
-                                        v-if="!msg.read"
+                                        v-if="item.unread"
                                         class="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-violet-500 dark:border-gray-800"
                                     ></span>
                                 </div>
@@ -122,25 +127,25 @@ const markAsRead = (id: number) => emit('markAsRead', id);
                                         <p
                                             class="truncate text-sm font-medium text-gray-900 dark:text-gray-100"
                                             :class="{
-                                                'font-semibold': !msg.read,
+                                                'font-semibold': item.unread,
                                             }"
                                         >
-                                            {{ msg.sender.name }}
+                                            {{ item.peer.name }}
                                         </p>
                                         <span
                                             class="ml-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400"
-                                            >{{ msg.time }}</span
+                                            >{{ item.time }}</span
                                         >
                                     </div>
                                     <p
                                         class="truncate text-sm text-gray-600 dark:text-gray-300"
-                                        :class="{ 'font-medium': !msg.read }"
+                                        :class="{ 'font-medium': item.unread }"
                                     >
-                                        {{ msg.preview }}
+                                        {{ messagePreview(item.preview, item.sender_id === currentUserId) }}
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     </TransitionGroup>
 
                     <div v-else class="px-4 py-6 text-center">
@@ -160,23 +165,25 @@ const markAsRead = (id: number) => emit('markAsRead', id);
                             </svg>
                         </div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            No new messages
+                            No conversations yet
                         </p>
                         <p class="mt-1 text-xs text-gray-400">
-                            Your messages will appear here
+                            Reach out from a pet listing or profile
                         </p>
                     </div>
                 </div>
 
                 <div
-                    v-if="messages.length > 0"
+                    v-if="previews.length > 0"
                     class="border-t border-gray-200 bg-gray-50 px-4 py-2 text-center dark:border-gray-700 dark:bg-gray-800/80"
                 >
-                    <a
-                        href="#"
+                    <Link
+                        :href="route('conversations.index')"
                         class="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
-                        >View all messages</a
+                        @click="emit('toggle')"
                     >
+                        View all messages
+                    </Link>
                 </div>
             </div>
         </Transition>

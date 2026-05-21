@@ -95,7 +95,7 @@ const props = defineProps<Props>();
                     <div class="flex items-center space-x-2">
                         <Checkbox
                             id="vaccinated"
-                            v-model:checked="form.health.vaccinated"
+                            v-model="form.health.vaccinated"
                         />
                         <Label for="vaccinated">Vaccinated</Label>
                     </div>
@@ -103,7 +103,7 @@ const props = defineProps<Props>();
                     <div class="flex items-center space-x-2">
                         <Checkbox
                             id="spayed-neutered"
-                            v-model:checked="form.health.spayedNeutered"
+                            v-model="form.health.spayedNeutered"
                         />
                         <Label for="spayed-neutered">Spayed/Neutered</Label>
                     </div>

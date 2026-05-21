@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useAuthUser } from '@/composables/useAuthUser';
 import { ref, computed } from 'vue';
-import { usePage, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import ReviewSummary from './reviews/ReviewSummary.vue';
 import ReviewForm from './reviews/ReviewForm.vue';
 import ReviewCarousel from './reviews/ReviewCarousel.vue';
@@ -32,7 +33,8 @@ const props = defineProps({
     },
 });
 
-const currentUser = usePage().props.auth.user || { id: 0 }; // Fallback for guest
+const authUser = useAuthUser();
+const currentUser = computed(() => authUser.value ?? { id: 0 });
 
 const isAddReviewOpen = ref(false);
 const isReportOpen = ref(false);
@@ -40,12 +42,13 @@ const reportingReviewId = ref<number | null>(null);
 
 const canAddReview = computed(() => {
     // Authenticated user can add review if they are not the profile owner
-    return currentUser.id !== 0 && currentUser.id !== props.profileOwnerId;
+    return currentUser.value.id !== 0 && currentUser.value.id !== props.profileOwnerId;
 });
 
 const handleAddReview = (data) => {
     router.post(
         route('reviews.store', {
+            type: 'App\\Models\\User',
             reviewable_type: 'App\\Models\\User',
             reviewable_id: props.profileOwnerId,
         }),

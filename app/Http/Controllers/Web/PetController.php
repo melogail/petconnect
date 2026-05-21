@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\ListingType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
 use App\Http\Resources\CreatePetPostResource;
+use App\Http\Resources\Pet\PetDetailResource;
 use App\Models\Category;
 use App\Models\Pet;
 use App\Services\PetService;
-use App\Enums\ListingType;
+use Illuminate\Http\RedirectResponse;
 
 class PetController extends Controller
 {
-
     public function __construct(protected PetService $petService)
     {
         //
@@ -32,6 +33,8 @@ class PetController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Pet::class);
+
         $petCategories = CreatePetPostResource::collection(Category::with('breeds')->get());
 
         return inertia('pet/Create', [
@@ -53,10 +56,20 @@ class PetController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($pet)
+    public function show(Pet $pet)
     {
+        $pet->load([
+            'user',
+            'category',
+            'breed',
+            'comments' => fn ($query) => $query
+                ->whereNull('parent_id')
+                ->with(['user', 'replies.user'])
+                ->latest(),
+        ]);
+
         return inertia('pet/Show', [
-            'pet' => $pet,
+            'pet' => PetDetailResource::make($pet),
         ]);
     }
 
@@ -65,7 +78,13 @@ class PetController extends Controller
      */
     public function edit(Pet $pet)
     {
-        //
+        $petCategories = CreatePetPostResource::collection(Category::with('breeds')->get());
+
+        return inertia('pet/Edit', [
+            'pet' => PetDetailResource::make($pet->load('user', 'category', 'breed', 'comments')),
+            'petCategories' => $petCategories,
+            'listingTypes' => ListingType::options(),
+        ]);
     }
 
     /**
@@ -73,14 +92,19 @@ class PetController extends Controller
      */
     public function update(UpdatePetRequest $request, Pet $pet)
     {
-        //
+        $this->petService->updatePet($pet->id, $request);
+
+        return redirect()->route('pets.show', $pet)->with('success', 'Pet updated successfully');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Pet $pet)
+    public function destroy(Pet $pet): RedirectResponse
     {
-        //
+        $this->authorize('delete', $pet);
+        $this->petService->deletePet($pet->id);
+
+        return redirect()->route('home')->with('success', 'Pet listing removed successfully');
     }
 }

@@ -87,8 +87,8 @@ class StorePetRequest extends FormRequest
     {
         return [
             'images.max' => 'You can upload a maximum of 3 additional images.',
-            'images.*.max' => 'Each image must not exceed 5MB. Please compress your images before uploading.',
-            'featuredImage.max' => 'The featured image must not exceed 5MB. Please compress your image before uploading.',
+            'images.*.max' => 'Each image must not exceed 512KB. Please compress your images before uploading.',
+            'featuredImage.max' => 'The featured image must not exceed 512KB. Please compress your image before uploading.',
         ];
     }
 }

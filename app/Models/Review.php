@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Traits\HasReport;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Review extends Model
 {
-    use HasReport;
+    use HasFactory, HasReport;
 
     protected $guarded = [];
 
@@ -16,7 +17,6 @@ class Review extends Model
      * == RELATIONSHIPS
      * ======================
      */
-
     public function reviewable()
     {
         return $this->morphTo();

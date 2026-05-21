@@ -3,24 +3,26 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Contracts\ReviewInterface;
 use App\Observers\UserObserver;
+use App\Traits\HasReviews;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Contracts\ReviewInterface;
-use App\Traits\HasReviews;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[ObservedBy(UserObserver::class)]
-class User extends Authenticatable implements ReviewInterface, HasMedia
+class User extends Authenticatable implements HasMedia, MustVerifyEmail, ReviewInterface
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasReviews, InteractsWithMedia;
+    use HasFactory, HasReviews, InteractsWithMedia, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -48,7 +50,6 @@ class User extends Authenticatable implements ReviewInterface, HasMedia
      */
     protected $appends = ['location'];
 
-
     /**
      * Get the attributes that should be cast.
      *
@@ -72,20 +73,24 @@ class User extends Authenticatable implements ReviewInterface, HasMedia
         $this->addMediaCollection('users');
     }
 
+    public function isVerified(): bool
+    {
+        return $this->email_verified_at ? true : false;
+    }
+
     /**
      * ============================
      * == ACCESSORS AND MUTATORS ==
      * ============================
      */
-
     public function location(): Attribute
     {
         return Attribute::make(
-            get: fn() => collect([
+            get: fn () => collect([
                 $this->city,
                 $this->state,
-                $this->country
-            ])->filter()->implode(", ")
+                $this->country,
+            ])->filter()->implode(', ')
         );
     }
 
@@ -94,7 +99,6 @@ class User extends Authenticatable implements ReviewInterface, HasMedia
      * == RELATIONSHIPS
      * =======================
      */
-
     public function pets(): HasMany
     {
         return $this->hasMany(Pet::class);
@@ -103,5 +107,12 @@ class User extends Authenticatable implements ReviewInterface, HasMedia
     public function givenReviews()
     {
         return $this->hasMany(Review::class, 'user_id');
+    }
+
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_user', 'user_id', 'conversation_id')
+            ->withPivot('last_read_at')
+            ->withTimestamps();
     }
 }

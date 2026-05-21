@@ -6,14 +6,15 @@ use App\Enums\ListingType;
 use App\Traits\HasComments;
 use App\Traits\HasLikes;
 use App\Traits\HasSaves;
-use Carbon\Carbon;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\HasMedia;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Pet extends Model implements HasMedia
 {
-    use HasComments, HasLikes, HasSaves, InteractsWithMedia;
+    use HasComments, HasFactory, HasLikes, HasSaves, InteractsWithMedia, SoftDeletes;
 
     protected $guarded = [];
 
@@ -23,6 +24,14 @@ class Pet extends Model implements HasMedia
         'created_at' => 'datetime',
         'breed_id' => 'integer',
         'listing_type' => ListingType::class,
+        'vaccinations' => 'array',
+        'medications' => 'array',
+        'allergies' => 'array',
+        'traits' => 'array',
+        'additional_info' => 'array',
+        'vaccinated' => 'boolean',
+        'spayed_neutered' => 'boolean',
+        'last_vet_visit' => 'date',
     ];
 
     public function registerMediaCollections(): void
@@ -35,7 +44,6 @@ class Pet extends Model implements HasMedia
      * == RELATIONSHIPS
      * =======================
      */
-
     public function category()
     {
         return $this->belongsTo(Category::class);

@@ -25,7 +25,10 @@ const emit = defineEmits<{
     removeImage: [index: number];
 }>();
 
-const isMaxImages = computed(() => props.form.images.length >= 3);
+const galleryImageCount = computed(
+    () => (props.form.existingImages?.length ?? 0) + props.form.images.length,
+);
+const isMaxImages = computed(() => galleryImageCount.value >= 3);
 </script>
 
 <template>
@@ -140,7 +143,6 @@ const isMaxImages = computed(() => props.form.images.length >= 3);
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <Label
-                            is-required
                             class="text-base font-semibold text-gray-800 dark:text-white"
                             >Gallery Photos</Label
                         >
@@ -176,13 +178,13 @@ const isMaxImages = computed(() => props.form.images.length >= 3);
                                         class="mt-2 block text-sm text-gray-600"
                                     >
                                         {{
-                                            form.images.length > 0
+                                            galleryImageCount > 0
                                                 ? 'Add more'
                                                 : 'Add photos'
                                         }}
                                     </span>
                                     <span class="text-xs text-gray-500">
-                                        {{ form.images.length }}/3
+                                        {{ galleryImageCount }}/3
                                     </span>
                                 </div>
                             </Label>

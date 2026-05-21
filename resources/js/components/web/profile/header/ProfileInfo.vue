@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuthUser } from '@/composables/useAuthUser';
 import {
     BadgeCheck,
     User,
@@ -6,15 +7,15 @@ import {
     MessageSquare,
     Edit2,
 } from 'lucide-vue-next';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import Button from '@/components/ui/button/Button.vue';
+
+const auth = useAuthUser();
 
 defineProps({
     user: Object,
 });
 
-const auth = usePage().props.auth.user;
 </script>
 
 <template>
@@ -52,16 +53,19 @@ const auth = usePage().props.auth.user;
             </p>
         </div>
         <div class="flex flex-wrap gap-3">
-            <Button
+            <Link
                 v-if="auth && auth.id !== user.data.id"
-                :href="'#'"
+                :href="route('conversations.store')"
+                method="post"
+                as="button"
+                :data="{ other_user_id: user.data.id }"
                 class="inline-flex cursor-pointer items-center rounded-xl border border-gray-200/50 bg-white/80 px-4 py-2.5 text-sm font-medium text-gray-700 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-gray-200 dark:hover:bg-gray-600"
             >
                 <MessageSquare
                     class="mr-2 h-4 w-4 text-indigo-500 dark:text-indigo-400"
                 />
                 Messages
-            </Button>
+            </Link>
             <Link
                 v-if="user.data.can.update"
                 :href="route('profile.edit', user.data.id)"

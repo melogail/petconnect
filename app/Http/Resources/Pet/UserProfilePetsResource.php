@@ -15,12 +15,14 @@ class UserProfilePetsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $featuredImage = $this->getMedia('pets')->first(
+            fn (Media $media) => $media->getCustomProperty('featured') === true
+        );
+
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'feature_image' => $this->getMedia('pets')->filter(function (Media $media) {
-                return $media->getCustomProperty("featured") == true;
-            })->first()->getUrl() ?? null,
+            'feature_image' => $featuredImage?->getUrl() ?: $this->getFirstMediaUrl('pets') ?: null,
             'type' => $this->category->name,
             'breed' => $this->breed->name,
             'age' => $this->age,
@@ -28,7 +30,7 @@ class UserProfilePetsResource extends JsonResource
             'color' => $this->color,
             'status' => $this->status,
             'created_at' => $this->created_at->diffForHumans(),
-            'views' => $this->views
+            'views' => $this->views,
         ];
     }
 }

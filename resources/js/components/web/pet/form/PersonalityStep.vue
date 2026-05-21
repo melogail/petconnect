@@ -93,17 +93,22 @@ const props = defineProps<Props>();
                         >
                             <Checkbox
                                 :id="`trait-${trait.id}`"
-                                :checked="form.traits.includes(trait.id)"
-                                @update:checked="
-                                    (checked) => {
-                                        if (checked) {
-                                            form.traits.push(trait.id);
+                                :model-value="form.traits.includes(trait.id)"
+                                @update:model-value="
+                                    (value) => {
+                                        if (value === true) {
+                                            if (
+                                                !form.traits.includes(trait.id)
+                                            ) {
+                                                form.traits.push(trait.id);
+                                            }
                                         } else {
                                             const index = form.traits.indexOf(
                                                 trait.id,
                                             );
-                                            if (index > -1)
+                                            if (index > -1) {
                                                 form.traits.splice(index, 1);
+                                            }
                                         }
                                     }
                                 "

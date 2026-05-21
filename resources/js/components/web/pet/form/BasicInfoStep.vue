@@ -156,6 +156,19 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
+                    <Label for="weight">Weight (kg/lbs)</Label>
+                    <Input
+                        id="weight"
+                        v-model="form.weight"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        placeholder="Ex: 15.5"
+                    />
+                    <InputError :message="form.errors.weight" />
+                </div>
+
+                <div class="space-y-2">
                     <Label is-required>Gender</Label>
                     <div class="flex space-x-4">
                         <div class="flex items-center space-x-2">

@@ -136,6 +136,26 @@ const getInitials = (name: string) => {
 
                 <div class="py-1">
                     <Link
+                        :href="route('conversations.index')"
+                        class="group flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50"
+                        @click="closeDropdown"
+                    >
+                        <svg
+                            class="h-4 w-4 text-gray-500 group-hover:text-violet-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                            />
+                        </svg>
+                        <span>Messages</span>
+                    </Link>
+                    <Link
                         :href="route('profile.show', user.id)"
                         class="group flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700/50"
                         @click="closeDropdown"

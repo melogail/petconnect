@@ -28,6 +28,7 @@ import PersonalityStep from '@/components/web/pet/form/PersonalityStep.vue';
 import PhotosStep from '@/components/web/pet/form/PhotosStep.vue';
 import ReviewStep from '@/components/web/pet/form/ReviewStep.vue';
 import StepperProgress from '@/components/web/pet/form/StepperProgress.vue';
+import { route } from 'ziggy-js';
 
 interface Props {
     petCategories: { data: any[] };
@@ -64,14 +65,17 @@ const breeds = computed(() => {
 
 // Pet traits
 const petTraits = [
-    { id: 'friendly', label: 'Friendly' },
-    { id: 'playful', label: 'Playful' },
-    { id: 'calm', label: 'Calm' },
-    { id: 'energetic', label: 'Energetic' },
-    { id: 'shy', label: 'Shy' },
-    { id: 'affectionate', label: 'Affectionate' },
-    { id: 'independent', label: 'Independent' },
-    { id: 'intelligent', label: 'Intelligent' },
+    { id: 'Friendly', label: 'Friendly' },
+    { id: 'Playful', label: 'Playful' },
+    { id: 'Calm', label: 'Calm' },
+    { id: 'Energetic', label: 'Energetic' },
+    { id: 'Shy', label: 'Shy' },
+    { id: 'Loyal', label: 'Loyal' },
+    { id: 'Smart', label: 'Smart' },
+    { id: 'Gentle', label: 'Gentle' },
+    { id: 'Affectionate', label: 'Affectionate' },
+    { id: 'Independent', label: 'Independent' },
+    { id: 'Intelligent', label: 'Intelligent' },
 ];
 
 // Stepper state
@@ -86,24 +90,26 @@ const isLoadingLocation = ref(false);
 
 // Form state
 const form = useForm({
-    name: '',
+    name: 'Bella',
     type: '',
     breed: '',
-    age: '',
-    color: '',
-    gender: '',
-    description: '',
+    age: '2.5',
+    color: 'Golden',
+    weight: '15',
+    gender: 'female',
+    description:
+        'Bella is a very lovely and friendly companion who loves to play fetch and go for long walks. She is great with kids and other pets.',
     listing_type: props.listingTypes[0]?.value || 1, // Default to first available type
-    price: '',
+    price: '250',
     status: 'available',
     location: {
-        address: '',
-        detailedAddress: '',
-        city: '',
-        state: '',
-        postalCode: '',
+        address: '123 Main St',
+        detailedAddress: 'Apt 4B',
+        city: 'New York',
+        state: 'NY',
+        postalCode: '10001',
         country: 'United States',
-        coordinates: { lat: 0, lng: 0 },
+        coordinates: { lat: 40.7128, lng: -74.006 },
     },
     images: [] as File[],
     imagePreviews: [] as string[],
@@ -111,18 +117,24 @@ const form = useForm({
     featuredImagePreview: '' as string,
     health: {
         status: 'healthy',
-        vaccinated: false,
-        spayedNeutered: false,
-        specialNeeds: '',
-        lastVetVisit: '',
-        vaccinations: [] as { date: string; name: string }[],
-        medications: [] as { name: string; usage: string }[],
-        allergies: [] as string[],
-        vetName: '',
-        vetPhone: '',
+        vaccinated: true,
+        spayedNeutered: true,
+        specialNeeds: 'None',
+        lastVetVisit: '2023-10-10',
+        vaccinations: [{ date: '2023-10-10', name: 'Rabies' }] as {
+            date: string;
+            name: string;
+        }[],
+        medications: [{ name: 'Heartworm preventative', usage: 'Monthly' }] as {
+            name: string;
+            usage: string;
+        }[],
+        allergies: ['Chicken'] as string[],
+        vetName: 'Dr. Smith',
+        vetPhone: '555-0199',
     },
-    traits: [] as string[],
-    additionalInfo: [{ key: '', value: '' }],
+    traits: ['Friendly', 'Playful'],
+    additionalInfo: [{ key: 'Favorite Toy', value: 'Squeaky bone' }],
 });
 
 // Image compression configuration
@@ -420,14 +432,10 @@ const validateForm = (): boolean => {
         goToStep(2);
         return false;
     }
-    if (form.images.length === 0) {
-        const proceed = confirm(
-            'No images uploaded. Do you want to continue without images?',
-        );
-        if (!proceed) {
-            goToStep(3);
-            return false;
-        }
+    if (!form.featuredImage) {
+        alert('Please upload a featured image');
+        goToStep(3);
+        return false;
     }
     return true;
 };
@@ -503,16 +511,32 @@ onMounted(() => {
     getCurrentLocation();
 });
 
+const withoutClientOnlyFields = <
+    T extends { imagePreviews?: unknown; featuredImagePreview?: unknown },
+>(
+    data: T,
+) => {
+    const { imagePreviews, featuredImagePreview, ...payload } = data;
+    void imagePreviews;
+    void featuredImagePreview;
+
+    return payload;
+};
+
 const submit = () => {
     // Validate form before submission
     if (!validateForm()) {
         return;
     }
 
-    form.post(route('pets.store'), {
+    form.transform(withoutClientOnlyFields).post(route('pets.store'), {
+        forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
+        },
+        onFinish: () => {
+            form.transform((data) => data);
         },
     });
 };

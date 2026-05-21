@@ -153,6 +153,15 @@ const getListingTypeName = (value: number) => {
                         </div>
                         <div>
                             <span class="text-gray-500 dark:text-gray-400"
+                                >Weight (kg/lbs):</span
+                            >
+                            <span
+                                class="font-medium text-gray-800 dark:text-white"
+                                >{{ form.weight || 'Not provided' }}</span
+                            >
+                        </div>
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400"
                                 >Listing Type:</span
                             >
                             <span

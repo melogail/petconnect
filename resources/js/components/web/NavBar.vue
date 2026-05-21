@@ -1,22 +1,18 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { route } from 'ziggy-js';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useDarkMode } from '@/composables/useDarkMode';
 import NotificationsDropdown from '@/components/web/NotificationsDropdown.vue';
 import MessagesDropdown from '@/components/web/MessagesDropdown.vue';
 import UserDropdown from '@/components/web/UserDropdown.vue';
+import { useAuthUser } from '@/composables/useAuthUser';
+import { useDarkMode } from '@/composables/useDarkMode';
+import type { MessagingSummary } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-// Dark mode composable
 const { isDark, toggleDarkMode } = useDarkMode();
 
-// Inertia page props
 const page = usePage();
 
-// Dropdown states
-const isUserDropdownOpen = ref(false);
-
-// Dummy data (replace with API/inertia data)
 const notifications = ref([
     {
         id: 1,
@@ -41,81 +37,47 @@ const notifications = ref([
     },
 ]);
 
-const messages = ref([
-    {
-        id: 1,
-        sender: {
-            name: 'Sarah Johnson',
-            avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        },
-        preview: 'Hey! Is your Golden Retriever still available for...',
-        time: '2m ago',
-        read: false,
-    },
-    {
-        id: 2,
-        sender: {
-            name: 'Michael Chen',
-            avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        },
-        preview: 'Thanks for the information about the adoption...',
-        time: '1h ago',
-        read: true,
-    },
-]);
-
-// UI state
 const showNotifications = ref(false);
 const showMessages = ref(false);
+const isUserDropdownOpen = ref(false);
 
-// Toggle logic
+const messaging = computed(() => page.props.messaging as MessagingSummary | null);
+const messagePreviews = computed(() => messaging.value?.previews ?? []);
+const unreadMessages = computed(() => messaging.value?.unread_count ?? 0);
+
 const toggleNotifications = () => {
     showNotifications.value = !showNotifications.value;
-    if (showNotifications.value) showMessages.value = false;
+    if (showNotifications.value) {
+        showMessages.value = false;
+    }
 };
 
 const toggleMessages = () => {
     showMessages.value = !showMessages.value;
-    if (showMessages.value) showNotifications.value = false;
+    if (showMessages.value) {
+        showNotifications.value = false;
+    }
 };
 
-// Mark as read handlers
 const markNotificationAsRead = (id: number) => {
-    const n = notifications.value.find((n) => n.id === id);
-    if (n) n.read = true;
+    const n = notifications.value.find((x) => x.id === id);
+    if (n) {
+        n.read = true;
+    }
 };
 
 const markAllNotificationsAsRead = () => {
-    notifications.value.forEach((n) => (n.read = true));
+    notifications.value.forEach((n) => {
+        n.read = true;
+    });
 };
 
-const markMessageAsRead = (id: number) => {
-    const m = messages.value.find((m) => m.id === id);
-    if (m) m.read = true;
-};
-
-// Computed
-const user = computed(() => page.props.auth.user);
+const user = useAuthUser();
 const isLoggedIn = computed(() => !!user.value);
 const unreadNotifications = computed(
     () => notifications.value.filter((n) => !n.read).length,
 );
-const unreadMessages = computed(
-    () => messages.value.filter((m) => !m.read).length,
-);
 
-// Helpers
-const getInitials = (name: string | undefined) => {
-    if (!name) return 'U';
-    return name
-        .split(' ')
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase();
-};
-
-// Toggle user dropdown
 const toggleUserDropdown = () => {
     isUserDropdownOpen.value = !isUserDropdownOpen.value;
     if (isUserDropdownOpen.value) {
@@ -124,13 +86,17 @@ const toggleUserDropdown = () => {
     }
 };
 
-// Close menus on outside click
 const handleClickOutside = (e: MouseEvent) => {
     const target = e.target as Node;
-    if (!target.closest('.user-dropdown')) isUserDropdownOpen.value = false;
-    if (!target.closest('.notifications-container'))
+    if (!target.closest('.user-dropdown')) {
+        isUserDropdownOpen.value = false;
+    }
+    if (!target.closest('.notifications-container')) {
         showNotifications.value = false;
-    if (!target.closest('.messages-container')) showMessages.value = false;
+    }
+    if (!target.closest('.messages-container')) {
+        showMessages.value = false;
+    }
 };
 
 onMounted(() => document.addEventListener('click', handleClickOutside));
@@ -142,7 +108,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
         class="sticky top-0 z-50 border-b border-gray-200 bg-white/80 px-6 py-3 shadow-sm backdrop-blur-md transition-all dark:border-gray-700 dark:bg-gray-900/80"
     >
         <div class="mx-auto flex max-w-7xl items-center justify-between">
-            <!-- Logo -->
             <Link href="/" class="flex items-center gap-2.5">
                 <div
                     class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500"
@@ -154,7 +119,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 >
             </Link>
 
-            <!-- Search -->
             <div class="mx-8 hidden max-w-xl flex-1 md:block">
                 <div class="relative">
                     <svg
@@ -179,10 +143,9 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                 </div>
             </div>
 
-            <!-- Right side -->
             <div class="flex items-center gap-3">
-                <!-- Dark mode toggle -->
                 <button
+                    type="button"
                     @click="toggleDarkMode"
                     class="relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none"
                     :class="isDark ? 'bg-violet-600' : 'bg-gray-200'"
@@ -224,7 +187,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     </span>
                 </button>
 
-                <!-- If logged out -->
                 <template v-if="!isLoggedIn">
                     <Link
                         :href="route('login')"
@@ -238,9 +200,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                     >
                 </template>
 
-                <!-- If logged in -->
                 <template v-else>
-                    <!-- Notifications -->
                     <div class="notifications-container">
                         <NotificationsDropdown
                             :notifications="notifications"
@@ -252,18 +212,15 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
                         />
                     </div>
 
-                    <!-- Messages -->
                     <div class="messages-container">
                         <MessagesDropdown
-                            :messages="messages"
+                            :previews="messagePreviews"
                             :unread-count="unreadMessages"
                             :is-open="showMessages"
                             @toggle="toggleMessages"
-                            @mark-as-read="markMessageAsRead"
                         />
                     </div>
 
-                    <!-- User dropdown -->
                     <div class="user-dropdown">
                         <UserDropdown
                             :user="user"

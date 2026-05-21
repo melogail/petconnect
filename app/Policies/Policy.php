@@ -2,90 +2,42 @@
 
 namespace App\Policies;
 
-use App\Models\Admin;
 use App\Models\User;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Nova\Http\Requests\NovaRequest;
-use Laravel\Nova\Nova;
 
 abstract class Policy
 {
-
-    public function viewAny(Authenticatable $auth)
+    public function viewAny(User $user): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () {
-            return false;
-        });
+        return true;
     }
 
-    public function view($auth, $model)
+    public function view(User $user, $model): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth, $model) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () {
-            return false;
-        });
+        return true;
     }
 
-    public function create($auth)
+    public function create(User $user): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () {
-            return false;
-        });
+        return $user->isVerified();
     }
 
-    public function update($auth, $model)
+    public function update(User $user, $model): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth, $model) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () use ($auth, $model) {
-            return $auth->id === $model->user_id;
-        });
+        return $user->isVerified() && $user->id === $model->user_id;
     }
 
-    public function delete($auth, $model)
+    public function delete(User $user, $model): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth, $model) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () use ($auth, $model) {
-            return $auth->id === $model->user_id;
-        });
+        return $user->isVerified() && $user->id === $model->user_id;
     }
 
-    public function restore($auth, $model)
+    public function restore(User $user, $model): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth, $model) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () use ($auth, $model) {
-            return $auth->id === $model->user_id;
-        });
+        return $user->isVerified() && $user->id === $model->user_id;
     }
 
-    public function forceDelete($auth, $model)
+    public function forceDelete(User $user, $model): bool
     {
-        return Nova::whenServing(function (NovaRequest $request) use ($auth, $model) {
-            if ($auth instanceof Admin) {
-                return true;
-            }
-        }, function () use ($auth, $model) {
-            return $auth->id === $model->user_id;
-        });
+        return $user->isVerified() && $user->id === $model->user_id;
     }
-
 }

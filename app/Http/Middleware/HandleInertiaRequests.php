@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Resources\UserResource;
+use App\Services\MessagingInboxService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -43,13 +45,18 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'flash' => [
-                'error' => fn() => request()->session()->get('error'),
-                'success' => fn() => request()->session()->get('success'),
+                'error' => fn () => request()->session()->get('error'),
+                'success' => fn () => request()->session()->get('success'),
             ],
             'auth' => [
-                'user' => $request->user(),
+                'user' => fn () => $request->user()
+                    ? UserResource::make($request->user())
+                    : null,
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'messaging' => fn () => $request->user()
+                ? app(MessagingInboxService::class)->sharedPropsFor($request->user())
+                : null,
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

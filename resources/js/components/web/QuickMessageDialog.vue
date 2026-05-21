@@ -1,7 +1,7 @@
 <template>
     <Dialog v-model:open="isDialogOpen">
         <DialogTrigger as-child>
-            <slot></slot>
+            <slot />
         </DialogTrigger>
         <DialogContent class="sm:max-w-[500px]">
             <DialogHeader>
@@ -36,10 +36,10 @@
                     <Label for="message">Your Message</Label>
                     <Textarea
                         id="message"
-                        v-model="message"
+                        v-model="form.initial_message"
                         placeholder="Write your message here..."
                         class="min-h-[120px]"
-                        :disabled="isSubmitting"
+                        :disabled="form.processing"
                         required
                     />
                     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
@@ -49,23 +49,23 @@
                     <Button
                         type="button"
                         variant="outline"
-                        :disabled="isSubmitting"
+                        :disabled="form.processing"
                         @click="closeDialog"
                     >
                         Cancel
                     </Button>
                     <Button
                         type="submit"
-                        :disabled="!message.trim() || isSubmitting"
+                        :disabled="!form.initial_message.trim() || form.processing"
                         :class="[
                             'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90',
                             {
                                 'cursor-not-allowed opacity-75':
-                                    !message.trim() || isSubmitting,
+                                    !form.initial_message.trim() || form.processing,
                             },
                         ]"
                     >
-                        <span v-if="!isSubmitting">Send Message</span>
+                        <span v-if="!form.processing">Send Message</span>
                         <Loader2 v-else class="h-4 w-4 animate-spin" />
                     </Button>
                 </div>
@@ -75,8 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Loader2 } from 'lucide-vue-next';
+import { useForm } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
 import { Label } from '@/components/ui/label';
@@ -93,11 +95,14 @@ import { toast } from 'vue-sonner';
 
 interface Props {
     ownerName: string;
-    petName: string;
-    petId: string | number;
+    petName?: string;
+    otherUserId?: number | null;
+    open?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    petName: 'this listing',
+    otherUserId: null,
     open: false,
 });
 
@@ -106,11 +111,12 @@ const emit = defineEmits<{
     (e: 'message-sent'): void;
 }>();
 
-const message = ref('');
-const isSubmitting = ref(false);
 const error = ref('');
+const form = useForm({
+    other_user_id: props.otherUserId,
+    initial_message: '',
+});
 
-// Create a computed property to handle v-model binding
 const isDialogOpen = computed({
     get() {
         return props.open;
@@ -124,48 +130,45 @@ const closeDialog = () => {
     isDialogOpen.value = false;
 };
 
-const sendMessage = async () => {
-    if (!message.value.trim() || isSubmitting.value) return;
-
-    isSubmitting.value = true;
-    error.value = '';
-
-    try {
-        // In a real app, you would send this to your API
-        // const response = await axios.post(`/api/pets/${props.petId}/messages`, {
-        //   message: message.value.trim(),
-        //   petId: props.petId,
-        // });
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Show success toast
-        toast.success('Message sent!', {
-            description: 'Your message has been sent successfully.',
-        });
-
-        // Emit event
-        emit('message-sent');
-
-        // Reset form and close dialog
-        message.value = '';
-        closeDialog();
-    } catch (err: unknown) {
-        console.error('Error sending message:', err);
-
-        // Handle different error types
-        if (err instanceof Error) {
-            error.value = err.message;
-        } else {
-            error.value = 'Failed to send message. Please try again.';
+watch(
+    () => props.open,
+    (open) => {
+        if (open) {
+            error.value = '';
         }
+    },
+);
 
-        toast.error('Error', {
-            description: error.value,
-        });
-    } finally {
-        isSubmitting.value = false;
+const sendMessage = () => {
+    if (!form.initial_message.trim()) {
+        return;
     }
+
+    if (!props.otherUserId) {
+        error.value = 'Unable to start this conversation right now.';
+        return;
+    }
+
+    error.value = '';
+    form.transform((data) => ({
+        ...data,
+        other_user_id: props.otherUserId,
+        initial_message: data.initial_message.trim(),
+    })).post(route('conversations.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset('initial_message');
+            emit('message-sent');
+            closeDialog();
+            toast.success('Message sent.');
+        },
+        onError: (errors) => {
+            error.value = String(errors.initial_message ?? errors.other_user_id ?? 'Failed to send message.');
+            toast.error(error.value);
+        },
+        onFinish: () => {
+            form.transform((data) => data);
+        },
+    });
 };
 </script>

@@ -26,7 +26,7 @@ class ReviewResource extends JsonResource
                 'name' => $this->user->name,
                 'profile_image' => $this->user->getMedia('users')->filter(function (Media $media) {
                     return $media->getCustomProperty('profile_image') == true;
-                })->first()->getUrl() ?? null,
+                })->first()?->getUrl() ?? null,
             ],
             'can' => [
                 'update' => $request->user()?->can('update', $this->resource),

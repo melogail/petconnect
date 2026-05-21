@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'fuck',
+    'shit',
+    'bitch',
+    'cunt',
+    'dick',
+    'pussy',
+    'ass',
+    'fag',
+    'nigger',
+    'whore',
+    'slut',
+    'cock',
+    'penis',
+    'vagina',
+    'anus',
+    'rectum',
+    'rectal',
+    'anal',
+    'anal sex',
+    'anal penetration',
+    'anal intercourse',
+    'cum',
+    'faggot',
+];

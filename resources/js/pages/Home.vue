@@ -14,10 +14,16 @@ import {
 } from '@/components/ui/sheet';
 import Filter from '@/components/web/Filter.vue';
 import { route } from 'ziggy-js';
+import { useInertiaInfiniteScroll } from '@/composables/useInertiaInfiniteScroll';
+import InfiniteScroll from '@/components/web/InfiniteScroll.vue';
+import { useAuthUser } from '@/composables/useAuthUser';
 
-const props = defineProps({
-    pets: Object,
-});
+const user = useAuthUser();
+const props = defineProps<{
+    pets: any;
+}>();
+
+const { items: allPets, nextUrl, isLoading, loadMore } = useInertiaInfiniteScroll<any>(props.pets, 'pets');
 </script>
 
 <template>
@@ -52,6 +58,7 @@ const props = defineProps({
                         Discover Pets
                     </h2>
                     <Link
+                     v-if="user?.email_verified_at"
                         :href="route('pets.create')"
                         :class="
                             cn(
@@ -67,17 +74,28 @@ const props = defineProps({
                 <section
                     class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                 >
-                    <div v-if="pets.data.length > 0">
+                    <template v-if="allPets.length > 0">
                         <PetCard
-                            v-for="(pet, index) in pets.data"
+                            v-for="(pet, index) in allPets"
                             :key="index"
                             :pet="pet"
                         />
-                    </div>
-                    <div v-else>
+                    </template>
+                    <div
+                        v-else
+                        class="col-span-full py-12 text-center text-gray-500"
+                    >
                         <p>No pets found</p>
                     </div>
                 </section>
+                
+                <!-- Infinite Scroll Component -->
+                <InfiniteScroll
+                    v-if="allPets.length > 0"
+                    :has-more="!!nextUrl"
+                    :is-loading="isLoading"
+                    @load-more="loadMore"
+                />
             </div>
         </div>
     </MainLayout>

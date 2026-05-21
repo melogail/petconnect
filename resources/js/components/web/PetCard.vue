@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { useAuthUser } from '@/composables/useAuthUser';
 import {
     HeartCrack,
     Syringe,
@@ -17,6 +19,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+const user = useAuthUser();
 
 // Define props
 const props = defineProps({
@@ -189,6 +193,7 @@ onUnmounted(() => {
 
             <!-- Favorite Button with Animation -->
             <button
+                v-if="user?.email_verified_at"
                 class="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:bg-gray-800/80 dark:hover:bg-gray-700/90"
                 :aria-pressed="pet.isFavorite"
                 :aria-label="
@@ -766,10 +771,11 @@ onUnmounted(() => {
             <div class="mt-5 flex items-center gap-2">
                 <!-- Quick Message Dialog Trigger -->
                 <QuickMessageDialog
+                    v-if="user?.email_verified_at"
                     v-model:open="showMessageDialog"
                     :owner-name="pet.ownerName || 'the owner'"
                     :pet-name="pet.name"
-                    :pet-id="pet.id"
+                    :other-user-id="pet.user_id ?? pet.user?.id ?? null"
                     @message-sent="handleMessageSent"
                 >
                     <TooltipProvider>
@@ -811,12 +817,12 @@ onUnmounted(() => {
                 </QuickMessageDialog>
 
                 <!-- View Details Button -->
-                <button
-                    @click="$emit('view-details')"
-                    class="h-12 flex-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                <Link
+                    :href="route('pets.show', pet.id)"
+                    class="flex h-12 flex-1 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                 >
                     View Details
-                </button>
+                </Link>
             </div>
         </div>
     </article>
