@@ -56,12 +56,15 @@
                     </Button>
                     <Button
                         type="submit"
-                        :disabled="!form.initial_message.trim() || form.processing"
+                        :disabled="
+                            !form.initial_message.trim() || form.processing
+                        "
                         :class="[
                             'bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:opacity-90',
                             {
                                 'cursor-not-allowed opacity-75':
-                                    !form.initial_message.trim() || form.processing,
+                                    !form.initial_message.trim() ||
+                                    form.processing,
                             },
                         ]"
                     >
@@ -163,7 +166,11 @@ const sendMessage = () => {
             toast.success('Message sent.');
         },
         onError: (errors) => {
-            error.value = String(errors.initial_message ?? errors.other_user_id ?? 'Failed to send message.');
+            error.value = String(
+                errors.initial_message ??
+                    errors.other_user_id ??
+                    'Failed to send message.',
+            );
             toast.error(error.value);
         },
         onFinish: () => {

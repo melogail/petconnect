@@ -49,7 +49,10 @@ export interface MessagingConversation {
 export interface MessagingMessage {
     id: number;
     sender_id: number;
-    conversation?: Pick<MessagingConversation, 'id' | 'type' | 'last_message_at'> | null;
+    conversation?: Pick<
+        MessagingConversation,
+        'id' | 'type' | 'last_message_at'
+    > | null;
     sender?: User | null;
     pinned_by?: User | null;
     content: string;

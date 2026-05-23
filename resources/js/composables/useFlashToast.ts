@@ -34,7 +34,9 @@ export function showFlashFromPageProps(pageProps: PageProps | undefined): void {
  * Listens for completed Inertia visits and shows flash from the new page props.
  * Must be registered once at app bootstrap (after the plugin is installed).
  */
-export function registerInertiaFlashListeners(initialPageProps: PageProps | undefined): void {
+export function registerInertiaFlashListeners(
+    initialPageProps: PageProps | undefined,
+): void {
     showFlashFromPageProps(initialPageProps);
 
     router.on('success', (event) => {

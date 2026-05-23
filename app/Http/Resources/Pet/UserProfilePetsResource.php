@@ -31,6 +31,10 @@ class UserProfilePetsResource extends JsonResource
             'status' => $this->status,
             'created_at' => $this->created_at->diffForHumans(),
             'views' => $this->views,
+            'can' => [
+                'update' => $request->user()?->can('update', $this->resource),
+                'delete' => $request->user()?->can('delete', $this->resource),
+            ],
         ];
     }
 }

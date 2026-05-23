@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { MessageSquare } from 'lucide-vue-next';
+import { MessageSquareDashed } from 'lucide-vue-next';
 </script>
 
 <template>
     <div
-        class="rounded-2xl border border-dashed border-gray-200 bg-gray-50/80 py-16 text-center dark:border-gray-700 dark:bg-gray-900/40"
+        class="border-border bg-muted/30 flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center"
     >
-        <MessageSquare class="mx-auto mb-3 h-12 w-12 text-gray-300 dark:text-gray-600" />
-        <p class="text-gray-600 dark:text-gray-400">No conversations yet</p>
-        <p class="mt-1 text-sm text-gray-500">
+        <div
+            class="bg-muted mb-4 flex h-16 w-16 items-center justify-center rounded-full"
+        >
+            <MessageSquareDashed class="text-muted-foreground h-8 w-8" />
+        </div>
+        <h3 class="text-foreground text-base font-semibold">
+            No conversations yet
+        </h3>
+        <p class="text-muted-foreground mt-1 max-w-xs text-sm">
             Message someone from a pet listing or profile to start chatting.
         </p>
     </div>

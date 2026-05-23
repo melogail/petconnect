@@ -21,6 +21,8 @@ class ReviewResource extends JsonResource
             'comment' => $this->comment,
             'created_at' => $this->created_at->diffForHumans(),
             'is_owner' => $this->user_id === $request->user()?->id,
+            'has_reported_by_current_user' => $request->user() !== null
+                && (bool) ($this->has_reported_by_current_user ?? false),
             'user' => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,

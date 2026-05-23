@@ -33,7 +33,7 @@ class StorePetRequest extends FormRequest
             'description' => ['required', 'string'],
             'listing_type' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\ListingType::class)],
             'price' => ['required_if:listing_type,2', 'nullable', 'numeric', 'min:0'],
-            'status' => ['required', 'string', 'in:available,sold,adopted'],
+            'status' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\PetStatus::class)],
 
             // Location
             'location.address' => ['nullable', 'string'],

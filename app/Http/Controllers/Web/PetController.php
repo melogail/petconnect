@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Enums\ListingType;
+use App\Enums\ReportReason;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
@@ -64,12 +65,19 @@ class PetController extends Controller
             'breed',
             'comments' => fn ($query) => $query
                 ->whereNull('parent_id')
-                ->with(['user', 'replies.user'])
+                ->with([
+                    'user',
+                    'replies' => fn ($replyQuery) => $replyQuery
+                        ->with('user')
+                        ->withReportedByCurrentUser(),
+                ])
+                ->withReportedByCurrentUser()
                 ->latest(),
         ]);
 
         return inertia('pet/Show', [
             'pet' => PetDetailResource::make($pet),
+            'reportReasons' => ReportReason::options(),
         ]);
     }
 
@@ -106,5 +114,13 @@ class PetController extends Controller
         $this->petService->deletePet($pet->id);
 
         return redirect()->route('home')->with('success', 'Pet listing removed successfully');
+    }
+
+    public function toggleStatus(Pet $pet): RedirectResponse
+    {
+        $this->authorize('update', $pet);
+        $this->petService->toggleStatus($pet->id);
+
+        return back()->with('success', 'Pet status updated successfully');
     }
 }

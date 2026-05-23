@@ -21,9 +21,15 @@ import { useAuthUser } from '@/composables/useAuthUser';
 const user = useAuthUser();
 const props = defineProps<{
     pets: any;
+    reportReasons: Array<{ value: string; label: string }>;
 }>();
 
-const { items: allPets, nextUrl, isLoading, loadMore } = useInertiaInfiniteScroll<any>(props.pets, 'pets');
+const {
+    items: allPets,
+    nextUrl,
+    isLoading,
+    loadMore,
+} = useInertiaInfiniteScroll<any>(props.pets, 'pets');
 </script>
 
 <template>
@@ -58,7 +64,7 @@ const { items: allPets, nextUrl, isLoading, loadMore } = useInertiaInfiniteScrol
                         Discover Pets
                     </h2>
                     <Link
-                     v-if="user?.email_verified_at"
+                        v-if="user?.email_verified_at"
                         :href="route('pets.create')"
                         :class="
                             cn(
@@ -79,6 +85,7 @@ const { items: allPets, nextUrl, isLoading, loadMore } = useInertiaInfiniteScrol
                             v-for="(pet, index) in allPets"
                             :key="index"
                             :pet="pet"
+                            :report-reasons="reportReasons"
                         />
                     </template>
                     <div
@@ -88,7 +95,7 @@ const { items: allPets, nextUrl, isLoading, loadMore } = useInertiaInfiniteScrol
                         <p>No pets found</p>
                     </div>
                 </section>
-                
+
                 <!-- Infinite Scroll Component -->
                 <InfiniteScroll
                     v-if="allPets.length > 0"

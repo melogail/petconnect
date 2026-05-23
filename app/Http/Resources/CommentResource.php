@@ -22,6 +22,8 @@ class CommentResource extends JsonResource
             'replies' => $this->whenLoaded('replies', function () {
                 return CommentResource::collection($this->replies);
             }),
+            'has_reported_by_current_user' => $request->user() !== null
+                && (bool) ($this->has_reported_by_current_user ?? false),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

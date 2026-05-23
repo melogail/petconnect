@@ -95,10 +95,16 @@ const emit = defineEmits(['toggle']);
                         <Link
                             v-for="item in previews"
                             :key="item.conversation_id"
-                            :href="route('conversations.show', item.conversation_id)"
+                            :href="
+                                route(
+                                    'conversations.show',
+                                    item.conversation_id,
+                                )
+                            "
                             class="group relative block border-b border-gray-100 px-4 py-3 transition-colors duration-150 hover:bg-gray-50 dark:border-gray-700/50 dark:hover:bg-gray-700/50"
                             :class="{
-                                'bg-violet-50 dark:bg-violet-900/20': item.unread,
+                                'bg-violet-50 dark:bg-violet-900/20':
+                                    item.unread,
                             }"
                             @click="emit('toggle')"
                         >
@@ -141,7 +147,13 @@ const emit = defineEmits(['toggle']);
                                         class="truncate text-sm text-gray-600 dark:text-gray-300"
                                         :class="{ 'font-medium': item.unread }"
                                     >
-                                        {{ messagePreview(item.preview, item.sender_id === currentUserId) }}
+                                        {{
+                                            messagePreview(
+                                                item.preview,
+                                                item.sender_id ===
+                                                    currentUserId,
+                                            )
+                                        }}
                                     </p>
                                 </div>
                             </div>

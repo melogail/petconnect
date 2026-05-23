@@ -13,18 +13,20 @@ defineProps<{
 <template>
     <div>
         <!-- Pet Name Welcome -->
-        <h2 class="mb-4 text-xl font-bold text-foreground">
+        <h2 class="text-foreground mb-4 text-xl font-bold">
             Meet {{ petDetails.name.split(' ')[0] }}!
         </h2>
 
         <!-- Description -->
-        <p class="mb-6 leading-relaxed text-muted-foreground">
+        <p class="text-muted-foreground mb-6 leading-relaxed">
             {{ petDetails.description }}
         </p>
 
         <!-- Personality Traits -->
         <div v-if="petDetails.traits && petDetails.traits.length > 0">
-            <h4 class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <h4
+                class="text-muted-foreground mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest"
+            >
                 <Shield class="h-4 w-4 text-primary" />
                 Personality Traits
             </h4>

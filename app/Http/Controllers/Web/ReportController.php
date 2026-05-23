@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\CreateReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReportRequest;
-use App\Actions\CreateReport;
 
 class ReportController extends Controller
 {
@@ -14,7 +14,7 @@ class ReportController extends Controller
     public function __invoke(StoreReportRequest $storeReportRequest, CreateReport $createReport)
     {
 
-        $report = $$createReport->execute($storeReportRequest->validated());
+        $report = $createReport->handle($storeReportRequest->validated());
 
         return back()->with('success', 'Report submitted successfully');
     }

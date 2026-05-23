@@ -17,18 +17,25 @@ import PetHealthInfo from '@/components/pet/show/PetHealthInfo.vue';
 import PetComments from '@/components/pet/show/PetComments.vue';
 import PetOwnerCard from '@/components/pet/show/PetOwnerCard.vue';
 import QuickMessageDialog from '@/components/web/QuickMessageDialog.vue';
-import ReportDialog from '@/components/web/ReportDialog.vue';
 import { useAuthUser } from '@/composables/useAuthUser';
 
-const props = defineProps({
-    pet: { type: Object, required: true },
-});
+interface ReportReasonOption {
+    value: string;
+    label: string;
+}
+
+const props = defineProps<{
+    pet: Record<string, unknown>;
+    reportReasons?: ReportReasonOption[];
+}>();
 
 const petData = computed(() => props.pet.data || props.pet);
 const user = useAuthUser();
 
 const showMessageDialog = ref(false);
-const ownerUserId = computed(() => petData.value.user?.id as number | undefined);
+const ownerUserId = computed(
+    () => petData.value.user?.id as number | undefined,
+);
 
 const showContact = computed(
     () =>
@@ -37,36 +44,28 @@ const showContact = computed(
         user.value.id !== ownerUserId.value,
 );
 
-// Report dialog
-const reportDialogOpen = ref(false);
-const reportContentType = ref('');
-const reportContentId = ref<string | number | null>(null);
-
-const closeReportDialog = () => {
-    reportDialogOpen.value = false;
-    reportContentType.value = '';
-    reportContentId.value = null;
-};
-
-const handleReportSubmit = (reportData: any) => {
-    console.log('Report submitted:', reportData);
-    alert('Thank you for your report. We will review it shortly.');
-    closeReportDialog();
-};
-
 // ─── Computed Data ──────────────────────────────────────────
-const listingTypeLabels: Record<number, string> = { 1: 'Adoption', 2: 'Sale', 3: 'Mating' };
+const listingTypeLabels: Record<number, string> = {
+    1: 'Adoption',
+    2: 'Sale',
+    3: 'Mating',
+};
 
 const getAdditionalInfoValue = (key: string): string | null => {
     const info = petData.value.additional_info || [];
     if (!Array.isArray(info)) return null;
-    const item = info.find((i: { key?: string }) => i?.key && String(i.key).toLowerCase() === key.toLowerCase());
+    const item = info.find(
+        (i: { key?: string }) =>
+            i?.key && String(i.key).toLowerCase() === key.toLowerCase(),
+    );
     return item?.value ?? null;
 };
 
 const petDetails = computed(() => {
     const data = petData.value;
-    const additionalInfo = Array.isArray(data.additional_info) ? data.additional_info : [];
+    const additionalInfo = Array.isArray(data.additional_info)
+        ? data.additional_info
+        : [];
     return {
         name: data.name || 'Unknown Pet',
         breed: data.breed?.name || 'Unknown Breed',
@@ -74,9 +73,14 @@ const petDetails = computed(() => {
         gender: data.gender || 'Unknown',
         vaccinated: data.vaccinated ?? false,
         spayedNeutered: data.spayed_neutered ?? false,
-        description: data.description || 'No description available for this pet.',
+        description:
+            data.description || 'No description available for this pet.',
         listing_type: data.listing_type,
-        listing_type_label: listingTypeLabels[data.listing_type] || (typeof data.listing_type === 'string' ? data.listing_type : 'Adoption'),
+        listing_type_label:
+            listingTypeLabels[data.listing_type] ||
+            (typeof data.listing_type === 'string'
+                ? data.listing_type
+                : 'Adoption'),
         city: data.city,
         state: data.state,
         price: data.price,
@@ -108,13 +112,16 @@ const petDetails = computed(() => {
 });
 
 const filteredAdditionalInfo = computed(() => {
-    return (petDetails.value.additional_info || []).filter((i: { key?: string; value?: string }) => i?.key && i?.value);
+    return (petDetails.value.additional_info || []).filter(
+        (i: { key?: string; value?: string }) => i?.key && i?.value,
+    );
 });
 
 const carouselImages = computed(() => {
     const data = petData.value;
     const images = data.images?.map((img: any) => img.url) || [];
-    if (images.length === 0 && data.feature_image) images.push(data.feature_image);
+    if (images.length === 0 && data.feature_image)
+        images.push(data.feature_image);
     return images;
 });
 
@@ -123,25 +130,40 @@ const owner = computed(() => {
     return {
         id: user.id,
         name: user.name || 'Unknown User',
-        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}`,
-        location: user.city && user.state ? `${user.city}, ${user.state}` : (user.country || 'Location unknown'),
-        memberSince: user.created_at ? new Date(user.created_at).getFullYear().toString() : '2023',
+        avatar:
+            user.avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}`,
+        location:
+            user.city && user.state
+                ? `${user.city}, ${user.state}`
+                : user.country || 'Location unknown',
+        memberSince: user.created_at
+            ? new Date(user.created_at).getFullYear().toString()
+            : '2023',
         rating: user.rating ? Number(parseFloat(user.rating).toFixed(1)) : 5.0,
         verified: true,
         phone: user.phone || null,
     };
 });
 
-const hasLocation = computed(() =>
-    petDetails.value.address || petDetails.value.city || petDetails.value.state || petDetails.value.country
+const hasLocation = computed(
+    () =>
+        petDetails.value.address ||
+        petDetails.value.city ||
+        petDetails.value.state ||
+        petDetails.value.country,
 );
 
-const hasHealthInfo = computed(() =>
-    petDetails.value.health_status || petDetails.value.special_needs || petDetails.value.last_vet_visit
-    || petDetails.value.vet_name || petDetails.value.vet_phone
-    || petDetails.value.vaccinations?.length > 0
-    || petDetails.value.medications?.length > 0
-    || petDetails.value.allergies?.length > 0
+const hasHealthInfo = computed(
+    () =>
+        petDetails.value.health_status ||
+        petDetails.value.special_needs ||
+        petDetails.value.last_vet_visit ||
+        petDetails.value.vet_name ||
+        petDetails.value.vet_phone ||
+        petDetails.value.vaccinations?.length > 0 ||
+        petDetails.value.medications?.length > 0 ||
+        petDetails.value.allergies?.length > 0,
 );
 </script>
 
@@ -152,7 +174,7 @@ const hasHealthInfo = computed(() =>
             <div class="mb-6">
                 <Link
                     :href="route('home')"
-                    class="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
                 >
                     <ArrowLeft class="h-4 w-4" />
                     Back to Pets
@@ -178,7 +200,9 @@ const hasHealthInfo = computed(() =>
                     />
 
                     <!-- Main Details Card -->
-                    <div class="mb-6 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm">
+                    <div
+                        class="border-border/50 bg-card mb-6 overflow-hidden rounded-2xl border shadow-sm"
+                    >
                         <div class="p-6">
                             <!-- Stats Grid -->
                             <PetStats :pet-details="petDetails" />
@@ -187,7 +211,7 @@ const hasHealthInfo = computed(() =>
                             <PetListingInfo :pet-details="petDetails" />
 
                             <!-- Divider -->
-                            <div class="mb-6 border-t border-border/50" />
+                            <div class="border-border/50 mb-6 border-t" />
 
                             <!-- About -->
                             <div class="mb-6">
@@ -206,17 +230,29 @@ const hasHealthInfo = computed(() =>
 
                             <!-- Additional Info -->
                             <div v-if="filteredAdditionalInfo.length > 0">
-                                <h4 class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                                <h4
+                                    class="text-muted-foreground mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest"
+                                >
                                     Additional Information
                                 </h4>
-                                <dl class="grid gap-2 rounded-xl border border-border/50 bg-muted/10 p-4 sm:grid-cols-2">
+                                <dl
+                                    class="border-border/50 bg-muted/10 grid gap-2 rounded-xl border p-4 sm:grid-cols-2"
+                                >
                                     <div
-                                        v-for="(item, idx) in filteredAdditionalInfo"
+                                        v-for="(
+                                            item, idx
+                                        ) in filteredAdditionalInfo"
                                         :key="idx"
                                         class="flex flex-col"
                                     >
-                                        <dt class="text-xs text-muted-foreground">{{ item.key }}</dt>
-                                        <dd class="mt-0.5 font-medium text-sm">{{ item.value }}</dd>
+                                        <dt
+                                            class="text-muted-foreground text-xs"
+                                        >
+                                            {{ item.key }}
+                                        </dt>
+                                        <dd class="mt-0.5 text-sm font-medium">
+                                            {{ item.value }}
+                                        </dd>
                                     </div>
                                 </dl>
                             </div>
@@ -228,6 +264,7 @@ const hasHealthInfo = computed(() =>
                         :current-user="user"
                         :commentable-id="petData.id"
                         commentable-type="pet"
+                        :report-reasons="reportReasons ?? []"
                     />
                 </div>
 
@@ -244,7 +281,9 @@ const hasHealthInfo = computed(() =>
                         <!-- Safety Tips -->
                         <Card class="border-border/50">
                             <CardHeader class="pb-3">
-                                <CardTitle class="text-base">Safety Tips</CardTitle>
+                                <CardTitle class="text-base"
+                                    >Safety Tips</CardTitle
+                                >
                             </CardHeader>
                             <CardContent>
                                 <ul class="space-y-2.5">
@@ -258,7 +297,9 @@ const hasHealthInfo = computed(() =>
                                         :key="tip"
                                         class="flex items-start gap-2.5"
                                     >
-                                        <CheckCircle2 class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                                        <CheckCircle2
+                                            class="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                                        />
                                         <span class="text-sm">{{ tip }}</span>
                                     </li>
                                 </ul>
@@ -268,15 +309,6 @@ const hasHealthInfo = computed(() =>
                 </div>
             </div>
         </div>
-
-        <!-- Report Dialog -->
-        <ReportDialog
-            :is-open="reportDialogOpen"
-            :content-type="reportContentType"
-            :content-id="reportContentId"
-            @close="closeReportDialog"
-            @submit="handleReportSubmit"
-        />
 
         <QuickMessageDialog
             v-model:open="showMessageDialog"

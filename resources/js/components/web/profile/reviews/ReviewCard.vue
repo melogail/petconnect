@@ -9,6 +9,12 @@ import {
     AlertTriangle,
 } from 'lucide-vue-next';
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -97,36 +103,62 @@ const handleReport = () => {
             </div>
 
             <!-- Actions Dropdown -->
-            <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        class="h-8 w-8 rounded-full"
-                    >
-                        <MoreVertical class="h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <template v-if="review.is_owner">
-                        <DropdownMenuItem @click="isEditOpen = true">
-                            <Edit2 class="mr-2 h-4 w-4" />
-                            Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            @click="isDeleteOpen = true"
-                            class="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+            <div class="flex items-center gap-1">
+                <TooltipProvider
+                    v-if="
+                        !review.is_owner && review.has_reported_by_current_user
+                    "
+                >
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <span
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-600 dark:text-amber-400"
+                                aria-label="Already reported"
+                            >
+                                <Flag class="h-4 w-4 fill-current" />
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>You have already reported this review</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <DropdownMenu
+                    v-if="
+                        review.is_owner || !review.has_reported_by_current_user
+                    "
+                >
+                    <DropdownMenuTrigger as-child>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            class="h-8 w-8 rounded-full"
                         >
-                            <Trash2 class="mr-2 h-4 w-4" />
-                            Delete
+                            <MoreVertical class="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <template v-if="review.is_owner">
+                            <DropdownMenuItem @click="isEditOpen = true">
+                                <Edit2 class="mr-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                @click="isDeleteOpen = true"
+                                class="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                            >
+                                <Trash2 class="mr-2 h-4 w-4" />
+                                Delete
+                            </DropdownMenuItem>
+                        </template>
+                        <DropdownMenuItem v-else @click="handleReport">
+                            <Flag class="mr-2 h-4 w-4" />
+                            Report Abuse
                         </DropdownMenuItem>
-                    </template>
-                    <DropdownMenuItem v-else @click="handleReport">
-                        <Flag class="mr-2 h-4 w-4" />
-                        Report Abuse
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
 
         <div class="mt-4 flex items-center">

@@ -1,18 +1,43 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { AlertCircle, Eye, EyeOff } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
+import { AlertCircle, Eye, EyeOff, TriangleAlert } from 'lucide-vue-next';
 import { ref } from 'vue';
 
-defineProps({
-    form: Object,
-});
+const props = defineProps<{
+    form: Record<string, any>;
+    userId: number;
+}>();
 
 const showCurrentPassword = ref(false);
 const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
+
+const isDeleteDialogOpen = ref(false);
+const isDeleting = ref(false);
+
+const confirmDelete = () => {
+    isDeleting.value = true;
+    router.delete(route('profile.destroy', { user: props.userId }), {
+        onFinish: () => {
+            isDeleting.value = false;
+            isDeleteDialogOpen.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -179,5 +204,83 @@ const showConfirmPassword = ref(false);
                 </div>
             </div>
         </div>
+
+        <!-- Danger Zone -->
+        <Separator class="my-6" />
+
+        <div
+            class="rounded-xl border-2 border-red-300 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/30"
+        >
+            <div class="mb-4 flex items-center gap-2">
+                <TriangleAlert class="h-5 w-5 text-red-600 dark:text-red-400" />
+                <h3
+                    class="text-base font-semibold text-red-700 dark:text-red-400"
+                >
+                    Danger Zone
+                </h3>
+            </div>
+
+            <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                    <p
+                        class="text-sm font-medium text-red-800 dark:text-red-300"
+                    >
+                        Delete Account
+                    </p>
+                    <p class="text-sm text-red-600 dark:text-red-400">
+                        Permanently delete your account and all associated data.
+                        This action cannot be undone.
+                    </p>
+                </div>
+                <Button
+                    type="button"
+                    variant="destructive"
+                    class="shrink-0"
+                    @click="isDeleteDialogOpen = true"
+                >
+                    Delete Account
+                </Button>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Dialog -->
+        <Dialog v-model:open="isDeleteDialogOpen">
+            <DialogContent class="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle
+                        class="flex items-center gap-2 text-red-600 dark:text-red-400"
+                    >
+                        <TriangleAlert class="h-5 w-5" />
+                        Delete Account
+                    </DialogTitle>
+                    <DialogDescription>
+                        This will permanently delete your account, all your pet
+                        listings, messages, reviews, and any other data
+                        associated with your profile. This action
+                        <strong>cannot be undone</strong>.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <DialogFooter class="gap-2 sm:gap-0">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="isDeleteDialogOpen = false"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        :disabled="isDeleting"
+                        @click="confirmDelete"
+                    >
+                        {{
+                            isDeleting ? 'Deleting…' : 'Yes, delete my account'
+                        }}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

@@ -3,16 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\UpdateUserProfileAction;
+use App\Enums\ReportReason;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\ProfileResource;
 use App\Models\User;
-use App\Enums\ReportReason;
-use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
-
     public function __construct(
         protected UpdateUserProfileAction $updateUserProfileAction,
     ) {
@@ -25,7 +23,12 @@ class ProfileController extends Controller
     public function show(User $user)
     {
         return inertia('profile/Show', [
-            'user' => ProfileResource::make($user->load(['pets', 'reviews.user'])),
+            'user' => ProfileResource::make($user->load([
+                'pets',
+                'reviews' => fn ($query) => $query
+                    ->with('user')
+                    ->withReportedByCurrentUser(),
+            ])),
             'reportReasons' => ReportReason::options(),
         ]);
     }
@@ -38,7 +41,7 @@ class ProfileController extends Controller
         $this->authorize('update', $user);
 
         return inertia('profile/Edit', [
-            'user' => ProfileResource::make($user->load('media'))
+            'user' => ProfileResource::make($user->load('media')),
         ]);
     }
 
@@ -59,8 +62,9 @@ class ProfileController extends Controller
      */
     public function destroy(User $user)
     {
+        $this->authorize('delete', $user);
+
         $user->delete();
-        // destroy the session
         auth()->logout();
 
         // TODO::Send an email to verify the account deletion.

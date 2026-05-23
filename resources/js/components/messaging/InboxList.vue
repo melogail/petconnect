@@ -13,8 +13,12 @@ defineProps<{
 
     <ul
         v-else
-        class="divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800"
+        class="border-border bg-card divide-border divide-y overflow-hidden rounded-2xl border shadow-sm"
     >
-        <InboxListItem v-for="row in inbox" :key="row.conversation.id" :row="row" />
+        <InboxListItem
+            v-for="row in inbox"
+            :key="row.conversation.id"
+            :row="row"
+        />
     </ul>
 </template>

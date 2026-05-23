@@ -3,13 +3,14 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useAuthUser } from '@/composables/useAuthUser';
 import {
-    HeartCrack,
-    Syringe,
-    Share2,
-    Heart,
+    CheckCircle2,
     Copy,
+    Heart,
+    HeartCrack,
     Mail,
     MessageCircle,
+    Share2,
+    Syringe,
 } from 'lucide-vue-next';
 import CommentsDialog from './CommentsDialog.vue';
 import QuickMessageDialog from './QuickMessageDialog.vue';
@@ -31,6 +32,10 @@ const props = defineProps({
     user: {
         type: Object,
         default: null,
+    },
+    reportReasons: {
+        type: Array,
+        default: () => [],
     },
 });
 
@@ -120,20 +125,17 @@ const toggleFavorite = () => {
 };
 
 // Event handlers
-const handleCommentAdded = (comment) => {
+const handleCommentAdded = () => {
     if (props.pet) {
-        if (!props.pet.comments) {
-            props.pet.comments = 0;
-        }
-        props.pet.comments++;
-        emit('comment-added', comment);
+        props.pet.commentsCount = (props.pet.commentsCount || 0) + 1;
+        emit('comment-added');
     }
 };
 
-const handleCommentDeleted = (commentId) => {
-    if (props.pet?.comments > 0) {
-        props.pet.comments--;
-        emit('comment-deleted', commentId);
+const handleCommentDeleted = () => {
+    if (props.pet?.commentsCount > 0) {
+        props.pet.commentsCount -= 1;
+        emit('comment-deleted');
     }
 };
 
@@ -162,7 +164,12 @@ onUnmounted(() => {
 
 <template>
     <article
-        class="pet-card group relative w-full max-w-[320px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary-400/50 hover:shadow-xl hover:shadow-primary-100 dark:border-gray-700/60 dark:bg-gray-800/80 dark:hover:border-primary-500/50 dark:hover:shadow-primary-900/20"
+        :class="[
+            'pet-card group relative w-full max-w-[320px] overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800/80',
+            pet.isOwnedByCurrentUser
+                ? 'border-emerald-300/70 shadow-emerald-100 hover:border-emerald-400/80 hover:shadow-emerald-200/80 dark:border-emerald-700/60 dark:shadow-emerald-950/60 dark:hover:border-emerald-600/70'
+                : 'border-gray-200 hover:border-primary-400/50 hover:shadow-primary-100 dark:border-gray-700/60 dark:hover:border-primary-500/50 dark:hover:shadow-primary-900/20',
+        ]"
         itemscope
         itemtype="https://schema.org/Pet"
     >
@@ -191,9 +198,35 @@ onUnmounted(() => {
 
             <!-- Overlay -->
 
-            <!-- Favorite Button with Animation -->
+            <!-- My Listing Badge (top-left, owner only) -->
+            <div
+                v-if="pet.isOwnedByCurrentUser"
+                class="group/badge absolute left-4 top-4 z-10"
+            >
+                <div class="relative">
+                    <!-- Animated background glow -->
+                    <div
+                        class="absolute -inset-1 animate-pulse rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 opacity-75 blur transition-all duration-500 group-hover/badge:animate-none group-hover/badge:opacity-100"
+                    ></div>
+                    <!-- Main badge -->
+                    <div
+                        class="relative flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover/badge:scale-105 group-hover/badge:shadow-emerald-500/50 group-hover/badge:shadow-xl"
+                    >
+                        <CheckCircle2 class="h-3 w-3 shrink-0" />
+                        <span class="tracking-wide text-white/95">My Listing</span>
+                        <!-- Shine sweep on hover -->
+                        <span class="absolute inset-0 overflow-hidden rounded-full">
+                            <span
+                                class="absolute left-0 top-0 h-full w-1/2 -translate-x-full -skew-x-12 transform bg-white/20 transition-transform duration-500 ease-in-out group-hover/badge:translate-x-full"
+                            ></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Favorite Button with Animation (hidden for own pets) -->
             <button
-                v-if="user?.email_verified_at"
+                v-if="user?.email_verified_at && !pet.isOwnedByCurrentUser"
                 class="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:bg-gray-800/80 dark:hover:bg-gray-700/90"
                 :aria-pressed="pet.isFavorite"
                 :aria-label="
@@ -602,7 +635,9 @@ onUnmounted(() => {
                         :pet-id="pet.id"
                         :pet-name="pet.name"
                         :comments-count="pet.commentsCount || 0"
-                        :current-user-id="user?.id"
+                        :initial-comments="pet.comments || []"
+                        :current-user="user"
+                        :report-reasons="reportReasons"
                         @comment-added="handleCommentAdded"
                         @comment-deleted="handleCommentDeleted"
                     >
@@ -771,7 +806,7 @@ onUnmounted(() => {
             <div class="mt-5 flex items-center gap-2">
                 <!-- Quick Message Dialog Trigger -->
                 <QuickMessageDialog
-                    v-if="user?.email_verified_at"
+                    v-if="user?.email_verified_at && !pet.isOwnedByCurrentUser"
                     v-model:open="showMessageDialog"
                     :owner-name="pet.ownerName || 'the owner'"
                     :pet-name="pet.name"

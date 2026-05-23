@@ -91,7 +91,9 @@
                 </div>
 
                 <!-- Right Column: Navigation Links -->
-                <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-end">
+                <div
+                    class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-end"
+                >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"

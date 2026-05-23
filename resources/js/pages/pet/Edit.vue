@@ -102,10 +102,11 @@ const form = useForm({
     weight: petData.value.weight || '',
     gender: petData.value.gender || '',
     description: petData.value.description || '',
-    listing_type: petData.value.listing_type || (props.listingTypes[0]?.value || 1),
+    listing_type:
+        petData.value.listing_type || props.listingTypes[0]?.value || 1,
     price: petData.value.price || '',
     status: petData.value.status || 'available',
-    
+
     // Flatten location
     location: {
         address: petData.value.address || '',
@@ -119,15 +120,16 @@ const form = useForm({
             lng: petData.value.longitude || 0,
         },
     },
-    
+
     // Images
     images: [] as File[],
-    imagePreviews: petData.value.images?.map((img: any) => img.url) || [] as string[],
+    imagePreviews:
+        petData.value.images?.map((img: any) => img.url) || ([] as string[]),
     existingImages: petData.value.images || [],
     deletedMediaIds: [] as number[],
     featuredImage: null as File | null,
-    featuredImagePreview: petData.value.feature_image || '' as string,
-    
+    featuredImagePreview: petData.value.feature_image || ('' as string),
+
     // Health (Combine basic and detailed health)
     health: {
         status: petData.value.health_status || 'healthy',
@@ -135,18 +137,32 @@ const form = useForm({
         spayedNeutered: petData.value.spayed_neutered ?? true,
         specialNeeds: petData.value.special_needs || '',
         lastVetVisit: dateToInputString(petData.value.last_vet_visit),
-        vaccinations: (typeof petData.value.vaccinations === 'string' ? JSON.parse(petData.value.vaccinations) : petData.value.vaccinations) || [],
-        medications: (typeof petData.value.medications === 'string' ? JSON.parse(petData.value.medications) : petData.value.medications) || [],
-        allergies: (typeof petData.value.allergies === 'string' ? JSON.parse(petData.value.allergies) : petData.value.allergies) || [],
+        vaccinations:
+            (typeof petData.value.vaccinations === 'string'
+                ? JSON.parse(petData.value.vaccinations)
+                : petData.value.vaccinations) || [],
+        medications:
+            (typeof petData.value.medications === 'string'
+                ? JSON.parse(petData.value.medications)
+                : petData.value.medications) || [],
+        allergies:
+            (typeof petData.value.allergies === 'string'
+                ? JSON.parse(petData.value.allergies)
+                : petData.value.allergies) || [],
         vetName: petData.value.vet_name || '',
         vetPhone: petData.value.vet_phone || '',
     },
-    
+
     // Traits and Additional (normalize casing to match PersonalityStep trait ids)
-    traits: ((typeof petData.value.traits === 'string' ? JSON.parse(petData.value.traits) : petData.value.traits) || []).map(
-        (t: string) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase(),
-    ),
-    additionalInfo: (typeof petData.value.additional_info === 'string' ? JSON.parse(petData.value.additional_info) : petData.value.additional_info) || [],
+    traits: (
+        (typeof petData.value.traits === 'string'
+            ? JSON.parse(petData.value.traits)
+            : petData.value.traits) || []
+    ).map((t: string) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()),
+    additionalInfo:
+        (typeof petData.value.additional_info === 'string'
+            ? JSON.parse(petData.value.additional_info)
+            : petData.value.additional_info) || [],
 });
 
 // Since Edit uses subsections instead of stepper progress
@@ -156,12 +172,12 @@ const sections = [
     { id: 1, name: 'Basic & Personality', icon: Home, refId: 'section-basic' },
     { id: 2, name: 'Location', icon: MapPin, refId: 'section-location' },
     { id: 3, name: 'Health', icon: Stethoscope, refId: 'section-health' },
-    { id: 4, name: 'Media', icon: Camera, refId: 'section-media' }
+    { id: 4, name: 'Media', icon: Camera, refId: 'section-media' },
 ];
 
 const scrollToSection = (id: number) => {
     activeSection.value = id;
-    const sectionToScroll = sections.find(s => s.id === id);
+    const sectionToScroll = sections.find((s) => s.id === id);
     if (sectionToScroll) {
         const el = document.getElementById(sectionToScroll.refId);
         if (el) {
@@ -171,16 +187,24 @@ const scrollToSection = (id: number) => {
 };
 
 // Map state
-const mapCenter = ref({ lat: parseFloat((form.location.coordinates.lat || 39.8283).toString()), lng: parseFloat((form.location.coordinates.lng || -98.5795).toString()) });
-const mapMarker = ref({ lat: parseFloat((form.location.coordinates.lat || 39.8283).toString()), lng: parseFloat((form.location.coordinates.lng || -98.5795).toString()) });
+const mapCenter = ref({
+    lat: parseFloat((form.location.coordinates.lat || 39.8283).toString()),
+    lng: parseFloat((form.location.coordinates.lng || -98.5795).toString()),
+});
+const mapMarker = ref({
+    lat: parseFloat((form.location.coordinates.lat || 39.8283).toString()),
+    lng: parseFloat((form.location.coordinates.lng || -98.5795).toString()),
+});
 const isLoadingLocation = ref(false);
-
 
 // Image compression configuration
 const MAX_TOTAL_SIZE_MB = 0.5;
 const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
 
-const compressImage = async (file: File, targetSizeKB: number): Promise<File> => {
+const compressImage = async (
+    file: File,
+    targetSizeKB: number,
+): Promise<File> => {
     const options = {
         maxSizeMB: targetSizeKB / 1024,
         maxWidthOrHeight: 1920,
@@ -222,7 +246,8 @@ const handleFileUpload = async (event: Event) => {
         return;
     }
 
-    const totalImages = files.length + form.images.length + (form.featuredImage ? 1 : 0);
+    const totalImages =
+        files.length + form.images.length + (form.featuredImage ? 1 : 0);
     const targetSizeKB = calculateTargetSize(totalImages > 0 ? totalImages : 1);
 
     for (const file of files) {
@@ -280,11 +305,12 @@ const removeImage = (index: number) => {
     form.imagePreviews.splice(index, 1);
 };
 
-
 // Strict validation for form submission
 const validateForm = (): boolean => {
     if (!form.name || !form.type || !form.breed || !form.age || !form.gender) {
-        alert('Please fill in all basic information fields in the Basic section.');
+        alert(
+            'Please fill in all basic information fields in the Basic section.',
+        );
         scrollToSection(1);
         return false;
     }
@@ -384,13 +410,16 @@ const submit = () => {
     }
 
     // Since we're uploading files with PUT, Laravel handles this best using POST with _method field
-    form.transform(withoutClientOnlyFields).post(route('pets.update', petData.value.id), {
-        forceFormData: true,
-        preserveScroll: true,
-        onFinish: () => {
-            form.transform((data) => data);
+    form.transform(withoutClientOnlyFields).post(
+        route('pets.update', petData.value.id),
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => {
+                form.transform((data) => data);
+            },
         },
-    });
+    );
 };
 </script>
 
@@ -399,8 +428,15 @@ const submit = () => {
         <div class="container relative mx-auto max-w-5xl px-4 py-8">
             <div class="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Edit Pet: {{ petData.name }}</h1>
-                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Update the information below to keep your pet's profile current.</p>
+                    <h1
+                        class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
+                    >
+                        Edit Pet: {{ petData.name }}
+                    </h1>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Update the information below to keep your pet's profile
+                        current.
+                    </p>
                 </div>
                 <Button
                     variant="outline"
@@ -412,10 +448,12 @@ const submit = () => {
                 </Button>
             </div>
 
-            <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex flex-col gap-8 lg:flex-row">
                 <!-- Sidebar Navigation -->
-                <aside class="w-full lg:w-64 flex-shrink-0">
-                    <nav class="sticky top-24 space-y-1 rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                <aside class="w-full flex-shrink-0 lg:w-64">
+                    <nav
+                        class="sticky top-24 space-y-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
                         <button
                             v-for="section in sections"
                             :key="section.id"
@@ -424,14 +462,16 @@ const submit = () => {
                                 activeSection === section.id
                                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/50 dark:text-primary-400'
                                     : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50',
-                                'group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
+                                'group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
                             ]"
                         >
                             <component
                                 :is="section.icon"
                                 :class="[
-                                    activeSection === section.id ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500',
-                                    '-ml-1 mr-3 h-5 w-5 flex-shrink-0'
+                                    activeSection === section.id
+                                        ? 'text-primary-500'
+                                        : 'text-gray-400 group-hover:text-gray-500',
+                                    '-ml-1 mr-3 h-5 w-5 flex-shrink-0',
                                 ]"
                             />
                             <span class="truncate">{{ section.name }}</span>
@@ -443,14 +483,26 @@ const submit = () => {
                 <div class="flex-1">
                     <form @submit.prevent="submit" class="space-y-10">
                         <!-- Section 1: Basic & Personality -->
-                        <div id="section-basic" class="scroll-mt-24 space-y-6 rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div
+                            id="section-basic"
+                            class="scroll-mt-24 space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8"
+                        >
                             <div>
-                                <h2 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Basic Information & Personality</h2>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update the primary details and description of your pet.</p>
+                                <h2
+                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                                >
+                                    Basic Information & Personality
+                                </h2>
+                                <p
+                                    class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    Update the primary details and description
+                                    of your pet.
+                                </p>
                             </div>
-                            
+
                             <hr class="border-gray-200 dark:border-gray-700" />
-                            
+
                             <BasicInfoStep
                                 :form="form"
                                 :categories="categories"
@@ -459,8 +511,14 @@ const submit = () => {
                                 class="-mx-6 px-6"
                             />
 
-                            <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
-                                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Personality Traits & Description</h3>
+                            <div
+                                class="mt-8 border-t border-gray-100 pt-8 dark:border-gray-700"
+                            >
+                                <h3
+                                    class="text-md mb-4 font-medium text-gray-900 dark:text-white"
+                                >
+                                    Personality Traits & Description
+                                </h3>
                                 <PersonalityStep
                                     :form="form"
                                     :pet-traits="petTraits"
@@ -468,8 +526,14 @@ const submit = () => {
                                 />
                             </div>
 
-                            <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
-                                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Additional Info (Optional)</h3>
+                            <div
+                                class="mt-8 border-t border-gray-100 pt-8 dark:border-gray-700"
+                            >
+                                <h3
+                                    class="text-md mb-4 font-medium text-gray-900 dark:text-white"
+                                >
+                                    Additional Info (Optional)
+                                </h3>
                                 <AdditionalInfoStep
                                     :form="form"
                                     @add-info-field="addInfoField"
@@ -480,14 +544,25 @@ const submit = () => {
                         </div>
 
                         <!-- Section 2: Location -->
-                        <div id="section-location" class="scroll-mt-24 space-y-6 rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div
+                            id="section-location"
+                            class="scroll-mt-24 space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8"
+                        >
                             <div>
-                                <h2 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Location Details</h2>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Where is the pet currently located?</p>
+                                <h2
+                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                                >
+                                    Location Details
+                                </h2>
+                                <p
+                                    class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    Where is the pet currently located?
+                                </p>
                             </div>
-                            
+
                             <hr class="border-gray-200 dark:border-gray-700" />
-                            
+
                             <LocationStep
                                 :is-visible="true"
                                 :form="form"
@@ -501,35 +576,70 @@ const submit = () => {
                         </div>
 
                         <!-- Section 3: Health -->
-                        <div id="section-health" class="scroll-mt-24 space-y-6 rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div
+                            id="section-health"
+                            class="scroll-mt-24 space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8"
+                        >
                             <div>
-                                <h2 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Health & Medical History</h2>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Provide medical details, vaccinations, and overall health status.</p>
+                                <h2
+                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                                >
+                                    Health & Medical History
+                                </h2>
+                                <p
+                                    class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    Provide medical details, vaccinations, and
+                                    overall health status.
+                                </p>
                             </div>
-                            
+
                             <hr class="border-gray-200 dark:border-gray-700" />
-                            
+
                             <HealthStep :form="form" class="-mx-6 px-6" />
 
-                            <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
-                                <h3 class="text-md font-medium text-gray-900 dark:text-white mb-4">Detailed Healthcare</h3>
-                                <HealthcareStep :form="form" class="-mx-6 px-6" />
+                            <div
+                                class="mt-8 border-t border-gray-100 pt-8 dark:border-gray-700"
+                            >
+                                <h3
+                                    class="text-md mb-4 font-medium text-gray-900 dark:text-white"
+                                >
+                                    Detailed Healthcare
+                                </h3>
+                                <HealthcareStep
+                                    :form="form"
+                                    class="-mx-6 px-6"
+                                />
                             </div>
                         </div>
 
                         <!-- Section 4: Media -->
-                        <div id="section-media" class="scroll-mt-24 space-y-6 rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <div
+                            id="section-media"
+                            class="scroll-mt-24 space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-8"
+                        >
                             <div>
-                                <h2 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Media & Photos</h2>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update photos of your pet. Changes here will apply upon save.</p>
+                                <h2
+                                    class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                                >
+                                    Media & Photos
+                                </h2>
+                                <p
+                                    class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    Update photos of your pet. Changes here will
+                                    apply upon save.
+                                </p>
                             </div>
-                            
+
                             <hr class="border-gray-200 dark:border-gray-700" />
-                            
+
                             <PhotosStep
                                 :form="form"
                                 @handle-file-upload="handleFileUpload"
-                                @handle-featured-image-upload="handleFeaturedImageUpload"
+                                @handle-featured-image-upload="
+                                    handleFeaturedImageUpload
+                                "
                                 @remove-featured-image="removeFeaturedImage"
                                 @remove-image="removeImage"
                                 class="-mx-6 px-6"
@@ -538,11 +648,15 @@ const submit = () => {
 
                         <!-- Sticky Action Bar -->
                         <div class="sticky bottom-14 z-10 mt-12 bg-transparent">
-                            <div class="rounded-2xl border border-gray-200 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-gray-700 dark:bg-gray-800/95 flex justify-end gap-4 items-center">
+                            <div
+                                class="flex items-center justify-end gap-4 rounded-2xl border border-gray-200 bg-white/95 p-5 shadow-2xl backdrop-blur-md dark:border-gray-700 dark:bg-gray-800/95"
+                            >
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    @click="$inertia.visit(`/pets/${petData.id}`)"
+                                    @click="
+                                        $inertia.visit(`/pets/${petData.id}`)
+                                    "
                                     class="rounded-xl px-6"
                                 >
                                     Cancel
@@ -550,16 +664,38 @@ const submit = () => {
                                 <Button
                                     type="submit"
                                     :disabled="form.processing"
-                                    class="relative overflow-hidden rounded-xl px-8 py-2 font-medium shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed bg-primary hover:bg-primary/90 min-w-[200px]"
+                                    class="relative min-w-[200px] overflow-hidden rounded-xl bg-primary px-8 py-2 font-medium shadow-md transition-all hover:bg-primary/90 hover:shadow-lg disabled:cursor-not-allowed"
                                 >
-                                    <span v-if="form.processing" class="flex items-center text-white">
-                                        <svg class="-ml-1 mr-2 h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <span
+                                        v-if="form.processing"
+                                        class="flex items-center text-white"
+                                    >
+                                        <svg
+                                            class="-ml-1 mr-2 h-5 w-5 animate-spin text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle>
+                                            <path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
                                         </svg>
                                         Saving Changes...
                                     </span>
-                                    <span v-else class="flex items-center text-white">
+                                    <span
+                                        v-else
+                                        class="flex items-center text-white"
+                                    >
                                         <Check class="mr-2 h-5 w-5" />
                                         Save Changes
                                     </span>

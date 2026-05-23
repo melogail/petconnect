@@ -42,7 +42,10 @@ const reportingReviewId = ref<number | null>(null);
 
 const canAddReview = computed(() => {
     // Authenticated user can add review if they are not the profile owner
-    return currentUser.value.id !== 0 && currentUser.value.id !== props.profileOwnerId;
+    return (
+        currentUser.value.id !== 0 &&
+        currentUser.value.id !== props.profileOwnerId
+    );
 });
 
 const handleAddReview = (data) => {
@@ -99,9 +102,8 @@ const handleReportReview = (reviewId) => {
     isReportOpen.value = true;
 };
 
-const handleSubmitReport = (reportData) => {
+const handleSubmitReport = () => {
     isReportOpen.value = false;
-    toast.success('Report submitted successfully');
 };
 </script>
 
@@ -163,6 +165,7 @@ const handleSubmitReport = (reportData) => {
             :is-open="isReportOpen"
             :report-reasons="reportReasons"
             :content-id="reportingReviewId || ''"
+            reportable-type="App\Models\Review"
             @close="isReportOpen = false"
             @submit="handleSubmitReport"
         />

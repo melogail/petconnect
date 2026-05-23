@@ -15,7 +15,6 @@ const auth = useAuthUser();
 defineProps({
     user: Object,
 });
-
 </script>
 
 <template>

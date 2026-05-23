@@ -9,6 +9,7 @@ enum ReportCategory: string
     case copyright = 'Copyright';
     case technical = 'Technical';
     case feedback = 'Feedback';
+    case other = 'Other';
 
     public function label(): string
     {
@@ -18,13 +19,14 @@ enum ReportCategory: string
             self::copyright => 'Copyright',
             self::technical => 'Technical',
             self::feedback => 'Feedback',
+            self::other => 'Other',
         };
     }
 
     public static function options(): array
     {
         return array_map(
-            fn($case) => ['value' => $case->value, 'label' => $case->label()],
+            fn ($case) => ['value' => $case->value, 'label' => $case->label()],
             self::cases()
         );
     }

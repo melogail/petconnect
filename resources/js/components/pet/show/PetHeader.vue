@@ -11,7 +11,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Clock, MapPin, Heart, MessageSquare, Edit, Eye, Trash2 } from 'lucide-vue-next';
+import {
+    Clock,
+    MapPin,
+    Heart,
+    MessageSquare,
+    Edit,
+    Eye,
+    Trash2,
+} from 'lucide-vue-next';
 import { ref } from 'vue';
 import { route } from 'ziggy-js';
 
@@ -55,45 +63,70 @@ const confirmDelete = () => {
 </script>
 
 <template>
-    <div class="mb-6 overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm">
+    <div
+        class="border-border/50 bg-card mb-6 overflow-hidden rounded-2xl border shadow-sm"
+    >
         <!-- Accent Top Bar -->
-        <div class="h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary/60" />
+        <div
+            class="h-1.5 bg-gradient-to-r from-primary via-blue-500 to-primary/60"
+        />
 
         <div class="p-6">
-            <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div
+                class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"
+            >
                 <!-- Left: name & meta -->
-                <div class="flex-1 min-w-0">
+                <div class="min-w-0 flex-1">
                     <div class="mb-2 flex flex-wrap items-center gap-2">
-                        <h1 class="text-3xl font-bold tracking-tight text-foreground">
+                        <h1
+                            class="text-foreground text-3xl font-bold tracking-tight"
+                        >
                             {{ petDetails.name }}
                         </h1>
-                        <Badge variant="secondary" class="rounded-full px-3 text-xs font-medium">
+                        <Badge
+                            variant="secondary"
+                            class="rounded-full px-3 text-xs font-medium"
+                        >
                             {{ petDetails.breed }}
                         </Badge>
                         <Badge
                             class="rounded-full px-3 text-xs font-medium capitalize"
                             :class="{
-                                'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300': petDetails.status === 'available',
-                                'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300': petDetails.status === 'pending',
-                                'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300': petDetails.status === 'adopted',
+                                'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300':
+                                    petDetails.status === 'available',
+                                'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300':
+                                    petDetails.status === 'pending',
+                                'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300':
+                                    petDetails.status === 'adopted',
                             }"
                         >
                             {{ petDetails.status }}
                         </Badge>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <div
+                        class="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+                    >
                         <span class="flex items-center gap-1.5">
                             <Clock class="h-4 w-4 text-primary/70" />
                             {{ petDetails.age }}
                         </span>
                         <span class="flex items-center gap-1.5 capitalize">
-                            <span class="h-1 w-1 rounded-full bg-muted-foreground/40" />
+                            <span
+                                class="bg-muted-foreground/40 h-1 w-1 rounded-full"
+                            />
                             {{ petDetails.gender.toLowerCase() }}
                         </span>
-                        <span v-if="petDetails.city || petDetails.state" class="flex items-center gap-1.5">
+                        <span
+                            v-if="petDetails.city || petDetails.state"
+                            class="flex items-center gap-1.5"
+                        >
                             <MapPin class="h-4 w-4 text-primary/70" />
-                            <span>{{ [petDetails.city, petDetails.state].filter(Boolean).join(', ') }}</span>
+                            <span>{{
+                                [petDetails.city, petDetails.state]
+                                    .filter(Boolean)
+                                    .join(', ')
+                            }}</span>
                         </span>
                         <span class="flex items-center gap-1.5">
                             <Eye class="h-4 w-4 text-primary/70" />
@@ -111,17 +144,22 @@ const confirmDelete = () => {
                             variant="outline"
                             class="group h-10 rounded-full border-primary/20 px-5 hover:border-primary/50 hover:bg-primary/5"
                         >
-                            <Edit class="mr-2 h-4 w-4 transition-colors group-hover:text-primary" />
+                            <Edit
+                                class="mr-2 h-4 w-4 transition-colors group-hover:text-primary"
+                            />
                             Edit Pet
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
-                            class="group h-10 rounded-full border-destructive/25 px-4 text-destructive hover:border-destructive/50 hover:bg-destructive/10"
+                            class="border-destructive/25 text-destructive hover:border-destructive/50 hover:bg-destructive/10 group h-10 rounded-full px-4"
                             @click="deleteDialogOpen = true"
                         >
                             <Trash2 class="h-4 w-4" />
-                            <span class="sr-only md:not-sr-only md:ml-2 md:inline">Remove listing</span>
+                            <span
+                                class="sr-only md:not-sr-only md:ml-2 md:inline"
+                                >Remove listing</span
+                            >
                         </Button>
                     </template>
                     <template v-else>
@@ -131,11 +169,13 @@ const confirmDelete = () => {
                             class="group h-10 w-10 rounded-full p-0 hover:border-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                             @click="$emit('save')"
                         >
-                            <Heart class="h-4 w-4 transition-all group-hover:fill-rose-500 group-hover:text-rose-500" />
+                            <Heart
+                                class="h-4 w-4 transition-all group-hover:fill-rose-500 group-hover:text-rose-500"
+                            />
                         </Button>
                         <Button
                             v-if="showContact && user?.email_verified_at"
-                            class="h-10 rounded-full bg-gradient-to-r from-primary to-blue-500 px-6 shadow-md transition-all duration-200 hover:shadow-lg hover:from-primary/90 hover:to-blue-500/90"
+                            class="h-10 rounded-full bg-gradient-to-r from-primary to-blue-500 px-6 shadow-md transition-all duration-200 hover:from-primary/90 hover:to-blue-500/90 hover:shadow-lg"
                             @click="$emit('contact')"
                         >
                             <MessageSquare class="mr-2 h-4 w-4" />
@@ -151,12 +191,18 @@ const confirmDelete = () => {
                 <DialogHeader>
                     <DialogTitle>Remove this listing?</DialogTitle>
                     <DialogDescription>
-                        This will remove “{{ petDetails.name }}” from PetConnect. You can contact support if you need to
+                        This will remove “{{ petDetails.name }}” from
+                        PetConnect. You can contact support if you need to
                         restore it later.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter class="gap-2 sm:gap-0">
-                    <Button type="button" variant="outline" :disabled="deleteProcessing" @click="deleteDialogOpen = false">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        :disabled="deleteProcessing"
+                        @click="deleteDialogOpen = false"
+                    >
                         Cancel
                     </Button>
                     <Button

@@ -153,6 +153,7 @@ const submit = () => {
                         <SecuritySection
                             v-show="activeSection === 'security'"
                             :form="form"
+                            :user-id="user.data?.id"
                         />
 
                         <!-- General Actions -->

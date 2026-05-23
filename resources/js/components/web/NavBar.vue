@@ -41,7 +41,9 @@ const showNotifications = ref(false);
 const showMessages = ref(false);
 const isUserDropdownOpen = ref(false);
 
-const messaging = computed(() => page.props.messaging as MessagingSummary | null);
+const messaging = computed(
+    () => page.props.messaging as MessagingSummary | null,
+);
 const messagePreviews = computed(() => messaging.value?.previews ?? []);
 const unreadMessages = computed(() => messaging.value?.unread_count ?? 0);
 

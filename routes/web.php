@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pets/{pet}/edit', [PetController::class, 'edit'])->name('pets.edit');
     Route::put('pets/{pet}', [PetController::class, 'update'])->name('pets.update');
     Route::delete('pets/{pet}', [PetController::class, 'destroy'])->name('pets.destroy');
+    Route::patch('pets/{pet}/toggle-status', [PetController::class, 'toggleStatus'])->name('pets.toggle-status');
 
     // REVIEWS ROUTES
     Route::post('reviews/store/{type}/{reviewable_id}', [ReviewController::class, 'store'])->name('reviews.store');
@@ -69,5 +70,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('comments/{comment}', [CommentController::class, 'delete'])->name('comments.delete');
 });
 
-require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

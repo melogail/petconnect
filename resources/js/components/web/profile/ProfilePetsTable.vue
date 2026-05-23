@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Plus, Edit2, Trash2, FileText, Eye, EyeOff } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 
@@ -7,6 +7,22 @@ const props = defineProps({
     pets: Object,
     userCanCreate: Boolean,
 });
+
+const toggleStatus = (petId: number) => {
+    router.patch(
+        route('pets.toggle-status', { pet: petId }),
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
+};
+
+const deletePet = (petId: number) => {
+    router.delete(route('pets.destroy', { pet: petId }), {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
@@ -128,7 +144,7 @@ const props = defineProps({
                                 {{
                                     pet.status === 'available'
                                         ? 'Available'
-                                        : 'Sold'
+                                        : 'Unavailable'
                                 }}
                             </span>
                         </td>
@@ -151,14 +167,22 @@ const props = defineProps({
                                 class="flex items-center justify-end space-x-3"
                             >
                                 <Link
-                                    :href="`/pets/${pet.id}/edit`"
+                                    v-if="pet.can?.update"
+                                    :href="route('pets.edit', { pet: pet.id })"
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-gray-700"
                                     title="Edit pet"
                                 >
                                     <Edit2 class="h-4 w-4" />
                                 </Link>
                                 <button
+                                    v-if="pet.can?.update"
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                                    :title="
+                                        pet.status === 'available'
+                                            ? 'Mark as unavailable'
+                                            : 'Mark as available'
+                                    "
+                                    @click="toggleStatus(pet.id)"
                                 >
                                     <EyeOff
                                         v-if="pet.status === 'available'"
@@ -167,8 +191,10 @@ const props = defineProps({
                                     <Eye v-else class="h-4 w-4" />
                                 </button>
                                 <button
+                                    v-if="pet.can?.delete"
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-gray-700"
-                                    title="Delete post"
+                                    title="Delete pet"
+                                    @click="deletePet(pet.id)"
                                 >
                                     <Trash2 class="h-4 w-4" />
                                 </button>

@@ -2,7 +2,9 @@ import type { AppPageProps, InertiaResource, User } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed, type ComputedRef } from 'vue';
 
-function unwrapResource<T>(resource: InertiaResource<T> | null | undefined): T | null {
+function unwrapResource<T>(
+    resource: InertiaResource<T> | null | undefined,
+): T | null {
     if (!resource) {
         return null;
     }

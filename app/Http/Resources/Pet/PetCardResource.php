@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Pet;
 
+use App\Http\Resources\CommentResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,6 +24,7 @@ class PetCardResource extends JsonResource
                 'avatar' => $this->user?->getMedia('users')->first()?->getUrl(),
             ]),
             'ownerName' => $this->user?->name,
+            'isOwnedByCurrentUser' => $this->user_id === auth()->user()?->id,
             'name' => $this->name,
             'age' => $this->age,
             'gender' => $this->gender,
@@ -37,8 +39,8 @@ class PetCardResource extends JsonResource
             'spayedNeutered' => $this->spayed_neutered,
             'likes' => $this->likes ?? null,
             'likesCount' => $this->likes_count ?? $this->likes->count() ?? 0,
-            'comments' => $this->comments ?? null,
-            'commentsCount' => $this->comments_count ?? $this->comments->count() ?? 0,
+            'comments' => $this->whenLoaded('comments', fn () => CommentResource::collection($this->comments)),
+            'commentsCount' => $this->comments_count ?? ($this->relationLoaded('comments') ? $this->comments->count() : 0),
         ];
     }
 }

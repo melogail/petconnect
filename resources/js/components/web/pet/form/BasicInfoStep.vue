@@ -248,8 +248,9 @@ const filteredBreeds = computed(() => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="available">Available</SelectItem>
-                            <SelectItem value="adopted">Adopted</SelectItem>
-                            <SelectItem value="sold">Sold</SelectItem>
+                            <SelectItem value="unavailable"
+                                >Unavailable</SelectItem
+                            >
                         </SelectContent>
                     </Select>
                     <InputError :message="form.errors.status" />

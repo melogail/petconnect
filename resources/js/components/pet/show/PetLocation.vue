@@ -17,23 +17,45 @@ defineProps<{
 
 <template>
     <div>
-        <h4 class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <h4
+            class="text-muted-foreground mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest"
+        >
             <MapPin class="h-4 w-4 text-primary" />
             Location
         </h4>
-        <div class="rounded-xl border border-border/50 bg-muted/10 p-4 space-y-1">
-            <p v-if="petDetails.address" class="font-medium text-foreground">
+        <div
+            class="border-border/50 bg-muted/10 space-y-1 rounded-xl border p-4"
+        >
+            <p v-if="petDetails.address" class="text-foreground font-medium">
                 {{ petDetails.address }}
             </p>
-            <p v-if="petDetails.detailed_address" class="text-sm text-muted-foreground">
+            <p
+                v-if="petDetails.detailed_address"
+                class="text-muted-foreground text-sm"
+            >
                 {{ petDetails.detailed_address }}
             </p>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-muted-foreground text-sm">
                 <span v-if="petDetails.city">{{ petDetails.city }}</span>
                 <span v-if="petDetails.city && petDetails.state">, </span>
                 <span v-if="petDetails.state">{{ petDetails.state }}</span>
-                <span v-if="petDetails.postal_code && (petDetails.city || petDetails.state)"> {{ petDetails.postal_code }}</span>
-                <span v-if="petDetails.country && (petDetails.city || petDetails.state || petDetails.postal_code)">, </span>
+                <span
+                    v-if="
+                        petDetails.postal_code &&
+                        (petDetails.city || petDetails.state)
+                    "
+                >
+                    {{ petDetails.postal_code }}</span
+                >
+                <span
+                    v-if="
+                        petDetails.country &&
+                        (petDetails.city ||
+                            petDetails.state ||
+                            petDetails.postal_code)
+                    "
+                    >,
+                </span>
                 <span v-if="petDetails.country">{{ petDetails.country }}</span>
             </p>
             <a

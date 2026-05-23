@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\ListingType;
+use App\Enums\PetStatus;
 use App\Traits\HasComments;
 use App\Traits\HasLikes;
 use App\Traits\HasSaves;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,6 +21,7 @@ class Pet extends Model implements HasMedia
     protected $guarded = [];
 
     protected $casts = [
+        'status' => PetStatus::class,
         'category_id' => 'integer',
         'views' => 'integer',
         'created_at' => 'datetime',
@@ -37,6 +40,21 @@ class Pet extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('pets');
+    }
+
+    /**
+     * ============================
+     * == SCOPES
+     * ============================
+     */
+    public function scopeAvailable(Builder $query): Builder
+    {
+        return $query->where('status', PetStatus::available);
+    }
+
+    public function scopeUnavailable(Builder $query): Builder
+    {
+        return $query->where('status', PetStatus::unavailable);
     }
 
     /**

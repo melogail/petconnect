@@ -1,0 +1,47 @@
+---
+description: PetConnect Laravel backend conventions
+globs:
+  - app/**/*.php
+  - routes/**/*.php
+  - database/**/*.php
+  - config/**/*.php
+  - bootstrap/**/*.php
+  - tests/**/*.php
+alwaysApply: false
+---
+# Laravel Backend Rules
+
+## Architecture
+
+- Keep controllers thin: authorize, validate, call a service/action, return Inertia or redirect responses.
+- Use Form Requests for new or changed domain validation.
+- Use policies or Form Request `authorize()` for authorization. User-owned models commonly rely on `App\Policies\Policy` verified-owner defaults.
+- Use services for multi-step business flows and actions for small single-purpose flows.
+- Use repositories where the module already uses them or the query logic is shared/complex. Do not force a repository for a one-off existing pattern unless the refactor is requested.
+- Repository bindings currently belong in `App\Providers\AppServiceProvider`; `RepositoryServiceProvider` is not registered in `bootstrap/providers.php`.
+- Prefer Eloquent relationships, scopes, eager loading, and API Resources over raw arrays and ad hoc queries.
+
+## Domain Rules
+
+- `Pet` belongs to `User`, `Category`, and `Breed`; uses `ListingType`, soft deletes, JSON casts, comments, likes, saves, and media collection `pets`.
+- Pet forms submit wizard-shaped data: `type`, `breed`, `location.*`, `health.*`, `traits`, `additionalInfo`, `featuredImage`, `images`, and `deletedMediaIds`.
+- `PetService` maps wizard fields to database columns and handles media after DB transactions.
+- `User` implements `MustVerifyEmail`, Fortify two-factor auth, reviews, conversations, and media collection `users`.
+- Direct messaging uses `Conversation`, `Message`, `conversation_user.last_read_at`, `ConversationService`, `MessageService`, and `MessagingInboxService`.
+- `MessageObserver` maintains `conversations.last_message_at`.
+- Comments are polymorphic through `App\Enums\Commentable`; current supported value is `pet`.
+- Comment content must pass through `CommentService` so `TrimContentPipeline` and `FilterBadWordsPipeline` run.
+- Reports must keep `ReportCategory`, `ReportReason`, `StoreReportRequest`, `CreateReport`, and frontend payload keys aligned.
+
+## Media
+
+- Pet media collection: `pets`.
+- User/profile media collection: `users`.
+- Keep Spatie media writes outside DB transactions.
+- `MediaPathGenerator` assumes non-user media models have a `user` relationship.
+
+## Verification
+
+- Run focused Pest tests for changed behavior.
+- Run `vendor/bin/pint` after PHP edits.
+- Regenerate Wayfinder helpers after route/controller signature changes.

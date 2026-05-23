@@ -37,16 +37,16 @@ const handleScroll = (event: any) => {
             <div
                 ref="carouselRef"
                 class="flex overflow-hidden rounded-3xl"
-                style="scroll-snap-type: x mandatory;"
+                style="scroll-snap-type: x mandatory"
                 @scroll="handleScroll"
             >
                 <div
                     v-for="(image, index) in images"
                     :key="index"
                     class="w-full flex-shrink-0"
-                    style="scroll-snap-align: start;"
+                    style="scroll-snap-align: start"
                 >
-                    <div class="relative bg-muted" style="padding-top: 60%;">
+                    <div class="bg-muted relative" style="padding-top: 60%">
                         <img
                             :src="image"
                             :alt="`${petName} image ${index + 1}`"
@@ -54,7 +54,9 @@ const handleScroll = (event: any) => {
                             loading="lazy"
                         />
                         <!-- Subtle overlay gradient -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"
+                        />
                     </div>
                 </div>
             </div>
@@ -72,7 +74,7 @@ const handleScroll = (event: any) => {
                 v-if="images.length > 1"
                 @click="goToSlide(currentSlide - 1)"
                 :disabled="currentSlide === 0"
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-110 disabled:opacity-0 disabled:pointer-events-none dark:bg-black/50 dark:hover:bg-black/70"
+                class="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0 dark:bg-black/50 dark:hover:bg-black/70"
             >
                 <ChevronLeft class="h-5 w-5" />
             </button>
@@ -80,35 +82,45 @@ const handleScroll = (event: any) => {
                 v-if="images.length > 1"
                 @click="goToSlide(currentSlide + 1)"
                 :disabled="currentSlide === images.length - 1"
-                class="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-110 disabled:opacity-0 disabled:pointer-events-none dark:bg-black/50 dark:hover:bg-black/70"
+                class="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0 dark:bg-black/50 dark:hover:bg-black/70"
             >
                 <ChevronRight class="h-5 w-5" />
             </button>
         </div>
 
         <!-- Dot Indicators -->
-        <div v-if="images.length > 1 && images.length <= 8" class="mb-2 flex justify-center gap-1.5">
+        <div
+            v-if="images.length > 1 && images.length <= 8"
+            class="mb-2 flex justify-center gap-1.5"
+        >
             <button
                 v-for="(_, index) in images"
                 :key="`dot-${index}`"
                 @click="goToSlide(index)"
                 class="rounded-full transition-all duration-300"
-                :class="currentSlide === index
-                    ? 'w-6 h-2 bg-primary'
-                    : 'w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'"
+                :class="
+                    currentSlide === index
+                        ? 'h-2 w-6 bg-primary'
+                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/60 h-2 w-2'
+                "
             />
         </div>
 
         <!-- Thumbnails -->
-        <div v-if="images.length > 1" class="pet-gallery-thumbnails flex gap-2 overflow-x-auto pb-1">
+        <div
+            v-if="images.length > 1"
+            class="pet-gallery-thumbnails flex gap-2 overflow-x-auto pb-1"
+        >
             <button
                 v-for="(image, index) in images"
                 :key="`thumb-${index}`"
                 @click="goToSlide(index)"
                 class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl transition-all duration-200"
                 :class="{
-                    'ring-2 ring-primary ring-offset-2 dark:ring-offset-background scale-105': currentSlide === index,
-                    'ring-1 ring-border/50 hover:ring-border hover:scale-105': currentSlide !== index,
+                    'dark:ring-offset-background scale-105 ring-2 ring-primary ring-offset-2':
+                        currentSlide === index,
+                    'ring-border/50 hover:ring-border ring-1 hover:scale-105':
+                        currentSlide !== index,
                 }"
             >
                 <img

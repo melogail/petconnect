@@ -1,12 +1,31 @@
-import { ref } from 'vue';
 import axios from 'axios';
+import { ref, watch } from 'vue';
 
-export function useInertiaInfiniteScroll<T>(initialData: any, _propName: string) {
+export function useInertiaInfiniteScroll<T>(
+    initialData: any,
+    _propName: string,
+) {
     const items = ref<T[]>([...initialData.data]);
     const nextUrl = ref<string | null>(
-        initialData.meta ? initialData.links.next : initialData.next_page_url
+        initialData.meta ? initialData.links.next : initialData.next_page_url,
     );
     const isLoading = ref(false);
+
+    watch(
+        () => initialData.data,
+        (newItems) => {
+            if (Array.isArray(newItems)) {
+                items.value = [...newItems];
+            }
+        },
+    );
+
+    watch(
+        () => initialData.links?.next ?? initialData.next_page_url,
+        (url) => {
+            nextUrl.value = url ?? null;
+        },
+    );
 
     const loadMore = async () => {
         if (!nextUrl.value || isLoading.value) return;

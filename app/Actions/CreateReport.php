@@ -2,20 +2,21 @@
 
 namespace App\Actions;
 
-use App\Models\Report;
 use App\Enums\ReportCategory;
 use App\Enums\ReportReason;
+use App\Models\Report;
 
 class CreateReport
 {
-    public function execute($data)
+    public function handle(array $data): Report
     {
         return Report::create([
             'user_id' => auth()->id(),
-            'category' => $data['category'] ?? ReportCategory::other,
-            'reason' => $data['reason'] ?? ReportReason::other,
-            'description' => $data['description'],
-
+            'category' => ReportCategory::tryFrom($data['category'] ?? '') ?? ReportCategory::other,
+            'reason' => ReportReason::tryFrom($data['reason']) ?? ReportReason::other,
+            'description' => $data['description'] ?? null,
+            'reportable_type' => $data['reportable_type'],
+            'reportable_id' => $data['reportable_id'],
         ]);
     }
 }

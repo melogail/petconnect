@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ListingType;
+use App\Enums\PetStatus;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
 use App\Models\Category;
@@ -408,5 +409,14 @@ class PetService
     {
         // Add any business logic here before deleting
         return $this->petRepository->delete($id);
+    }
+
+    public function toggleStatus(int $id): bool
+    {
+        $pet = $this->getPetById($id);
+
+        $pet->status = $pet->status === PetStatus::available ? PetStatus::unavailable : PetStatus::available;
+
+        return $pet->save();
     }
 }
