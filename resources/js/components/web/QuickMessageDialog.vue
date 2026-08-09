@@ -5,15 +5,21 @@
         </DialogTrigger>
         <DialogContent class="sm:max-w-[500px]">
             <DialogHeader>
-                <DialogTitle>Send a message to {{ ownerName }}</DialogTitle>
+                <DialogTitle>{{
+                    t('messaging.send_message_to', { name: ownerName })
+                }}</DialogTitle>
                 <DialogDescription>
-                    Send a quick message to the owner about {{ petName }}.
+                    {{
+                        t('messaging.send_quick_message', {
+                            pet: displayPetName,
+                        })
+                    }}
                 </DialogDescription>
             </DialogHeader>
             <DialogClose
-                class="ring-offset-background focus:ring-ring absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none"
+                class="ring-offset-background focus:ring-ring absolute end-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none"
             >
-                <span class="sr-only">Close</span>
+                <span class="sr-only">{{ t('messaging.close') }}</span>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -33,11 +39,13 @@
 
             <form @submit.prevent="sendMessage" class="space-y-4 py-2">
                 <div class="space-y-2">
-                    <Label for="message">Your Message</Label>
+                    <Label for="message">{{
+                        t('messaging.your_message')
+                    }}</Label>
                     <Textarea
                         id="message"
                         v-model="form.initial_message"
-                        placeholder="Write your message here..."
+                        :placeholder="t('messaging.write_message_placeholder')"
                         class="min-h-[120px]"
                         :disabled="form.processing"
                         required
@@ -52,7 +60,7 @@
                         :disabled="form.processing"
                         @click="closeDialog"
                     >
-                        Cancel
+                        {{ t('messaging.cancel') }}
                     </Button>
                     <Button
                         type="submit"
@@ -68,7 +76,9 @@
                             },
                         ]"
                     >
-                        <span v-if="!form.processing">Send Message</span>
+                        <span v-if="!form.processing">{{
+                            t('messaging.send_message')
+                        }}</span>
                         <Loader2 v-else class="h-4 w-4 animate-spin" />
                     </Button>
                 </div>
@@ -95,6 +105,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'vue-sonner';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     ownerName: string;
@@ -104,7 +115,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    petName: 'this listing',
+    petName: undefined,
     otherUserId: null,
     open: false,
 });
@@ -113,6 +124,12 @@ const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
     (e: 'message-sent'): void;
 }>();
+
+const { t } = useTranslations();
+
+const displayPetName = computed(
+    () => props.petName || t('messaging.this_listing'),
+);
 
 const error = ref('');
 const form = useForm({
@@ -148,7 +165,7 @@ const sendMessage = () => {
     }
 
     if (!props.otherUserId) {
-        error.value = 'Unable to start this conversation right now.';
+        error.value = t('messaging.unable_to_start');
         return;
     }
 
@@ -163,13 +180,13 @@ const sendMessage = () => {
             form.reset('initial_message');
             emit('message-sent');
             closeDialog();
-            toast.success('Message sent.');
+            toast.success(t('messaging.message_sent'));
         },
         onError: (errors) => {
             error.value = String(
                 errors.initial_message ??
                     errors.other_user_id ??
-                    'Failed to send message.',
+                    t('messaging.failed_to_send'),
             );
             toast.error(error.value);
         },

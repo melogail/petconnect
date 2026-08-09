@@ -33,7 +33,7 @@ class MessageController extends Controller
         $this->messageService->update($message, $request->validated('content'));
 
         return redirect()->route('conversations.show', $message->conversation_id)
-            ->with('success', 'Message updated.');
+            ->with('success', __('flash.message_updated'));
     }
 
     public function destroy(Message $message): RedirectResponse
@@ -44,6 +44,6 @@ class MessageController extends Controller
         $this->messageService->delete($message);
 
         return redirect()->route('conversations.show', $conversation)
-            ->with('success', 'Message deleted.');
+            ->with('success', __('flash.message_deleted'));
     }
 }

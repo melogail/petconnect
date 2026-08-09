@@ -29,6 +29,7 @@ import PhotosStep from '@/components/web/pet/form/PhotosStep.vue';
 import ReviewStep from '@/components/web/pet/form/ReviewStep.vue';
 import StepperProgress from '@/components/web/pet/form/StepperProgress.vue';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     petCategories: { data: any[] };
@@ -36,6 +37,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 console.log(props.petCategories.data);
 
@@ -63,20 +66,20 @@ const breeds = computed(() => {
     return result;
 });
 
-// Pet traits
-const petTraits = [
-    { id: 'Friendly', label: 'Friendly' },
-    { id: 'Playful', label: 'Playful' },
-    { id: 'Calm', label: 'Calm' },
-    { id: 'Energetic', label: 'Energetic' },
-    { id: 'Shy', label: 'Shy' },
-    { id: 'Loyal', label: 'Loyal' },
-    { id: 'Smart', label: 'Smart' },
-    { id: 'Gentle', label: 'Gentle' },
-    { id: 'Affectionate', label: 'Affectionate' },
-    { id: 'Independent', label: 'Independent' },
-    { id: 'Intelligent', label: 'Intelligent' },
-];
+// Pet traits — keep English IDs for data, translate labels for display
+const petTraits = computed(() => [
+    { id: 'Friendly', label: t('traits.friendly') },
+    { id: 'Playful', label: t('traits.playful') },
+    { id: 'Calm', label: t('traits.calm') },
+    { id: 'Energetic', label: t('traits.energetic') },
+    { id: 'Shy', label: t('traits.shy') },
+    { id: 'Loyal', label: t('traits.loyal') },
+    { id: 'Smart', label: t('traits.smart') },
+    { id: 'Gentle', label: t('traits.gentle') },
+    { id: 'Affectionate', label: t('traits.affectionate') },
+    { id: 'Independent', label: t('traits.independent') },
+    { id: 'Intelligent', label: t('traits.intelligent') },
+]);
 
 // Stepper state
 const currentStep = ref(1);
@@ -171,21 +174,56 @@ const calculateTargetSize = (totalImages: number): number => {
 };
 
 // Step configuration
-const steps = [
-    { id: 1, name: 'Basic Info', icon: Home, description: 'Pet details' },
-    { id: 2, name: 'Location', icon: MapPin, description: 'Where is your pet' },
-    { id: 3, name: 'Photos', icon: Camera, description: 'Upload images' },
-    { id: 4, name: 'Health', icon: Stethoscope, description: 'Health status' },
+const steps = computed(() => [
+    {
+        id: 1,
+        name: t('wizard.step_basic_info'),
+        icon: Home,
+        description: t('wizard.step_basic_info_desc'),
+    },
+    {
+        id: 2,
+        name: t('wizard.step_location'),
+        icon: MapPin,
+        description: t('wizard.step_location_desc'),
+    },
+    {
+        id: 3,
+        name: t('wizard.step_photos'),
+        icon: Camera,
+        description: t('wizard.step_photos_desc'),
+    },
+    {
+        id: 4,
+        name: t('wizard.step_health'),
+        icon: Stethoscope,
+        description: t('wizard.step_health_desc'),
+    },
     {
         id: 5,
-        name: 'Personality',
+        name: t('wizard.step_personality'),
         icon: Smile,
-        description: 'Traits & behavior',
+        description: t('wizard.step_personality_desc'),
     },
-    { id: 6, name: 'Details', icon: Info, description: 'Additional info' },
-    { id: 7, name: 'Healthcare', icon: Heart, description: 'Medical history' },
-    { id: 8, name: 'Review', icon: FileText, description: 'Final check' },
-];
+    {
+        id: 6,
+        name: t('wizard.step_details'),
+        icon: Info,
+        description: t('wizard.step_details_desc'),
+    },
+    {
+        id: 7,
+        name: t('wizard.step_healthcare'),
+        icon: Heart,
+        description: t('wizard.step_healthcare_desc'),
+    },
+    {
+        id: 8,
+        name: t('wizard.step_review'),
+        icon: FileText,
+        description: t('wizard.step_review_desc'),
+    },
+]);
 
 // Computed properties
 const invalidSteps = computed(() => {
@@ -277,7 +315,7 @@ const handleFileUpload = async (event: Event) => {
     const files = Array.from(target.files || []);
 
     if (files.length + form.images.length > 3) {
-        alert('You can only upload up to 3 images');
+        alert(t('pets.alert_max_upload_images'));
         return;
     }
 
@@ -423,17 +461,17 @@ const validateStep = (step: number): boolean => {
 const validateForm = (): boolean => {
     if (!form.name || !form.type || !form.breed || !form.age || !form.gender) {
         console.log(form.name, form.type, form.breed, form.age, form.gender);
-        alert('Please fill in all basic information fields');
+        alert(t('pets.alert_fill_basic'));
         goToStep(1);
         return false;
     }
     if (!form.location.city || !form.location.country) {
-        alert('Please provide location information');
+        alert(t('pets.alert_provide_location'));
         goToStep(2);
         return false;
     }
     if (!form.featuredImage) {
-        alert('Please upload a featured image');
+        alert(t('pets.alert_upload_featured'));
         goToStep(3);
         return false;
     }
@@ -443,7 +481,7 @@ const validateForm = (): boolean => {
 // Location methods
 const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser');
+        alert(t('pets.alert_geolocation_unsupported'));
         return;
     }
 
@@ -465,7 +503,7 @@ const getCurrentLocation = async () => {
         },
         (error) => {
             console.error('Error getting location:', error);
-            alert('Unable to get your location. Please enter it manually.');
+            alert(t('pets.alert_unable_get_location'));
             isLoadingLocation.value = false;
         },
     );
@@ -638,9 +676,9 @@ const submit = () => {
                                 class="group w-full rounded-xl px-6 py-3 text-sm font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/50 sm:w-auto"
                             >
                                 <ArrowLeft
-                                    class="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
+                                    class="me-2 h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1"
                                 />
-                                <span>Back to Profile</span>
+                                <span>{{ t('wizard.back_to_profile') }}</span>
                             </Button>
 
                             <!-- Navigation Buttons -->
@@ -655,8 +693,10 @@ const submit = () => {
                                     @click="prevStep"
                                     class="flex-1 rounded-xl border-2 border-gray-300 px-6 py-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md dark:border-gray-600 dark:hover:bg-gray-700/50 sm:flex-none"
                                 >
-                                    <ArrowLeft class="mr-2 h-4 w-4" />
-                                    Previous
+                                    <ArrowLeft
+                                        class="me-2 h-4 w-4 rtl:rotate-180"
+                                    />
+                                    {{ t('wizard.previous') }}
                                 </Button>
 
                                 <!-- Next Button -->
@@ -670,8 +710,10 @@ const submit = () => {
                                     <span
                                         class="relative z-10 flex items-center justify-center font-semibold text-white"
                                     >
-                                        Next Step
-                                        <ArrowRight class="ml-2 h-4 w-4" />
+                                        {{ t('wizard.next_step') }}
+                                        <ArrowRight
+                                            class="ms-2 h-4 w-4 rtl:rotate-180"
+                                        />
                                     </span>
                                     <span
                                         class="absolute inset-0 bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600"
@@ -703,7 +745,7 @@ const submit = () => {
                                             class="flex items-center"
                                         >
                                             <svg
-                                                class="-ml-1 mr-2 h-5 w-5 animate-spin"
+                                                class="-ms-1 me-2 h-5 w-5 animate-spin"
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
@@ -722,11 +764,11 @@ const submit = () => {
                                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                 ></path>
                                             </svg>
-                                            Creating...
+                                            {{ t('wizard.creating') }}
                                         </span>
                                         <span v-else class="flex items-center">
-                                            <Check class="mr-2 h-5 w-5" />
-                                            Create Pet Listing
+                                            <Check class="me-2 h-5 w-5" />
+                                            {{ t('wizard.create_pet_listing') }}
                                         </span>
                                     </span>
                                     <span
@@ -746,20 +788,24 @@ const submit = () => {
                             <div
                                 class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
                             >
-                                <span
-                                    >{{ completedSteps.length }} of
-                                    {{ totalSteps }} steps completed</span
-                                >
+                                <span>{{
+                                    t('wizard.steps_completed', {
+                                        completed: completedSteps.length,
+                                        total: totalSteps,
+                                    })
+                                }}</span>
                                 <span
                                     class="font-semibold text-primary-600 dark:text-primary-400"
                                 >
                                     {{
-                                        Math.round(
-                                            (completedSteps.length /
-                                                totalSteps) *
-                                                100,
-                                        )
-                                    }}% Complete
+                                        t('wizard.percent_complete', {
+                                            percent: Math.round(
+                                                (completedSteps.length /
+                                                    totalSteps) *
+                                                    100,
+                                            ),
+                                        })
+                                    }}
                                 </span>
                             </div>
                         </div>

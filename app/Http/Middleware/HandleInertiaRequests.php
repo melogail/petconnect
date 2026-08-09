@@ -3,9 +3,13 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Services\MessagingInboxService;
+use App\Services\NotificationInboxService;
+use App\Support\LocaleManager;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -40,23 +44,41 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $locale = App::getLocale();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => $locale,
+            'dir' => LocaleManager::direction($locale),
+            'translations' => fn () => LocaleManager::translations($locale),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'flash' => [
                 'error' => fn () => request()->session()->get('error'),
                 'success' => fn () => request()->session()->get('success'),
             ],
             'auth' => [
-                'user' => fn () => $request->user()
-                    ? UserResource::make($request->user())
+                'user' => fn () => ($user = $this->domainUser($request))
+                    ? UserResource::make($user)
                     : null,
             ],
-            'messaging' => fn () => $request->user()
-                ? app(MessagingInboxService::class)->sharedPropsFor($request->user())
+            'messaging' => fn () => ($user = $this->domainUser($request))
+                ? app(MessagingInboxService::class)->sharedPropsFor($user)
+                : null,
+            'notifications' => fn () => ($user = $this->domainUser($request))
+                ? app(NotificationInboxService::class)->sharedPropsFor($user)
                 : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * Resolve the authenticated front-end user, ignoring Nova admin sessions.
+     */
+    protected function domainUser(Request $request): ?User
+    {
+        $user = $request->user();
+
+        return $user instanceof User ? $user : null;
     }
 }

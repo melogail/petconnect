@@ -4,52 +4,38 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
+use JsonException;
+use RuntimeException;
 
 class CategorySeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * @throws JsonException
      */
     public function run(): void
     {
-        $categories = [
-            [
-                'name' => 'Dogs',
-                'description' => 'Man\'s best friend - loyal, loving, and full of energy',
-            ],
-            [
-                'name' => 'Cats',
-                'description' => 'Independent and affectionate feline companions',
-            ],
-            [
-                'name' => 'Birds',
-                'description' => 'Colorful and melodious feathered friends',
-            ],
-            [
-                'name' => 'Fish',
-                'description' => 'Beautiful aquatic pets for your home',
-            ],
-            [
-                'name' => 'Small Pets',
-                'description' => 'Rabbits, hamsters, guinea pigs and more',
-            ],
-            [
-                'name' => 'Reptiles',
-                'description' => 'Exotic cold-blooded companions',
-            ],
-            [
-                'name' => 'Farm Animals',
-                'description' => 'Chickens, goats, horses and other farm friends',
-            ],
-        ];
+        $path = database_path('data/categories.json');
+
+        if (! File::exists($path)) {
+            throw new RuntimeException("Category seed data not found at [{$path}].");
+        }
+
+        /** @var list<array{slug: string, name: string, name_ar: string, description?: string|null, description_ar?: string|null}> $categories */
+        $categories = json_decode(File::get($path), true, 512, JSON_THROW_ON_ERROR);
 
         foreach ($categories as $category) {
-            Category::create([
-                'name' => $category['name'],
-                'slug' => Str::slug($category['name']),
-                'description' => $category['description'],
-            ]);
+            Category::query()->updateOrCreate(
+                ['slug' => $category['slug']],
+                [
+                    'name' => $category['name'],
+                    'name_ar' => $category['name_ar'],
+                    'description' => $category['description'] ?? null,
+                    'description_ar' => $category['description_ar'] ?? null,
+                ],
+            );
         }
     }
 }

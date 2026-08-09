@@ -16,6 +16,7 @@ import {
 import ReportDialog from '@/components/web/ReportDialog.vue';
 import CommentItem from '@/components/web/CommentItem.vue';
 import { AlertTriangle } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface CommentUser {
     id?: number | null;
@@ -63,6 +64,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits(['comment-added', 'comment-deleted']);
+
+const { t } = useTranslations();
 
 const isOpen = ref(false);
 const newComment = ref('');
@@ -229,20 +232,20 @@ defineExpose({ open });
             class="flex max-h-[80vh] flex-col bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 sm:max-w-[600px]"
         >
             <DialogHeader>
-                <DialogTitle class="text-xl"
-                    >Comments for {{ petName }}</DialogTitle
-                >
+                <DialogTitle class="text-xl">{{
+                    t('comments.comments_for', { name: petName })
+                }}</DialogTitle>
                 <DialogDescription>
-                    Share your thoughts and questions about {{ petName }}.
+                    {{ t('comments.share_thoughts', { name: petName }) }}
                 </DialogDescription>
             </DialogHeader>
 
-            <div class="-mr-2 flex-1 overflow-y-auto py-4 pr-2">
+            <div class="-me-2 flex-1 overflow-y-auto py-4 pe-2">
                 <div
                     v-if="comments.length === 0"
                     class="py-8 text-center text-gray-500 dark:text-gray-400"
                 >
-                    No comments yet. Be the first to comment!
+                    {{ t('comments.empty') }}
                 </div>
 
                 <div v-else class="space-y-6">
@@ -274,7 +277,7 @@ defineExpose({ open });
                 <div class="flex gap-2">
                     <Input
                         v-model="newComment"
-                        placeholder="Write a comment..."
+                        :placeholder="t('comments.write_placeholder')"
                         class="flex-1"
                         required
                         :disabled="submitting"
@@ -285,7 +288,11 @@ defineExpose({ open });
                         class="h-9 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:opacity-90"
                         :disabled="!newComment.trim() || submitting"
                     >
-                        {{ submitting ? 'Posting...' : 'Comment' }}
+                        {{
+                            submitting
+                                ? t('comments.posting')
+                                : t('comments.comment')
+                        }}
                     </Button>
                 </div>
             </form>
@@ -294,7 +301,7 @@ defineExpose({ open });
                 v-else
                 class="mt-4 border-t border-gray-200 pt-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
             >
-                Sign in with a verified account to leave a comment.
+                {{ t('comments.sign_in_to_comment') }}
             </p>
         </DialogContent>
     </Dialog>
@@ -305,15 +312,14 @@ defineExpose({ open });
     >
         <DialogContent class="sm:max-w-[480px]">
             <DialogHeader>
-                <DialogTitle>Edit comment</DialogTitle>
-                <DialogDescription
-                    >Update your comment and save your
-                    changes.</DialogDescription
-                >
+                <DialogTitle>{{ t('comments.edit_comment') }}</DialogTitle>
+                <DialogDescription>{{
+                    t('comments.edit_description')
+                }}</DialogDescription>
             </DialogHeader>
             <Textarea
                 v-model="editContent"
-                placeholder="Edit your comment..."
+                :placeholder="t('comments.edit_placeholder')"
                 class="min-h-[120px]"
                 :disabled="submitting"
                 maxlength="500"
@@ -324,13 +330,17 @@ defineExpose({ open });
                     :disabled="submitting"
                     @click="closeEditDialog"
                 >
-                    Cancel
+                    {{ t('comments.cancel') }}
                 </Button>
                 <Button
                     :disabled="!editContent.trim() || submitting"
                     @click="submitEdit"
                 >
-                    {{ submitting ? 'Saving...' : 'Save changes' }}
+                    {{
+                        submitting
+                            ? t('comments.saving')
+                            : t('comments.save_changes')
+                    }}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -346,11 +356,12 @@ defineExpose({ open });
                     class="flex items-center gap-2 text-red-600 dark:text-red-400"
                 >
                     <AlertTriangle class="h-5 w-5" />
-                    <DialogTitle>Delete comment</DialogTitle>
+                    <DialogTitle>{{
+                        t('comments.delete_comment')
+                    }}</DialogTitle>
                 </div>
                 <DialogDescription>
-                    Are you sure you want to delete this comment? This action
-                    cannot be undone and any replies will also be removed.
+                    {{ t('comments.delete_confirm') }}
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2 sm:justify-end">
@@ -359,14 +370,18 @@ defineExpose({ open });
                     :disabled="submitting"
                     @click="closeDeleteDialog"
                 >
-                    Cancel
+                    {{ t('comments.cancel') }}
                 </Button>
                 <Button
                     variant="destructive"
                     :disabled="submitting"
                     @click="confirmDelete"
                 >
-                    {{ submitting ? 'Deleting...' : 'Delete' }}
+                    {{
+                        submitting
+                            ? t('comments.deleting')
+                            : t('comments.delete')
+                    }}
                 </Button>
             </DialogFooter>
         </DialogContent>

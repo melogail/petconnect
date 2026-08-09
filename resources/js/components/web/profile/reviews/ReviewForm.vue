@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { Star } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 import Textarea from '@/components/ui/textarea/Textarea.vue';
 import Label from '@/components/ui/label/Label.vue';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     initialRating: {
@@ -34,7 +37,7 @@ const submit = () => {
 <template>
     <form @submit.prevent="submit" class="space-y-4">
         <div class="space-y-2">
-            <Label>Rating</Label>
+            <Label>{{ t('reviews.rating') }}</Label>
             <div class="flex items-center space-x-1">
                 <button
                     v-for="i in 5"
@@ -61,11 +64,11 @@ const submit = () => {
         </div>
 
         <div class="space-y-2">
-            <Label for="comment">Review</Label>
+            <Label for="comment">{{ t('reviews.review') }}</Label>
             <Textarea
                 id="comment"
                 v-model="comment"
-                placeholder="Share your experience..."
+                :placeholder="t('reviews.share_experience_placeholder')"
                 rows="4"
                 class="w-full resize-none"
             />
@@ -77,7 +80,7 @@ const submit = () => {
                 :disabled="rating === 0 || !comment.trim()"
                 class="bg-indigo-600 text-white hover:bg-indigo-700"
             >
-                Submit Review
+                {{ t('reviews.submit_review') }}
             </Button>
         </div>
     </form>

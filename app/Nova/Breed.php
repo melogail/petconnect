@@ -3,7 +3,6 @@
 namespace App\Nova;
 
 use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
-use Illuminate\Http\Request;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Slug;
@@ -54,6 +53,11 @@ class Breed extends Resource
                 ->rules(['required', 'string', 'max:255'])
                 ->sortable(),
 
+            Text::make('Name Arabic', 'name_ar')
+                ->required()
+                ->rules(['required', 'string', 'max:255'])
+                ->sortable(),
+
             Slug::make('Slug')
                 ->from('name')
                 ->immutable()
@@ -61,13 +65,15 @@ class Breed extends Resource
                 ->required()
                 ->hideFromIndex(),
 
-            Images::make('Breed image', 'image')
+            Images::make('Breed image', 'breeds')
                 ->required()
-                ->rules(['required'])
-                ->rules('required'),
+                ->rules(['required']),
 
             Text::make('Description')
-            ->hideFromIndex(),
+                ->hideFromIndex(),
+
+            Text::make('Description Arabic', 'description_ar')
+                ->hideFromIndex(),
         ];
     }
 

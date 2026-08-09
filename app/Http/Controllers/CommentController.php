@@ -31,7 +31,7 @@ class CommentController extends Controller
             parentId: $request->integer('parent_id') ?: null,
         );
 
-        return back()->with('success', 'Comment created successfully');
+        return back()->with('success', __('flash.comment_created'));
     }
 
     public function update(UpdateCommentRequest $request, Comment $comment): RedirectResponse
@@ -41,7 +41,7 @@ class CommentController extends Controller
 
         $this->commentService->updateComment($comment, $request->string('content')->toString());
 
-        return back()->with('success', 'Comment updated successfully');
+        return back()->with('success', __('flash.comment_updated'));
     }
 
     public function delete(Comment $comment): RedirectResponse
@@ -51,6 +51,6 @@ class CommentController extends Controller
 
         $this->commentService->deleteComment($comment);
 
-        return back()->with('success', 'Comment deleted successfully');
+        return back()->with('success', __('flash.comment_deleted'));
     }
 }

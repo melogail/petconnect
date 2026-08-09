@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/InputError.vue';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
@@ -17,6 +18,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -30,7 +33,7 @@ const props = defineProps<Props>();
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-purple-100/20 to-transparent opacity-50 dark:from-purple-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-purple-100/20 to-transparent opacity-50 dark:from-purple-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -58,31 +61,36 @@ const props = defineProps<Props>();
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Description & Personality</CardTitle
+                            >{{
+                                t('wizard.description_and_personality')
+                            }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Tell us about your pet's personality and
-                            traits</CardDescription
+                            >{{
+                                t('wizard.description_and_personality_desc')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
             </CardHeader>
             <CardContent class="space-y-6">
                 <div class="space-y-2">
-                    <Label for="description">Description</Label>
+                    <Label for="description">{{
+                        t('wizard.description')
+                    }}</Label>
                     <Textarea
                         id="description"
                         name="description"
                         v-model="form.description"
-                        placeholder="Tell us about your pet's personality, habits, and any special needs..."
+                        :placeholder="t('wizard.description_placeholder')"
                         class="min-h-[120px]"
                     />
                     <InputError :message="form.errors.description" />
                 </div>
 
                 <div class="space-y-3">
-                    <Label>Personality Traits</Label>
+                    <Label>{{ t('wizard.personality_traits') }}</Label>
                     <div
                         class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"
                     >

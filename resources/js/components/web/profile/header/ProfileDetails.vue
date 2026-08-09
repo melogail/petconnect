@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Mail, Phone, MapPin } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 defineProps({
     user: Object,
@@ -13,7 +16,7 @@ defineProps({
         >
             <div class="flex items-center">
                 <div
-                    class="mr-3 rounded-lg bg-indigo-50 p-2 dark:bg-indigo-900/30"
+                    class="me-3 rounded-lg bg-indigo-50 p-2 dark:bg-indigo-900/30"
                 >
                     <Mail
                         class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
@@ -21,7 +24,7 @@ defineProps({
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Email
+                        {{ t('profile.email') }}
                     </p>
                     <p
                         class="truncate text-sm font-medium text-gray-900 dark:text-white"
@@ -37,7 +40,7 @@ defineProps({
         >
             <div class="flex items-center">
                 <div
-                    class="mr-3 rounded-lg bg-violet-50 p-2 dark:bg-violet-900/30"
+                    class="me-3 rounded-lg bg-violet-50 p-2 dark:bg-violet-900/30"
                 >
                     <Phone
                         class="h-5 w-5 text-violet-600 dark:text-violet-400"
@@ -45,15 +48,12 @@ defineProps({
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Phone
+                        {{ t('profile.phone') }}
                     </p>
                     <p
                         class="text-sm font-medium text-gray-900 dark:text-white"
                     >
-                        {{
-                            user.data.phone ??
-                            '+ Make it easier for people to contact you.'
-                        }}
+                        {{ user.data.phone ?? t('profile.add_contact_hint') }}
                     </p>
                 </div>
             </div>
@@ -64,7 +64,7 @@ defineProps({
         >
             <div class="flex items-center">
                 <div
-                    class="mr-3 rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/30"
+                    class="me-3 rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/30"
                 >
                     <MapPin
                         class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
@@ -72,12 +72,11 @@ defineProps({
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Location
+                        {{ t('profile.location') }}
                     </p>
                     <p class="text-sm font-medium dark:text-white">
                         {{
-                            user.data.location ??
-                            '+ Add your location to find people nearby.'
+                            user.data.location ?? t('profile.add_location_hint')
                         }}
                     </p>
                 </div>

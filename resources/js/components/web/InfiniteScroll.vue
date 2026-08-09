@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useIntersectionObserver } from '@vueuse/core';
+import { useTranslations } from '@/composables/useTranslations';
 
 const props = defineProps<{
     hasMore: boolean;
@@ -9,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['loadMore']);
 
+const { t } = useTranslations();
 const target = ref<HTMLElement | null>(null);
 
 useIntersectionObserver(
@@ -18,7 +20,11 @@ useIntersectionObserver(
             emit('loadMore');
         }
     },
-    { rootMargin: '200px' }, // Load slightly before reaching the element
+    {
+        rootMargin: '200px',
+        // Avoid rapid re-entry storms while content is still settling.
+        threshold: 0.1,
+    },
 );
 </script>
 
@@ -53,7 +59,7 @@ useIntersectionObserver(
             v-show="!hasMore"
             class="mt-8 py-4 text-center text-sm text-gray-400"
         >
-            <slot name="no-more">You've reached the end of the list.</slot>
+            <slot name="no-more">{{ t('home.end_of_list') }}</slot>
         </div>
     </div>
 </template>

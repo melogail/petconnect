@@ -21,6 +21,17 @@ class Category extends Model implements HasMedia
             ->useDisk('public');
     }
 
+    /**
+     * ==================================
+     * RELATIONS
+     * ==================================
+     */
+
+    /**
+     * Get the breeds for the category.
+     *
+     * @return HasMany<Breed, Category>
+     */
     public function breeds(): HasMany
     {
         return $this->hasMany(Breed::class);

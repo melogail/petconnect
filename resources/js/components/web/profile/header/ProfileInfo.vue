@@ -9,8 +9,10 @@ import {
 } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 
 const auth = useAuthUser();
+const { t } = useTranslations();
 
 defineProps({
     user: Object,
@@ -32,7 +34,7 @@ defineProps({
                     <span
                         v-if="!user.data.is_verified"
                         class="text-violet-500 dark:text-violet-400"
-                        title="Verified account"
+                        :title="t('profile.verified_account')"
                     >
                         <BadgeCheck class="h-6 w-6 text-green-500" :size="24" />
                     </span>
@@ -40,15 +42,15 @@ defineProps({
                 <span
                     class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
                 >
-                    <User class="mr-1 h-3 w-3" />
-                    Member
+                    <User class="me-1 h-3 w-3" />
+                    {{ t('profile.member') }}
                 </span>
             </div>
             <p
                 class="flex items-center text-sm text-indigo-500 dark:text-indigo-400"
             >
-                <Calendar class="mr-1.5 h-4 w-4" />
-                Member since {{ user.data.created_at }}
+                <Calendar class="me-1.5 h-4 w-4" />
+                {{ t('profile.member_since', { date: user.data.created_at }) }}
             </p>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -61,17 +63,17 @@ defineProps({
                 class="inline-flex cursor-pointer items-center rounded-xl border border-gray-200/50 bg-white/80 px-4 py-2.5 text-sm font-medium text-gray-700 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-gray-600/50 dark:bg-gray-700/80 dark:text-gray-200 dark:hover:bg-gray-600"
             >
                 <MessageSquare
-                    class="mr-2 h-4 w-4 text-indigo-500 dark:text-indigo-400"
+                    class="me-2 h-4 w-4 text-indigo-500 dark:text-indigo-400"
                 />
-                Messages
+                {{ t('profile.messages') }}
             </Link>
             <Link
                 v-if="user.data.can.update"
                 :href="route('profile.edit', user.data.id)"
                 class="inline-flex cursor-pointer items-center rounded-xl border-0 bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:from-indigo-700 hover:to-violet-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
-                <Edit2 class="mr-2 h-4 w-4 text-white/90" />
-                Edit Profile
+                <Edit2 class="me-2 h-4 w-4 text-white/90" />
+                {{ t('profile.edit_profile') }}
             </Link>
         </div>
     </div>

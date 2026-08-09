@@ -17,12 +17,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -36,7 +39,7 @@ const props = defineProps<Props>();
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-emerald-100/20 to-transparent opacity-50 dark:from-emerald-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-emerald-100/20 to-transparent opacity-50 dark:from-emerald-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -64,29 +67,44 @@ const props = defineProps<Props>();
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Health Status</CardTitle
+                            >{{ t('wizard.health_status') }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Your pet's current health
-                            condition</CardDescription
+                            >{{
+                                t('wizard.health_status_desc')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="health-status">Overall Health Status</Label>
+                    <Label for="health-status">{{
+                        t('wizard.overall_health_status')
+                    }}</Label>
                     <Select id="health-status" v-model="form.health.status">
                         <SelectTrigger>
-                            <SelectValue placeholder="Select health status" />
+                            <SelectValue
+                                :placeholder="t('wizard.select_health_status')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="excellent">Excellent</SelectItem>
-                            <SelectItem value="good">Good</SelectItem>
-                            <SelectItem value="fair">Fair</SelectItem>
-                            <SelectItem value="poor">Poor</SelectItem>
-                            <SelectItem value="critical">Critical</SelectItem>
+                            <SelectItem value="excellent">{{
+                                t('wizard.excellent')
+                            }}</SelectItem>
+                            <SelectItem value="good">{{
+                                t('wizard.good')
+                            }}</SelectItem>
+                            <SelectItem value="fair">{{
+                                t('wizard.fair')
+                            }}</SelectItem>
+                            <SelectItem value="poor">{{
+                                t('wizard.poor')
+                            }}</SelectItem>
+                            <SelectItem value="critical">{{
+                                t('wizard.critical')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -97,7 +115,9 @@ const props = defineProps<Props>();
                             id="vaccinated"
                             v-model="form.health.vaccinated"
                         />
-                        <Label for="vaccinated">Vaccinated</Label>
+                        <Label for="vaccinated">{{
+                            t('wizard.vaccinated')
+                        }}</Label>
                     </div>
 
                     <div class="flex items-center space-x-2">
@@ -105,12 +125,16 @@ const props = defineProps<Props>();
                             id="spayed-neutered"
                             v-model="form.health.spayedNeutered"
                         />
-                        <Label for="spayed-neutered">Spayed/Neutered</Label>
+                        <Label for="spayed-neutered">{{
+                            t('wizard.spayed_neutered')
+                        }}</Label>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="last-vet-visit">Last Vet Visit</Label>
+                    <Label for="last-vet-visit">{{
+                        t('wizard.last_vet_visit')
+                    }}</Label>
                     <Input
                         id="last-vet-visit"
                         type="date"
@@ -119,13 +143,13 @@ const props = defineProps<Props>();
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="special-needs"
-                        >Special Needs or Medical Conditions</Label
-                    >
+                    <Label for="special-needs">{{
+                        t('wizard.special_needs')
+                    }}</Label>
                     <Textarea
                         id="special-needs"
                         v-model="form.health.specialNeeds"
-                        placeholder="Any special care requirements, medications, or health concerns..."
+                        :placeholder="t('wizard.special_needs_placeholder')"
                         class="min-h-[100px]"
                     />
                 </div>

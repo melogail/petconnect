@@ -28,6 +28,7 @@ import PhotosStep from '@/components/web/pet/form/PhotosStep.vue';
 import ReviewStep from '@/components/web/pet/form/ReviewStep.vue';
 import StepperProgress from '@/components/web/pet/form/StepperProgress.vue';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     pet: { data: any } | any; // To handle both wrapped Resource and direct object
@@ -36,6 +37,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 // Handle potential resource wrapper
 const petData = computed(() => {
@@ -75,20 +78,20 @@ const breeds = computed(() => {
     return result;
 });
 
-// Pet traits
-const petTraits = [
-    { id: 'Friendly', label: 'Friendly' },
-    { id: 'Playful', label: 'Playful' },
-    { id: 'Calm', label: 'Calm' },
-    { id: 'Energetic', label: 'Energetic' },
-    { id: 'Shy', label: 'Shy' },
-    { id: 'Loyal', label: 'Loyal' },
-    { id: 'Smart', label: 'Smart' },
-    { id: 'Gentle', label: 'Gentle' },
-    { id: 'Affectionate', label: 'Affectionate' },
-    { id: 'Independent', label: 'Independent' },
-    { id: 'Intelligent', label: 'Intelligent' },
-];
+// Pet traits — keep English IDs for data, translate labels for display
+const petTraits = computed(() => [
+    { id: 'Friendly', label: t('traits.friendly') },
+    { id: 'Playful', label: t('traits.playful') },
+    { id: 'Calm', label: t('traits.calm') },
+    { id: 'Energetic', label: t('traits.energetic') },
+    { id: 'Shy', label: t('traits.shy') },
+    { id: 'Loyal', label: t('traits.loyal') },
+    { id: 'Smart', label: t('traits.smart') },
+    { id: 'Gentle', label: t('traits.gentle') },
+    { id: 'Affectionate', label: t('traits.affectionate') },
+    { id: 'Independent', label: t('traits.independent') },
+    { id: 'Intelligent', label: t('traits.intelligent') },
+]);
 
 // Default to single page view, avoiding steps for edit
 // Form state populated with existing pet data
@@ -158,7 +161,10 @@ const form = useForm({
         (typeof petData.value.traits === 'string'
             ? JSON.parse(petData.value.traits)
             : petData.value.traits) || []
-    ).map((t: string) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()),
+    ).map(
+        (trait: string) =>
+            trait.charAt(0).toUpperCase() + trait.slice(1).toLowerCase(),
+    ),
     additionalInfo:
         (typeof petData.value.additional_info === 'string'
             ? JSON.parse(petData.value.additional_info)
@@ -168,16 +174,31 @@ const form = useForm({
 // Since Edit uses subsections instead of stepper progress
 const activeSection = ref(1);
 
-const sections = [
-    { id: 1, name: 'Basic & Personality', icon: Home, refId: 'section-basic' },
-    { id: 2, name: 'Location', icon: MapPin, refId: 'section-location' },
-    { id: 3, name: 'Health', icon: Stethoscope, refId: 'section-health' },
-    { id: 4, name: 'Media', icon: Camera, refId: 'section-media' },
-];
+const sections = computed(() => [
+    {
+        id: 1,
+        name: t('pets.basic_and_personality'),
+        icon: Home,
+        refId: 'section-basic',
+    },
+    {
+        id: 2,
+        name: t('pets.location_details'),
+        icon: MapPin,
+        refId: 'section-location',
+    },
+    {
+        id: 3,
+        name: t('wizard.step_health'),
+        icon: Stethoscope,
+        refId: 'section-health',
+    },
+    { id: 4, name: t('pets.media'), icon: Camera, refId: 'section-media' },
+]);
 
 const scrollToSection = (id: number) => {
     activeSection.value = id;
-    const sectionToScroll = sections.find((s) => s.id === id);
+    const sectionToScroll = sections.value.find((s) => s.id === id);
     if (sectionToScroll) {
         const el = document.getElementById(sectionToScroll.refId);
         if (el) {
@@ -242,7 +263,7 @@ const handleFileUpload = async (event: Event) => {
     const files = Array.from(target.files || []);
 
     if (files.length + form.images.length + form.existingImages.length > 3) {
-        alert('You can only have up to 3 gallery images total');
+        alert(t('pets.alert_max_gallery_images'));
         return;
     }
 
@@ -308,19 +329,17 @@ const removeImage = (index: number) => {
 // Strict validation for form submission
 const validateForm = (): boolean => {
     if (!form.name || !form.type || !form.breed || !form.age || !form.gender) {
-        alert(
-            'Please fill in all basic information fields in the Basic section.',
-        );
+        alert(t('pets.alert_fill_basic_section'));
         scrollToSection(1);
         return false;
     }
     if (!form.location.city || !form.location.country) {
-        alert('Please provide location information in the Location section.');
+        alert(t('pets.alert_provide_location_section'));
         scrollToSection(2);
         return false;
     }
     if (!form.featuredImagePreview) {
-        alert('A featured image is required.');
+        alert(t('pets.alert_featured_required'));
         scrollToSection(4);
         return false;
     }
@@ -330,7 +349,7 @@ const validateForm = (): boolean => {
 // Location methods
 const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser');
+        alert(t('pets.alert_geolocation_unsupported'));
         return;
     }
 
@@ -351,7 +370,7 @@ const getCurrentLocation = async () => {
         },
         (error) => {
             console.error('Error getting location:', error);
-            alert('Unable to get your location. Please enter it manually.');
+            alert(t('pets.alert_unable_get_location'));
             isLoadingLocation.value = false;
         },
     );
@@ -431,11 +450,10 @@ const submit = () => {
                     <h1
                         class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
                     >
-                        Edit Pet: {{ petData.name }}
+                        {{ t('pets.edit_pet', { name: petData.name }) }}
                     </h1>
                     <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Update the information below to keep your pet's profile
-                        current.
+                        {{ t('pets.edit_pet_description') }}
                     </p>
                 </div>
                 <Button
@@ -443,8 +461,8 @@ const submit = () => {
                     @click="$inertia.visit(`/pets/${petData.id}`)"
                     class="rounded-xl"
                 >
-                    <ArrowLeft class="mr-2 h-4 w-4" />
-                    Back to Pet Profile
+                    <ArrowLeft class="me-2 h-4 w-4 rtl:rotate-180" />
+                    {{ t('pets.back_to_pet_profile') }}
                 </Button>
             </div>
 
@@ -471,7 +489,7 @@ const submit = () => {
                                     activeSection === section.id
                                         ? 'text-primary-500'
                                         : 'text-gray-400 group-hover:text-gray-500',
-                                    '-ml-1 mr-3 h-5 w-5 flex-shrink-0',
+                                    '-ms-1 me-3 h-5 w-5 flex-shrink-0',
                                 ]"
                             />
                             <span class="truncate">{{ section.name }}</span>
@@ -491,13 +509,16 @@ const submit = () => {
                                 <h2
                                     class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
                                 >
-                                    Basic Information & Personality
+                                    {{
+                                        t(
+                                            'pets.basic_information_and_personality',
+                                        )
+                                    }}
                                 </h2>
                                 <p
                                     class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    Update the primary details and description
-                                    of your pet.
+                                    {{ t('pets.update_primary_details') }}
                                 </p>
                             </div>
 
@@ -517,7 +538,11 @@ const submit = () => {
                                 <h3
                                     class="text-md mb-4 font-medium text-gray-900 dark:text-white"
                                 >
-                                    Personality Traits & Description
+                                    {{
+                                        t(
+                                            'pets.personality_traits_and_description',
+                                        )
+                                    }}
                                 </h3>
                                 <PersonalityStep
                                     :form="form"
@@ -532,7 +557,7 @@ const submit = () => {
                                 <h3
                                     class="text-md mb-4 font-medium text-gray-900 dark:text-white"
                                 >
-                                    Additional Info (Optional)
+                                    {{ t('pets.additional_info_optional') }}
                                 </h3>
                                 <AdditionalInfoStep
                                     :form="form"
@@ -552,12 +577,12 @@ const submit = () => {
                                 <h2
                                     class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
                                 >
-                                    Location Details
+                                    {{ t('pets.location_details') }}
                                 </h2>
                                 <p
                                     class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    Where is the pet currently located?
+                                    {{ t('pets.where_pet_located_question') }}
                                 </p>
                             </div>
 
@@ -584,13 +609,12 @@ const submit = () => {
                                 <h2
                                     class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
                                 >
-                                    Health & Medical History
+                                    {{ t('pets.health_and_medical_history') }}
                                 </h2>
                                 <p
                                     class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    Provide medical details, vaccinations, and
-                                    overall health status.
+                                    {{ t('pets.provide_medical_details') }}
                                 </p>
                             </div>
 
@@ -604,7 +628,7 @@ const submit = () => {
                                 <h3
                                     class="text-md mb-4 font-medium text-gray-900 dark:text-white"
                                 >
-                                    Detailed Healthcare
+                                    {{ t('pets.detailed_healthcare') }}
                                 </h3>
                                 <HealthcareStep
                                     :form="form"
@@ -622,13 +646,12 @@ const submit = () => {
                                 <h2
                                     class="text-lg font-medium leading-6 text-gray-900 dark:text-white"
                                 >
-                                    Media & Photos
+                                    {{ t('pets.media_and_photos') }}
                                 </h2>
                                 <p
                                     class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    Update photos of your pet. Changes here will
-                                    apply upon save.
+                                    {{ t('pets.update_photos') }}
                                 </p>
                             </div>
 
@@ -659,7 +682,7 @@ const submit = () => {
                                     "
                                     class="rounded-xl px-6"
                                 >
-                                    Cancel
+                                    {{ t('pets.cancel') }}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -671,7 +694,7 @@ const submit = () => {
                                         class="flex items-center text-white"
                                     >
                                         <svg
-                                            class="-ml-1 mr-2 h-5 w-5 animate-spin text-white"
+                                            class="-ms-1 me-2 h-5 w-5 animate-spin text-white"
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
                                             viewBox="0 0 24 24"
@@ -690,14 +713,14 @@ const submit = () => {
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                             ></path>
                                         </svg>
-                                        Saving Changes...
+                                        {{ t('pets.saving_changes') }}
                                     </span>
                                     <span
                                         v-else
                                         class="flex items-center text-white"
                                     >
-                                        <Check class="mr-2 h-5 w-5" />
-                                        Save Changes
+                                        <Check class="me-2 h-5 w-5" />
+                                        {{ t('pets.save_changes') }}
                                     </span>
                                 </Button>
                             </div>

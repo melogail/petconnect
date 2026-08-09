@@ -39,8 +39,13 @@ class PetCardResource extends JsonResource
             'spayedNeutered' => $this->spayed_neutered,
             'likes' => $this->likes ?? null,
             'likesCount' => $this->likes_count ?? $this->likes->count() ?? 0,
+            'isLiked' => (bool) ($this->is_liked ?? false),
             'comments' => $this->whenLoaded('comments', fn () => CommentResource::collection($this->comments)),
             'commentsCount' => $this->comments_count ?? ($this->relationLoaded('comments') ? $this->comments->count() : 0),
+            'distance' => $this->when(
+                isset($this->distance),
+                fn () => round((float) $this->distance, 2),
+            ),
         ];
     }
 }

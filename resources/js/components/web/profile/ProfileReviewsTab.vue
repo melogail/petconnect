@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { useTranslations } from '@/composables/useTranslations';
 
 const props = defineProps({
     reviews: {
@@ -33,6 +34,7 @@ const props = defineProps({
     },
 });
 
+const { t } = useTranslations();
 const authUser = useAuthUser();
 const currentUser = computed(() => authUser.value ?? { id: 0 });
 
@@ -59,10 +61,10 @@ const handleAddReview = (data) => {
         {
             onSuccess: () => {
                 isAddReviewOpen.value = false;
-                toast.success('Review added successfully');
+                toast.success(t('reviews.added_successfully'));
             },
             onError: () => {
-                toast.error('Failed to add review');
+                toast.error(t('reviews.failed_to_add'));
             },
         },
     );
@@ -77,10 +79,10 @@ const handleUpdateReview = (updatedData) => {
         },
         {
             onSuccess: () => {
-                toast.success('Review updated successfully');
+                toast.success(t('reviews.updated_successfully'));
             },
             onError: () => {
-                toast.error('Failed to update review');
+                toast.error(t('reviews.failed_to_update'));
             },
         },
     );
@@ -89,10 +91,10 @@ const handleUpdateReview = (updatedData) => {
 const handleDeleteReview = (reviewId) => {
     router.delete(route('reviews.destroy', { review: reviewId }), {
         onSuccess: () => {
-            toast.success('Review deleted successfully');
+            toast.success(t('reviews.deleted_successfully'));
         },
         onError: () => {
-            toast.error('Failed to delete review');
+            toast.error(t('reviews.failed_to_delete'));
         },
     });
 };
@@ -124,15 +126,17 @@ const handleSubmitReport = () => {
                         <Button
                             class="bg-indigo-600 text-white hover:bg-indigo-700"
                         >
-                            <Plus class="mr-2 h-4 w-4" />
-                            Add Review
+                            <Plus class="me-2 h-4 w-4" />
+                            {{ t('reviews.add_review') }}
                         </Button>
                     </DialogTrigger>
                     <DialogContent class="sm:max-w-[425px]">
                         <DialogHeader>
-                            <DialogTitle>Write a Review</DialogTitle>
+                            <DialogTitle>{{
+                                t('reviews.write_a_review')
+                            }}</DialogTitle>
                             <DialogDescription>
-                                Share your experience with this profile.
+                                {{ t('reviews.share_experience') }}
                             </DialogDescription>
                         </DialogHeader>
                         <ReviewForm @submit="handleAddReview" />
@@ -146,7 +150,7 @@ const handleSubmitReport = () => {
             <h3
                 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white"
             >
-                What People Say
+                {{ t('reviews.what_people_say') }}
             </h3>
             <ReviewCarousel
                 :reviews="reviews"
@@ -157,7 +161,7 @@ const handleSubmitReport = () => {
             />
         </div>
         <div v-else class="text-center text-gray-500 dark:text-gray-400">
-            No reviews yet. Be the first to review!
+            {{ t('reviews.empty') }}
         </div>
 
         <!-- Report Dialog -->

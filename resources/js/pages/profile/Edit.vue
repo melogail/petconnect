@@ -2,15 +2,18 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import MainLayout from '@/layouts/MainLayout.vue';
 import { Button } from '@/components/ui/button';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { MapPin, Shield, User } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 
 // Section Components
 import EditHeader from '@/components/web/profile/edit/EditHeader.vue';
 import BasicInfoSection from '@/components/web/profile/edit/BasicInfoSection.vue';
 import LocationSection from '@/components/web/profile/edit/LocationSection.vue';
 import SecuritySection from '@/components/web/profile/edit/SecuritySection.vue';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     user: Object,
@@ -39,26 +42,26 @@ const form = useForm({
 
 // Navigation State
 const activeSection = ref('basic');
-const sections = [
+const sections = computed(() => [
     {
         id: 'basic',
-        label: 'Basic Information',
+        label: t('profile.basic_information'),
         icon: User,
-        description: 'Manage your profile details',
+        description: t('profile.manage_profile_details'),
     },
     {
         id: 'location',
-        label: 'Location',
+        label: t('profile.location'),
         icon: MapPin,
-        description: 'Update where you live',
+        description: t('profile.update_where_you_live'),
     },
     {
         id: 'security',
-        label: 'Security',
+        label: t('profile.security'),
         icon: Shield,
-        description: 'Secure your account',
+        description: t('profile.secure_your_account'),
     },
-];
+]);
 
 const submit = () => {
     form.post(route('profile.update', props.user.data?.id), {
@@ -77,7 +80,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Edit Profile" />
+    <Head :title="t('profile.edit_profile')" />
 
     <MainLayout class="min-h-screen bg-gray-50/50 dark:bg-gray-900">
         <!-- Reusable Header Component -->
@@ -116,11 +119,11 @@ const submit = () => {
                                         activeSection === section.id
                                             ? 'text-violet-600 dark:text-violet-400'
                                             : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300',
-                                        'mr-3 h-5 w-5 flex-shrink-0',
+                                        'me-3 h-5 w-5 flex-shrink-0',
                                     ]"
                                     aria-hidden="true"
                                 />
-                                <div class="text-left">
+                                <div class="text-start">
                                     <span class="block">{{
                                         section.label
                                     }}</span>
@@ -133,7 +136,7 @@ const submit = () => {
                                 </div>
                                 <div
                                     v-if="activeSection === section.id"
-                                    class="ml-auto h-1 w-1 rounded-full bg-violet-500"
+                                    class="ms-auto h-1 w-1 rounded-full bg-violet-500"
                                 />
                             </button>
                         </nav>
@@ -164,13 +167,13 @@ const submit = () => {
                                 v-if="form.recentlySuccessful"
                                 class="text-sm text-green-600 dark:text-green-400"
                             >
-                                Saved successfully.
+                                {{ t('profile.saved_successfully') }}
                             </p>
                             <Link
                                 :href="route('profile.show', user.data.id)"
                                 class="cursor-pointer rounded-xl bg-gray-200 px-4 py-2 transition-all duration-200 ease-in-out hover:bg-gray-300 hover:text-gray-900 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-200"
                             >
-                                Cancel
+                                {{ t('profile.cancel') }}
                             </Link>
                             <Button
                                 @click="submit"
@@ -178,7 +181,7 @@ const submit = () => {
                                 :disabled="form.processing"
                                 class="cursor-pointer bg-violet-600 text-white shadow-md transition-all hover:bg-violet-700 hover:shadow-lg dark:bg-violet-500 dark:hover:bg-violet-600"
                             >
-                                Save Changes
+                                {{ t('profile.save_changes') }}
                             </Button>
                         </div>
                     </div>

@@ -2,9 +2,17 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
 
+/**
+ * @property string $name
+ * @property string $description
+ * @property string $image
+ * @property Category $category
+ */
 class BreedResource extends JsonResource
 {
     /**
@@ -16,10 +24,23 @@ class BreedResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'description' => $this->description,
-            'image' => $this->image,
-            'category' => $this->category->name,
+            'name' => $this->localized('name'),
+            'description' => $this->localized('description'),
+            'image' => $this->getFirstMediaUrl('breeds') ?: $this->image,
+            'category' => $this->whenLoaded('category', fn () => CategoryResource::make($this->category)),
         ];
+    }
+
+    protected function localized(string $attribute): mixed
+    {
+        if (App::getLocale() === 'ar') {
+            $arabic = $this->{"{$attribute}_ar"};
+
+            if (filled($arabic)) {
+                return $arabic;
+            }
+        }
+
+        return $this->{$attribute};
     }
 }

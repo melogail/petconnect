@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
 use Laravel\Nova\Nova;
@@ -17,7 +17,11 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     {
         parent::boot();
 
-        //
+        Gate::before(function ($user, string $ability) {
+            if ($user instanceof Admin) {
+                return true;
+            }
+        });
     }
 
     /**
@@ -53,7 +57,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewNova', function (User $user) {
+        Gate::define('viewNova', function (Admin $user) {
             return in_array($user->email, [
                 //
             ]);

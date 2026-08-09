@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Star } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     reviews: {
@@ -38,7 +41,7 @@ const getPercentage = (count) => {
         class="rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Overall Rating
+            {{ t('reviews.overall_rating') }}
         </h3>
         <div class="mt-4 flex items-center">
             <div class="flex items-center">
@@ -53,11 +56,11 @@ const getPercentage = (count) => {
                     ]"
                 />
             </div>
-            <p class="ml-3 text-2xl font-bold text-gray-900 dark:text-white">
+            <p class="ms-3 text-2xl font-bold text-gray-900 dark:text-white">
                 {{ averageRating }}
             </p>
-            <p class="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                based on {{ totalReviews }} reviews
+            <p class="ms-2 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('reviews.based_on', { count: totalReviews }) }}
             </p>
         </div>
 
@@ -68,9 +71,9 @@ const getPercentage = (count) => {
                 class="flex items-center text-sm"
             >
                 <div class="w-12 text-gray-500 dark:text-gray-400">
-                    {{ star }} stars
+                    {{ t('reviews.stars', { count: star }) }}
                 </div>
-                <div class="ml-4 flex-1">
+                <div class="ms-4 flex-1">
                     <div
                         class="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700"
                     >
@@ -83,7 +86,7 @@ const getPercentage = (count) => {
                     </div>
                 </div>
                 <div
-                    class="ml-4 w-12 text-right text-gray-500 dark:text-gray-400"
+                    class="ms-4 w-12 text-end text-gray-500 dark:text-gray-400"
                 >
                     {{ Math.round(getPercentage(ratingCounts[star])) }}%
                 </div>

@@ -2,13 +2,11 @@
 
 namespace App\Nova;
 
-use Illuminate\Http\Request;
+use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Slug;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Http\Requests\NovaRequest;
-use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
-
 
 class Category extends Resource
 {
@@ -49,13 +47,19 @@ class Category extends Resource
                 ->rules(['required', 'max:255'])
                 ->sortable(),
 
+            Text::make('Name Arabic', 'name_ar')
+                ->required()
+                ->rules(['required', 'max:255'])
+                ->sortable(),
+
             Slug::make('Slug')
                 ->from('name'),
 
-            Images::make('Category image', 'image')
-            ->rules('required'),
+            Images::make('Category image', 'categories')
+                ->rules('required'),
 
-            Text::make('Description')->sortable(),
+            Text::make('Description')->hideFromIndex(),
+            Text::make('Description Arabic', 'description_ar')->hideFromIndex(),
         ];
     }
 

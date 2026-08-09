@@ -33,6 +33,21 @@ export interface MessagingSummary {
     previews: MessagingPreviewItem[];
 }
 
+export interface NotificationItem {
+    id: string;
+    type: string;
+    text: string;
+    url?: string | null;
+    time: string;
+    read: boolean;
+    created_at?: string | null;
+}
+
+export interface NotificationsSummary {
+    unread_count: number;
+    items: NotificationItem[];
+}
+
 export interface MessagingConversation {
     id: number;
     type: string;
@@ -89,6 +104,9 @@ export type AppPageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
     name: string;
+    locale: string;
+    dir: 'ltr' | 'rtl';
+    translations: Record<string, string>;
     quote: { message: string; author: string };
     flash: {
         success: string | null;
@@ -96,6 +114,7 @@ export type AppPageProps<
     };
     auth: Auth;
     messaging: MessagingSummary | null;
+    notifications: NotificationsSummary | null;
     sidebarOpen: boolean;
 };
 
@@ -111,6 +130,7 @@ export interface User {
     state?: string | null;
     zip?: string | null;
     country?: string | null;
+    locale?: string | null;
     rating?: number | string | null;
     email_verified_at: string | null;
     created_at: string | null;

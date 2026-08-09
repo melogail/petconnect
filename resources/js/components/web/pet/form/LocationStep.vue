@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/InputError.vue';
 import { MapPin } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
@@ -23,6 +24,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 const emit = defineEmits<{
     updateLocation: [lat: number, lng: number];
@@ -233,7 +236,7 @@ onUnmounted(() => {
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-blue-100/20 to-transparent opacity-50 dark:from-blue-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-blue-100/20 to-transparent opacity-50 dark:from-blue-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -248,11 +251,13 @@ onUnmounted(() => {
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Location</CardTitle
+                            >{{ t('wizard.location') }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Where is your pet located?</CardDescription
+                            >{{
+                                t('wizard.where_is_your_pet_located')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
@@ -269,13 +274,13 @@ onUnmounted(() => {
                     >
                         <span class="relative z-10 flex items-center">
                             <MapPin
-                                class="mr-2 h-5 w-5 transition-transform group-hover:scale-110"
+                                class="me-2 h-5 w-5 transition-transform group-hover:scale-110"
                                 :class="{ 'animate-pulse': isLoading }"
                             />
                             {{
                                 isLoading
-                                    ? 'Getting Location...'
-                                    : 'Use My Current Location'
+                                    ? t('wizard.getting_location')
+                                    : t('wizard.use_my_current_location')
                             }}
                         </span>
                         <span
@@ -292,12 +297,12 @@ onUnmounted(() => {
 
                     <!-- Coordinates Display -->
                     <div
-                        class="absolute bottom-3 left-3 right-3 z-[1000] rounded-lg bg-white/90 px-3 py-2 font-mono text-xs backdrop-blur-sm dark:bg-gray-800/90"
+                        class="absolute bottom-3 end-3 start-3 z-[1000] rounded-lg bg-white/90 px-3 py-2 font-mono text-xs backdrop-blur-sm dark:bg-gray-800/90"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-400"
-                                >Coordinates:</span
-                            >
+                            <span class="text-gray-600 dark:text-gray-400">{{
+                                t('wizard.coordinates')
+                            }}</span>
                             <span
                                 class="font-semibold text-gray-800 dark:text-gray-200"
                             >
@@ -321,7 +326,7 @@ onUnmounted(() => {
                             <p
                                 class="text-sm font-medium text-gray-800 dark:text-gray-200"
                             >
-                                Detected Address
+                                {{ t('wizard.detected_address') }}
                             </p>
                             <p
                                 class="mt-1 text-sm text-gray-600 dark:text-gray-400"
@@ -338,57 +343,67 @@ onUnmounted(() => {
                         for="detailedAddress"
                         class="flex items-center space-x-2"
                     >
-                        <span>Detailed Address</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400"
-                            >(Optional)</span
+                        <span>{{ t('wizard.detailed_address') }}</span>
+                        <span
+                            class="text-xs text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.optional') }}</span
                         >
                     </Label>
                     <Textarea
                         id="detailedAddress"
                         v-model="form.location.detailedAddress"
-                        placeholder="Enter apartment number, building name, landmarks, or any additional details..."
+                        :placeholder="t('wizard.detailed_address_placeholder')"
                         class="min-h-[80px] resize-none"
                     />
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Add specific details to help people find your location
-                        easily
+                        {{ t('wizard.detailed_address_help') }}
                     </p>
                 </div>
 
                 <!-- Location Details Grid -->
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div class="space-y-2">
-                        <Label for="city" is-required>City</Label>
+                        <Label for="city" is-required>{{
+                            t('wizard.city')
+                        }}</Label>
                         <Input
                             id="city"
                             v-model="form.location.city"
-                            placeholder="Enter city"
+                            :placeholder="t('wizard.city_placeholder')"
                             required
                         />
                         <InputError :message="form.errors['location.city']" />
                     </div>
                     <div class="space-y-2">
-                        <Label for="state" is-required>State/Province</Label>
+                        <Label for="state" is-required>{{
+                            t('wizard.state_province')
+                        }}</Label>
                         <Input
                             id="state"
                             v-model="form.location.state"
-                            placeholder="Enter state or province"
+                            :placeholder="
+                                t('wizard.state_province_placeholder')
+                            "
                         />
                     </div>
                     <div class="space-y-2">
-                        <Label for="postalCode">Postal Code</Label>
+                        <Label for="postalCode">{{
+                            t('wizard.postal_code')
+                        }}</Label>
                         <Input
                             id="postalCode"
                             v-model="form.location.postalCode"
-                            placeholder="Enter postal code"
+                            :placeholder="t('wizard.postal_code_placeholder')"
                         />
                     </div>
                     <div class="space-y-2">
-                        <Label for="country" is-required>Country</Label>
+                        <Label for="country" is-required>{{
+                            t('wizard.country')
+                        }}</Label>
                         <Input
                             id="country"
                             v-model="form.location.country"
-                            placeholder="Enter country"
+                            :placeholder="t('wizard.country_placeholder')"
                             required
                         />
                         <InputError

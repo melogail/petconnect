@@ -4,6 +4,7 @@ import ConversationHeader from '@/components/messaging/ConversationHeader.vue';
 import MessageComposer from '@/components/messaging/MessageComposer.vue';
 import MessageThread from '@/components/messaging/MessageThread.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { useTranslations } from '@/composables/useTranslations';
 import type {
     MessagingConversation,
     MessagingMessage,
@@ -13,6 +14,7 @@ import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const auth = useAuthUser();
+const { t } = useTranslations();
 
 const props = defineProps<{
     conversation: MessagingConversation;
@@ -27,10 +29,10 @@ const conversationId = computed(() => Number(conversationData.value.id ?? 0));
 const peer = computed(() => {
     const row = users.value.find((user) => user.id !== auth.value?.id);
 
-    return row ?? { id: 0, name: 'Member', avatar: null };
+    return row ?? { id: 0, name: t('messaging.member'), avatar: null };
 });
 
-const peerName = computed(() => peer.value.name || 'Conversation');
+const peerName = computed(() => peer.value.name || t('messaging.conversation'));
 const peerAvatar = computed(
     () =>
         peer.value.avatar ||
@@ -39,7 +41,7 @@ const peerAvatar = computed(
 </script>
 
 <template>
-    <Head :title="`Chat with ${peerName}`" />
+    <Head :title="t('messaging.chat_with', { name: peerName })" />
 
     <MainLayout>
         <div

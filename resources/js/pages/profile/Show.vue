@@ -29,8 +29,9 @@ import {
     ChevronLeft,
     ChevronRight,
 } from 'lucide-vue-next';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 import {
     Carousel,
     CarouselContent,
@@ -38,6 +39,8 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from '@/components/ui/carousel';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     user: Object,
@@ -49,25 +52,24 @@ const props = defineProps({
 
 // Tabs state
 const activeTab = ref('Pets');
-const tabs = ref([
-    { name: 'Pets', icon: 'FileText', count: 0 },
-    { name: 'Reviews', icon: 'Star', count: 0 },
+const tabs = computed(() => [
+    {
+        name: 'Pets',
+        label: t('profile.pets'),
+        icon: 'FileText',
+        count: props.user?.data?.pets?.length ?? 0,
+    },
+    {
+        name: 'Reviews',
+        label: t('profile.reviews'),
+        icon: 'Star',
+        count: props.user?.data?.reviews?.length ?? 0,
+    },
 ]);
-
-// Initialize tab counts
-onMounted(() => {
-    updateTabCounts();
-});
-
-// Update tab counts when data changes
-const updateTabCounts = () => {
-    tabs.value[0].count = props.user.data.pets.length;
-    tabs.value[1].count = props.user.data.reviews.length;
-};
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head :title="t('profile.title')" />
     <MainLayout class="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <!-- Enhanced Profile Header -->
@@ -76,7 +78,7 @@ const updateTabCounts = () => {
             <!-- Tabs Navigation -->
             <div class="mt-8">
                 <div class="border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <nav class="-mb-px flex gap-8" aria-label="Tabs">
                         <button
                             v-for="tab in tabs"
                             :key="tab.name"
@@ -88,11 +90,11 @@ const updateTabCounts = () => {
                                 'flex items-center whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium',
                             ]"
                         >
-                            <component :is="tab.icon" class="mr-2 h-5 w-5" />
-                            {{ tab.name }}
+                            <component :is="tab.icon" class="me-2 h-5 w-5" />
+                            {{ tab.label }}
                             <span
                                 v-if="tab.count !== undefined"
-                                class="ml-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium dark:bg-gray-700"
+                                class="ms-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium dark:bg-gray-700"
                             >
                                 {{ tab.count }}
                             </span>

@@ -16,6 +16,7 @@ import {
     Check,
 } from 'lucide-vue-next';
 import { FileText } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
@@ -27,23 +28,37 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useTranslations();
+
 const getCategoryName = (id: string) => {
-    return props.categories.find((c) => c.id === id)?.name || 'Not provided';
+    return (
+        props.categories.find((c) => c.id === id)?.name ||
+        t('wizard.not_provided')
+    );
 };
 
 const getBreedName = (categoryId: string, breedId: string) => {
-    if (!categoryId || !breedId || !props.breeds[categoryId])
-        return 'Not provided';
+    if (!categoryId || !breedId || !props.breeds[categoryId]) {
+        return t('wizard.not_provided');
+    }
     return (
         props.breeds[categoryId].find((b) => b.id === breedId)?.name ||
-        'Not provided'
+        t('wizard.not_provided')
     );
 };
 
 const getListingTypeName = (value: number) => {
-    return (
-        props.listingTypes.find((t) => t.value === value)?.label || 'Adoption'
-    );
+    const keys: Record<number, string> = {
+        1: 'listing_types.adoption',
+        2: 'listing_types.sale',
+        3: 'listing_types.mating',
+    };
+    return t(keys[value] ?? 'listing_types.adoption');
+};
+
+const traitLabel = (traitId: string) => {
+    const found = props.petTraits.find((trait) => trait.id === traitId);
+    return found?.label ?? traitId;
 };
 </script>
 
@@ -58,7 +73,7 @@ const getListingTypeName = (value: number) => {
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-green-100/20 to-transparent opacity-50 dark:from-green-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-green-100/20 to-transparent opacity-50 dark:from-green-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -73,12 +88,15 @@ const getListingTypeName = (value: number) => {
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Review Your Pet Listing</CardTitle
+                            >{{
+                                t('wizard.review_your_pet_listing')
+                            }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Please review all information before
-                            submitting</CardDescription
+                            >{{
+                                t('wizard.review_before_submitting')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
@@ -92,78 +110,93 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <Home
-                            class="mr-2 h-5 w-5 text-primary-600 dark:text-primary-400"
+                            class="me-2 h-5 w-5 text-primary-600 dark:text-primary-400"
                         />
-                        Basic Information
+                        {{ t('wizard.basic_information') }}
                     </h3>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Name:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.name_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
-                                >{{ form.name || 'Not provided' }}</span
+                                >{{
+                                    form.name || t('wizard.not_provided')
+                                }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Type:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.type_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ getCategoryName(form.type) }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Breed:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.breed_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ getBreedName(form.type, form.breed) }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Age:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.age_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
-                                >{{ form.age || 'Not provided' }}</span
+                                >{{
+                                    form.age || t('wizard.not_provided')
+                                }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Gender:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.gender_label')
+                            }}</span>
                             <span
                                 class="font-medium capitalize text-gray-800 dark:text-white"
-                                >{{ form.gender || 'Not provided' }}</span
+                                >{{
+                                    form.gender === 'male'
+                                        ? t('wizard.male')
+                                        : form.gender === 'female'
+                                          ? t('wizard.female')
+                                          : form.gender ||
+                                            t('wizard.not_provided')
+                                }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Color:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.color_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
-                                >{{ form.color || 'Not provided' }}</span
+                                >{{
+                                    form.color || t('wizard.not_provided')
+                                }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Weight (kg/lbs):</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.weight_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
-                                >{{ form.weight || 'Not provided' }}</span
+                                >{{
+                                    form.weight || t('wizard.not_provided')
+                                }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Listing Type:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.listing_type_label')
+                            }}</span>
                             <span
                                 class="font-medium capitalize text-gray-800 dark:text-white"
                                 >{{
@@ -172,9 +205,9 @@ const getListingTypeName = (value: number) => {
                             >
                         </div>
                         <div v-if="form.listing_type === 2 && form.price">
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Price:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.price_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >${{ form.price }}</span
@@ -191,44 +224,45 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <MapPin
-                            class="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400"
+                            class="me-2 h-5 w-5 text-blue-600 dark:text-blue-400"
                         />
-                        Location
+                        {{ t('wizard.location') }}
                     </h3>
                     <div class="space-y-2 text-sm">
                         <div v-if="form.location.address">
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Address:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.address_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ form.location.address }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >City:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.city_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{
-                                    form.location.city || 'Not provided'
+                                    form.location.city ||
+                                    t('wizard.not_provided')
                                 }}</span
                             >
                         </div>
                         <div v-if="form.location.state">
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >State:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.state_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ form.location.state }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Country:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.country_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ form.location.country }}</span
@@ -240,9 +274,9 @@ const getListingTypeName = (value: number) => {
                                 form.location.coordinates.lng
                             "
                         >
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Coordinates:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.coordinates')
+                            }}</span>
                             <span
                                 class="font-mono text-xs font-medium text-gray-800 dark:text-white"
                                 >{{ form.location.coordinates.lat.toFixed(6) }},
@@ -255,9 +289,9 @@ const getListingTypeName = (value: number) => {
                             v-if="form.location.detailedAddress"
                             class="border-t border-blue-200 pt-2 dark:border-blue-800"
                         >
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Details:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.details_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ form.location.detailedAddress }}</span
@@ -274,20 +308,20 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <Camera
-                            class="mr-2 h-5 w-5 text-amber-600 dark:text-amber-400"
+                            class="me-2 h-5 w-5 text-amber-600 dark:text-amber-400"
                         />
-                        Photos
+                        {{ t('wizard.step_photos') }}
                     </h3>
                     <div class="grid grid-cols-4 gap-3">
                         <div v-if="form.featuredImagePreview" class="relative">
                             <img
                                 :src="form.featuredImagePreview"
-                                alt="Featured"
+                                :alt="t('wizard.featured')"
                                 class="aspect-square w-full rounded-lg border-2 border-amber-400 object-cover"
                             />
                             <span
-                                class="absolute left-1 top-1 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white"
-                                >Featured</span
+                                class="absolute start-1 top-1 rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white"
+                                >{{ t('wizard.featured') }}</span
                             >
                         </div>
                         <img
@@ -304,7 +338,7 @@ const getListingTypeName = (value: number) => {
                             "
                             class="col-span-4 py-4 text-center text-gray-500 dark:text-gray-400"
                         >
-                            No photos uploaded
+                            {{ t('wizard.no_photos_uploaded') }}
                         </div>
                     </div>
                 </div>
@@ -317,46 +351,50 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <Stethoscope
-                            class="mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                            class="me-2 h-5 w-5 text-emerald-600 dark:text-emerald-400"
                         />
-                        Health Status
+                        {{ t('wizard.health_status') }}
                     </h3>
                     <div class="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Status:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.status_label')
+                            }}</span>
                             <span
                                 class="font-medium capitalize text-gray-800 dark:text-white"
                                 >{{ form.health.status }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Vaccinated:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.vaccinated_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{
-                                    form.health.vaccinated ? 'Yes' : 'No'
+                                    form.health.vaccinated
+                                        ? t('common.yes')
+                                        : t('common.no')
                                 }}</span
                             >
                         </div>
                         <div>
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Spayed/Neutered:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.spayed_neutered_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{
-                                    form.health.spayedNeutered ? 'Yes' : 'No'
+                                    form.health.spayedNeutered
+                                        ? t('common.yes')
+                                        : t('common.no')
                                 }}</span
                             >
                         </div>
                         <div v-if="form.health.lastVetVisit">
-                            <span class="text-gray-500 dark:text-gray-400"
-                                >Last Vet Visit:</span
-                            >
+                            <span class="text-gray-500 dark:text-gray-400">{{
+                                t('wizard.last_vet_visit_label')
+                            }}</span>
                             <span
                                 class="font-medium text-gray-800 dark:text-white"
                                 >{{ form.health.lastVetVisit }}</span
@@ -367,8 +405,9 @@ const getListingTypeName = (value: number) => {
                         v-if="form.health.specialNeeds"
                         class="mt-3 border-t border-emerald-200 pt-3 dark:border-emerald-800"
                     >
-                        <span class="text-sm text-gray-500 dark:text-gray-400"
-                            >Special Needs:</span
+                        <span
+                            class="text-sm text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.special_needs_label') }}</span
                         >
                         <p
                             class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
@@ -386,13 +425,14 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <Smile
-                            class="mr-2 h-5 w-5 text-purple-600 dark:text-purple-400"
+                            class="me-2 h-5 w-5 text-purple-600 dark:text-purple-400"
                         />
-                        Personality
+                        {{ t('wizard.step_personality') }}
                     </h3>
                     <div v-if="form.description" class="mb-3">
-                        <span class="text-sm text-gray-500 dark:text-gray-400"
-                            >Description:</span
+                        <span
+                            class="text-sm text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.description_label') }}</span
                         >
                         <p
                             class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
@@ -401,8 +441,9 @@ const getListingTypeName = (value: number) => {
                         </p>
                     </div>
                     <div v-if="form.traits.length > 0">
-                        <span class="text-sm text-gray-500 dark:text-gray-400"
-                            >Traits:</span
+                        <span
+                            class="text-sm text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.traits_label') }}</span
                         >
                         <div class="mt-2 flex flex-wrap gap-2">
                             <span
@@ -410,9 +451,7 @@ const getListingTypeName = (value: number) => {
                                 :key="trait"
                                 class="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
                             >
-                                {{
-                                    petTraits.find((t) => t.id === trait)?.label
-                                }}
+                                {{ traitLabel(trait) }}
                             </span>
                         </div>
                     </div>
@@ -433,7 +472,7 @@ const getListingTypeName = (value: number) => {
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="mr-2 h-5 w-5 text-rose-600 dark:text-rose-400"
+                            class="me-2 h-5 w-5 text-rose-600 dark:text-rose-400"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -445,7 +484,7 @@ const getListingTypeName = (value: number) => {
                                 d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
                             />
                         </svg>
-                        Healthcare Information
+                        {{ t('wizard.healthcare_information') }}
                     </h3>
 
                     <!-- Vaccinations -->
@@ -455,7 +494,7 @@ const getListingTypeName = (value: number) => {
                     >
                         <span
                             class="text-sm font-semibold text-gray-500 dark:text-gray-400"
-                            >Vaccination Records:</span
+                            >{{ t('wizard.vaccination_records_label') }}</span
                         >
                         <div class="mt-2 space-y-2">
                             <div
@@ -465,11 +504,13 @@ const getListingTypeName = (value: number) => {
                             >
                                 <span
                                     class="rounded bg-rose-100 px-2 py-1 text-xs text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                                    >{{ vax.date || 'No date' }}</span
+                                    >{{ vax.date || t('wizard.no_date') }}</span
                                 >
                                 <span
                                     class="font-medium text-gray-800 dark:text-white"
-                                    >{{ vax.name || 'Unknown vaccine' }}</span
+                                    >{{
+                                        vax.name || t('wizard.unknown_vaccine')
+                                    }}</span
                                 >
                             </div>
                         </div>
@@ -482,7 +523,7 @@ const getListingTypeName = (value: number) => {
                     >
                         <span
                             class="text-sm font-semibold text-gray-500 dark:text-gray-400"
-                            >Current Medications:</span
+                            >{{ t('wizard.current_medications_label') }}</span
                         >
                         <div class="mt-2 space-y-2">
                             <div
@@ -511,7 +552,7 @@ const getListingTypeName = (value: number) => {
                     >
                         <span
                             class="text-sm font-semibold text-gray-500 dark:text-gray-400"
-                            >Allergies:</span
+                            >{{ t('wizard.allergies_label') }}</span
                         >
                         <div class="mt-2 flex flex-wrap gap-2">
                             <span
@@ -532,7 +573,7 @@ const getListingTypeName = (value: number) => {
                     >
                         <span
                             class="text-sm font-semibold text-gray-500 dark:text-gray-400"
-                            >Veterinarian:</span
+                            >{{ t('wizard.veterinarian_label') }}</span
                         >
                         <div class="mt-2 text-sm">
                             <div v-if="form.health.vetName">
@@ -564,9 +605,9 @@ const getListingTypeName = (value: number) => {
                         class="mb-3 flex items-center text-lg font-semibold text-gray-800 dark:text-white"
                     >
                         <Info
-                            class="mr-2 h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                            class="me-2 h-5 w-5 text-indigo-600 dark:text-indigo-400"
                         />
-                        Additional Information
+                        {{ t('wizard.additional_information') }}
                     </h3>
                     <div class="space-y-2 text-sm">
                         <div
@@ -578,7 +619,7 @@ const getListingTypeName = (value: number) => {
                                     >{{ info.key }}:</span
                                 >
                                 <span
-                                    class="ml-2 font-medium text-gray-800 dark:text-white"
+                                    class="ms-2 font-medium text-gray-800 dark:text-white"
                                     >{{ info.value }}</span
                                 >
                             </div>
@@ -598,12 +639,10 @@ const getListingTypeName = (value: number) => {
                             <h4
                                 class="mb-1 font-semibold text-gray-800 dark:text-white"
                             >
-                                Ready to Submit
+                                {{ t('wizard.ready_to_submit') }}
                             </h4>
                             <p class="text-sm text-gray-600 dark:text-gray-400">
-                                Please review all the information above. Once
-                                you submit, your pet listing will be created and
-                                visible to others.
+                                {{ t('wizard.ready_to_submit_desc') }}
                             </p>
                         </div>
                     </div>

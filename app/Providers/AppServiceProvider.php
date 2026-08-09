@@ -10,6 +10,7 @@ use App\Repositories\Eloquent\PetRepository;
 use App\Repositories\Interfaces\ConversationRepositoryInterface;
 use App\Repositories\Interfaces\MessageRepositoryInterface;
 use App\Repositories\Interfaces\PetRepositoryInterface;
+use App\Support\RegistersSqliteMathFunctions;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Message::observe(MessageObserver::class);
+        RegistersSqliteMathFunctions::register();
     }
 }

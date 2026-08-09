@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +14,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     form: Object,
@@ -52,15 +55,13 @@ const triggerFileInput = () => {
 </script>
 
 <template>
-    <div
-        class="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300"
-    >
+    <div class="animate-in fade-in slide-in-from-end-4 space-y-6 duration-300">
         <div>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Basic Information
+                {{ t('profile.basic_information') }}
             </h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Update your personal details and public profile information.
+                {{ t('profile.update_personal_details') }}
             </p>
         </div>
         <Separator />
@@ -74,7 +75,7 @@ const triggerFileInput = () => {
                     <img
                         v-if="displayAvatar"
                         :src="displayAvatar"
-                        alt="Profile preview"
+                        :alt="t('profile.profile_preview_alt')"
                         class="h-full w-full object-cover"
                     />
                     <Camera
@@ -86,7 +87,7 @@ const triggerFileInput = () => {
                     v-if="imagePreview"
                     type="button"
                     @click="removeImage"
-                    class="absolute -right-1 -top-1 rounded-full bg-red-500 p-1 text-white shadow-md hover:bg-red-600"
+                    class="absolute -end-1 -top-1 rounded-full bg-red-500 p-1 text-white shadow-md hover:bg-red-600"
                 >
                     <X class="h-3 w-3" />
                 </button>
@@ -95,7 +96,7 @@ const triggerFileInput = () => {
                 <Label
                     for="feature_image"
                     :class="{ 'text-red-500': form.errors.feature_image }"
-                    >Profile Photo</Label
+                    >{{ t('profile.profile_photo') }}</Label
                 >
                 <input
                     ref="fileInput"
@@ -111,11 +112,15 @@ const triggerFileInput = () => {
                     size="sm"
                     @click="triggerFileInput"
                 >
-                    <Camera class="mr-2 h-4 w-4" />
-                    {{ displayAvatar ? 'Change Photo' : 'Upload Photo' }}
+                    <Camera class="me-2 h-4 w-4" />
+                    {{
+                        displayAvatar
+                            ? t('profile.change_photo')
+                            : t('profile.upload_photo')
+                    }}
                 </Button>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    JPG, PNG or GIF. Max 2MB.
+                    {{ t('profile.photo_requirements') }}
                 </p>
                 <p
                     v-if="form.errors.feature_image"
@@ -128,8 +133,10 @@ const triggerFileInput = () => {
 
         <div class="grid gap-6 md:grid-cols-2">
             <div class="space-y-2">
-                <Label for="name" :class="{ 'text-red-500': form.errors.name }"
-                    >Full Name</Label
+                <Label
+                    for="name"
+                    :class="{ 'text-red-500': form.errors.name }"
+                    >{{ t('profile.full_name') }}</Label
                 >
                 <Input
                     id="name"
@@ -145,7 +152,7 @@ const triggerFileInput = () => {
                 <Label
                     for="email"
                     :class="{ 'text-red-500': form.errors.email }"
-                    >Email Address</Label
+                    >{{ t('profile.email_address') }}</Label
                 >
                 <Input
                     id="email"
@@ -162,7 +169,7 @@ const triggerFileInput = () => {
                 <Label
                     for="phone"
                     :class="{ 'text-red-500': form.errors.phone }"
-                    >Phone Number</Label
+                    >{{ t('profile.phone_number') }}</Label
                 >
                 <Input
                     id="phone"
@@ -180,7 +187,7 @@ const triggerFileInput = () => {
                     <Label
                         for="locale"
                         :class="{ 'text-red-500': form.errors.locale }"
-                        >Language Preference</Label
+                        >{{ t('profile.language_preference') }}</Label
                     >
                     <Select
                         v-model="form.locale"
@@ -189,11 +196,17 @@ const triggerFileInput = () => {
                         <SelectTrigger
                             class="bg-gray-50/50 dark:bg-gray-900/20"
                         >
-                            <SelectValue placeholder="Select language" />
+                            <SelectValue
+                                :placeholder="t('profile.select_language')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="en">English (en)</SelectItem>
-                            <SelectItem value="ar">Arabic (ar)</SelectItem>
+                            <SelectItem value="en">{{
+                                t('profile.english')
+                            }}</SelectItem>
+                            <SelectItem value="ar">{{
+                                t('profile.arabic')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <p v-if="form.errors.locale" class="text-sm text-red-500">
@@ -207,7 +220,7 @@ const triggerFileInput = () => {
                     <Label
                         for="bio"
                         :class="{ 'text-red-500': form.errors.bio }"
-                        >Bio</Label
+                        >{{ t('profile.bio') }}</Label
                     >
                     <span class="text-xs text-gray-500">
                         {{ form.bio?.length ?? 0 }} / 500
@@ -222,7 +235,7 @@ const triggerFileInput = () => {
                     class="resize-none bg-gray-50/50 dark:bg-gray-900/20"
                 />
                 <p class="text-[0.8rem] text-gray-500 dark:text-gray-400">
-                    Brief description for your profile. URLs are hyperlinked.
+                    {{ t('profile.bio_help') }}
                 </p>
                 <p v-if="form.errors.bio" class="text-sm text-red-500">
                     {{ form.errors.bio }}

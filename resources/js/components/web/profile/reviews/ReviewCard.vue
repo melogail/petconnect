@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import {
     MoreVertical,
     Star,
@@ -30,6 +31,8 @@ import {
 } from '@/components/ui/dialog';
 import Button from '@/components/ui/button/Button.vue';
 import ReviewForm from './ReviewForm.vue';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     review: {
@@ -113,13 +116,13 @@ const handleReport = () => {
                         <TooltipTrigger as-child>
                             <span
                                 class="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-600 dark:text-amber-400"
-                                aria-label="Already reported"
+                                :aria-label="t('reviews.already_reported')"
                             >
                                 <Flag class="h-4 w-4 fill-current" />
                             </span>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>You have already reported this review</p>
+                            <p>{{ t('reviews.already_reported_tooltip') }}</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -141,20 +144,20 @@ const handleReport = () => {
                     <DropdownMenuContent align="end">
                         <template v-if="review.is_owner">
                             <DropdownMenuItem @click="isEditOpen = true">
-                                <Edit2 class="mr-2 h-4 w-4" />
-                                Edit
+                                <Edit2 class="me-2 h-4 w-4" />
+                                {{ t('reviews.edit') }}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 @click="isDeleteOpen = true"
                                 class="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
                             >
-                                <Trash2 class="mr-2 h-4 w-4" />
-                                Delete
+                                <Trash2 class="me-2 h-4 w-4" />
+                                {{ t('reviews.delete') }}
                             </DropdownMenuItem>
                         </template>
                         <DropdownMenuItem v-else @click="handleReport">
-                            <Flag class="mr-2 h-4 w-4" />
-                            Report Abuse
+                            <Flag class="me-2 h-4 w-4" />
+                            {{ t('reviews.report_abuse') }}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -184,9 +187,9 @@ const handleReport = () => {
         <Dialog v-model:open="isEditOpen">
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Review</DialogTitle>
+                    <DialogTitle>{{ t('reviews.edit_review') }}</DialogTitle>
                     <DialogDescription>
-                        Update your review for this profile.
+                        {{ t('reviews.update_review') }}
                     </DialogDescription>
                 </DialogHeader>
                 <ReviewForm
@@ -206,19 +209,20 @@ const handleReport = () => {
                         class="flex items-center gap-2 text-red-600 dark:text-red-400"
                     >
                         <AlertTriangle class="h-5 w-5" />
-                        <DialogTitle>Delete Review</DialogTitle>
+                        <DialogTitle>{{
+                            t('reviews.delete_review')
+                        }}</DialogTitle>
                     </div>
                     <DialogDescription>
-                        Are you sure you want to delete this review? This action
-                        cannot be undone.
+                        {{ t('reviews.delete_confirm') }}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter class="flex gap-2 sm:justify-end">
                     <Button variant="outline" @click="isDeleteOpen = false">
-                        Cancel
+                        {{ t('reviews.cancel') }}
                     </Button>
                     <Button variant="destructive" @click="handleDeleteConfirm">
-                        Delete
+                        {{ t('reviews.delete') }}
                     </Button>
                 </DialogFooter>
             </DialogContent>

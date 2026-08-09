@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Check, AlertCircle } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Step {
     id: number;
@@ -18,6 +19,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useTranslations();
+
 const emit = defineEmits<{
     goToStep: [stepId: number];
 }>();
@@ -30,10 +33,10 @@ const emit = defineEmits<{
             <h1
                 class="mb-2 bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 bg-clip-text text-4xl font-bold text-transparent"
             >
-                Add New Pet
+                {{ t('wizard.add_new_pet') }}
             </h1>
             <p class="text-gray-600 dark:text-gray-400">
-                Complete all steps to create your pet listing
+                {{ t('wizard.complete_all_steps') }}
             </p>
         </div>
 
@@ -42,10 +45,10 @@ const emit = defineEmits<{
             <div class="relative">
                 <!-- Progress Line -->
                 <div
-                    class="absolute left-0 right-0 top-5 h-0.5 bg-gray-200 dark:bg-gray-700"
+                    class="absolute end-0 start-0 top-5 h-0.5 bg-gray-200 dark:bg-gray-700"
                 ></div>
                 <div
-                    class="absolute left-0 top-5 h-0.5 bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-500 ease-out"
+                    class="absolute start-0 top-5 h-0.5 bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-500 ease-out"
                     :style="{
                         width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
                     }"
@@ -173,7 +176,12 @@ const emit = defineEmits<{
                             <div
                                 class="text-xs text-gray-500 dark:text-gray-400"
                             >
-                                Step {{ currentStep }} of {{ totalSteps }}
+                                {{
+                                    t('wizard.step_of', {
+                                        current: currentStep,
+                                        total: totalSteps,
+                                    })
+                                }}
                             </div>
                         </div>
                     </div>

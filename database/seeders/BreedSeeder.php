@@ -5,59 +5,53 @@ namespace Database\Seeders;
 use App\Models\Breed;
 use App\Models\Category;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use JsonException;
+use RuntimeException;
 
 class BreedSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * @throws JsonException
      */
     public function run(): void
     {
-        $breeds = [
-            'Dogs' => [
-                'Golden Retriever', 'German Shepherd', 'Labrador Retriever', 'French Bulldog',
-                'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Yorkshire Terrier', 'Boxer',
-                'Dachshund', 'Siberian Husky', 'Great Dane', 'Doberman Pinscher', 'Shih Tzu',
-            ],
-            'Cats' => [
-                'Persian Cat', 'Siamese Cat', 'Maine Coon', 'Bengal Cat', 'Ragdoll',
-                'British Shorthair', 'Abyssinian', 'Sphynx', 'Scottish Fold', 'Birman',
-                'Russian Blue', 'American Shorthair', 'Oriental', 'Devon Rex',
-            ],
-            'Birds' => [
-                'Budgie', 'Cockatiel', 'African Grey Parrot', 'Macaw', 'Canary',
-                'Lovebird', 'Conure', 'Cockatoo', 'Finch', 'Parakeet',
-            ],
-            'Fish' => [
-                'Goldfish', 'Betta Fish', 'Guppy', 'Angelfish', 'Tetra',
-                'Molly', 'Platy', 'Swordtail', 'Discus', 'Oscar',
-            ],
-            'Small Pets' => [
-                'Rabbit', 'Hamster', 'Guinea Pig', 'Chinchilla', 'Ferret',
-                'Gerbil', 'Rat', 'Mouse', 'Hedgehog',
-            ],
-            'Reptiles' => [
-                'Bearded Dragon', 'Leopard Gecko', 'Ball Python', 'Corn Snake',
-                'Red-Eared Slider Turtle', 'Iguana', 'Chameleon', 'Blue Tongued Skink',
-            ],
-            'Farm Animals' => [
-                'Chicken', 'Duck', 'Goat', 'Sheep', 'Pig', 'Horse', 'Cow', 'Turkey',
-            ],
-        ];
+        $path = database_path('data/breeds.json');
 
-        foreach ($breeds as $categoryName => $breedList) {
-            $category = Category::where('name', $categoryName)->first();
+        if (! File::exists($path)) {
+            throw new RuntimeException("Breed seed data not found at [{$path}].");
+        }
 
-            if ($category) {
-                foreach ($breedList as $breedName) {
-                    Breed::create([
+        /** @var array<string, list<array{slug?: string, name: string, name_ar: string, description?: string|null, description_ar?: string|null}>> $breedsByCategory */
+        $breedsByCategory = json_decode(File::get($path), true, 512, JSON_THROW_ON_ERROR);
+
+        foreach ($breedsByCategory as $categorySlug => $breeds) {
+            $category = Category::query()->where('slug', $categorySlug)->first();
+
+            if ($category === null) {
+                $this->command?->warn("Category [{$categorySlug}] not found. Skipping breeds.");
+
+                continue;
+            }
+
+            foreach ($breeds as $breed) {
+                $slug = $breed['slug'] ?? Str::slug($breed['name']);
+
+                Breed::query()->updateOrCreate(
+                    [
                         'category_id' => $category->id,
-                        'name' => $breedName,
-                        'slug' => Str::slug($breedName),
-                        'description' => "A popular {$categoryName} breed.",
-                    ]);
-                }
+                        'slug' => $slug,
+                    ],
+                    [
+                        'name' => $breed['name'],
+                        'name_ar' => $breed['name_ar'],
+                        'description' => $breed['description'] ?? null,
+                        'description_ar' => $breed['description_ar'] ?? null,
+                    ],
+                );
             }
         }
     }

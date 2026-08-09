@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface User {
     id: number;
@@ -16,6 +17,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['toggle', 'update:isOpen']);
+
+const { t } = useTranslations();
 
 const toggleDropdown = () => {
     emit('toggle');
@@ -67,7 +70,7 @@ const getInitials = (name: string) => {
             class="flex items-center gap-2 rounded-full p-1 transition-all hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800"
             :class="{ 'bg-gray-100 dark:bg-gray-700': isOpen }"
             :aria-expanded="isOpen"
-            :aria-label="`User menu for ${user.name}`"
+            :aria-label="t('nav.user_menu_for', { name: user.name })"
         >
             <div class="relative">
                 <img
@@ -84,7 +87,7 @@ const getInitials = (name: string) => {
                 </div>
                 <!-- Online status indicator -->
                 <span
-                    class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-gray-800"
+                    class="absolute bottom-0 end-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-gray-800"
                 ></span>
             </div>
 
@@ -121,7 +124,7 @@ const getInitials = (name: string) => {
         >
             <div
                 v-if="isOpen"
-                class="absolute right-0 z-50 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 dark:divide-gray-700 dark:bg-gray-800 dark:ring-white/10"
+                class="origin-top-end absolute end-0 z-50 mt-2 w-56 divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 dark:divide-gray-700 dark:bg-gray-800 dark:ring-white/10"
             >
                 <div class="px-4 py-3">
                     <p class="text-sm text-gray-900 dark:text-white">
@@ -153,7 +156,7 @@ const getInitials = (name: string) => {
                                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                             />
                         </svg>
-                        <span>Messages</span>
+                        <span>{{ t('nav.messages') }}</span>
                     </Link>
                     <Link
                         :href="route('profile.show', user.id)"
@@ -173,7 +176,7 @@ const getInitials = (name: string) => {
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             />
                         </svg>
-                        <span>Your Profile</span>
+                        <span>{{ t('nav.your_profile') }}</span>
                     </Link>
                 </div>
 
@@ -196,7 +199,7 @@ const getInitials = (name: string) => {
                                 d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
-                        <span>Help & Support</span>
+                        <span>{{ t('nav.help_and_support') }}</span>
                     </Link>
                     <a
                         href="#"
@@ -215,7 +218,7 @@ const getInitials = (name: string) => {
                                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
-                        <span>Help Center</span>
+                        <span>{{ t('nav.help_center') }}</span>
                     </a>
                 </div>
 
@@ -224,7 +227,7 @@ const getInitials = (name: string) => {
                         :href="route('logout')"
                         method="post"
                         as="button"
-                        class="group flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        class="group flex w-full items-center gap-2 px-4 py-2 text-start text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                         @click="closeDropdown"
                     >
                         <svg
@@ -240,7 +243,7 @@ const getInitials = (name: string) => {
                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                             />
                         </svg>
-                        <span>Sign out</span>
+                        <span>{{ t('nav.sign_out') }}</span>
                     </Link>
                 </div>
             </div>

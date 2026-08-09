@@ -4,13 +4,32 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('email verification screen can be rendered', function () {
     $user = User::factory()->unverified()->create();
 
     $response = $this->actingAs($user)->get(route('verification.notice'));
 
-    $response->assertStatus(200);
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('auth/VerifyEmail')
+        ->where('status', null)
+    );
+});
+
+test('email verification screen shows resent status', function () {
+    $user = User::factory()->unverified()->create();
+
+    $response = $this->actingAs($user)
+        ->withSession(['status' => 'verification-link-sent'])
+        ->get(route('verification.notice'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('auth/VerifyEmail')
+        ->where('status', 'verification-link-sent')
+    );
 });
 
 test('email can be verified', function () {

@@ -1,20 +1,25 @@
 <script setup>
-// No props or reactive data needed for this static footer
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 </script>
 
 <template>
     <footer
-        class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
+        class="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80"
     >
         <div class="mx-auto max-w-7xl px-6 py-4">
             <div
                 class="grid grid-cols-1 items-center justify-between gap-4 md:grid-cols-3"
             >
-                <!-- Left Column: Copyright -->
-                <div class="text-center md:text-left">
+                <!-- Start Column: Copyright -->
+                <div class="text-center md:text-start">
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        © {{ new Date().getFullYear() }} PetConnect. All rights
-                        reserved.
+                        {{
+                            t('nav.footer_copyright', {
+                                year: new Date().getFullYear(),
+                            })
+                        }}
                     </p>
                 </div>
 
@@ -24,7 +29,7 @@
                     <a
                         href="#"
                         class="text-gray-400 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
-                        aria-label="Facebook"
+                        :aria-label="t('nav.facebook')"
                     >
                         <svg
                             class="h-5 w-5"
@@ -41,7 +46,7 @@
                     <a
                         href="#"
                         class="text-gray-400 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
-                        aria-label="X"
+                        :aria-label="t('nav.x')"
                     >
                         <svg
                             class="h-4 w-4"
@@ -58,7 +63,7 @@
                     <a
                         href="#"
                         class="text-gray-400 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
-                        aria-label="Instagram"
+                        :aria-label="t('nav.instagram')"
                     >
                         <svg
                             class="h-5 w-5"
@@ -75,7 +80,7 @@
                     <a
                         href="#"
                         class="text-gray-400 transition-colors hover:text-violet-600 dark:hover:text-violet-400"
-                        aria-label="LinkedIn"
+                        :aria-label="t('nav.linkedin')"
                     >
                         <svg
                             class="h-5 w-5"
@@ -90,34 +95,34 @@
                     </a>
                 </div>
 
-                <!-- Right Column: Navigation Links -->
+                <!-- End Column: Navigation Links -->
                 <div
                     class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-end"
                 >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"
-                        >Privacy</a
+                        >{{ t('nav.privacy') }}</a
                     >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"
-                        >Terms</a
+                        >{{ t('nav.terms') }}</a
                     >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"
-                        >Cookies</a
+                        >{{ t('nav.cookies') }}</a
                     >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"
-                        >Contacts</a
+                        >{{ t('nav.contacts') }}</a
                     >
                     <a
                         href="#"
                         class="text-xs font-medium text-gray-500 transition-colors hover:text-violet-600 dark:text-gray-400"
-                        >Report Issue</a
+                        >{{ t('nav.report_issue') }}</a
                     >
                 </div>
             </div>

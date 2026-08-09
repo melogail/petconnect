@@ -28,7 +28,7 @@ metadata:
 
 ## Paths
 
-`MediaPathGenerator` stores files beneath the owning user's `media_directory_name`. Non-user media models must have a `user` relationship.
+`MediaPathGenerator` stores files beneath the owning user's `media_directory_name` when the model is a `User` or has a `user` relationship. System models without an owner (`Category`, `Breed`) store under `media/{model}/{id}/`.
 
 ## Validation
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAuthUser } from '@/composables/useAuthUser';
+import { useTranslations } from '@/composables/useTranslations';
 import { fallbackAvatar, messagePreview } from '@/lib/utils';
 import type { MessagingPreviewItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
@@ -12,6 +13,7 @@ defineProps<{
     isOpen: boolean;
 }>();
 
+const { t } = useTranslations();
 const currentUser = useAuthUser();
 const currentUserId = computed(() => currentUser.value?.id ?? null);
 const emit = defineEmits(['toggle']);
@@ -24,9 +26,13 @@ const emit = defineEmits(['toggle']);
             @click.stop="emit('toggle')"
             class="relative rounded-full p-2 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-800"
             :aria-expanded="isOpen"
-            :aria-label="`Messages ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`"
+            :aria-label="
+                unreadCount > 0
+                    ? `${t('nav.messages')} (${t('messaging.unread', { count: unreadCount })})`
+                    : t('nav.messages')
+            "
         >
-            <span class="sr-only">Messages</span>
+            <span class="sr-only">{{ t('nav.messages') }}</span>
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-6 w-6 text-gray-600 transition-transform duration-200 dark:text-gray-300"
@@ -44,7 +50,7 @@ const emit = defineEmits(['toggle']);
             </svg>
             <span
                 v-if="unreadCount > 0"
-                class="absolute right-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white shadow-sm"
+                class="absolute end-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white shadow-sm"
             >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
@@ -61,7 +67,7 @@ const emit = defineEmits(['toggle']);
             <div
                 v-if="isOpen"
                 v-click-outside="() => emit('toggle')"
-                class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-white/10"
+                class="absolute end-0 z-50 mt-2 w-80 overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-white/10"
             >
                 <div
                     class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/80"
@@ -69,12 +75,12 @@ const emit = defineEmits(['toggle']);
                     <h3
                         class="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100"
                     >
-                        <span>Messages</span>
+                        <span>{{ t('messaging.messages') }}</span>
                         <span
                             v-if="unreadCount > 0"
                             class="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800 dark:bg-violet-900/50 dark:text-violet-200"
                         >
-                            {{ unreadCount }} unread
+                            {{ t('messaging.unread', { count: unreadCount }) }}
                         </span>
                     </h3>
                     <button
@@ -82,7 +88,7 @@ const emit = defineEmits(['toggle']);
                         @click.stop="emit('toggle')"
                         class="text-xs font-medium text-violet-600 transition-colors hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
                     >
-                        Close
+                        {{ t('messaging.close') }}
                     </button>
                 </div>
 
@@ -109,7 +115,7 @@ const emit = defineEmits(['toggle']);
                             @click="emit('toggle')"
                         >
                             <div class="flex items-start gap-3">
-                                <div class="relative flex-shrink-0">
+                                <div class="relative shrink-0">
                                     <img
                                         :src="
                                             item.peer.avatar ||
@@ -123,7 +129,7 @@ const emit = defineEmits(['toggle']);
                                     />
                                     <span
                                         v-if="item.unread"
-                                        class="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-violet-500 dark:border-gray-800"
+                                        class="absolute -end-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-violet-500 dark:border-gray-800"
                                     ></span>
                                 </div>
                                 <div class="min-w-0 flex-1">
@@ -139,7 +145,7 @@ const emit = defineEmits(['toggle']);
                                             {{ item.peer.name }}
                                         </p>
                                         <span
-                                            class="ml-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400"
+                                            class="ms-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400"
                                             >{{ item.time }}</span
                                         >
                                     </div>
@@ -177,10 +183,10 @@ const emit = defineEmits(['toggle']);
                             </svg>
                         </div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            No conversations yet
+                            {{ t('messaging.no_conversations_yet') }}
                         </p>
                         <p class="mt-1 text-xs text-gray-400">
-                            Reach out from a pet listing or profile
+                            {{ t('messaging.reach_out_hint') }}
                         </p>
                     </div>
                 </div>
@@ -194,7 +200,7 @@ const emit = defineEmits(['toggle']);
                         class="text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
                         @click="emit('toggle')"
                     >
-                        View all messages
+                        {{ t('messaging.view_all_messages') }}
                     </Link>
                 </div>
             </div>

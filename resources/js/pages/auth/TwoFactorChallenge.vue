@@ -7,10 +7,13 @@ import {
     PinInputGroup,
     PinInputSlot,
 } from '@/components/ui/pin-input';
+import { useTranslations } from '@/composables/useTranslations';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { store } from '@/routes/two-factor/login';
 import { Form, Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+
+const { t } = useTranslations();
 
 interface AuthConfigContent {
     title: string;
@@ -21,18 +24,16 @@ interface AuthConfigContent {
 const authConfigContent = computed<AuthConfigContent>(() => {
     if (showRecoveryInput.value) {
         return {
-            title: 'Recovery Code',
-            description:
-                'Please confirm access to your account by entering one of your emergency recovery codes.',
-            toggleText: 'login using an authentication code',
+            title: t('auth.recovery_code'),
+            description: t('auth.recovery_code_description'),
+            toggleText: t('auth.login_using_authentication_code'),
         };
     }
 
     return {
-        title: 'Authentication Code',
-        description:
-            'Enter the authentication code provided by your authenticator application.',
-        toggleText: 'login using a recovery code',
+        title: t('auth.authentication_code'),
+        description: t('auth.authentication_code_description'),
+        toggleText: t('auth.login_using_recovery_code'),
     };
 });
 
@@ -53,7 +54,7 @@ const codeValue = computed<string>(() => code.value.join(''));
         :title="authConfigContent.title"
         :description="authConfigContent.description"
     >
-        <Head title="Two-Factor Authentication" />
+        <Head :title="t('auth.two_factor_authentication')" />
 
         <div class="space-y-6">
             <template v-if="!showRecoveryInput">
@@ -89,11 +90,14 @@ const codeValue = computed<string>(() => code.value.join(''));
                         </div>
                         <InputError :message="errors.code" />
                     </div>
-                    <Button type="submit" class="w-full" :disabled="processing"
-                        >Continue</Button
+                    <Button
+                        type="submit"
+                        class="w-full"
+                        :disabled="processing"
+                        >{{ t('auth.continue') }}</Button
                     >
                     <div class="text-muted-foreground text-center text-sm">
-                        <span>or you can </span>
+                        <span>{{ t('auth.or_you_can') }} </span>
                         <button
                             type="button"
                             class="text-foreground hover:decoration-current! underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out dark:decoration-neutral-500"
@@ -115,17 +119,20 @@ const codeValue = computed<string>(() => code.value.join(''));
                     <Input
                         name="recovery_code"
                         type="text"
-                        placeholder="Enter recovery code"
+                        :placeholder="t('auth.recovery_code_placeholder')"
                         :autofocus="showRecoveryInput"
                         required
                     />
                     <InputError :message="errors.recovery_code" />
-                    <Button type="submit" class="w-full" :disabled="processing"
-                        >Continue</Button
+                    <Button
+                        type="submit"
+                        class="w-full"
+                        :disabled="processing"
+                        >{{ t('auth.continue') }}</Button
                     >
 
                     <div class="text-muted-foreground text-center text-sm">
-                        <span>or you can </span>
+                        <span>{{ t('auth.or_you_can') }} </span>
                         <button
                             type="button"
                             class="text-foreground hover:decoration-current! underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out dark:decoration-neutral-500"

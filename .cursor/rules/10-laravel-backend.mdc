@@ -38,7 +38,7 @@ alwaysApply: false
 - Pet media collection: `pets`.
 - User/profile media collection: `users`.
 - Keep Spatie media writes outside DB transactions.
-- `MediaPathGenerator` assumes non-user media models have a `user` relationship.
+- `MediaPathGenerator` uses the owning user's directory for `User` and models with a `user` relation; system models like `Category`/`Breed` use `media/{model}/{id}/`.
 
 ## Verification
 

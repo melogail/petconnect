@@ -1,21 +1,20 @@
 <template>
-    <Head title="Support" />
+    <Head :title="t('support.title')" />
     <MainLayout>
         <div class="min-h-screen bg-gray-50 py-12">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-4xl">
                     <div class="rounded-2xl bg-white p-8 shadow-sm">
                         <h1 class="text-3xl font-bold text-gray-900">
-                            Contact Support
+                            {{ t('support.contact_support') }}
                         </h1>
                         <p class="mt-4 text-lg text-gray-600">
-                            Our pet experts are here to help you with any
-                            questions or concerns you may have.
+                            {{ t('support.intro') }}
                         </p>
 
                         <div class="mt-8">
                             <h2 class="text-xl font-semibold text-gray-900">
-                                Ways to reach us
+                                {{ t('support.ways_to_reach_us') }}
                             </h2>
                             <div class="mt-6 grid gap-6">
                                 <div
@@ -28,16 +27,15 @@
                                     </div>
                                     <div>
                                         <h3 class="font-medium text-gray-900">
-                                            Live Chat
+                                            {{ t('support.live_chat') }}
                                         </h3>
                                         <p class="mt-1 text-gray-500">
-                                            Chat with our support team in
-                                            real-time
+                                            {{ t('support.live_chat_desc') }}
                                         </p>
                                         <button
                                             class="mt-3 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                         >
-                                            Start chat
+                                            {{ t('support.start_chat') }}
                                             <ArrowRight class="ml-2 h-4 w-4" />
                                         </button>
                                     </div>
@@ -51,17 +49,18 @@
                                     </div>
                                     <div>
                                         <h3 class="font-medium text-gray-900">
-                                            Email Support
+                                            {{ t('support.email_support') }}
                                         </h3>
                                         <p class="mt-1 text-gray-500">
-                                            Send us an email and we'll get back
-                                            to you within 24 hours
+                                            {{
+                                                t('support.email_support_desc')
+                                            }}
                                         </p>
                                         <a
                                             href="mailto:support@petconnect.com"
                                             class="mt-3 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                         >
-                                            Email us
+                                            {{ t('support.email_us') }}
                                             <ArrowRight class="ml-2 h-4 w-4" />
                                         </a>
                                     </div>
@@ -76,7 +75,10 @@
 </template>
 
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { useTranslations } from '@/composables/useTranslations';
 import MainLayout from '@/layouts/MainLayout.vue';
-import { MessageSquare, Mail, ArrowRight } from 'lucide-vue-next';
+import { Head } from '@inertiajs/vue3';
+import { ArrowRight, Mail, MessageSquare } from 'lucide-vue-next';
+
+const { t } = useTranslations();
 </script>

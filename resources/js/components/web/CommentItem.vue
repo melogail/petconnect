@@ -2,17 +2,17 @@
     <div
         class="comment-item group relative"
         :class="{
-            'ml-8 mt-3': isReply,
-            'border-l-2 border-gray-200 pl-3 dark:border-gray-700':
+            'ms-8 mt-3': isReply,
+            'border-s-2 border-gray-200 ps-3 dark:border-gray-700':
                 isReply && !isNestedReply,
-            'ml-6': isNestedReply,
+            'ms-6': isNestedReply,
         }"
     >
         <div class="flex items-start gap-3">
             <Avatar :class="isReply ? 'h-8 w-8' : 'h-10 w-10'">
                 <AvatarImage
                     :src="comment.user?.avatar ?? ''"
-                    :alt="comment.user?.name ?? 'User'"
+                    :alt="comment.user?.name ?? t('comments.user')"
                 />
                 <AvatarFallback
                     class="bg-gradient-to-br from-violet-500 to-fuchsia-500 font-medium text-white"
@@ -26,7 +26,7 @@
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <p class="text-sm font-medium">
-                            {{ comment.user?.name ?? 'Unknown' }}
+                            {{ comment.user?.name ?? t('comments.unknown') }}
                         </p>
                         <span class="text-xs text-gray-500 dark:text-gray-400"
                             >• {{ formatDate(comment.created_at) }}</span
@@ -39,14 +39,20 @@
                                 <TooltipTrigger as-child>
                                     <span
                                         class="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-600 dark:text-amber-400"
-                                        aria-label="Already reported"
+                                        :aria-label="
+                                            t('comments.already_reported')
+                                        "
                                     >
                                         <Flag class="h-4 w-4 fill-current" />
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>
-                                        You have already reported this comment
+                                        {{
+                                            t(
+                                                'comments.already_reported_tooltip',
+                                            )
+                                        }}
                                     </p>
                                 </TooltipContent>
                             </Tooltip>
@@ -69,23 +75,23 @@
                                         )
                                     "
                                 >
-                                    <Flag class="mr-2 h-4 w-4" />
-                                    <span>Report</span>
+                                    <Flag class="me-2 h-4 w-4" />
+                                    <span>{{ t('comments.report') }}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     v-if="isVerifiedOwner(comment)"
                                     @click="$emit('edit-comment', comment)"
                                 >
-                                    <Edit2 class="mr-2 h-4 w-4" />
-                                    <span>Edit</span>
+                                    <Edit2 class="me-2 h-4 w-4" />
+                                    <span>{{ t('comments.edit') }}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     v-if="isVerifiedOwner(comment)"
                                     @click="$emit('delete-comment', comment)"
                                     class="text-red-500 focus:text-red-500"
                                 >
-                                    <Trash2 class="mr-2 h-4 w-4" />
-                                    <span>Delete</span>
+                                    <Trash2 class="me-2 h-4 w-4" />
+                                    <span>{{ t('comments.delete') }}</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -104,13 +110,13 @@
                         @click="$emit('toggle-reply', comment.id)"
                         class="hover:text-blue-500 dark:hover:text-blue-400"
                     >
-                        Reply
+                        {{ t('comments.reply') }}
                     </button>
                 </div>
 
                 <div
                     v-if="activeReply === comment.id && canComment"
-                    class="ml-12 mt-2"
+                    class="ms-12 mt-2"
                 >
                     <form
                         @submit.prevent="
@@ -120,7 +126,7 @@
                     >
                         <Input
                             v-model="localReplyText"
-                            placeholder="Write a reply..."
+                            :placeholder="t('comments.write_reply_placeholder')"
                             class="h-9 flex-1 border-gray-300 bg-white text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                             required
                         />
@@ -130,7 +136,7 @@
                             class="h-9 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white hover:opacity-90"
                             :disabled="!localReplyText.trim()"
                         >
-                            <span>Reply</span>
+                            <span>{{ t('comments.reply') }}</span>
                         </Button>
                     </form>
                 </div>
@@ -167,6 +173,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -226,6 +233,8 @@ const props = defineProps<{
     locallyReportedIds?: Set<number>;
 }>();
 
+const { t } = useTranslations();
+
 const localReplyText = ref('');
 
 const canComment = computed(() => !!props.currentUser?.email_verified_at);
@@ -267,19 +276,25 @@ const formatDate = (dateString?: string | null) => {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) {
-        return 'Just now';
+        return t('comments.just_now');
     }
 
     if (diffInSeconds < 3600) {
-        return `${Math.floor(diffInSeconds / 60)}m ago`;
+        return t('comments.minutes_ago', {
+            count: Math.floor(diffInSeconds / 60),
+        });
     }
 
     if (diffInSeconds < 86400) {
-        return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return t('comments.hours_ago', {
+            count: Math.floor(diffInSeconds / 3600),
+        });
     }
 
     if (diffInSeconds < 604800) {
-        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        return t('comments.days_ago', {
+            count: Math.floor(diffInSeconds / 86400),
+        });
     }
 
     return date.toLocaleDateString('en-US', {

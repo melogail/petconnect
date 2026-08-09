@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import InboxList from '@/components/messaging/InboxList.vue';
 import MainLayout from '@/layouts/MainLayout.vue';
+import { useTranslations } from '@/composables/useTranslations';
 import type { MessagingInboxRow } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Inbox } from 'lucide-vue-next';
 import { computed } from 'vue';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     inbox: MessagingInboxRow[];
@@ -13,10 +16,22 @@ const props = defineProps<{
 const unreadCount = computed(
     () => props.inbox.filter((row) => row.unread).length,
 );
+
+function plural(key: string, count: number): string {
+    const parts = t(key, { count }).split('|');
+
+    return parts[count === 1 ? 0 : parts.length - 1] ?? parts[0] ?? '';
+}
+
+const subtitle = computed(() =>
+    unreadCount.value > 0
+        ? plural('messaging.unread_conversations', unreadCount.value)
+        : plural('messaging.conversations', props.inbox.length),
+);
 </script>
 
 <template>
-    <Head title="Messages" />
+    <Head :title="t('messaging.messages')" />
 
     <MainLayout>
         <div class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
@@ -32,14 +47,10 @@ const unreadCount = computed(
                     </div>
                     <div>
                         <h1 class="text-foreground text-xl font-bold">
-                            Messages
+                            {{ t('messaging.messages') }}
                         </h1>
                         <p class="text-muted-foreground text-sm">
-                            {{
-                                unreadCount > 0
-                                    ? `${unreadCount} unread conversation${unreadCount === 1 ? '' : 's'}`
-                                    : `${inbox.length} conversation${inbox.length === 1 ? '' : 's'}`
-                            }}
+                            {{ subtitle }}
                         </p>
                     </div>
                 </div>
@@ -49,7 +60,7 @@ const unreadCount = computed(
                     v-if="unreadCount > 0"
                     class="rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
                 >
-                    {{ unreadCount }} new
+                    {{ t('messaging.new', { count: unreadCount }) }}
                 </span>
             </div>
 

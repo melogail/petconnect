@@ -3,18 +3,21 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslations } from '@/composables/useTranslations';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { store } from '@/routes/password/confirm';
 import { Form, Head } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+
+const { t } = useTranslations();
 </script>
 
 <template>
     <AuthLayout
-        title="Confirm your password"
-        description="This is a secure area of the application. Please confirm your password before continuing."
+        :title="t('auth.confirm_your_password')"
+        :description="t('auth.confirm_password_description')"
     >
-        <Head title="Confirm password" />
+        <Head :title="t('auth.confirm_password')" />
 
         <Form
             v-bind="store.form()"
@@ -23,7 +26,7 @@ import { LoaderCircle } from 'lucide-vue-next';
         >
             <div class="space-y-6">
                 <div class="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{{ t('auth.password') }}</Label>
                     <Input
                         id="password"
                         type="password"
@@ -47,7 +50,7 @@ import { LoaderCircle } from 'lucide-vue-next';
                             v-if="processing"
                             class="h-4 w-4 animate-spin"
                         />
-                        Confirm Password
+                        {{ t('auth.confirm_password_button') }}
                     </Button>
                 </div>
             </div>

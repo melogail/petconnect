@@ -3,7 +3,9 @@
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\Web\ConversationController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\LocaleController;
 use App\Http\Controllers\Web\MessageController;
+use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PetController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\ReportController;
@@ -18,6 +20,8 @@ Route::get('/auto-login', function () {
     return redirect('/pets/1/edit');
 });
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 // Support and Help Routes
 Route::get('/support', function () {
@@ -44,6 +48,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('pets/{pet}', [PetController::class, 'update'])->name('pets.update');
     Route::delete('pets/{pet}', [PetController::class, 'destroy'])->name('pets.destroy');
     Route::patch('pets/{pet}/toggle-status', [PetController::class, 'toggleStatus'])->name('pets.toggle-status');
+    Route::post('pets/{pet}/like', [PetController::class, 'toggleLike'])->name('pets.like');
+
+    // NOTIFICATIONS
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
 
     // REVIEWS ROUTES
     Route::post('reviews/store/{type}/{reviewable_id}', [ReviewController::class, 'store'])->name('reviews.store');

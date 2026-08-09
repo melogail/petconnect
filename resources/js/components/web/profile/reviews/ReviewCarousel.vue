@@ -31,11 +31,11 @@ const emit = defineEmits(['update', 'delete', 'report']);
                 loop: false,
             }"
         >
-            <CarouselContent class="-ml-4">
+            <CarouselContent class="-ms-4">
                 <CarouselItem
                     v-for="review in reviews"
                     :key="review.id"
-                    class="pl-4 md:basis-1/2 lg:basis-1/3"
+                    class="ps-4 md:basis-1/2 lg:basis-1/3"
                 >
                     <ReviewCard
                         :review="review"

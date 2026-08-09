@@ -54,7 +54,7 @@ class ProfileController extends Controller
 
         $this->updateUserProfileAction->execute($request, $user);
 
-        return to_route('profile.show', $user)->with('success', 'Profile updated successfully');
+        return to_route('profile.show', $user)->with('success', __('flash.profile_updated'));
     }
 
     /**
@@ -69,6 +69,6 @@ class ProfileController extends Controller
 
         // TODO::Send an email to verify the account deletion.
 
-        return to_route('home', $user)->with('success', 'Profile deleted successfully');
+        return to_route('home', $user)->with('success', __('flash.profile_deleted'));
     }
 }

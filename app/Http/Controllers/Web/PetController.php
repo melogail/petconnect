@@ -51,7 +51,7 @@ class PetController extends Controller
     {
         $this->petService->createPet($request);
 
-        return redirect()->route('home')->with('success', 'Pet created successfully');
+        return redirect()->route('home')->with('success', __('flash.pet_created'));
     }
 
     /**
@@ -102,7 +102,7 @@ class PetController extends Controller
     {
         $this->petService->updatePet($pet->id, $request);
 
-        return redirect()->route('pets.show', $pet)->with('success', 'Pet updated successfully');
+        return redirect()->route('pets.show', $pet)->with('success', __('flash.pet_updated'));
     }
 
     /**
@@ -113,7 +113,7 @@ class PetController extends Controller
         $this->authorize('delete', $pet);
         $this->petService->deletePet($pet->id);
 
-        return redirect()->route('home')->with('success', 'Pet listing removed successfully');
+        return redirect()->route('home')->with('success', __('flash.pet_removed'));
     }
 
     public function toggleStatus(Pet $pet): RedirectResponse
@@ -121,6 +121,14 @@ class PetController extends Controller
         $this->authorize('update', $pet);
         $this->petService->toggleStatus($pet->id);
 
-        return back()->with('success', 'Pet status updated successfully');
+        return back()->with('success', __('flash.pet_status_updated'));
+    }
+
+    public function toggleLike(Pet $pet): RedirectResponse
+    {
+        $this->authorize('like', $pet);
+        $isLiked = $pet->toggleLike();
+
+        return back()->with('success', $isLiked ? __('flash.pet_liked') : __('flash.pet_unliked'));
     }
 }

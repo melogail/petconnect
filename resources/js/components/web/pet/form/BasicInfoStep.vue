@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import InputError from '@/components/InputError.vue';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
@@ -26,11 +27,22 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 const filteredBreeds = computed(() => {
     return props.form.type
         ? props.breeds[props.form.type as keyof typeof props.breeds]
         : [];
 });
+
+const listingTypeLabel = (type: { value: number; label: string }): string => {
+    const keys: Record<number, string> = {
+        1: 'listing_types.adoption',
+        2: 'listing_types.sale',
+        3: 'listing_types.mating',
+    };
+    return t(keys[type.value] ?? 'listing_types.adoption');
+};
 </script>
 
 <template>
@@ -44,7 +56,7 @@ const filteredBreeds = computed(() => {
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-primary-100/20 to-transparent opacity-50 dark:from-primary-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-primary-100/20 to-transparent opacity-50 dark:from-primary-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-start space-x-4 sm:items-center">
@@ -72,28 +84,35 @@ const filteredBreeds = computed(() => {
                     <div>
                         <CardTitle
                             class="text-xl font-bold text-gray-800 dark:text-white"
-                            >Basic Information</CardTitle
+                            >{{ t('wizard.basic_information') }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Tell us about your pet's basic
-                            details</CardDescription
+                            >{{
+                                t('wizard.basic_information_desc')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
             </CardHeader>
             <CardContent class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="space-y-2">
-                    <Label for="name" is-required>Pet Name</Label>
+                    <Label for="name" is-required>{{
+                        t('wizard.pet_name')
+                    }}</Label>
                     <Input id="name" v-model="form.name" required />
                     <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="type" is-required>Pet Type</Label>
+                    <Label for="type" is-required>{{
+                        t('wizard.pet_type')
+                    }}</Label>
                     <Select v-model="form.type" required>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select pet type" />
+                            <SelectValue
+                                :placeholder="t('wizard.select_pet_type')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -109,14 +128,18 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="breed" is-required>Breed</Label>
+                    <Label for="breed" is-required>{{
+                        t('wizard.breed')
+                    }}</Label>
                     <Select
                         v-model="form.breed"
                         :disabled="!form.type"
                         required
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select breed" />
+                            <SelectValue
+                                :placeholder="t('wizard.select_breed')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem
@@ -132,7 +155,9 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="age" is-required>Age (years)</Label>
+                    <Label for="age" is-required>{{
+                        t('wizard.age_years')
+                    }}</Label>
                     <Input
                         id="age"
                         v-model="form.age"
@@ -145,31 +170,33 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="color" is-required>Pet Color</Label>
+                    <Label for="color" is-required>{{
+                        t('wizard.pet_color')
+                    }}</Label>
                     <Input
                         id="color"
                         v-model="form.color"
                         required
-                        placeholder="Ex: Gray with white color"
+                        :placeholder="t('wizard.pet_color_placeholder')"
                     />
                     <InputError :message="form.errors.color" />
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="weight">Weight (kg/lbs)</Label>
+                    <Label for="weight">{{ t('wizard.weight') }}</Label>
                     <Input
                         id="weight"
                         v-model="form.weight"
                         type="number"
                         min="0"
                         step="0.1"
-                        placeholder="Ex: 15.5"
+                        :placeholder="t('wizard.weight_placeholder')"
                     />
                     <InputError :message="form.errors.weight" />
                 </div>
 
                 <div class="space-y-2">
-                    <Label is-required>Gender</Label>
+                    <Label is-required>{{ t('wizard.gender') }}</Label>
                     <div class="flex space-x-4">
                         <div class="flex items-center space-x-2">
                             <input
@@ -180,7 +207,7 @@ const filteredBreeds = computed(() => {
                                 class="h-4 w-4"
                                 required
                             />
-                            <Label for="male">Male</Label>
+                            <Label for="male">{{ t('wizard.male') }}</Label>
                         </div>
 
                         <div class="flex items-center space-x-2">
@@ -191,14 +218,14 @@ const filteredBreeds = computed(() => {
                                 value="female"
                                 class="h-4 w-4"
                             />
-                            <Label for="female">Female</Label>
+                            <Label for="female">{{ t('wizard.female') }}</Label>
                         </div>
                     </div>
                     <InputError :message="form.errors.gender" />
                 </div>
 
                 <div class="space-y-2">
-                    <Label is-required>Listing Type</Label>
+                    <Label is-required>{{ t('wizard.listing_type') }}</Label>
                     <div
                         class="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
                     >
@@ -215,7 +242,7 @@ const filteredBreeds = computed(() => {
                                 class="h-4 w-4"
                             />
                             <Label :for="`type-${type.value}`">{{
-                                type.label
+                                listingTypeLabel(type)
                             }}</Label>
                         </div>
                     </div>
@@ -223,14 +250,14 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="price">Price ($)</Label>
+                    <Label for="price">{{ t('wizard.price') }}</Label>
                     <Input
                         id="price"
                         v-model="form.price"
                         type="number"
                         min="0"
                         step="0.01"
-                        placeholder="0.00"
+                        :placeholder="t('wizard.price_placeholder')"
                         :disabled="form.listing_type !== 2"
                         :class="{
                             'cursor-not-allowed opacity-50':
@@ -241,16 +268,20 @@ const filteredBreeds = computed(() => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="status">Status</Label>
+                    <Label for="status">{{ t('wizard.status') }}</Label>
                     <Select v-model="form.status" required>
                         <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
+                            <SelectValue
+                                :placeholder="t('wizard.select_status')"
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="available">Available</SelectItem>
-                            <SelectItem value="unavailable"
-                                >Unavailable</SelectItem
-                            >
+                            <SelectItem value="available">{{
+                                t('wizard.available')
+                            }}</SelectItem>
+                            <SelectItem value="unavailable">{{
+                                t('wizard.unavailable')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <InputError :message="form.errors.status" />

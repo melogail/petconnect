@@ -1,16 +1,17 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import { useAuthUser } from '@/composables/useAuthUser';
+import { useTranslations } from '@/composables/useTranslations';
 import {
     CheckCircle2,
     Copy,
-    Heart,
     HeartCrack,
     Mail,
     MessageCircle,
     Share2,
     Syringe,
+    ThumbsUp,
 } from 'lucide-vue-next';
 import CommentsDialog from './CommentsDialog.vue';
 import QuickMessageDialog from './QuickMessageDialog.vue';
@@ -20,8 +21,10 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { route } from 'ziggy-js';
 
 const user = useAuthUser();
+const { t } = useTranslations();
 
 // Define props
 const props = defineProps({
@@ -50,8 +53,9 @@ const emit = defineEmits([
 
 // Component state
 const showFullDescription = ref(false);
-const isLiked = ref(false);
+const isLiked = ref(!!props.pet?.isLiked);
 const likeCount = ref(props.pet?.likesCount || 0);
+const isLiking = ref(false);
 const shareButton = ref(null);
 const isShareOpen = ref(false);
 const showMessageDialog = ref(false);
@@ -61,18 +65,69 @@ const spayedNeutered = computed(function () {
     if (!props.pet?.spayedNeutered) return null;
 
     const labels = {
-        male: 'Spayed',
-        female: 'Neutered',
+        male: t('pets.spayed'),
+        female: t('pets.neutered'),
     };
 
     return labels[props.pet.gender] ?? null;
 });
 
+watch(
+    () => props.pet?.isLiked,
+    (value) => {
+        if (typeof value === 'boolean') {
+            isLiked.value = value;
+        }
+    },
+);
+
+watch(
+    () => props.pet?.likesCount,
+    (value) => {
+        if (typeof value === 'number') {
+            likeCount.value = value;
+        }
+    },
+);
+
 // Toggle like with animation
 const toggleLike = () => {
-    isLiked.value = !isLiked.value;
-    likeCount.value += isLiked.value ? 1 : -1;
-    // Here you would typically make an API call to update the like status
+    if (isLiking.value) {
+        return;
+    }
+
+    if (!user.value) {
+        router.visit(route('login'));
+        return;
+    }
+
+    if (!user.value.email_verified_at) {
+        return;
+    }
+
+    const wasLiked = isLiked.value;
+    const previousCount = likeCount.value;
+
+    isLiked.value = !wasLiked;
+    likeCount.value = Math.max(0, previousCount + (wasLiked ? -1 : 1));
+    isLiking.value = true;
+
+    router.post(
+        route('pets.like', props.pet.id),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['pets', 'flash', 'notifications'],
+            onError: () => {
+                isLiked.value = wasLiked;
+                likeCount.value = previousCount;
+            },
+            onFinish: () => {
+                isLiking.value = false;
+            },
+        },
+    );
 };
 
 const toggleShareDropdown = (event) => {
@@ -89,7 +144,7 @@ const closeShareDropdown = (event) => {
 const shareOnSocial = (platform) => {
     const url = encodeURIComponent(window.location.href);
     const title = encodeURIComponent(
-        `Check out ${props.pet.name} on PetConnect`,
+        t('pets.share_title', { name: props.pet.name }),
     );
     let shareUrl = '';
     switch (platform) {
@@ -186,7 +241,7 @@ onUnmounted(() => {
             <div class="h-full w-full overflow-hidden">
                 <img
                     :src="pet.image"
-                    :alt="`Photo of ${pet.name}, a ${pet.age} ${pet.gender === 'male' ? 'Male' : 'Female'} from ${pet.location}`"
+                    :alt="`Photo of ${pet.name}, a ${pet.age} ${pet.gender === 'male' ? t('pets.male') : t('pets.female')} from ${pet.location}`"
                     class="h-full w-full object-cover transition-all duration-700 group-hover:scale-110"
                     loading="lazy"
                     @error="$event.target.src = '/images/pet-placeholder.jpg'"
@@ -198,10 +253,10 @@ onUnmounted(() => {
 
             <!-- Overlay -->
 
-            <!-- My Listing Badge (top-left, owner only) -->
+            <!-- My Listing Badge (top-start, owner only) -->
             <div
                 v-if="pet.isOwnedByCurrentUser"
-                class="group/badge absolute left-4 top-4 z-10"
+                class="group/badge absolute start-4 top-4 z-10"
             >
                 <div class="relative">
                     <!-- Animated background glow -->
@@ -210,14 +265,18 @@ onUnmounted(() => {
                     ></div>
                     <!-- Main badge -->
                     <div
-                        class="relative flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover/badge:scale-105 group-hover/badge:shadow-emerald-500/50 group-hover/badge:shadow-xl"
+                        class="relative flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-3 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/30 transition-all duration-300 group-hover/badge:scale-105 group-hover/badge:shadow-xl group-hover/badge:shadow-emerald-500/50"
                     >
                         <CheckCircle2 class="h-3 w-3 shrink-0" />
-                        <span class="tracking-wide text-white/95">My Listing</span>
+                        <span class="tracking-wide text-white/95">{{
+                            t('pets.my_listing')
+                        }}</span>
                         <!-- Shine sweep on hover -->
-                        <span class="absolute inset-0 overflow-hidden rounded-full">
+                        <span
+                            class="absolute inset-0 overflow-hidden rounded-full"
+                        >
                             <span
-                                class="absolute left-0 top-0 h-full w-1/2 -translate-x-full -skew-x-12 transform bg-white/20 transition-transform duration-500 ease-in-out group-hover/badge:translate-x-full"
+                                class="absolute start-0 top-0 h-full w-1/2 -translate-x-full -skew-x-12 transform bg-white/20 transition-transform duration-500 ease-in-out group-hover/badge:translate-x-full"
                             ></span>
                         </span>
                     </div>
@@ -227,12 +286,12 @@ onUnmounted(() => {
             <!-- Favorite Button with Animation (hidden for own pets) -->
             <button
                 v-if="user?.email_verified_at && !pet.isOwnedByCurrentUser"
-                class="absolute left-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:bg-gray-800/80 dark:hover:bg-gray-700/90"
+                class="absolute start-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500/50 dark:bg-gray-800/80 dark:hover:bg-gray-700/90"
                 :aria-pressed="pet.isFavorite"
                 :aria-label="
                     pet.isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites'
+                        ? t('pets.remove_from_favorites')
+                        : t('pets.add_to_favorites')
                 "
                 @click.stop="toggleFavorite"
             >
@@ -258,7 +317,7 @@ onUnmounted(() => {
             <!-- Status Badge -->
             <div
                 v-if="pet.status === 'sale' || pet.status === 'adoption'"
-                class="group absolute right-4 top-4 z-10"
+                class="group absolute end-4 top-4 z-10"
             >
                 <div class="relative">
                     <!-- Animated background glow -->
@@ -285,8 +344,8 @@ onUnmounted(() => {
                         <span class="font-semibold tracking-wide text-white/95">
                             {{
                                 pet.status === 'sale'
-                                    ? 'For Sale'
-                                    : 'For Adoption'
+                                    ? t('listing_types.for_sale')
+                                    : t('listing_types.for_adoption')
                             }}
                         </span>
 
@@ -295,7 +354,7 @@ onUnmounted(() => {
                             class="absolute inset-0 overflow-hidden rounded-full"
                         >
                             <span
-                                class="absolute left-0 top-0 h-full w-1/2 -translate-x-full -skew-x-12 transform bg-white/20 transition-transform duration-500 ease-in-out group-hover:translate-x-full"
+                                class="absolute start-0 top-0 h-full w-1/2 -translate-x-full -skew-x-12 transform bg-white/20 transition-transform duration-500 ease-in-out group-hover:translate-x-full"
                             ></span>
                         </span>
                     </div>
@@ -305,7 +364,7 @@ onUnmounted(() => {
             <!-- Status Icons with Tooltips -->
             <!-- Enhanced status bar with better visibility -->
             <div
-                class="absolute bottom-0 left-0 right-0 z-10 translate-y-2 transform bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 pt-10 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100"
+                class="absolute inset-x-0 bottom-0 z-10 translate-y-2 transform bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 pt-10 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100"
             >
                 <TooltipProvider>
                     <div class="flex items-center justify-center gap-3">
@@ -319,7 +378,7 @@ onUnmounted(() => {
                             <TooltipContent
                                 class="border-0 bg-gray-800 text-xs text-white"
                             >
-                                <p>Vaccinated</p>
+                                <p>{{ t('pets.vaccinated') }}</p>
                             </TooltipContent>
                         </Tooltip>
 
@@ -359,7 +418,7 @@ onUnmounted(() => {
                             <TooltipContent
                                 class="border-0 bg-gray-800 text-xs text-white"
                             >
-                                <p>{{ pet.age }} old</p>
+                                <p>{{ pet.age }} {{ t('pets.old') }}</p>
                             </TooltipContent>
                         </Tooltip>
 
@@ -391,7 +450,13 @@ onUnmounted(() => {
                             <TooltipContent
                                 class="border-0 bg-gray-800 text-xs text-white"
                             >
-                                <p>Located in {{ pet.location }}</p>
+                                <p>
+                                    {{
+                                        t('pets.located_in', {
+                                            location: pet.location,
+                                        })
+                                    }}
+                                </p>
                             </TooltipContent>
                         </Tooltip>
                     </div>
@@ -406,13 +471,13 @@ onUnmounted(() => {
             <!-- Pet Name and Gender with enhanced typography -->
             <div class="mb-2.5 flex items-center justify-between">
                 <h3
-                    class="truncate pr-2 text-xl font-extrabold text-gray-900 transition-colors duration-300 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400"
+                    class="truncate pe-2 text-xl font-extrabold text-gray-900 transition-colors duration-300 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400"
                     itemprop="name"
                 >
                     {{ pet.name }}
                 </h3>
                 <span
-                    class="inline-flex flex-shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                     :class="
                         pet.gender === 'male'
                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
@@ -430,7 +495,7 @@ onUnmounted(() => {
                         stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="mr-1"
+                        class="me-1"
                     >
                         <path d="M16 3h5v5" />
                         <path d="m21 3-6.75 6.75" />
@@ -447,13 +512,17 @@ onUnmounted(() => {
                         stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="mr-1"
+                        class="me-1"
                     >
                         <path d="M12 15v7" />
                         <path d="M9 19h6" />
                         <circle cx="12" cy="9" r="6" />
                     </svg>
-                    {{ pet.gender === 'male' ? 'Male' : 'Female' }}
+                    {{
+                        pet.gender === 'male'
+                            ? t('pets.male')
+                            : t('pets.female')
+                    }}
                 </span>
             </div>
 
@@ -477,7 +546,7 @@ onUnmounted(() => {
                     </svg>
                     <span
                         class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >{{ pet.breed || 'Mixed Breed' }}</span
+                        >{{ pet.breed || t('pets.mixed_breed') }}</span
                     >
                 </div>
                 <div
@@ -500,7 +569,7 @@ onUnmounted(() => {
                     <span
                         class="text-sm font-medium text-gray-700 dark:text-gray-300"
                         itemprop="age"
-                        >{{ pet.age }} old</span
+                        >{{ pet.age }} {{ t('pets.old') }}</span
                     >
                 </div>
             </div>
@@ -517,21 +586,18 @@ onUnmounted(() => {
                         "
                         itemprop="description"
                     >
-                        {{
-                            pet.description ||
-                            'No description available for this pet.'
-                        }}
+                        {{ pet.description || t('pets.no_description') }}
                     </p>
                     <div
                         v-if="pet.description && pet.description.length > 120"
-                        class="absolute bottom-0 left-0 right-0 flex h-10 items-end justify-center bg-gradient-to-t from-white to-transparent pb-1 dark:from-gray-800 dark:to-transparent"
+                        class="absolute inset-x-0 bottom-0 flex h-10 items-end justify-center bg-gradient-to-t from-white to-transparent pb-1 dark:from-gray-800 dark:to-transparent"
                         v-show="!showFullDescription"
                     >
                         <button
                             @click.stop="showFullDescription = true"
                             class="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-primary-600 shadow-sm transition-all hover:text-primary-700 hover:shadow focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-primary-400 dark:hover:text-primary-300"
                         >
-                            Read more
+                            {{ t('pets.read_more') }}
                         </button>
                     </div>
                 </div>
@@ -544,9 +610,9 @@ onUnmounted(() => {
                     @click.stop="showFullDescription = false"
                     class="mx-auto mt-2 flex items-center text-xs font-medium text-primary-600 transition-all duration-200 hover:text-primary-700 hover:underline focus:outline-none dark:text-primary-400 dark:hover:text-primary-300"
                 >
-                    Show less
+                    {{ t('pets.show_less') }}
                     <svg
-                        class="ml-1 h-3 w-3"
+                        class="ms-1 h-3 w-3"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -596,15 +662,18 @@ onUnmounted(() => {
                 <!-- Likes with Animation -->
                 <button
                     @click.stop="toggleLike"
+                    type="button"
+                    :disabled="isLiking"
                     class="group relative flex items-center gap-1.5 overflow-hidden rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                    :class="{ 'text-red-500': isLiked }"
+                    :class="{ 'text-violet-600 dark:text-violet-400': isLiked }"
                 >
                     <span class="relative">
-                        <Heart
+                        <ThumbsUp
                             class="h-5 w-5 transition-all duration-300"
                             :class="{
-                                'scale-110 fill-red-500 text-red-500': isLiked,
-                                'group-hover:fill-red-500/20 group-hover:text-red-500':
+                                'scale-110 fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400':
+                                    isLiked,
+                                'group-hover:fill-violet-500/20 group-hover:text-violet-500':
                                     !isLiked,
                             }"
                         />
@@ -616,9 +685,9 @@ onUnmounted(() => {
                             leave-from-class="transform scale-100 opacity-100"
                             leave-to-class="transform scale-150 opacity-0"
                         >
-                            <Heart
+                            <ThumbsUp
                                 v-if="isLiked"
-                                class="absolute inset-0 h-5 w-5 fill-red-500 text-red-500"
+                                class="absolute inset-0 h-5 w-5 fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400"
                             />
                         </transition>
                     </span>
@@ -675,7 +744,7 @@ onUnmounted(() => {
                     <button
                         @click.stop="toggleShareDropdown"
                         class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:bg-gray-100 hover:text-primary-500 dark:hover:bg-gray-700/50 dark:hover:text-primary-400"
-                        aria-label="Share"
+                        :aria-label="t('pets.share')"
                         aria-haspopup="true"
                         :aria-expanded="isShareOpen"
                         ref="shareButton"
@@ -690,7 +759,7 @@ onUnmounted(() => {
                     <transition name="fade-slide">
                         <div
                             v-if="isShareOpen"
-                            class="absolute right-0 z-10 mt-2 flex gap-3 rounded-lg bg-white px-4 py-3 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-gray-700"
+                            class="absolute end-0 z-10 mt-2 flex gap-3 rounded-lg bg-white px-4 py-3 shadow-lg ring-1 ring-black/5 dark:bg-gray-800 dark:ring-gray-700"
                             role="menu"
                             aria-orientation="horizontal"
                         >
@@ -713,7 +782,9 @@ onUnmounted(() => {
                                             </svg>
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>Facebook</TooltipContent>
+                                    <TooltipContent>{{
+                                        t('pets.facebook')
+                                    }}</TooltipContent>
                                 </Tooltip>
 
                                 <!-- Twitter -->
@@ -722,7 +793,9 @@ onUnmounted(() => {
                                         <button
                                             @click="shareOnSocial('twitter')"
                                             class="transition-transform hover:scale-110"
-                                            aria-label="Share on Twitter"
+                                            :aria-label="
+                                                t('pets.share_on_twitter')
+                                            "
                                         >
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
@@ -753,7 +826,9 @@ onUnmounted(() => {
                                             </svg>
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>X (Twitter)</TooltipContent>
+                                    <TooltipContent>{{
+                                        t('pets.x_twitter')
+                                    }}</TooltipContent>
                                 </Tooltip>
 
                                 <!-- WhatsApp -->
@@ -781,7 +856,9 @@ onUnmounted(() => {
                                             </svg>
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>WhatsApp</TooltipContent>
+                                    <TooltipContent>{{
+                                        t('pets.whatsapp')
+                                    }}</TooltipContent>
                                 </Tooltip>
 
                                 <!-- Copy link -->
@@ -794,7 +871,9 @@ onUnmounted(() => {
                                             <Copy class="h-5 w-5" />
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>Copy link</TooltipContent>
+                                    <TooltipContent>{{
+                                        t('pets.copy_link')
+                                    }}</TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
@@ -808,7 +887,7 @@ onUnmounted(() => {
                 <QuickMessageDialog
                     v-if="user?.email_verified_at && !pet.isOwnedByCurrentUser"
                     v-model:open="showMessageDialog"
-                    :owner-name="pet.ownerName || 'the owner'"
+                    :owner-name="pet.ownerName || t('pets.the_owner')"
                     :pet-name="pet.name"
                     :other-user-id="pet.user_id ?? pet.user?.id ?? null"
                     @message-sent="handleMessageSent"
@@ -818,8 +897,8 @@ onUnmounted(() => {
                             <TooltipTrigger as-child>
                                 <button
                                     @click="showMessageDialog = true"
-                                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                                    aria-label="Contact Owner"
+                                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                                    :aria-label="t('pets.contact_owner')"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -846,7 +925,9 @@ onUnmounted(() => {
                                     </svg>
                                 </button>
                             </TooltipTrigger>
-                            <TooltipContent>Contact Owner</TooltipContent>
+                            <TooltipContent>{{
+                                t('pets.contact_owner')
+                            }}</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </QuickMessageDialog>
@@ -856,7 +937,7 @@ onUnmounted(() => {
                     :href="route('pets.show', pet.id)"
                     class="flex h-12 flex-1 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                 >
-                    View Details
+                    {{ t('pets.view_details') }}
                 </Link>
             </div>
         </div>

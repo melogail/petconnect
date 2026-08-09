@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\App;
 
 class CategoryResource extends JsonResource
 {
@@ -16,12 +17,26 @@ class CategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => $this->localized('name'),
+            'description' => $this->localized('description'),
             'slug' => $this->slug,
-            'image' => $this->image,
+            'image' => $this->getFirstMediaUrl('categories') ?: $this->image,
             'breeds' => $this->whenLoaded('breeds', function () {
                 return BreedResource::collection($this->breeds);
             }),
         ];
+    }
+
+    protected function localized(string $attribute): mixed
+    {
+        if (App::getLocale() === 'ar') {
+            $arabic = $this->{"{$attribute}_ar"};
+
+            if (filled($arabic)) {
+                return $arabic;
+            }
+        }
+
+        return $this->{$attribute};
     }
 }

@@ -37,7 +37,7 @@ class PetFactory extends Factory
 
             // Basic Information
             'name' => fake()->randomElement($petNames),
-            'age' => fake()->randomElement(['2 months', '6 months', '1 year', '2 years', '3 years', '5 years']),
+            'age' => (string) fake()->randomElement([0.5, 1, 2, 3, 5, 7, 10]),
             'gender' => fake()->randomElement(['male', 'female']),
             'color' => fake()->randomElement(['Black', 'White', 'Brown', 'Golden', 'Gray', 'Mixed', 'Spotted']),
             'weight' => fake()->randomFloat(2, 1, 50),
@@ -126,6 +126,17 @@ class PetFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'listing_type' => ListingType::Mating->value,
             'price' => null,
+        ]);
+    }
+
+    /**
+     * Place the pet at specific coordinates.
+     */
+    public function at(float $latitude, float $longitude): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'latitude' => $latitude,
+            'longitude' => $longitude,
         ]);
     }
 }

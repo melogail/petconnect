@@ -16,6 +16,9 @@ import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { AlertCircle, Eye, EyeOff, TriangleAlert } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps<{
     form: Record<string, any>;
@@ -41,15 +44,13 @@ const confirmDelete = () => {
 </script>
 
 <template>
-    <div
-        class="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300"
-    >
+    <div class="animate-in fade-in slide-in-from-end-4 space-y-6 duration-300">
         <div>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                Security Settings
+                {{ t('profile.security_settings') }}
             </h2>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Ensure your account is secure with a strong password.
+                {{ t('profile.security_settings_desc') }}
             </p>
         </div>
         <Separator />
@@ -58,10 +59,9 @@ const confirmDelete = () => {
             class="space-y-4 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
         >
             <div class="flex items-start">
-                <AlertCircle class="mr-2 h-5 w-5 flex-shrink-0" />
+                <AlertCircle class="me-2 h-5 w-5 flex-shrink-0" />
                 <p>
-                    Use a password at least 12 characters long, or a phrase with
-                    at least 4 words.
+                    {{ t('profile.password_requirements') }}
                 </p>
             </div>
         </div>
@@ -71,19 +71,19 @@ const confirmDelete = () => {
                 <Label
                     for="current_password"
                     :class="{ 'text-red-500': form.errors.current_password }"
-                    >Current Password</Label
+                    >{{ t('profile.current_password') }}</Label
                 >
                 <div class="relative">
                     <Input
                         id="current_password"
                         v-model="form.current_password"
                         :type="showCurrentPassword ? 'text' : 'password'"
-                        class="bg-gray-50/50 pr-10 dark:bg-gray-900/20"
+                        class="bg-gray-50/50 pe-10 dark:bg-gray-900/20"
                     />
                     <button
                         type="button"
                         @click="showCurrentPassword = !showCurrentPassword"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        class="absolute end-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                         <Eye v-if="!showCurrentPassword" class="h-4 w-4" />
                         <EyeOff v-else class="h-4 w-4" />
@@ -97,20 +97,20 @@ const confirmDelete = () => {
                 <Label
                     for="new_password"
                     :class="{ 'text-red-500': form.errors.new_password }"
-                    >New Password</Label
+                    >{{ t('profile.new_password') }}</Label
                 >
                 <div class="relative">
                     <Input
                         id="new_password"
                         v-model="form.new_password"
                         :type="showNewPassword ? 'text' : 'password'"
-                        class="bg-gray-50/50 pr-10 dark:bg-gray-900/20"
+                        class="bg-gray-50/50 pe-10 dark:bg-gray-900/20"
                         :class="{ 'border-red-500': form.errors.new_password }"
                     />
                     <button
                         type="button"
                         @click="showNewPassword = !showNewPassword"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        class="absolute end-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                         <Eye v-if="!showNewPassword" class="h-4 w-4" />
                         <EyeOff v-else class="h-4 w-4" />
@@ -124,14 +124,14 @@ const confirmDelete = () => {
                 <Label
                     for="confirm_password"
                     :class="{ 'text-red-500': form.errors.confirm_password }"
-                    >Confirm New Password</Label
+                    >{{ t('profile.confirm_new_password') }}</Label
                 >
                 <div class="relative">
                     <Input
                         id="confirm_password"
                         v-model="form.confirm_password"
                         :type="showConfirmPassword ? 'text' : 'password'"
-                        class="bg-gray-50/50 pr-10 dark:bg-gray-900/20"
+                        class="bg-gray-50/50 pe-10 dark:bg-gray-900/20"
                         :class="{
                             'border-red-500': form.errors.confirm_password,
                         }"
@@ -139,7 +139,7 @@ const confirmDelete = () => {
                     <button
                         type="button"
                         @click="showConfirmPassword = !showConfirmPassword"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        class="absolute end-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                         <Eye v-if="!showConfirmPassword" class="h-4 w-4" />
                         <EyeOff v-else class="h-4 w-4" />
@@ -156,16 +156,16 @@ const confirmDelete = () => {
         <div class="flex items-center justify-between">
             <div class="space-y-0.5">
                 <div class="flex items-center">
-                    <Label class="text-base font-semibold"
-                        >Two-Factor Authentication</Label
-                    >
+                    <Label class="text-base font-semibold">{{
+                        t('profile.two_factor_authentication')
+                    }}</Label>
                     <span
-                        class="ml-2 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400"
-                        >Recommended</span
+                        class="ms-2 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400"
+                        >{{ t('profile.recommended') }}</span
                     >
                 </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Protect your account with an extra layer of security.
+                    {{ t('profile.two_factor_desc') }}
                 </p>
             </div>
             <Switch v-model="form.two_factor_enabled" />
@@ -181,12 +181,10 @@ const confirmDelete = () => {
                     <h3
                         class="text-sm font-medium text-red-800 dark:text-red-300"
                     >
-                        Account Status
+                        {{ t('profile.account_status') }}
                     </h3>
                     <p class="text-sm text-red-600 dark:text-red-400">
-                        Deactivating your account will hide your public profile,
-                        disable messaging/interactions, and prevent creating or
-                        managing pets.
+                        {{ t('profile.account_status_desc') }}
                     </p>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -194,7 +192,7 @@ const confirmDelete = () => {
                         for="is_active"
                         class="text-sm font-medium text-red-800 dark:text-red-300"
                     >
-                        Active
+                        {{ t('profile.active') }}
                     </Label>
                     <Switch
                         id="is_active"
@@ -216,7 +214,7 @@ const confirmDelete = () => {
                 <h3
                     class="text-base font-semibold text-red-700 dark:text-red-400"
                 >
-                    Danger Zone
+                    {{ t('profile.danger_zone') }}
                 </h3>
             </div>
 
@@ -225,11 +223,10 @@ const confirmDelete = () => {
                     <p
                         class="text-sm font-medium text-red-800 dark:text-red-300"
                     >
-                        Delete Account
+                        {{ t('profile.delete_account') }}
                     </p>
                     <p class="text-sm text-red-600 dark:text-red-400">
-                        Permanently delete your account and all associated data.
-                        This action cannot be undone.
+                        {{ t('profile.delete_account_desc') }}
                     </p>
                 </div>
                 <Button
@@ -238,7 +235,7 @@ const confirmDelete = () => {
                     class="shrink-0"
                     @click="isDeleteDialogOpen = true"
                 >
-                    Delete Account
+                    {{ t('profile.delete_account') }}
                 </Button>
             </div>
         </div>
@@ -251,7 +248,7 @@ const confirmDelete = () => {
                         class="flex items-center gap-2 text-red-600 dark:text-red-400"
                     >
                         <TriangleAlert class="h-5 w-5" />
-                        Delete Account
+                        {{ t('profile.delete_account') }}
                     </DialogTitle>
                     <DialogDescription>
                         This will permanently delete your account, all your pet
@@ -267,7 +264,7 @@ const confirmDelete = () => {
                         variant="outline"
                         @click="isDeleteDialogOpen = false"
                     >
-                        Cancel
+                        {{ t('profile.cancel') }}
                     </Button>
                     <Button
                         type="button"
@@ -276,7 +273,9 @@ const confirmDelete = () => {
                         @click="confirmDelete"
                     >
                         {{
-                            isDeleting ? 'Deleting…' : 'Yes, delete my account'
+                            isDeleting
+                                ? t('profile.deleting')
+                                : t('profile.yes_delete_my_account')
                         }}
                     </Button>
                 </DialogFooter>

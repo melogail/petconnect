@@ -39,6 +39,34 @@ class PetService
     }
 
     /**
+     * Paginate pets for the home feed, optionally filtered by nearby coordinates and discovery filters.
+     *
+     * @param  array{
+     *     category_ids?: list<int>,
+     *     breed_ids?: list<int>,
+     *     age_min?: float|null,
+     *     age_max?: float|null,
+     *     listing_types?: list<int>,
+     *     vaccinated?: bool|null
+     * }  $filters
+     */
+    public function getHomePets(
+        ?float $latitude = null,
+        ?float $longitude = null,
+        ?float $radiusKm = null,
+        array $filters = [],
+        int $perPage = 12,
+    ): LengthAwarePaginator {
+        return $this->petRepository->paginateHomeFeed(
+            latitude: $latitude,
+            longitude: $longitude,
+            radiusKm: $radiusKm,
+            filters: $filters,
+            perPage: $perPage,
+        );
+    }
+
+    /**
      * Create a new pet with comprehensive data processing
      *
      * This method handles:

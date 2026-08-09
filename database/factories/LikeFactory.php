@@ -49,4 +49,15 @@ class LikeFactory extends Factory
             'likeable_id' => $commentId ?? Comment::factory(),
         ]);
     }
+
+    /**
+     * Indicate that the like is for a user profile.
+     */
+    public function forUser($userId = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'likeable_type' => User::class,
+            'likeable_id' => $userId ?? User::factory(),
+        ]);
+    }
 }

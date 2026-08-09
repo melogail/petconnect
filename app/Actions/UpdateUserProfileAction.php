@@ -4,19 +4,18 @@ namespace App\Actions;
 
 use App\Models\User;
 use App\Services\ProfileImageService;
-use Arr;
+use App\Support\LocaleManager;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
-
 
 class UpdateUserProfileAction
 {
-
     public function __construct(protected ProfileImageService $profileImageService)
     {
         //
     }
 
-    public function execute($request, User $user)
+    public function execute($request, User $user): void
     {
         $validated = Arr::except(
             $request->validated(),
@@ -32,6 +31,9 @@ class UpdateUserProfileAction
         }
 
         $user->update($validated);
-    }
 
+        if (array_key_exists('locale', $validated) && filled($validated['locale'])) {
+            LocaleManager::apply($validated['locale'], $user);
+        }
+    }
 }

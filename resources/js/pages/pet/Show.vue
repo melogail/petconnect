@@ -18,6 +18,7 @@ import PetComments from '@/components/pet/show/PetComments.vue';
 import PetOwnerCard from '@/components/pet/show/PetOwnerCard.vue';
 import QuickMessageDialog from '@/components/web/QuickMessageDialog.vue';
 import { useAuthUser } from '@/composables/useAuthUser';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface ReportReasonOption {
     value: string;
@@ -29,6 +30,7 @@ const props = defineProps<{
     reportReasons?: ReportReasonOption[];
 }>();
 
+const { t } = useTranslations();
 const petData = computed(() => props.pet.data || props.pet);
 const user = useAuthUser();
 
@@ -45,11 +47,11 @@ const showContact = computed(
 );
 
 // ─── Computed Data ──────────────────────────────────────────
-const listingTypeLabels: Record<number, string> = {
-    1: 'Adoption',
-    2: 'Sale',
-    3: 'Mating',
-};
+const listingTypeLabels = computed<Record<number, string>>(() => ({
+    1: t('listing_types.adoption'),
+    2: t('listing_types.sale'),
+    3: t('listing_types.mating'),
+}));
 
 const getAdditionalInfoValue = (key: string): string | null => {
     const info = petData.value.additional_info || [];
@@ -67,24 +69,23 @@ const petDetails = computed(() => {
         ? data.additional_info
         : [];
     return {
-        name: data.name || 'Unknown Pet',
-        breed: data.breed?.name || 'Unknown Breed',
-        age: data.age || 'Unknown Age',
-        gender: data.gender || 'Unknown',
+        name: data.name || t('pets.unknown_pet'),
+        breed: data.breed?.name || t('pets.unknown_breed'),
+        age: data.age || t('pets.unknown_age'),
+        gender: data.gender || t('pets.unknown'),
         vaccinated: data.vaccinated ?? false,
         spayedNeutered: data.spayed_neutered ?? false,
-        description:
-            data.description || 'No description available for this pet.',
+        description: data.description || t('pets.no_description'),
         listing_type: data.listing_type,
         listing_type_label:
-            listingTypeLabels[data.listing_type] ||
+            listingTypeLabels.value[data.listing_type] ||
             (typeof data.listing_type === 'string'
                 ? data.listing_type
-                : 'Adoption'),
+                : t('listing_types.adoption')),
         city: data.city,
         state: data.state,
         price: data.price,
-        category: data.category?.name || 'Other',
+        category: data.category?.name || t('pets.other'),
         weight: data.weight,
         color: data.color,
         health_status: data.health_status || 'healthy',
@@ -129,14 +130,14 @@ const owner = computed(() => {
     const user = petData.value.user || {};
     return {
         id: user.id,
-        name: user.name || 'Unknown User',
+        name: user.name || t('pets.unknown_user'),
         avatar:
             user.avatar ||
             `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}`,
         location:
             user.city && user.state
                 ? `${user.city}, ${user.state}`
-                : user.country || 'Location unknown',
+                : user.country || t('pets.location_unknown'),
         memberSince: user.created_at
             ? new Date(user.created_at).getFullYear().toString()
             : '2023',
@@ -145,6 +146,13 @@ const owner = computed(() => {
         phone: user.phone || null,
     };
 });
+
+const safetyTips = computed(() => [
+    t('pets.safety_tip_public_place'),
+    t('pets.safety_tip_no_money'),
+    t('pets.safety_tip_health_records'),
+    t('pets.safety_tip_ownership_docs'),
+]);
 
 const hasLocation = computed(
     () =>
@@ -176,8 +184,8 @@ const hasHealthInfo = computed(
                     :href="route('home')"
                     class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
                 >
-                    <ArrowLeft class="h-4 w-4" />
-                    Back to Pets
+                    <ArrowLeft class="h-4 w-4 rtl:rotate-180" />
+                    {{ t('pets.back_to_pets') }}
                 </Link>
             </div>
 
@@ -233,7 +241,7 @@ const hasHealthInfo = computed(
                                 <h4
                                     class="text-muted-foreground mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest"
                                 >
-                                    Additional Information
+                                    {{ t('pets.additional_information') }}
                                 </h4>
                                 <dl
                                     class="border-border/50 bg-muted/10 grid gap-2 rounded-xl border p-4 sm:grid-cols-2"
@@ -281,19 +289,14 @@ const hasHealthInfo = computed(
                         <!-- Safety Tips -->
                         <Card class="border-border/50">
                             <CardHeader class="pb-3">
-                                <CardTitle class="text-base"
-                                    >Safety Tips</CardTitle
-                                >
+                                <CardTitle class="text-base">{{
+                                    t('pets.safety_tips')
+                                }}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ul class="space-y-2.5">
                                     <li
-                                        v-for="tip in [
-                                            'Meet in a public place',
-                                            'Never send money in advance',
-                                            'Check the pet\'s health records',
-                                            'Ask for ownership documents',
-                                        ]"
+                                        v-for="tip in safetyTips"
                                         :key="tip"
                                         class="flex items-start gap-2.5"
                                     >

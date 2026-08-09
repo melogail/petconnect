@@ -16,6 +16,6 @@ class ReportController extends Controller
 
         $report = $createReport->handle($storeReportRequest->validated());
 
-        return back()->with('success', 'Report submitted successfully');
+        return back()->with('success', __('flash.report_submitted'));
     }
 }

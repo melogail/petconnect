@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form?: any;
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 const addVaccination = () => {
     if (!props.form?.health?.vaccinations) return;
@@ -59,7 +62,7 @@ const removeAllergy = (index: number) => {
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-rose-100/20 to-transparent opacity-50 dark:from-rose-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-rose-100/20 to-transparent opacity-50 dark:from-rose-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -87,12 +90,13 @@ const removeAllergy = (index: number) => {
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Healthcare Information</CardTitle
+                            >{{ t('wizard.healthcare_information') }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Your pet's medical history and
-                            care</CardDescription
+                            >{{
+                                t('wizard.healthcare_information_desc')
+                            }}</CardDescription
                         >
                     </div>
                 </div>
@@ -101,14 +105,15 @@ const removeAllergy = (index: number) => {
                 <!-- Vaccination Records -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <Label>Vaccination Records</Label>
+                        <Label>{{ t('wizard.vaccination_records') }}</Label>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             @click="addVaccination"
                         >
-                            <Plus class="mr-2 h-4 w-4" /> Add Record
+                            <Plus class="me-2 h-4 w-4" />
+                            {{ t('wizard.add_record') }}
                         </Button>
                     </div>
                     <div
@@ -118,7 +123,7 @@ const removeAllergy = (index: number) => {
                         "
                         class="rounded-lg border-2 border-dashed border-gray-200 py-4 text-center text-sm italic text-gray-500"
                     >
-                        No vaccination records added
+                        {{ t('wizard.no_vaccination_records') }}
                     </div>
                     <div
                         v-for="(vax, index) in form.health.vaccinations"
@@ -126,9 +131,9 @@ const removeAllergy = (index: number) => {
                         class="animate-fade-in flex items-start gap-3"
                     >
                         <div class="flex-1 space-y-1">
-                            <Label :for="`vax-date-${index}`" class="text-xs"
-                                >Date</Label
-                            >
+                            <Label :for="`vax-date-${index}`" class="text-xs">{{
+                                t('wizard.date')
+                            }}</Label>
                             <Input
                                 :id="`vax-date-${index}`"
                                 type="date"
@@ -136,13 +141,15 @@ const removeAllergy = (index: number) => {
                             />
                         </div>
                         <div class="flex-[2] space-y-1">
-                            <Label :for="`vax-name-${index}`" class="text-xs"
-                                >Vaccine Name</Label
-                            >
+                            <Label :for="`vax-name-${index}`" class="text-xs">{{
+                                t('wizard.vaccine_name')
+                            }}</Label>
                             <Input
                                 :id="`vax-name-${index}`"
                                 v-model="vax.name"
-                                placeholder="e.g. Rabies"
+                                :placeholder="
+                                    t('wizard.vaccine_name_placeholder')
+                                "
                             />
                         </div>
                         <Button
@@ -162,14 +169,15 @@ const removeAllergy = (index: number) => {
                     class="space-y-3 border-t border-gray-100 pt-4 dark:border-gray-700"
                 >
                     <div class="flex items-center justify-between">
-                        <Label>Current Medications</Label>
+                        <Label>{{ t('wizard.current_medications') }}</Label>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             @click="addMedication"
                         >
-                            <Plus class="mr-2 h-4 w-4" /> Add Medication
+                            <Plus class="me-2 h-4 w-4" />
+                            {{ t('wizard.add_medication') }}
                         </Button>
                     </div>
                     <div
@@ -179,7 +187,7 @@ const removeAllergy = (index: number) => {
                         "
                         class="rounded-lg border-2 border-dashed border-gray-200 py-4 text-center text-sm italic text-gray-500"
                     >
-                        No medications added
+                        {{ t('wizard.no_medications') }}
                     </div>
                     <div
                         v-for="(med, index) in form.health.medications"
@@ -187,23 +195,29 @@ const removeAllergy = (index: number) => {
                         class="animate-fade-in flex items-start gap-3"
                     >
                         <div class="flex-1 space-y-1">
-                            <Label :for="`med-name-${index}`" class="text-xs"
-                                >Medication Name</Label
-                            >
+                            <Label :for="`med-name-${index}`" class="text-xs">{{
+                                t('wizard.medication_name')
+                            }}</Label>
                             <Input
                                 :id="`med-name-${index}`"
                                 v-model="med.name"
-                                placeholder="e.g. Heartgard"
+                                :placeholder="
+                                    t('wizard.medication_name_placeholder')
+                                "
                             />
                         </div>
                         <div class="flex-[2] space-y-1">
-                            <Label :for="`med-usage-${index}`" class="text-xs"
-                                >Usage/Purpose</Label
+                            <Label
+                                :for="`med-usage-${index}`"
+                                class="text-xs"
+                                >{{ t('wizard.usage_purpose') }}</Label
                             >
                             <Input
                                 :id="`med-usage-${index}`"
                                 v-model="med.usage"
-                                placeholder="e.g. Heartworm prevention"
+                                :placeholder="
+                                    t('wizard.usage_purpose_placeholder')
+                                "
                             />
                         </div>
                         <Button
@@ -223,14 +237,15 @@ const removeAllergy = (index: number) => {
                     class="space-y-3 border-t border-gray-100 pt-4 dark:border-gray-700"
                 >
                     <div class="flex items-center justify-between">
-                        <Label>Allergies</Label>
+                        <Label>{{ t('wizard.allergies') }}</Label>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             @click="addAllergy"
                         >
-                            <Plus class="mr-2 h-4 w-4" /> Add Allergy
+                            <Plus class="me-2 h-4 w-4" />
+                            {{ t('wizard.add_allergy') }}
                         </Button>
                     </div>
                     <div
@@ -240,7 +255,7 @@ const removeAllergy = (index: number) => {
                         "
                         class="rounded-lg border-2 border-dashed border-gray-200 py-4 text-center text-sm italic text-gray-500"
                     >
-                        No allergies listed
+                        {{ t('wizard.no_allergies') }}
                     </div>
                     <div
                         v-for="(allergy, index) in form.health.allergies"
@@ -250,7 +265,7 @@ const removeAllergy = (index: number) => {
                         <div class="flex-1">
                             <Input
                                 v-model="form.health.allergies[index]"
-                                placeholder="e.g. Chicken, Pollen"
+                                :placeholder="t('wizard.allergies_placeholder')"
                             />
                         </div>
                         <Button
@@ -269,20 +284,24 @@ const removeAllergy = (index: number) => {
                 <div
                     class="space-y-2 border-t border-gray-100 pt-4 dark:border-gray-700"
                 >
-                    <Label>Veterinarian Information</Label>
+                    <Label>{{ t('wizard.veterinarian_information') }}</Label>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
                             <Input
                                 id="vet-name"
                                 v-model="form.health.vetName"
-                                placeholder="Veterinarian Name"
+                                :placeholder="
+                                    t('wizard.veterinarian_name_placeholder')
+                                "
                             />
                         </div>
                         <div>
                             <Input
                                 id="vet-phone"
                                 v-model="form.health.vetPhone"
-                                placeholder="Phone Number"
+                                :placeholder="
+                                    t('wizard.phone_number_placeholder')
+                                "
                                 type="tel"
                             />
                         </div>

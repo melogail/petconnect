@@ -11,12 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/InputError.vue';
 import { Camera, X } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 const emit = defineEmits<{
     handleFileUpload: [event: Event];
@@ -42,7 +45,7 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-amber-100/20 to-transparent opacity-50 dark:from-amber-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-amber-100/20 to-transparent opacity-50 dark:from-amber-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center space-x-4">
@@ -57,12 +60,11 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                     <div>
                         <CardTitle
                             class="text-xl font-semibold text-gray-800 dark:text-white"
-                            >Pet Photos</CardTitle
+                            >{{ t('wizard.pet_photos') }}</CardTitle
                         >
                         <CardDescription
                             class="text-gray-500 dark:text-gray-400"
-                            >Upload a featured photo and up to 3 gallery
-                            images</CardDescription
+                            >{{ t('wizard.pet_photos_desc') }}</CardDescription
                         >
                     </div>
                 </div>
@@ -74,10 +76,11 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                         <Label
                             is-required
                             class="text-base font-semibold text-gray-800 dark:text-white"
-                            >Featured Photo</Label
+                            >{{ t('wizard.featured_photo') }}</Label
                         >
-                        <span class="text-xs text-gray-500 dark:text-gray-400"
-                            >Main display image</span
+                        <span
+                            class="text-xs text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.main_display_image') }}</span
                         >
                     </div>
                     <div class="relative">
@@ -101,19 +104,20 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                                 </div>
                                 <span
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                    >Upload Featured Photo</span
+                                    >{{
+                                        t('wizard.upload_featured_photo')
+                                    }}</span
                                 >
                                 <span
                                     class="mt-1 block text-xs text-gray-500 dark:text-gray-400"
-                                    >This will be the main image for your
-                                    pet</span
+                                    >{{ t('wizard.featured_photo_help') }}</span
                                 >
                             </div>
                         </Label>
                         <div v-else class="group relative">
                             <img
                                 :src="form.featuredImagePreview"
-                                alt="Featured pet photo"
+                                :alt="t('wizard.featured_pet_photo_alt')"
                                 class="aspect-video w-full rounded-xl border-2 border-primary-200 object-cover dark:border-primary-800"
                             />
                             <div
@@ -126,14 +130,14 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                                     @click="emit('removeFeaturedImage')"
                                     class="shadow-lg"
                                 >
-                                    <X class="mr-2 h-4 w-4" />
-                                    Remove
+                                    <X class="me-2 h-4 w-4" />
+                                    {{ t('wizard.remove') }}
                                 </Button>
                             </div>
                             <div
-                                class="absolute left-3 top-3 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-lg"
+                                class="absolute start-3 top-3 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white shadow-lg"
                             >
-                                Featured
+                                {{ t('wizard.featured') }}
                             </div>
                         </div>
                     </div>
@@ -144,10 +148,11 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                     <div class="flex items-center justify-between">
                         <Label
                             class="text-base font-semibold text-gray-800 dark:text-white"
-                            >Gallery Photos</Label
+                            >{{ t('wizard.gallery_photos') }}</Label
                         >
-                        <span class="text-xs text-gray-500 dark:text-gray-400"
-                            >Up to 3 images</span
+                        <span
+                            class="text-xs text-gray-500 dark:text-gray-400"
+                            >{{ t('wizard.up_to_3_images') }}</span
                         >
                     </div>
                     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -179,8 +184,8 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                                     >
                                         {{
                                             galleryImageCount > 0
-                                                ? 'Add more'
-                                                : 'Add photos'
+                                                ? t('wizard.add_more')
+                                                : t('wizard.add_photos')
                                         }}
                                     </span>
                                     <span class="text-xs text-gray-500">
@@ -205,7 +210,7 @@ const isMaxImages = computed(() => galleryImageCount.value >= 3);
                                 type="button"
                                 variant="destructive"
                                 size="icon"
-                                class="absolute -right-2 -top-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                                class="absolute -end-2 -top-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
                                 @click="emit('removeImage', index)"
                             >
                                 <X class="h-3 w-3" />

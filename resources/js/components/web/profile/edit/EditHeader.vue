@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 defineProps({});
 </script>
@@ -17,10 +20,10 @@ defineProps({});
 
             <!-- Abstract Circles/Shapes -->
             <div
-                class="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-white/20 blur-3xl filter"
+                class="absolute -start-20 -top-20 h-96 w-96 rounded-full bg-white/20 blur-3xl filter"
             ></div>
             <div
-                class="absolute -right-20 top-20 h-80 w-80 rounded-full bg-purple-300/20 blur-3xl filter"
+                class="absolute -end-20 top-20 h-80 w-80 rounded-full bg-purple-300/20 blur-3xl filter"
             ></div>
             <div
                 class="absolute bottom-0 left-1/2 h-64 w-64 -translate-x-1/2 transform rounded-full bg-white/10 blur-2xl filter"
@@ -35,22 +38,22 @@ defineProps({});
                     <span
                         class="inline-flex items-center rounded-md bg-white/20 px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-white/30"
                     >
-                        Settings
+                        {{ t('profile.settings') }}
                     </span>
                     <span class="h-1 w-1 rounded-full bg-violet-200"></span>
-                    <span class="text-sm font-medium">Profile Management</span>
+                    <span class="text-sm font-medium">{{
+                        t('profile.profile_management')
+                    }}</span>
                 </div>
                 <h1
                     class="animate-in fade-in slide-in-from-bottom-5 text-4xl font-bold tracking-tight text-white duration-700 sm:text-5xl lg:text-6xl"
                 >
-                    Edit Profile
+                    {{ t('profile.edit_profile') }}
                 </h1>
                 <p
                     class="animate-in fade-in slide-in-from-bottom-6 mt-4 max-w-2xl text-lg leading-relaxed text-violet-50 duration-1000"
                 >
-                    Update your personal details, manage your login security,
-                    and customize your public profile appearance all in one
-                    place.
+                    {{ t('profile.edit_header_description') }}
                 </p>
             </div>
         </div>

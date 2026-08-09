@@ -12,7 +12,10 @@ import {
 } from '@/components/ui/select';
 import { MapPin, Crosshair } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 import { Loader } from '@googlemaps/js-api-loader';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     form: {
@@ -31,8 +34,7 @@ const initMap = async () => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
-        mapError.value =
-            'Google Maps API Key is missing. Please check your .env configuration.';
+        mapError.value = t('profile.maps_unavailable');
         return;
     }
 
@@ -72,7 +74,7 @@ const initMap = async () => {
         marker.value = new Marker({
             position: userLocation,
             map: map.value,
-            title: 'Your Location',
+            title: t('profile.your_location'),
             draggable: true,
             animation: google.maps.Animation.DROP,
         });
@@ -96,8 +98,7 @@ const initMap = async () => {
         });
     } catch (error) {
         console.error('Error loading Google Maps:', error);
-        mapError.value =
-            'Failed to load Google Maps. Please verify your API Key and network connection.';
+        mapError.value = t('profile.maps_failed');
     }
 };
 
@@ -129,14 +130,12 @@ const getCurrentLocation = () => {
                 console.error('Error getting location:', error);
                 isLoadingLocation.value = false;
                 // Handle error (permission denied, time out, etc.)
-                alert(
-                    'Could not get your location. Please ensure location services are enabled.',
-                );
+                alert(t('profile.location_services_required'));
             },
             { enableHighAccuracy: true },
         );
     } else {
-        alert('Geolocation is not supported by this browser.');
+        alert(t('profile.geolocation_unsupported'));
     }
 };
 
@@ -167,16 +166,14 @@ watch(
 </script>
 
 <template>
-    <div
-        class="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300"
-    >
+    <div class="animate-in fade-in slide-in-from-end-4 space-y-6 duration-300">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                    Location Details
+                    {{ t('profile.location_details') }}
                 </h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Your physical location for shipping and local discovery.
+                    {{ t('profile.location_details_desc') }}
                 </p>
             </div>
             <Button
@@ -190,7 +187,11 @@ watch(
                     class="h-4 w-4"
                     :class="{ 'animate-spin': isLoadingLocation }"
                 />
-                {{ isLoadingLocation ? 'Locating...' : 'Use Current Location' }}
+                {{
+                    isLoadingLocation
+                        ? t('wizard.getting_location')
+                        : t('wizard.use_my_current_location')
+                }}
             </Button>
         </div>
         <Separator />
@@ -210,7 +211,7 @@ watch(
                 ref="mapContainer"
                 class="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400 dark:bg-gray-800"
             >
-                Loading Map...
+                {{ t('profile.loading_map') }}
             </div>
         </div>
 
@@ -219,17 +220,17 @@ watch(
                 <Label
                     for="address"
                     :class="{ 'text-red-500': form.errors.address }"
-                    >Street Address</Label
+                    >{{ t('profile.street_address') }}</Label
                 >
                 <div class="relative">
                     <MapPin
-                        class="absolute left-2.5 top-3 h-4 w-4 text-gray-500 dark:text-gray-400"
+                        class="absolute start-2.5 top-3 h-4 w-4 text-gray-500 dark:text-gray-400"
                     />
                     <Input
                         id="address"
                         v-model="form.address"
-                        class="bg-gray-50/50 pl-9 dark:bg-gray-900/20"
-                        placeholder="123 Main St"
+                        class="bg-gray-50/50 ps-9 dark:bg-gray-900/20"
+                        :placeholder="t('profile.street_address_placeholder')"
                         :class="{ 'border-red-500': form.errors.address }"
                     />
                     <p v-if="form.errors.address" class="text-red-500">
@@ -238,8 +239,10 @@ watch(
                 </div>
             </div>
             <div class="space-y-2">
-                <Label for="city" :class="{ 'text-red-500': form.errors.city }"
-                    >City</Label
+                <Label
+                    for="city"
+                    :class="{ 'text-red-500': form.errors.city }"
+                    >{{ t('profile.city') }}</Label
                 >
                 <Input
                     id="city"
@@ -255,7 +258,7 @@ watch(
                 <Label
                     for="state"
                     :class="{ 'text-red-500': form.errors.state }"
-                    >State / Province</Label
+                    >{{ t('profile.state_province') }}</Label
                 >
                 <Input
                     id="state"
@@ -271,20 +274,30 @@ watch(
                 <Label
                     for="country"
                     :class="{ 'text-red-500': form.errors.country }"
-                    >Country</Label
+                    >{{ t('profile.country') }}</Label
                 >
                 <Select
                     v-model="form.country"
                     :class="{ 'border-red-500': form.errors.country }"
                 >
                     <SelectTrigger class="bg-gray-50/50 dark:bg-gray-900/20">
-                        <SelectValue placeholder="Select country" />
+                        <SelectValue
+                            :placeholder="t('profile.select_country')"
+                        />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="us">United States</SelectItem>
-                        <SelectItem value="ca">Canada</SelectItem>
-                        <SelectItem value="uk">United Kingdom</SelectItem>
-                        <SelectItem value="au">Australia</SelectItem>
+                        <SelectItem value="us">{{
+                            t('profile.united_states')
+                        }}</SelectItem>
+                        <SelectItem value="ca">{{
+                            t('profile.canada')
+                        }}</SelectItem>
+                        <SelectItem value="uk">{{
+                            t('profile.united_kingdom')
+                        }}</SelectItem>
+                        <SelectItem value="au">{{
+                            t('profile.australia')
+                        }}</SelectItem>
                         <!-- Add more countries as needed -->
                     </SelectContent>
                 </Select>
@@ -297,14 +310,14 @@ watch(
                 <Label
                     for="timezone"
                     :class="{ 'text-red-500': form.errors.timezone }"
-                    >Timezone</Label
+                    >{{ t('profile.timezone') }}</Label
                 >
                 <Input
                     id="timezone"
                     v-model="form.timezone"
                     class="bg-gray-50/50 dark:bg-gray-900/20"
                     :class="{ 'border-red-500': form.errors.timezone }"
-                    placeholder="Auto-detected from location"
+                    :placeholder="t('profile.timezone_placeholder')"
                 />
                 <p v-if="form.errors.timezone" class="text-red-500">
                     {{ form.errors.timezone }}
@@ -316,7 +329,7 @@ watch(
                     <Label
                         for="lat"
                         :class="{ 'text-red-500': form.errors.lat }"
-                        >Latitude</Label
+                        >{{ t('profile.latitude') }}</Label
                     >
                     <Input
                         id="lat"
@@ -329,7 +342,7 @@ watch(
                     <Label
                         for="lng"
                         :class="{ 'text-red-500': form.errors.lng }"
-                        >Longitude</Label
+                        >{{ t('profile.longitude') }}</Label
                     >
                     <Input
                         id="lng"

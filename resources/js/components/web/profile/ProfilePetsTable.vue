@@ -2,6 +2,9 @@
 import { Link, router } from '@inertiajs/vue3';
 import { Plus, Edit2, Trash2, FileText, Eye, EyeOff } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     pets: Object,
@@ -28,15 +31,15 @@ const deletePet = (petId: number) => {
 <template>
     <div class="mb-6 flex items-center justify-between">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-            Your Pets
+            {{ t('pets.your_pets') }}
         </h2>
         <Link
             v-if="userCanCreate"
             :href="route('pets.create')"
             class="inline-flex items-center rounded-lg border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-            <Plus class="mr-2 h-4 w-4" />
-            Create New Pet Post
+            <Plus class="me-2 h-4 w-4" />
+            {{ t('pets.create_new_pet_post') }}
         </Link>
     </div>
 
@@ -59,28 +62,28 @@ const deletePet = (petId: number) => {
                             scope="col"
                             class="px-4 py-4 text-center font-sans text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300"
                         >
-                            Pet Name
+                            {{ t('pets.pet_name') }}
                         </th>
                         <th
                             scope="col"
                             class="px-4 py-4 text-center font-sans text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300"
                         >
-                            Status
+                            {{ t('pets.status') }}
                         </th>
                         <th
                             scope="col"
                             class="px-4 py-4 text-center font-sans text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300"
                         >
-                            Created at
+                            {{ t('pets.created_at') }}
                         </th>
                         <th
                             scope="col"
                             class="px-4 py-4 text-center font-sans text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-300"
                         >
-                            Views
+                            {{ t('pets.views') }}
                         </th>
                         <th scope="col" class="px-6 py-4 text-center">
-                            <span class="sr-only">Actions</span>
+                            <span class="sr-only">{{ t('pets.actions') }}</span>
                         </th>
                     </tr>
                 </thead>
@@ -135,7 +138,7 @@ const deletePet = (petId: number) => {
                             >
                                 <span
                                     :class="[
-                                        'mr-1.5 h-1.5 w-1.5 rounded-full',
+                                        'me-1.5 h-1.5 w-1.5 rounded-full',
                                         pet.status === 'available'
                                             ? 'bg-green-500 dark:bg-green-400'
                                             : 'bg-yellow-500 dark:bg-yellow-400',
@@ -143,8 +146,8 @@ const deletePet = (petId: number) => {
                                 ></span>
                                 {{
                                     pet.status === 'available'
-                                        ? 'Available'
-                                        : 'Unavailable'
+                                        ? t('pets.available')
+                                        : t('pets.unavailable')
                                 }}
                             </span>
                         </td>
@@ -163,14 +166,12 @@ const deletePet = (petId: number) => {
                             </div>
                         </td>
                         <td class="whitespace-nowrap px-6 py-4">
-                            <div
-                                class="flex items-center justify-end space-x-3"
-                            >
+                            <div class="flex items-center justify-end gap-3">
                                 <Link
                                     v-if="pet.can?.update"
                                     :href="route('pets.edit', { pet: pet.id })"
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-gray-700"
-                                    title="Edit pet"
+                                    :title="t('pets.edit_pet_title')"
                                 >
                                     <Edit2 class="h-4 w-4" />
                                 </Link>
@@ -179,8 +180,8 @@ const deletePet = (petId: number) => {
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
                                     :title="
                                         pet.status === 'available'
-                                            ? 'Mark as unavailable'
-                                            : 'Mark as available'
+                                            ? t('pets.mark_as_unavailable')
+                                            : t('pets.mark_as_available')
                                     "
                                     @click="toggleStatus(pet.id)"
                                 >
@@ -193,7 +194,7 @@ const deletePet = (petId: number) => {
                                 <button
                                     v-if="pet.can?.delete"
                                     class="rounded-full p-1.5 text-gray-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-gray-700"
-                                    title="Delete pet"
+                                    :title="t('pets.delete_pet')"
                                     @click="deletePet(pet.id)"
                                 >
                                     <Trash2 class="h-4 w-4" />
@@ -207,10 +208,10 @@ const deletePet = (petId: number) => {
         <div v-if="pets.length === 0" class="py-12 text-center">
             <FileText class="mx-auto h-12 w-12 text-gray-400" />
             <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">
-                No pets yet
+                {{ t('pets.no_pets_yet') }}
             </h3>
             <p class="mt-1 text-gray-500 dark:text-gray-400">
-                Get started by creating a new post
+                {{ t('pets.get_started_create_post') }}
             </p>
         </div>
     </div>

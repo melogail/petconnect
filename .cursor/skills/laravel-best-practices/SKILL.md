@@ -42,7 +42,7 @@ metadata:
 
 - Keep Spatie media writes outside database transactions.
 - Use `pets` collection for `Pet` media and `users` collection for `User` media.
-- Do not attach media to a non-user model unless it has a `user` relationship or `MediaPathGenerator` is updated.
+- Do not attach media to a non-user model unless it has a `user` relationship or is a system model like `Category`/`Breed` handled by `MediaPathGenerator`.
 
 ## Verification
 

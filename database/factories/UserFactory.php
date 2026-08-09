@@ -40,7 +40,7 @@ class UserFactory extends Factory
             'lat' => $latitude,
             'lng' => $longitude,
             'timezone' => fake()->timezone(),
-            'locale' => fake()->randomElement(['en', 'ar', 'es', 'fr']),
+            'locale' => 'en',
             'bio' => fake()->optional(0.7)->paragraph(),
             'is_verified' => fake()->optional(0.8)->passthrough(now()->subDays(rand(1, 365))),
             'is_active' => fake()->boolean(90),

@@ -28,6 +28,7 @@ class UserResource extends JsonResource
             'state' => $this->state ?? null,
             'zip' => $this->zip ?? null,
             'country' => $this->country ?? null,
+            'locale' => $this->locale ?? config('app.locale', 'en'),
             // TODO: Add reviews and rating
             'rating' => $this->reviews()->avg('rate') ?? null,
             'created_at' => $this->created_at ?? null,

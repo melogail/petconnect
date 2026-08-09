@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, X } from 'lucide-vue-next';
+import { useTranslations } from '@/composables/useTranslations';
 
 interface Props {
     form: any;
 }
 
 const props = defineProps<Props>();
+
+const { t } = useTranslations();
 
 const emit = defineEmits<{
     addInfoField: [];
@@ -34,7 +37,7 @@ const emit = defineEmits<{
             ></div>
             <!-- Decorative Corner -->
             <div
-                class="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-indigo-100/20 to-transparent opacity-50 dark:from-indigo-900/10"
+                class="absolute end-0 top-0 h-32 w-32 rounded-bl-full bg-gradient-to-br from-indigo-100/20 to-transparent opacity-50 dark:from-indigo-900/10"
             ></div>
             <CardHeader class="relative z-10">
                 <div class="flex items-center justify-between">
@@ -63,12 +66,15 @@ const emit = defineEmits<{
                         <div>
                             <CardTitle
                                 class="text-xl font-semibold text-gray-800 dark:text-white"
-                                >Additional Information</CardTitle
+                                >{{
+                                    t('wizard.additional_information')
+                                }}</CardTitle
                             >
                             <CardDescription
                                 class="text-gray-500 dark:text-gray-400"
-                                >Add any extra details about your
-                                pet</CardDescription
+                                >{{
+                                    t('wizard.additional_information_desc')
+                                }}</CardDescription
                             >
                         </div>
                     </div>
@@ -81,9 +87,9 @@ const emit = defineEmits<{
                     >
                         <span class="relative z-10 flex items-center">
                             <Plus
-                                class="mr-2 h-4 w-4 transition-transform group-hover:rotate-90"
+                                class="me-2 h-4 w-4 transition-transform group-hover:rotate-90"
                             />
-                            Add Field
+                            {{ t('wizard.add_field') }}
                         </span>
                         <span
                             class="absolute inset-0 bg-indigo-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-indigo-900/30"
@@ -98,19 +104,23 @@ const emit = defineEmits<{
                     class="grid grid-cols-12 items-end gap-3"
                 >
                     <div class="col-span-5">
-                        <Label :for="`key-${index}`">Key</Label>
+                        <Label :for="`key-${index}`">{{
+                            t('wizard.key')
+                        }}</Label>
                         <Input
                             :id="`key-${index}`"
                             v-model="info.key"
-                            placeholder="e.g., Microchip ID, Color"
+                            :placeholder="t('wizard.key_placeholder')"
                         />
                     </div>
                     <div class="col-span-5">
-                        <Label :for="`value-${index}`">Value</Label>
+                        <Label :for="`value-${index}`">{{
+                            t('wizard.value')
+                        }}</Label>
                         <Input
                             :id="`value-${index}`"
                             v-model="info.value"
-                            placeholder="Enter value"
+                            :placeholder="t('wizard.value_placeholder')"
                         />
                     </div>
                     <div class="col-span-2">

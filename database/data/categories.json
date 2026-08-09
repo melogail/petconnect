@@ -1,0 +1,16 @@
+[
+    {
+        "slug": "dogs",
+        "name": "Dogs",
+        "name_ar": "كلاب",
+        "description": "Man's best friend - loyal, loving, and full of energy",
+        "description_ar": "أفضل صديق للإنسان - وفي، محب، ومليء بالطاقة"
+    },
+    {
+        "slug": "cats",
+        "name": "Cats",
+        "name_ar": "قطط",
+        "description": "Independent and affectionate feline companions",
+        "description_ar": "رفاق قطط مستقلون وعاطفيون"
+    }
+]
