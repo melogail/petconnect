@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('name_ar')->nullable();
             $table->string('slug');
-            $table->string('description')->nullable();
-            $table->string('description_ar')->nullable();
+            $table->text('description')->nullable();
+            $table->text('description_ar')->nullable();
             $table->timestamps();
 
             $table->unique(['category_id', 'slug']);

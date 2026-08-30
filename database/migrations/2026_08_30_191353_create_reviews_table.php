@@ -18,6 +18,8 @@ return new class extends Migration
             $table->text('comment')->nullable();
             $table->morphs('reviewable');
             $table->timestamps();
+
+            $table->index('user_id');
         });
     }
 

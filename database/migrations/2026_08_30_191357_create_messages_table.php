@@ -24,6 +24,8 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['conversation_id', 'created_at']);
+            $table->index('sender_id');
+            $table->index('pinned_by');
         });
     }
 

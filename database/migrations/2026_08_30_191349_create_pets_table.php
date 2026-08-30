@@ -56,6 +56,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            $table->index('user_id');
+            $table->index('category_id');
+            $table->index('breed_id');
             $table->index('listing_type');
             $table->index('status');
             $table->index('created_at');

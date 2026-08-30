@@ -3,15 +3,19 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use Database\Seeders\Concerns\ReadsSeedData;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use JsonException;
 
 /**
  * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
+    use ReadsSeedData;
+
     /**
      * The current password being used by the factory.
      */
@@ -20,15 +24,39 @@ class UserFactory extends Factory
     /**
      * Define the model's default state.
      *
+     * `media_directory_name` is deliberately absent: App\Observers\UserObserver
+     * assigns it on creating, and the column is unique.
+     *
+     * The location, the timezone and the street line all come from the same
+     * real cities the seeders use, so a bare User::factory() never lands in a
+     * country the app has no data for.
+     *
      * @return array<string, mixed>
+     *
+     * @throws JsonException
      */
     public function definition(): array
     {
+        $location = fake()->randomElement($this->locations());
+
         return [
             'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
+            'bio' => fake()->optional(0.7)->paragraph(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'phone' => fake()->numerify('+20-1##-###-####'),
+            'country' => $location['country'],
+            'state' => $location['state'],
+            'city' => $location['city'],
+            'address' => $this->streetAddress(),
+            'lat' => $this->jitter($location['latitude']),
+            'lng' => $this->jitter($location['longitude']),
+            'timezone' => $location['timezone'],
+            'locale' => 'en',
+            'is_active' => true,
+            'last_seen_at' => fake()->dateTimeBetween('-7 days', 'now'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -37,11 +65,30 @@ class UserFactory extends Factory
     }
 
     /**
+     * Place the member in one of the cities from database/data/locations.json,
+     * scattered a few kilometres around the centre so members in one city do
+     * not stack on a single point.
+     *
+     * @param  array{city: string, state: string, country: string, postal_code: string, latitude: float, longitude: float, timezone: string}  $location
+     */
+    public function inCity(array $location): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'city' => $location['city'],
+            'state' => $location['state'],
+            'country' => $location['country'],
+            'lat' => $this->jitter($location['latitude']),
+            'lng' => $this->jitter($location['longitude']),
+            'timezone' => $location['timezone'],
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'email_verified_at' => null,
         ]);
     }
@@ -51,10 +98,32 @@ class UserFactory extends Factory
      */
     public function withTwoFactor(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the model does not have two-factor authentication configured.
+     */
+    public function withoutTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the account has been deactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_active' => false,
         ]);
     }
 }

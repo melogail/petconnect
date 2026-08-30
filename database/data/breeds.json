@@ -1,0 +1,590 @@
+{
+    "dogs": [
+        {
+            "slug": "golden-retriever",
+            "name": "Golden Retriever",
+            "name_ar": "جولدن ريتريفر",
+            "description": "Friendly, intelligent, and devoted family dog.",
+            "description_ar": "كلب عائلي ودود وذكي ومخلص."
+        },
+        {
+            "slug": "german-shepherd",
+            "name": "German Shepherd",
+            "name_ar": "الراعي الألماني",
+            "description": "Loyal, confident, and highly trainable working dog.",
+            "description_ar": "كلب عمل وفي وواثق وسهل التدريب."
+        },
+        {
+            "slug": "labrador-retriever",
+            "name": "Labrador Retriever",
+            "name_ar": "لابرادور ريتريفر",
+            "description": "Outgoing, active, and eager-to-please companion.",
+            "description_ar": "رفيق اجتماعي ونشيط ومتحمس للإرضاء."
+        },
+        {
+            "slug": "french-bulldog",
+            "name": "French Bulldog",
+            "name_ar": "البولدوغ الفرنسي",
+            "description": "Affectionate, playful, and adaptable small companion.",
+            "description_ar": "رفيق صغير عاطفي ومرح ومتكيف."
+        },
+        {
+            "slug": "bulldog",
+            "name": "Bulldog",
+            "name_ar": "بولدوغ",
+            "description": "Calm, courageous, and gentle-natured companion.",
+            "description_ar": "رفيق هادئ وشجاع ولطيف الطباع."
+        },
+        {
+            "slug": "poodle",
+            "name": "Poodle",
+            "name_ar": "بودل",
+            "description": "Highly intelligent, elegant, and active breed.",
+            "description_ar": "سلالة ذكية جداً وأنيقة ونشيطة."
+        },
+        {
+            "slug": "beagle",
+            "name": "Beagle",
+            "name_ar": "بيغل",
+            "description": "Curious, merry, and scent-driven hound.",
+            "description_ar": "كلب صيد فضولي ومرح ويعتمد على حاسة الشم."
+        },
+        {
+            "slug": "rottweiler",
+            "name": "Rottweiler",
+            "name_ar": "روتويلر",
+            "description": "Confident, protective, and loyal guardian breed.",
+            "description_ar": "سلالة حراسة واثقة ووقائية ووفية."
+        },
+        {
+            "slug": "yorkshire-terrier",
+            "name": "Yorkshire Terrier",
+            "name_ar": "يوركشاير تيرير",
+            "description": "Bold, affectionate, and lively toy terrier.",
+            "description_ar": "تيرير صغير جريء وعاطفي ونشيط."
+        },
+        {
+            "slug": "boxer",
+            "name": "Boxer",
+            "name_ar": "بوكسر",
+            "description": "Playful, patient, and energetic family dog.",
+            "description_ar": "كلب عائلي مرح وصبور ومفعم بالطاقة."
+        },
+        {
+            "slug": "dachshund",
+            "name": "Dachshund",
+            "name_ar": "دشهند",
+            "description": "Curious, brave, and lively small hound.",
+            "description_ar": "كلب صيد صغير فضولي وشجاع ونشيط."
+        },
+        {
+            "slug": "siberian-husky",
+            "name": "Siberian Husky",
+            "name_ar": "هاسكي سيبيري",
+            "description": "Outgoing, energetic, and endurance-oriented sled dog.",
+            "description_ar": "كلب زلاجات اجتماعي ونشيط ومصمم للتحمل."
+        },
+        {
+            "slug": "great-dane",
+            "name": "Great Dane",
+            "name_ar": "الدنماركي العظيم",
+            "description": "Gentle giant known for friendliness and dignity.",
+            "description_ar": "عملاق لطيف يُعرف بودّه ورصانته."
+        },
+        {
+            "slug": "doberman-pinscher",
+            "name": "Doberman Pinscher",
+            "name_ar": "دوبرمان",
+            "description": "Alert, loyal, and athletic guardian breed.",
+            "description_ar": "سلالة حراسة يقظة ووفية ورياضية."
+        },
+        {
+            "slug": "shih-tzu",
+            "name": "Shih Tzu",
+            "name_ar": "شيه تزو",
+            "description": "Affectionate, outgoing, and charming companion.",
+            "description_ar": "رفيق عاطفي واجتماعي وساحر."
+        },
+        {
+            "slug": "chihuahua",
+            "name": "Chihuahua",
+            "name_ar": "شيواوا",
+            "description": "Tiny, alert, and devoted companion dog.",
+            "description_ar": "كلب رفيق صغير جداً ويقظ ومخلص."
+        },
+        {
+            "slug": "pomeranian",
+            "name": "Pomeranian",
+            "name_ar": "بوميرانيان",
+            "description": "Lively, bold, and fluffy toy companion.",
+            "description_ar": "رفيق صغير مفعم بالحيوية وجريء وكثيف الفراء."
+        },
+        {
+            "slug": "border-collie",
+            "name": "Border Collie",
+            "name_ar": "بوردر كولي",
+            "description": "Extremely intelligent, energetic herding dog.",
+            "description_ar": "كلب رعي ذكي جداً ومفعم بالطاقة."
+        },
+        {
+            "slug": "corgi",
+            "name": "Corgi",
+            "name_ar": "كورجي",
+            "description": "Affectionate, alert, and sturdy herding companion.",
+            "description_ar": "رفيق رعي عاطفي ويقظ ومتين."
+        },
+        {
+            "slug": "maltese",
+            "name": "Maltese",
+            "name_ar": "مالطي",
+            "description": "Gentle, playful, and devoted toy companion.",
+            "description_ar": "رفيق صغير لطيف ومرح ومخلص."
+        }
+    ],
+    "cats": [
+        {
+            "slug": "persian",
+            "name": "Persian",
+            "name_ar": "فارسي",
+            "description": "Quiet, sweet, and long-haired companion cat.",
+            "description_ar": "قطة رفيقة هادئة وحلوة وطويلة الشعر."
+        },
+        {
+            "slug": "siamese",
+            "name": "Siamese",
+            "name_ar": "سيامي",
+            "description": "Vocal, social, and highly affectionate breed.",
+            "description_ar": "سلالة اجتماعية وعاطفية جداً وكثيرة المواء."
+        },
+        {
+            "slug": "maine-coon",
+            "name": "Maine Coon",
+            "name_ar": "مين كون",
+            "description": "Large, gentle, and friendly long-haired cat.",
+            "description_ar": "قطة كبيرة ولطيفة وودودة طويلة الشعر."
+        },
+        {
+            "slug": "bengal",
+            "name": "Bengal",
+            "name_ar": "بنغالي",
+            "description": "Active, curious, and strikingly patterned cat.",
+            "description_ar": "قطة نشيطة وفضولية وذات نمط فريد."
+        },
+        {
+            "slug": "ragdoll",
+            "name": "Ragdoll",
+            "name_ar": "راغدول",
+            "description": "Relaxed, affectionate, and people-oriented cat.",
+            "description_ar": "قطة هادئة وعاطفية وتحب الناس."
+        },
+        {
+            "slug": "british-shorthair",
+            "name": "British Shorthair",
+            "name_ar": "البريطاني قصير الشعر",
+            "description": "Calm, easygoing, and sturdy companion cat.",
+            "description_ar": "قطة رفيقة هادئة وسهلة المعشر ومتينة."
+        },
+        {
+            "slug": "abyssinian",
+            "name": "Abyssinian",
+            "name_ar": "الحبشي",
+            "description": "Curious, playful, and highly active breed.",
+            "description_ar": "سلالة فضولية ومرحة ونشيطة جداً."
+        },
+        {
+            "slug": "sphynx",
+            "name": "Sphynx",
+            "name_ar": "سفنكس",
+            "description": "Hairless, energetic, and very affectionate cat.",
+            "description_ar": "قطة بلا شعر ونشيطة وعاطفية جداً."
+        },
+        {
+            "slug": "scottish-fold",
+            "name": "Scottish Fold",
+            "name_ar": "الاسكتلندي مطوي الأذن",
+            "description": "Sweet-tempered cat known for folded ears.",
+            "description_ar": "قطة لطيفة الطباع تُعرف بآذانها المطوية."
+        },
+        {
+            "slug": "birman",
+            "name": "Birman",
+            "name_ar": "بيرمان",
+            "description": "Gentle, social, and silky long-haired cat.",
+            "description_ar": "قطة لطيفة واجتماعية وطويلة الشعر الحريري."
+        },
+        {
+            "slug": "russian-blue",
+            "name": "Russian Blue",
+            "name_ar": "الروسي الأزرق",
+            "description": "Quiet, elegant, and reserved companion cat.",
+            "description_ar": "قطة رفيقة هادئة وأنيقة ومتحفظة."
+        },
+        {
+            "slug": "american-shorthair",
+            "name": "American Shorthair",
+            "name_ar": "الأمريكي قصير الشعر",
+            "description": "Easygoing, healthy, and adaptable family cat.",
+            "description_ar": "قطة عائلية سهلة المعشر وصحية ومتكيفة."
+        },
+        {
+            "slug": "oriental-shorthair",
+            "name": "Oriental Shorthair",
+            "name_ar": "الشرقي قصير الشعر",
+            "description": "Sleek, vocal, and highly social companion.",
+            "description_ar": "رفيق أنيق وكثير المواء واجتماعي جداً."
+        },
+        {
+            "slug": "devon-rex",
+            "name": "Devon Rex",
+            "name_ar": "ديفون ريكس",
+            "description": "Playful, mischievous, and curly-coated cat.",
+            "description_ar": "قطة مرحة ومشاغبة وذات فراء مجعد."
+        },
+        {
+            "slug": "himalayan",
+            "name": "Himalayan",
+            "name_ar": "هيمالايا",
+            "description": "Calm, affectionate Persian-Siamese mix type.",
+            "description_ar": "نوع هادئ وعاطفي يجمع طابع الفارسي والسيامي."
+        },
+        {
+            "slug": "turkish-angora",
+            "name": "Turkish Angora",
+            "name_ar": "أنجورا تركي",
+            "description": "Elegant, intelligent, and graceful long-haired cat.",
+            "description_ar": "قطة أنيقة وذكية ورشيقة طويلة الشعر."
+        },
+        {
+            "slug": "egyptian-mau",
+            "name": "Egyptian Mau",
+            "name_ar": "ماو مصري",
+            "description": "Spotted, athletic, and loyal companion cat.",
+            "description_ar": "قطة مرقطة ورياضية ووفية."
+        },
+        {
+            "slug": "savannah",
+            "name": "Savannah",
+            "name_ar": "سافانا",
+            "description": "Tall, curious, and highly active exotic cat.",
+            "description_ar": "قطة غريبة طويلة وفضولية ونشيطة جداً."
+        }
+    ],
+    "birds": [
+        {
+            "slug": "african-grey-parrot",
+            "name": "African Grey Parrot",
+            "name_ar": "الببغاء الرمادي الأفريقي",
+            "description": "Highly intelligent talking parrot with a long lifespan.",
+            "description_ar": "ببغاء ذكي جداً يجيد التقليد ويعيش لسنوات طويلة."
+        },
+        {
+            "slug": "budgerigar",
+            "name": "Budgerigar",
+            "name_ar": "البادجي",
+            "description": "Small, sociable parakeet that is easy to tame.",
+            "description_ar": "ببغاء صغير اجتماعي وسهل الترويض."
+        },
+        {
+            "slug": "cockatiel",
+            "name": "Cockatiel",
+            "name_ar": "الكوكتيل",
+            "description": "Gentle crested companion known for whistling.",
+            "description_ar": "طائر لطيف ذو عرف يشتهر بالصفير."
+        },
+        {
+            "slug": "canary",
+            "name": "Canary",
+            "name_ar": "الكناري",
+            "description": "Bright songbird prized for its melodic voice.",
+            "description_ar": "طائر مغرد زاهي الألوان يشتهر بعذوبة صوته."
+        },
+        {
+            "slug": "lovebird",
+            "name": "Lovebird",
+            "name_ar": "طائر الحب",
+            "description": "Small colourful parrot that bonds closely with its mate.",
+            "description_ar": "ببغاء صغير ملون يرتبط بشدة بشريكه."
+        },
+        {
+            "slug": "zebra-finch",
+            "name": "Zebra Finch",
+            "name_ar": "عصفور الزيبرا",
+            "description": "Active little finch that thrives in small flocks.",
+            "description_ar": "عصفور صغير نشيط يعيش في مجموعات صغيرة."
+        },
+        {
+            "slug": "cockatoo",
+            "name": "Cockatoo",
+            "name_ar": "الكوكاتو",
+            "description": "Affectionate crested parrot that needs plenty of attention.",
+            "description_ar": "ببغاء عاطفي ذو عرف يحتاج إلى اهتمام كبير."
+        },
+        {
+            "slug": "amazon-parrot",
+            "name": "Amazon Parrot",
+            "name_ar": "ببغاء الأمازون",
+            "description": "Playful, vocal parrot with strong talking ability.",
+            "description_ar": "ببغاء مرح وعالي الصوت ويجيد الكلام."
+        },
+        {
+            "slug": "indian-ringneck",
+            "name": "Indian Ringneck Parakeet",
+            "name_ar": "الدرة الهندية",
+            "description": "Striking parakeet that learns words quickly.",
+            "description_ar": "ببغاء لافت يتعلم الكلمات بسرعة."
+        },
+        {
+            "slug": "domestic-pigeon",
+            "name": "Domestic Pigeon",
+            "name_ar": "الحمام المنزلي",
+            "description": "Hardy, homing bird kept for company and racing.",
+            "description_ar": "طائر قوي يعود إلى موطنه ويُربى للونس والسباق."
+        }
+    ],
+    "rabbits": [
+        {
+            "slug": "holland-lop",
+            "name": "Holland Lop",
+            "name_ar": "هولاند لوب",
+            "description": "Compact lop-eared rabbit with a calm temperament.",
+            "description_ar": "أرنب صغير مدلى الأذنين وهادئ الطباع."
+        },
+        {
+            "slug": "netherland-dwarf",
+            "name": "Netherland Dwarf",
+            "name_ar": "القزم الهولندي",
+            "description": "Tiny rabbit with a rounded face and lively nature.",
+            "description_ar": "أرنب صغير الحجم بوجه مستدير وطبع نشيط."
+        },
+        {
+            "slug": "mini-rex",
+            "name": "Mini Rex",
+            "name_ar": "ميني ريكس",
+            "description": "Small rabbit famous for its plush velvet coat.",
+            "description_ar": "أرنب صغير يشتهر بفرائه المخملي الناعم."
+        },
+        {
+            "slug": "lionhead",
+            "name": "Lionhead",
+            "name_ar": "رأس الأسد",
+            "description": "Friendly rabbit with a distinctive woolly mane.",
+            "description_ar": "أرنب ودود يتميز بعرف صوفي مميز."
+        },
+        {
+            "slug": "flemish-giant",
+            "name": "Flemish Giant",
+            "name_ar": "العملاق الفلمنكي",
+            "description": "Gentle giant among rabbits, calm and docile.",
+            "description_ar": "أكبر سلالات الأرانب وأهدأها طباعاً."
+        },
+        {
+            "slug": "dutch-rabbit",
+            "name": "Dutch Rabbit",
+            "name_ar": "الأرنب الهولندي",
+            "description": "Easy-going rabbit with a striking two-tone pattern.",
+            "description_ar": "أرنب هادئ الطباع بنقشة ثنائية اللون لافتة."
+        },
+        {
+            "slug": "angora-rabbit",
+            "name": "Angora Rabbit",
+            "name_ar": "أرنب الأنغورا",
+            "description": "Long-haired rabbit needing regular grooming.",
+            "description_ar": "أرنب طويل الشعر يحتاج إلى عناية منتظمة."
+        },
+        {
+            "slug": "rex-rabbit",
+            "name": "Rex Rabbit",
+            "name_ar": "أرنب الريكس",
+            "description": "Medium rabbit with dense, upright velvet fur.",
+            "description_ar": "أرنب متوسط الحجم بفراء كثيف ومخملي."
+        }
+    ],
+    "small-pets": [
+        {
+            "slug": "syrian-hamster",
+            "name": "Syrian Hamster",
+            "name_ar": "الهامستر السوري",
+            "description": "Solitary hamster that is easy to handle.",
+            "description_ar": "هامستر انفرادي وسهل التعامل معه."
+        },
+        {
+            "slug": "dwarf-hamster",
+            "name": "Dwarf Hamster",
+            "name_ar": "الهامستر القزم",
+            "description": "Fast, tiny hamster that enjoys company of its kind.",
+            "description_ar": "هامستر صغير وسريع يستمتع بصحبة أقرانه."
+        },
+        {
+            "slug": "guinea-pig",
+            "name": "Guinea Pig",
+            "name_ar": "خنزير غينيا",
+            "description": "Sociable rodent that vocalises with its owner.",
+            "description_ar": "قارض اجتماعي يتواصل بأصواته مع صاحبه."
+        },
+        {
+            "slug": "chinchilla",
+            "name": "Chinchilla",
+            "name_ar": "الشينشيلا",
+            "description": "Soft-furred nocturnal pet that needs dust baths.",
+            "description_ar": "حيوان ليلي ناعم الفراء يحتاج إلى حمامات الغبار."
+        },
+        {
+            "slug": "ferret",
+            "name": "Ferret",
+            "name_ar": "الفرّيت",
+            "description": "Curious, playful companion with lots of energy.",
+            "description_ar": "رفيق فضولي ومرح ومليء بالطاقة."
+        },
+        {
+            "slug": "gerbil",
+            "name": "Gerbil",
+            "name_ar": "الجربيل",
+            "description": "Desert rodent that is active and rarely bites.",
+            "description_ar": "قارض صحراوي نشيط ونادراً ما يعض."
+        },
+        {
+            "slug": "fancy-rat",
+            "name": "Fancy Rat",
+            "name_ar": "الفأر الأليف",
+            "description": "Clever, affectionate rodent that bonds with people.",
+            "description_ar": "قارض ذكي وعاطفي يرتبط بالبشر."
+        },
+        {
+            "slug": "african-pygmy-hedgehog",
+            "name": "African Pygmy Hedgehog",
+            "name_ar": "القنفذ القزم الأفريقي",
+            "description": "Quiet nocturnal pet with a spiny coat.",
+            "description_ar": "حيوان ليلي هادئ ذو غطاء شوكي."
+        }
+    ],
+    "fish": [
+        {
+            "slug": "goldfish",
+            "name": "Goldfish",
+            "name_ar": "السمك الذهبي",
+            "description": "Hardy cold-water fish suited to beginners.",
+            "description_ar": "سمكة مياه باردة قوية ومناسبة للمبتدئين."
+        },
+        {
+            "slug": "betta",
+            "name": "Betta",
+            "name_ar": "سمكة البيتا",
+            "description": "Colourful territorial fish best kept alone.",
+            "description_ar": "سمكة ملونة إقليمية يفضل تربيتها منفردة."
+        },
+        {
+            "slug": "guppy",
+            "name": "Guppy",
+            "name_ar": "الجوبي",
+            "description": "Small, lively fish that breeds readily.",
+            "description_ar": "سمكة صغيرة نشيطة سريعة التكاثر."
+        },
+        {
+            "slug": "angelfish",
+            "name": "Angelfish",
+            "name_ar": "سمكة الملاك",
+            "description": "Elegant cichlid with tall, graceful fins.",
+            "description_ar": "سمكة أنيقة بزعانف طويلة ورشيقة."
+        },
+        {
+            "slug": "neon-tetra",
+            "name": "Neon Tetra",
+            "name_ar": "التترا النيون",
+            "description": "Tiny schooling fish with a glowing blue stripe.",
+            "description_ar": "سمكة صغيرة تعيش في أسراب بخط أزرق لامع."
+        },
+        {
+            "slug": "molly",
+            "name": "Molly",
+            "name_ar": "المولي",
+            "description": "Peaceful community fish that tolerates hard water.",
+            "description_ar": "سمكة مسالمة تتحمل المياه العسرة."
+        },
+        {
+            "slug": "platy",
+            "name": "Platy",
+            "name_ar": "البلاتي",
+            "description": "Bright, easy-going fish for planted tanks.",
+            "description_ar": "سمكة زاهية وسهلة التربية في الأحواض النباتية."
+        },
+        {
+            "slug": "oscar",
+            "name": "Oscar",
+            "name_ar": "سمكة الأوسكار",
+            "description": "Large, intelligent cichlid with real personality.",
+            "description_ar": "سمكة كبيرة وذكية ذات شخصية مميزة."
+        },
+        {
+            "slug": "discus",
+            "name": "Discus",
+            "name_ar": "سمكة الديسكس",
+            "description": "Demanding show fish with vivid disc-shaped body.",
+            "description_ar": "سمكة عرض تحتاج عناية خاصة بجسم قرصي زاهي."
+        },
+        {
+            "slug": "koi",
+            "name": "Koi",
+            "name_ar": "سمك الكوي",
+            "description": "Ornamental pond carp that grows large and lives long.",
+            "description_ar": "سمك زينة للبرك ينمو كبيراً ويعيش طويلاً."
+        }
+    ],
+    "reptiles": [
+        {
+            "slug": "bearded-dragon",
+            "name": "Bearded Dragon",
+            "name_ar": "التنين الملتحي",
+            "description": "Docile lizard and a popular first reptile.",
+            "description_ar": "سحلية وديعة وخيار أول شائع بين الزواحف."
+        },
+        {
+            "slug": "leopard-gecko",
+            "name": "Leopard Gecko",
+            "name_ar": "أبو بريص النمر",
+            "description": "Small, calm gecko that is simple to house.",
+            "description_ar": "وزغة صغيرة هادئة وسهلة الإيواء."
+        },
+        {
+            "slug": "ball-python",
+            "name": "Ball Python",
+            "name_ar": "ثعبان البايثون الكروي",
+            "description": "Gentle constrictor that curls into a ball when shy.",
+            "description_ar": "ثعبان لطيف يتكور على نفسه عند الخوف."
+        },
+        {
+            "slug": "corn-snake",
+            "name": "Corn Snake",
+            "name_ar": "ثعبان الذرة",
+            "description": "Even-tempered snake available in many colours.",
+            "description_ar": "ثعبان هادئ الطباع يتوفر بألوان عديدة."
+        },
+        {
+            "slug": "red-eared-slider",
+            "name": "Red-Eared Slider",
+            "name_ar": "السلحفاة حمراء الأذن",
+            "description": "Aquatic turtle that needs a large, filtered tank.",
+            "description_ar": "سلحفاة مائية تحتاج حوضاً كبيراً بفلتر."
+        },
+        {
+            "slug": "russian-tortoise",
+            "name": "Russian Tortoise",
+            "name_ar": "السلحفاة الروسية",
+            "description": "Small land tortoise that enjoys digging.",
+            "description_ar": "سلحفاة برية صغيرة تحب الحفر."
+        },
+        {
+            "slug": "green-iguana",
+            "name": "Green Iguana",
+            "name_ar": "الإغوانا الخضراء",
+            "description": "Large herbivorous lizard needing lots of space.",
+            "description_ar": "سحلية عاشبة كبيرة تحتاج مساحة واسعة."
+        },
+        {
+            "slug": "crested-gecko",
+            "name": "Crested Gecko",
+            "name_ar": "أبو بريص ذو العرف",
+            "description": "Nocturnal gecko that thrives in a planted vivarium.",
+            "description_ar": "وزغة ليلية تزدهر في حوض نباتي."
+        }
+    ]
+}

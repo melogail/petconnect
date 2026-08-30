@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->json('metadata')->nullable();
             $table->timestamps();
+
+            $table->unique(['user_id', 'reportable_type', 'reportable_id']);
         });
     }
 

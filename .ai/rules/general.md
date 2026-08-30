@@ -1,6 +1,7 @@
 ---
 paths:
   - composer.json
+  - composer.lock
 ---
 
 # General

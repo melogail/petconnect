@@ -11,7 +11,12 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
+            // Public pages: the app sidebar assumes a signed-in user, and both
+            // of these are reachable by guests. Phase 4 gives them a real
+            // public layout.
             case name === 'Welcome':
+            case name === 'Home':
+            case name === 'pets/Show':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

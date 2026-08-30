@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Concerns\ResolvesMorphTarget;
 use App\Models\Comment;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 enum Reportable: string
 {
+    use ResolvesMorphTarget;
+
     case Comment = 'comment';
     case Review = 'review';
 
@@ -25,12 +28,5 @@ enum Reportable: string
             self::Comment => Comment::class,
             self::Review => Review::class,
         };
-    }
-
-    public function findOrFail(int $id): Model
-    {
-        $modelClass = $this->modelClass();
-
-        return $modelClass::query()->findOrFail($id);
     }
 }

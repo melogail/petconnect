@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('content');
-            $table->foreignId('parent_id')->nullable()->constrained('comments')->nullOnDelete();
+            $table->text('content');
+            $table->foreignId('parent_id')->nullable()->constrained('comments')->cascadeOnDelete();
             $table->morphs('commentable');
             $table->timestamps();
+
+            $table->index('user_id');
+            $table->index('parent_id');
         });
     }
 

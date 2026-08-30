@@ -1,0 +1,16 @@
+---
+paths:
+  - 'app/Notifications/**'
+---
+
+# Notifications
+
+## Deferred: branded, locale-aware VerifyEmailNotification is not ported yet
+`User::sendEmailVerificationNotification()` is deliberately NOT overridden yet, so Laravel's base `Illuminate\Auth\Notifications\VerifyEmail` is what ships. The legacy app's branded, locale-aware, RTL `VerifyEmailNotification` depends on a whole chain that is still unported: `resources/views/emails/`, `lang/en` + `lang/ar`, and `LocaleManager`.
+
+Restore it when the mail/lang layer lands, and change `tests/Feature/Auth/VerificationNotificationTest` in the same change — it currently asserts the base class, so it will start failing (correctly) the moment the override is added.
+
+## Notification payloads store translation keys, never rendered text
+A database notification row outlives the reader's locale, so never call `__()` when building `toArray()`. Store `message_key` plus `message_replace` and let the client render; a user who switches language must see their whole history in the new language, not text frozen at write time.
+
+There is a second, sharper reason here today: `lang/` contains only `lang/vendor/nova`, so `__('notifications.liked_pet')` returns the key and the literal string `notifications.liked_pet` gets persisted. The same applies to any "someone"-style fallback — emit `null` and let the client supply its own localized default.

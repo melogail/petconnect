@@ -20,3 +20,8 @@ Why the legacy layer was rejected: `app/Http/Repository/PetRepository` was dead 
 Where query logic goes instead:
 - Query composition for a unit of business work → a single-purpose Action in `app/Actions/{Domain}/` with one public `handle()`.
 - Reusable query fragments → **Eloquent model scopes**, the pattern this codebase already uses well (`Pet::available`, `Pet::nearby`, `Conversation::direct` / `forParticipant` / `betweenParticipants`).
+
+## Eager-load constraint closures receive a Relation, not a Builder
+In with(['comments' => fn (...) => ...]) the closure is handed the Relation object (MorphMany, HasMany, ...), not an Eloquent\Builder. Type hinting Builder throws a TypeError at runtime, which no static check here catches.
+
+Type these closures fn (Relation $r): Relation. Query methods and model scopes still work through Relation::__call. A closure passed to where() does get a Builder — that one is different.

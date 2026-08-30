@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Concerns\ResolvesMorphTarget;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 enum Reviewable: string
 {
+    use ResolvesMorphTarget;
+
     case User = 'user';
 
     /**
@@ -22,12 +25,5 @@ enum Reviewable: string
         return match ($this) {
             self::User => User::class,
         };
-    }
-
-    public function findOrFail(int $id): Model
-    {
-        $modelClass = $this->modelClass();
-
-        return $modelClass::query()->findOrFail($id);
     }
 }
