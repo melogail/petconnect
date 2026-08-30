@@ -13,6 +13,10 @@ use Illuminate\Http\UploadedFile;
  * media steps can run against it. `$deletedMediaIds` are the photos the form
  * asked to remove; they are resolved against this pet's own collection, never
  * looked up globally.
+ *
+ * `$maxGalleryImages` is the lifetime gallery cap, resolved from configuration
+ * once by Actions\Pets\UpdatePet and carried here so EnsureGalleryCapacity can
+ * be driven with any value without reaching for config().
  */
 class UpdatePetContext extends PetAttributeContext
 {
@@ -27,6 +31,7 @@ class UpdatePetContext extends PetAttributeContext
         ?UploadedFile $featuredImage = null,
         array $galleryImages = [],
         public readonly array $deletedMediaIds = [],
+        public readonly int $maxGalleryImages = 3,
     ) {
         parent::__construct($data, $featuredImage, $galleryImages);
 

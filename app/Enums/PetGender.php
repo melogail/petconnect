@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 /**
  * The sex of a listed pet.
  *
@@ -12,6 +14,8 @@ namespace App\Enums;
  */
 enum PetGender: string
 {
+    use HasOptions;
+
     case Male = 'male';
     case Female = 'female';
 
@@ -21,16 +25,5 @@ enum PetGender: string
             self::Male => 'Male',
             self::Female => 'Female',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases(),
-        );
     }
 }

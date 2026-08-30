@@ -31,6 +31,13 @@ use Illuminate\Pipeline\Pipeline;
  * The capacity check runs first, before anything is written or uploaded, so a
  * rejected edit leaves no partial state behind.
  *
+ * Among the photo steps, removal runs before attachment so the stored gallery
+ * never transiently exceeds the cap the capacity check just approved.
+ *
+ * This Action is where the flow's one tunable — the lifetime gallery cap — is
+ * resolved, so EnsureGalleryCapacity never reads config() and the whole flow can
+ * be driven with an explicit value from a test or the console.
+ *
  * The write is a full replacement rather than a patch — see
  * Pipelines\Pets\Update\PersistPet for why, and PetDetailResource for the
  * payload a client must round-trip to be safe under it.
@@ -51,7 +58,14 @@ class UpdatePet
         array $galleryImages = [],
         array $deletedMediaIds = [],
     ): Pet {
-        $context = new UpdatePetContext($pet, $data, $featuredImage, $galleryImages, $deletedMediaIds);
+        $context = new UpdatePetContext(
+            pet: $pet,
+            data: $data,
+            featuredImage: $featuredImage,
+            galleryImages: $galleryImages,
+            deletedMediaIds: $deletedMediaIds,
+            maxGalleryImages: (int) config('petconnect.pets.max_gallery_images', 3),
+        );
 
         return $this->pipeline
             ->send($context)
@@ -65,8 +79,8 @@ class UpdatePet
                 NormalizeAdditionalInfo::class,
                 PersistPet::class,
                 ReplaceFeaturedImage::class,
-                AttachGalleryImages::class,
                 RemoveDeletedMedia::class,
+                AttachGalleryImages::class,
                 RefreshPetWithMedia::class,
             ])
             ->then(fn (UpdatePetContext $completed): Pet => $completed->pet());

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Placeholder page — proves the Home props arrive. Replaced in Phase 4.
-import { Head, Link, router } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { Deferred, Head, InfiniteScroll, Link } from '@inertiajs/vue3';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { login, register } from '@/routes';
 import { create as createPet, show as showPet } from '@/routes/pets';
 import type {
@@ -11,26 +11,29 @@ import type {
     Paginated,
     PetCard,
     PetCategoryOption,
+    PetListingType,
     SelectOption,
 } from '@/types';
 
-const props = defineProps<{
+defineProps<{
+    /**
+     * Sent with Inertia::scroll() — a merge prop, so <InfiniteScroll> appends
+     * each page into `pets.data` instead of replacing it.
+     */
     pets: Paginated<PetCard>;
     filters: HomeFeedFilters;
     nearby: boolean;
     radius: number | null;
-    listingTypes: SelectOption[];
+    listingTypes: SelectOption<PetListingType>[];
     filterBounds: HomeFeedBounds;
-    /** Sent with Inertia::optional() — absent until it is asked for. */
+    /**
+     * Sent with Inertia::defer() — missing from the initial page object and
+     * announced in `deferredProps`, so Inertia fetches it by itself in one
+     * follow-up partial reload. The page must not reload it as well, and the
+     * prop stays `undefined` until that request lands.
+     */
     categories?: PetCategoryOption[];
 }>();
-
-// `categories` is optional, not deferred, so nothing fetches it automatically.
-onMounted(() => {
-    if (props.categories === undefined) {
-        router.reload({ only: ['categories'] });
-    }
-});
 </script>
 
 <template>
@@ -55,8 +58,7 @@ onMounted(() => {
 
         <section class="space-y-2">
             <h2 class="font-medium">
-                Pets ({{ pets.meta.total }} total, page
-                {{ pets.meta.current_page }} of {{ pets.meta.last_page }})
+                Pets ({{ pets.data.length }} of {{ pets.meta.total }} loaded)
             </h2>
             <p
                 v-if="pets.data.length === 0"
@@ -64,7 +66,12 @@ onMounted(() => {
             >
                 No listings match these filters.
             </p>
-            <ul v-else class="space-y-1 text-sm">
+            <InfiniteScroll
+                v-else
+                data="pets"
+                as="ul"
+                class="space-y-1 text-sm"
+            >
                 <li v-for="pet in pets.data" :key="pet.id">
                     <Link :href="showPet(pet.id)" class="underline">
                         {{ pet.name }}
@@ -78,27 +85,48 @@ onMounted(() => {
                         >
                     </span>
                 </li>
-            </ul>
+
+                <!-- Rendered in the component's own trigger div, outside the <ul>. -->
+                <template #loading>
+                    <p
+                        class="text-muted-foreground flex items-center gap-2 py-2 text-sm"
+                    >
+                        <Spinner />
+                        Loading more listings…
+                    </p>
+                </template>
+            </InfiniteScroll>
         </section>
 
         <section class="space-y-2">
             <h2 class="font-medium">Categories</h2>
-            <div v-if="categories === undefined" class="space-y-2">
-                <Skeleton class="h-4 w-48" />
-                <Skeleton class="h-4 w-32" />
-                <Skeleton class="h-4 w-40" />
-            </div>
-            <p
-                v-else-if="categories.length === 0"
-                class="text-muted-foreground text-sm"
-            >
-                No categories yet.
-            </p>
-            <ul v-else class="text-sm">
-                <li v-for="category in categories" :key="category.id">
-                    {{ category.name }}
-                </li>
-            </ul>
+            <!--
+                The router fetches `categories` on its own from the
+                `deferredProps` announcement — one partial reload per group.
+                <Deferred> only gates the markup on it, so the page issues no
+                reload of its own.
+            -->
+            <Deferred data="categories">
+                <template #fallback>
+                    <div class="space-y-2">
+                        <Skeleton class="h-4 w-48" />
+                        <Skeleton class="h-4 w-32" />
+                        <Skeleton class="h-4 w-40" />
+                    </div>
+                </template>
+
+                <p
+                    v-if="!categories?.length"
+                    class="text-muted-foreground text-sm"
+                >
+                    No categories yet.
+                </p>
+                <ul v-else class="text-sm">
+                    <li v-for="category in categories" :key="category.id">
+                        {{ category.name }}
+                    </li>
+                </ul>
+            </Deferred>
         </section>
 
         <section class="space-y-2 text-sm">

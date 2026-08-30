@@ -358,6 +358,12 @@ return [
     /*
      * When forcing lazy loading, media will be loaded even if you don't eager load media and you have
      * disabled lazy loading globally in the service provider.
+     *
+     * The package default is `true`, which makes `InteractsWithMedia::loadMedia()`
+     * call `loadMissing('media')` — an explicit eager load that
+     * `Model::preventLazyLoading()` permits. That turns every media N+1 into a
+     * pile of silent queries instead of an exception, so this application
+     * inverts the default outside production and lets the guardrail see them.
      */
-    'force_lazy_loading' => env('FORCE_MEDIA_LIBRARY_LAZY_LOADING', true),
+    'force_lazy_loading' => env('FORCE_MEDIA_LIBRARY_LAZY_LOADING', env('APP_ENV') === 'production'),
 ];

@@ -32,8 +32,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * read shapes rather than write shapes:
  * - `category` / `breed` are objects; the form posts `category_id`/`breed_id`.
  * - `featured_image` is a URL; the form posts `featuredImage`, an upload.
- * - `images` are attached media rows; the form posts `images` (new uploads) and
- *   `deletedMediaIds` (ids to detach).
+ * - `photos` are the attached media rows; the form posts `images` (new uploads)
+ *   and `deletedMediaIds` (ids to detach). The read key is deliberately *not*
+ *   called `images`: it used to be, and since a client is told above to send
+ *   back every field it received, round-tripping it posted media objects into
+ *   the `images` upload rule and 422'd. The write name stays `images` because it
+ *   is the file input's name and is referenced by string in petMessages() and
+ *   galleryImages().
  *
  * ## PUT is a full replacement
  *
@@ -103,7 +108,7 @@ class PetDetailResource extends JsonResource
             'additionalInfo' => $this->additional_info,
 
             'featured_image' => $this->featuredPhotoUrl('display'),
-            'images' => PetMediaResource::collection($this->whenLoaded('media')),
+            'photos' => PetMediaResource::collection($this->whenLoaded('media')),
 
             'likes_count' => (int) ($this->likes_count ?? 0),
             'comments_count' => (int) ($this->comments_count ?? 0),

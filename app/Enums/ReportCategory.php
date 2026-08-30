@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 enum ReportCategory: string
 {
+    use HasOptions;
+
     case Abuse = 'abuse';
     case Bug = 'bug';
     case Copyright = 'copyright';
@@ -21,16 +25,5 @@ enum ReportCategory: string
             self::Feedback => 'Feedback',
             self::Other => 'Other',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

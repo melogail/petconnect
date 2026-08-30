@@ -25,7 +25,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * rejected edit leaves no partial state behind.
  *
  * The passable is UpdatePetContext because only an existing listing can
- * accumulate; a create is fully bounded by the per-request rule.
+ * accumulate; a create is fully bounded by the per-request rule. The cap itself
+ * arrives on the context, resolved once by Actions\Pets\UpdatePet, so this step
+ * reads no configuration.
+ *
+ * `Pet::galleryPhotos()` is the single definition of "a gallery photo" that this
+ * step and RemoveDeletedMedia both work from, so the set counted here is exactly
+ * the set that can be deleted.
  *
  * @throws PetGalleryLimitExceeded
  */
@@ -33,7 +39,7 @@ class EnsureGalleryCapacity
 {
     public function handle(UpdatePetContext $context, Closure $next): mixed
     {
-        $allowed = (int) config('petconnect.pets.max_gallery_images', 3);
+        $allowed = $context->maxGalleryImages;
 
         $pet = $context->pet();
         $pet->loadMissing('media');

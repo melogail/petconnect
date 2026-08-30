@@ -1,8 +1,17 @@
 export type PetListingType = 'adoption' | 'sale' | 'mating';
 export type PetStatus = 'available' | 'unavailable';
+export type PetGender = 'male' | 'female';
+export type PetHealthStatus = 'healthy' | 'minor_issues' | 'chronic_condition';
 
-export type SelectOption = {
-    value: string;
+/**
+ * One `{value, label}` pair from a backing enum's `options()`.
+ *
+ * Parameterise it with the union the enum backs — `SelectOption<PetGender>` —
+ * so a select bound to the option list narrows to the same union the payload
+ * carries.
+ */
+export type SelectOption<TValue extends string = string> = {
+    value: TValue;
     label: string;
 };
 
@@ -41,41 +50,82 @@ export type PetMedia = {
     featured: boolean;
 };
 
-export type PetComment = {
+type PetCommentFields = {
     id: number;
     content: string;
     parent_id: number | null;
+    /** Only present when the backend eager loaded the author. */
     user?: PetOwner;
     has_reported: boolean;
-    replies?: PetComment[];
     created_at: string;
 };
 
-/** A listing as the home feed renders it. Public payload. */
+/**
+ * A comment that carries no thread of its own.
+ *
+ * This is what a feed card's `comments` preview holds — the backend loads no
+ * replies for a card at all, so the key is absent rather than empty — and what
+ * a reply on the detail page is, replies being one level deep.
+ */
+export type PetCommentPreview = PetCommentFields;
+
+/**
+ * A top-level comment on the detail page, with a bounded preview of its replies.
+ *
+ * Both the thread and each reply list are capped by the backend
+ * (`petconnect.pets.detail_comment_page_size` / `detail_reply_preview`);
+ * `comments_count` on the pet carries the true total.
+ */
+export type PetComment = PetCommentFields & {
+    replies?: PetCommentPreview[];
+};
+
+/** One clinical record in the health group's vaccination repeater. */
+export type PetVaccination = {
+    name: string;
+    date: string | null;
+};
+
+/** One clinical record in the health group's medication repeater. */
+export type PetMedication = {
+    name: string;
+    usage: string | null;
+};
+
+/**
+ * A listing as the home feed renders it. Public payload.
+ *
+ * Read shape, not the form's contract: every key here is the snake_case column
+ * name. `PetDetail` is the one that mirrors what the pet form posts back.
+ */
 export type PetCard = {
     id: number;
     name: string;
-    age: number | null;
-    gender: string | null;
-    color: string | null;
-    description: string | null;
+    /** A varchar column on the backend, so a string even though it reads numeric. */
+    age: string;
+    gender: PetGender;
+    color: string;
+    description: string;
     status: PetStatus;
     listing_type: PetListingType;
     price: number | null;
     vaccinated: boolean;
     spayed_neutered: boolean;
-    city: string | null;
-    state: string | null;
-    country: string | null;
+    city: string;
+    state: string;
+    country: string;
     category?: PetCategoryOption;
-    breed?: PetBreedOption;
+    /** Null when the listing has no breed; absent when it was not loaded. */
+    breed?: PetBreedOption | null;
     user?: PetOwner;
     is_owner: boolean;
     image: string | null;
     likes_count: number;
+    /** The true total, not the length of the `comments` preview below. */
     comments_count: number;
     is_liked: boolean;
-    comments?: PetComment[];
+    /** A bounded preview of the newest top-level comments, never their replies. */
+    comments?: PetCommentPreview[];
     /** Only present when the feed query ran with a distance calculation. */
     distance?: number;
     created_at: string;
@@ -84,51 +134,72 @@ export type PetCard = {
 /**
  * A listing as its own page renders it.
  *
+ * The nested `location`, `health` and `additionalInfo` groups use camelCase
+ * leaves, because those are the names the pet form posts back and the Form
+ * Request validates. The top-level scalars stay snake_case — they are column
+ * names.
+ *
+ * Four keys are read shapes rather than write shapes, so prefilling the form
+ * from them is not a straight assignment:
+ * - `category` / `breed` are objects; the form posts `category_id` / `breed_id`.
+ * - `featured_image` is a URL; the form posts `featuredImage`, an upload.
+ * - `photos` are the attached media rows you read back. The write side keeps
+ *   the name `images`, which means something else entirely: newly uploaded
+ *   files. A save posts `images` (new uploads) plus `deletedMediaIds` (ids to
+ *   detach), and never posts `photos`. The two were once the same key, so
+ *   echoing the read payload straight back 422'd on `images.*` expecting files.
+ *
  * The owner-only leaves are absent — not null — for a viewer who cannot update
  * the listing, so every one of them is optional here.
  */
 export type PetDetail = {
     id: number;
     name: string;
-    age: number | null;
-    gender: string | null;
-    color: string | null;
+    /** A varchar column on the backend, so a string even though it reads numeric. */
+    age: string;
+    gender: PetGender;
+    color: string;
     weight: number | null;
-    description: string | null;
+    description: string;
     listing_type: PetListingType;
     price: number | null;
     status: PetStatus;
     views: number;
     category?: PetCategoryOption;
-    breed?: PetBreedOption;
+    /** Null when the listing has no breed; absent when it was not loaded. */
+    breed?: PetBreedOption | null;
     user?: PetOwner;
     is_owner: boolean;
     location: {
-        city: string | null;
-        state: string | null;
-        country: string | null;
-        postal_code: string | null;
+        city: string;
+        state: string;
+        country: string;
+        postalCode: string | null;
         address?: string | null;
-        detailed_address?: string | null;
+        detailedAddress?: string | null;
         coordinates?: { lat: number | null; lng: number | null };
     };
     health: {
-        status: string | null;
+        status: PetHealthStatus;
         vaccinated: boolean;
-        spayed_neutered: boolean;
-        special_needs: boolean;
-        last_vet_visit: string | null;
-        vaccinations: string[] | null;
-        medications?: string[] | null;
+        spayedNeutered: boolean;
+        /** Free text, not a flag: the backing column is a `text`. */
+        specialNeeds: string | null;
+        lastVetVisit: string | null;
+        vaccinations: PetVaccination[] | null;
+        medications?: PetMedication[] | null;
         allergies?: string[] | null;
-        vet_name?: string | null;
-        vet_phone?: string | null;
+        vetName?: string | null;
+        vetPhone?: string | null;
     };
     traits: string[] | null;
-    additional_info: string | null;
+    /** A free-form label/value map, not a repeater and not a string. */
+    additionalInfo: Record<string, string> | null;
     featured_image: string | null;
-    images?: PetMedia[];
+    /** Read-side media rows. The write side calls its file uploads `images`. */
+    photos?: PetMedia[];
     likes_count: number;
+    /** The true total, not the length of the bounded `comments` thread below. */
     comments_count: number;
     is_liked: boolean;
     comments?: PetComment[];

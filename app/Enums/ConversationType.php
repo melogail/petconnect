@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 /**
  * The shape of a message thread.
  *
@@ -11,6 +13,8 @@ namespace App\Enums;
  */
 enum ConversationType: string
 {
+    use HasOptions;
+
     case Direct = 'direct';
 
     public function label(): string
@@ -18,16 +22,5 @@ enum ConversationType: string
         return match ($this) {
             self::Direct => 'Direct',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

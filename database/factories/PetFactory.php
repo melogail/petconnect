@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\HealthStatus;
 use App\Enums\ListingType;
+use App\Enums\PetGender;
 use App\Enums\PetStatus;
 use App\Models\Breed;
 use App\Models\Category;
@@ -58,7 +60,7 @@ class PetFactory extends Factory
 
             'name' => fake()->firstName(),
             'age' => (string) fake()->randomElement([0.5, 1, 2, 3, 4, 5, 7, 10]),
-            'gender' => fake()->randomElement(['male', 'female']),
+            'gender' => fake()->randomElement(PetGender::cases()),
             'color' => fake()->randomElement(['Black', 'White', 'Brown', 'Golden', 'Gray', 'Mixed', 'Spotted']),
             'weight' => fake()->randomFloat(2, 1, 50),
             'description' => fake()->paragraph(3),
@@ -79,7 +81,7 @@ class PetFactory extends Factory
             'latitude' => $this->jitter($location['latitude']),
             'longitude' => $this->jitter($location['longitude']),
 
-            'health_status' => fake()->randomElement(['healthy', 'minor_issues', 'chronic_condition']),
+            'health_status' => fake()->randomElement(HealthStatus::cases()),
             'vaccinated' => fake()->boolean(80),
             'spayed_neutered' => fake()->boolean(60),
             'special_needs' => fake()->optional(0.2)->sentence(),

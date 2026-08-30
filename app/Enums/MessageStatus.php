@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 /**
  * Delivery state of a message.
  *
@@ -12,6 +14,8 @@ namespace App\Enums;
  */
 enum MessageStatus: string
 {
+    use HasOptions;
+
     case Sent = 'sent';
 
     public function label(): string
@@ -19,16 +23,5 @@ enum MessageStatus: string
         return match ($this) {
             self::Sent => 'Sent',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

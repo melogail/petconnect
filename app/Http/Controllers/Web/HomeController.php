@@ -27,8 +27,14 @@ use Inertia\Response;
  * would replace it, leaving the visitor looking at page 2 alone.
  * Inertia::scroll() labels the paginator's `data` array for merging and ships
  * the cursor metadata the <InfiniteScroll> component reads, so the frontend
- * wires up to `pets` and gets append-on-scroll without a bespoke handler. Every
- * other prop on this page is a plain replace-on-reload prop.
+ * wires up to `pets` and gets append-on-scroll without a bespoke handler.
+ *
+ * `categories` is deferred, not optional. Both skip the category tree on the
+ * first render — it only opens with the filter sheet — but a deferred prop is
+ * announced in `deferredProps`, so the client fetches it by itself and the page
+ * needs no onMounted reload of its own. An optional prop is never announced and
+ * only ever arrives if page code asks for it by name. Every other prop here is
+ * a plain replace-on-reload prop.
  */
 class HomeController extends Controller
 {
@@ -59,7 +65,7 @@ class HomeController extends Controller
                 'default_age_min' => $request->defaultAgeMin(),
                 'default_age_max' => $request->defaultAgeMax(),
             ],
-            'categories' => Inertia::optional(
+            'categories' => Inertia::defer(
                 fn () => PetCategoryOptionResource::collection($listPetCategories->handle()),
             ),
         ]);

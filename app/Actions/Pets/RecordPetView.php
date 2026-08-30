@@ -28,6 +28,13 @@ use Illuminate\Support\Facades\Cache;
  * here: an Action knows nothing about HTTP. A signed-in visitor is keyed by id,
  * a guest by session id, so the dedup survives a changing IP and does not lump
  * everyone behind one NAT together.
+ *
+ * `views` is a vanity counter, not a metric — do not build anything on it. A
+ * guest is keyed by session id, so a client that keeps no cookie jar gets a
+ * fresh session per request and a `curl` loop still inflates the number. The
+ * window stops the honest reload loop, which is all it is for. Deliberately no
+ * IP or user-agent fingerprinting: it would cost real privacy, still be trivial
+ * to defeat, and buy a number nothing depends on.
  */
 class RecordPetView
 {

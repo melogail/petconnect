@@ -20,7 +20,13 @@ use Illuminate\Validation\ValidationException;
  * render() this replaced also flashed `$request->input()` wholesale, where
  * Laravel flashes everything except the fields on `dontFlash`.
  *
- * The class itself still knows nothing about HTTP — steps just throw it.
+ * That inheritance does mean the class is not HTTP-free: ValidationException
+ * carries `$response`, a 422 `$status` and `$redirectTo`. That is accepted
+ * deliberately — a pure domain exception plus a `render` mapping would be two
+ * more moving parts for byte-identical behaviour, and this abort genuinely is a
+ * field-level input problem. A step still throws it without knowing any of
+ * that. See .ai/rules/pipelines.md for when a domain abort may use
+ * ValidationException as its base and when it may not.
  */
 abstract class PetTaxonomyNotFound extends ValidationException
 {

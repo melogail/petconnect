@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 enum ReportReason: string
 {
+    use HasOptions;
+
     case Spam = 'spam';
     case HateSpeech = 'hate_speech';
     case FalseInformation = 'false_information';
@@ -21,16 +25,5 @@ enum ReportReason: string
             self::InappropriateContent => 'Inappropriate Content',
             self::Other => 'Other',
         };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

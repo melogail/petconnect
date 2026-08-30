@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Nova\Util;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -134,13 +135,22 @@ class AppServiceProvider extends ServiceProvider
      *
      * Nova resolves fields off models it did not eager load, so the guardrail
      * would fire on Nova's own internals rather than on application code. It is
-     * scoped out by request path instead of being switched off globally: the
+     * scoped out per request instead of being switched off globally: the
      * prevention is worth far more on the four verticals still to be built than
      * a green /nova is worth losing it.
+     *
+     * The callback replaces Model::handleLazyLoadingViolation() wholesale, so it
+     * has to restore that method's own early return for models that are not
+     * persisted or were just created — those have no relation to load and the
+     * framework never considers them a violation.
      */
     protected function configureLazyLoadingViolations(): void
     {
         Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            if (! $model->exists || $model->wasRecentlyCreated) {
+                return;
+            }
+
             if ($this->isNovaRequest()) {
                 return;
             }
@@ -151,6 +161,15 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Whether the current request is being served by Nova.
+     *
+     * Delegated to Nova's own matcher rather than re-derived from
+     * `config('nova.path')`. Nova registers 110 routes and only 32 of them sit
+     * under `nova/`: 76 are `nova-api/*` (every resource index, detail,
+     * relatable and action field resolution — i.e. all the code that actually
+     * lazy loads) and 2 are `nova-vendor/*`. A `$request->is($path, $path.'/*')`
+     * check returned false for all 78 of those, so the scope-out covered the SPA
+     * shell and nothing that renders a field. Util::isNovaRequest() knows all
+     * three prefixes plus the `nova.domain` install, and tracks the package.
      */
     protected function isNovaRequest(): bool
     {
@@ -158,12 +177,6 @@ class AppServiceProvider extends ServiceProvider
             return false;
         }
 
-        $path = trim((string) config('nova.path', '/nova'), '/');
-
-        if ($path === '') {
-            return false;
-        }
-
-        return $this->app->make('request')->is($path, $path.'/*');
+        return Util::isNovaRequest($this->app->make('request'));
     }
 }

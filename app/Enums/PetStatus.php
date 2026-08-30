@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 enum PetStatus: string
 {
+    use HasOptions;
+
     case Available = 'available';
     case Unavailable = 'unavailable';
 
@@ -13,27 +17,5 @@ enum PetStatus: string
             self::Available => 'Available',
             self::Unavailable => 'Unavailable',
         };
-    }
-
-    /**
-     * Tailwind classes the frontend applies to a pet status badge.
-     */
-    public function color(): string
-    {
-        return match ($this) {
-            self::Available => 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-            self::Unavailable => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-        };
-    }
-
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function options(): array
-    {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases(),
-        );
     }
 }
