@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Profiles\UpdatePassword;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
@@ -52,12 +53,18 @@ class SecurityController extends Controller
 
     /**
      * Update the user's password.
+     *
+     * The write is Actions\Profiles\UpdatePassword's, not this method's: it
+     * used to run `$request->user()->update([...])` here, which is a business
+     * write in a controller, and read the value off the raw input bag through
+     * `Request::__get` rather than `validated()`. The Action also deletes any
+     * outstanding password reset token, which nothing in this application did
+     * — read its docblock for why that gap mattered and why this endpoint is
+     * not Fortify's despite the route name.
      */
-    public function update(PasswordUpdateRequest $request): RedirectResponse
+    public function update(PasswordUpdateRequest $request, UpdatePassword $updatePassword): RedirectResponse
     {
-        $request->user()->update([
-            'password' => $request->password,
-        ]);
+        $updatePassword->handle($request->user(), $request->newPassword());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

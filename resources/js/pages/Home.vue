@@ -1,10 +1,10 @@
 <script setup lang="ts">
-// Placeholder page — proves the Home props arrive. Replaced in Phase 4.
-import { Deferred, Head, InfiniteScroll, Link } from '@inertiajs/vue3';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
-import { login, register } from '@/routes';
-import { create as createPet, show as showPet } from '@/routes/pets';
+import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import Heading from '@/components/Heading.vue';
+import NearbySearchButton from '@/components/pets/NearbySearchButton.vue';
+import PetFeed from '@/components/pets/PetFeed.vue';
+import PetFilterSheet from '@/components/pets/PetFilterSheet.vue';
 import type {
     HomeFeedBounds,
     HomeFeedFilters,
@@ -15,129 +15,71 @@ import type {
     SelectOption,
 } from '@/types';
 
-defineProps<{
-    /**
-     * Sent with Inertia::scroll() — a merge prop, so <InfiniteScroll> appends
-     * each page into `pets.data` instead of replacing it.
-     */
+/**
+ * The public discovery feed.
+ *
+ * Two of the props are not plain props and the page is built around that:
+ *
+ * - `pets` comes from `Inertia::scroll()`. The payload carries
+ *   `mergeProps: ["pets.data"]` and the scroll cursor, so `<InfiniteScroll>`
+ *   inside `PetFeed` appends page 2 into the list already on screen. Nothing
+ *   here reloads `pets` by hand.
+ * - `categories` comes from `Inertia::defer()`. It is announced in
+ *   `deferredProps` and fetched by the router in one follow-up request, so the
+ *   filter sheet gates on `<Deferred>` and the page issues no `onMounted`
+ *   fetch. It stays `undefined` until that request lands.
+ */
+const { filters, nearby } = defineProps<{
     pets: Paginated<PetCard>;
     filters: HomeFeedFilters;
     nearby: boolean;
     radius: number | null;
     listingTypes: SelectOption<PetListingType>[];
     filterBounds: HomeFeedBounds;
-    /**
-     * Sent with Inertia::defer() — missing from the initial page object and
-     * announced in `deferredProps`, so Inertia fetches it by itself in one
-     * follow-up partial reload. The page must not reload it as well, and the
-     * prop stays `undefined` until that request lands.
-     */
     categories?: PetCategoryOption[];
 }>();
+
+const heading = computed(() => (nearby ? 'Pets near you' : 'Discover pets'));
+
+const description = computed(() => {
+    if (nearby) {
+        return 'Sorted by how close each listing is to you.';
+    }
+
+    return filters.vaccinated === true ||
+        filters.category_ids.length > 0 ||
+        filters.breed_ids.length > 0 ||
+        filters.listing_types.length > 0
+        ? 'Listings matching your filters.'
+        : 'Every listing, newest first.';
+});
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-3xl space-y-6 p-6">
+    <div class="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
         <Head title="Home" />
 
-        <header class="space-y-1">
-            <h1 class="text-2xl font-semibold">Home</h1>
-            <p class="text-muted-foreground text-sm">
-                Placeholder feed — the real UI lands in Phase 4.
-            </p>
-            <nav class="flex gap-3 text-sm underline">
-                <Link :href="createPet()">Publish a listing</Link>
-                <Link v-if="!$page.props.auth.user" :href="login()"
-                    >Log in</Link
-                >
-                <Link v-if="!$page.props.auth.user" :href="register()">
-                    Register
-                </Link>
-            </nav>
-        </header>
+        <!-- `Heading` renders an h2, so the page still owes the document an h1. -->
+        <h1 class="sr-only">{{ heading }}</h1>
 
-        <section class="space-y-2">
-            <h2 class="font-medium">
-                Pets ({{ pets.data.length }} of {{ pets.meta.total }} loaded)
-            </h2>
-            <p
-                v-if="pets.data.length === 0"
-                class="text-muted-foreground text-sm"
-            >
-                No listings match these filters.
-            </p>
-            <InfiniteScroll
-                v-else
-                data="pets"
-                as="ul"
-                class="space-y-1 text-sm"
-            >
-                <li v-for="pet in pets.data" :key="pet.id">
-                    <Link :href="showPet(pet.id)" class="underline">
-                        {{ pet.name }}
-                    </Link>
-                    <span class="text-muted-foreground">
-                        — {{ pet.listing_type }} / {{ pet.status
-                        }}<template v-if="pet.category">
-                            / {{ pet.category.name }}</template
-                        ><template v-if="pet.distance !== undefined">
-                            / {{ pet.distance }} km</template
-                        >
-                    </span>
-                </li>
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <Heading :title="heading" :description="description" />
 
-                <!-- Rendered in the component's own trigger div, outside the <ul>. -->
-                <template #loading>
-                    <p
-                        class="text-muted-foreground flex items-center gap-2 py-2 text-sm"
-                    >
-                        <Spinner />
-                        Loading more listings…
-                    </p>
-                </template>
-            </InfiniteScroll>
-        </section>
+            <div class="flex flex-wrap items-start gap-2">
+                <NearbySearchButton
+                    :nearby="nearby"
+                    :radius="radius"
+                    :bounds="filterBounds"
+                />
+                <PetFilterSheet
+                    :filters="filters"
+                    :bounds="filterBounds"
+                    :listing-types="listingTypes"
+                    :categories="categories"
+                />
+            </div>
+        </div>
 
-        <section class="space-y-2">
-            <h2 class="font-medium">Categories</h2>
-            <!--
-                The router fetches `categories` on its own from the
-                `deferredProps` announcement — one partial reload per group.
-                <Deferred> only gates the markup on it, so the page issues no
-                reload of its own.
-            -->
-            <Deferred data="categories">
-                <template #fallback>
-                    <div class="space-y-2">
-                        <Skeleton class="h-4 w-48" />
-                        <Skeleton class="h-4 w-32" />
-                        <Skeleton class="h-4 w-40" />
-                    </div>
-                </template>
-
-                <p
-                    v-if="!categories?.length"
-                    class="text-muted-foreground text-sm"
-                >
-                    No categories yet.
-                </p>
-                <ul v-else class="text-sm">
-                    <li v-for="category in categories" :key="category.id">
-                        {{ category.name }}
-                    </li>
-                </ul>
-            </Deferred>
-        </section>
-
-        <section class="space-y-2 text-sm">
-            <h2 class="font-medium">Context</h2>
-            <p>
-                Listing types: {{ listingTypes.map((t) => t.label).join(', ') }}
-            </p>
-            <p>Nearby: {{ nearby ? `yes, ${radius} km` : 'no' }}</p>
-            <pre class="bg-muted overflow-x-auto rounded p-3 text-xs">{{
-                { filters, filterBounds }
-            }}</pre>
-        </section>
+        <PetFeed :pets="pets" />
     </div>
 </template>

@@ -29,7 +29,7 @@ function seedCategoryTree(int $categories): void
         ->has(Breed::factory()->count(2))
         ->create()
         ->each(function (Category $category): void {
-            $category->addMedia(UploadedFile::fake()->create('icon.jpg', 10))
+            $category->addMedia(UploadedFile::fake()->image('icon.jpg'))
                 ->toMediaCollection('categories');
         });
 }

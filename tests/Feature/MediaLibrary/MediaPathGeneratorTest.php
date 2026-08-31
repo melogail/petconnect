@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- * Persist a media row the way an upload would, without touching the image
- * pipeline: this machine has neither gd nor imagick.
+ * Persist a media row the way an upload would, without running the conversion
+ * pipeline: the generator reads only the row's own columns, and building the row
+ * directly is what lets these tests set a morph alias and an owner directory that
+ * no real upload would produce.
  *
  * @param  array<string, mixed>  $customProperties
  */

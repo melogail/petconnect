@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('status')->default('sent');
             $table->foreignId('pinned_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('pinned_at')->nullable();
+            $table->timestamp('edited_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

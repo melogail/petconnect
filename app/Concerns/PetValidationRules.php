@@ -69,6 +69,13 @@ use Illuminate\Validation\Rule;
 trait PetValidationRules
 {
     /**
+     * Both photo ceilings — `maxGalleryImages()` and `maxImageKilobytes()` —
+     * come from here, so Web\PetController can ship them as `photoBounds`
+     * without taking this trait's request-only accessors with them.
+     */
+    use PetPhotoRules;
+
+    /**
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
     protected function petRules(bool $requiresFeaturedImage): array
@@ -176,7 +183,7 @@ trait PetValidationRules
      */
     protected function imageRules(bool $requiresFeaturedImage): array
     {
-        $image = ['image', 'mimes:jpeg,jpg,png,gif,webp', 'max:'.$this->maxImageKilobytes()];
+        $image = $this->photoFileRules();
 
         return [
             'featuredImage' => [$requiresFeaturedImage ? 'required' : 'nullable', ...$image],
@@ -306,22 +313,6 @@ trait PetValidationRules
             is_array($images) ? $images : [$images],
             fn (mixed $image): bool => $image instanceof UploadedFile,
         ));
-    }
-
-    /**
-     * Per-image upload ceiling in kilobytes.
-     */
-    protected function maxImageKilobytes(): int
-    {
-        return (int) config('petconnect.pets.max_image_kilobytes', 512);
-    }
-
-    /**
-     * How many gallery photos a listing may carry, excluding the cover photo.
-     */
-    protected function maxGalleryImages(): int
-    {
-        return (int) config('petconnect.pets.max_gallery_images', 3);
     }
 
     /**

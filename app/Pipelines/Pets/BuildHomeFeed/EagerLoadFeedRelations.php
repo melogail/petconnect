@@ -26,6 +26,12 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * is applied per parent (Eloquent compiles a row_number window for a limit
  * inside an eager load), so it is one query for all cards, not one per card.
  *
+ * The previewed comments carry their own like and reply counters and the
+ * viewer's like/report flags, because CommentResource emits all four and falls
+ * back to zero rather than lazy loading; a card showing "0 likes" on a liked
+ * comment would be a silent lie. All four are withCount()/withExists()
+ * subqueries on the eager load already being issued, so they add no query.
+ *
  * A guest viewer makes withLikedBy() and withReportedBy() no-ops, so `is_liked`
  * and `has_reported` are simply absent and the resources default them to false.
  */
@@ -45,6 +51,8 @@ class EagerLoadFeedRelations
                 'comments' => fn (Relation $comments): Relation => $comments
                     ->whereNull('parent_id')
                     ->with('user.media')
+                    ->withCount(['likes', 'replies'])
+                    ->withLikedBy($viewer)
                     ->withReportedBy($viewer)
                     ->latest()
                     ->limit($commentPreview),

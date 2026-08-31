@@ -1,5 +1,25 @@
+{{--
+    `lang` and `dir` both come from the `locale` shared prop, which
+    Http\Middleware\HandleInertiaRequests derives from App::getLocale() and the
+    `petconnect.locales.rtl` whitelist. Reading the prop rather than recomputing
+    it here keeps one reader of that whitelist: the SetLocale middleware has
+    already resolved cookie -> user -> session -> app.locale by the time this
+    renders.
+
+    Without `dir`, an Arabic page laid out left-to-right. Nova emits its own
+    `dir` from its own root view and is unaffected.
+
+    The fallback covers a render with no Inertia page object (there is none
+    today; it costs a null-coalesce rather than a fatal if that changes).
+--}}
+@php
+    $inertiaLocale = data_get($page ?? [], 'props.locale', [
+        'current' => app()->getLocale(),
+        'direction' => 'ltr',
+    ]);
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', $inertiaLocale['current']) }}" dir="{{ $inertiaLocale['direction'] }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

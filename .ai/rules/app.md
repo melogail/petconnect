@@ -41,4 +41,54 @@ Eloquent\Builder::hydrate() only sets `$model->preventsLazyLoading` when `count(
 
 Consequence for fixtures: a render test with zero or one row proves nothing about lazy loading. Deleting an eager load can leave the whole suite green while the N+1 comes back — `ListPetCategories`'s `media` load is only observable with 2+ categories, and route-model-bound `show`/`edit` pages (one model, from `find`) are unguarded by construction.
 
-So: any test that is meant to protect an eager load must seed at least two rows of the model being iterated, and assert on the query count rather than trusting the exception. This applies to every fixture that carries a `->with(...)` claim.
+So: any test that is meant to protect an eager load must seed at least two rows of the model being iterated, and must not trust the exception alone. This applies to every fixture that carries a `->with(...)` claim.
+
+**What to assert depends on which half of the load you are protecting, and the count only covers one of them.**
+
+- *Half-miss* — the relation is loaded but a nested one is not (`with('user')` where the payload reaches `user.media`). The guardrail fires, or the query count goes **up**. A count assertion is the right guard here, and this is the case the paragraph above is about.
+- *Complete miss* — nothing eager loads the relation at all and the payload reads it through `whenLoaded()`. The key is silently dropped, no relation is ever touched, so no exception fires and **the query count goes DOWN**. A count assertion agrees with the regression. Measured twice: `ListReviews` 5→3 and `BuildInbox` the same shape. The only guard is asserting the key is present in the serialised payload. See .ai/rules/resources.md and .ai/rules/tests.md.
+
+## Morph type columns hold aliases: never compare them to a class name
+`Relation::enforceMorphMap()` is on (AppServiceProvider::configureMorphMap), so every `*_type` column stores an alias — `pet`, not `App\Models\Pet`. Any comparison against a class name matches zero rows and *passes silently*: `Rule::exists('comments','id')->where(fn ($q) => $q->where('commentable_type', $type->modelClass()))` validates nothing, and a raw `where('commentable_type', Pet::class)` filters nothing away.
+
+Nothing catches it — no exception, no static check, and a test written against the same wrong assumption agrees with it. Where you must name the type in a query, go through `Relation::getMorphAlias(Model::class)`; `CommentFactory` and `PersistComment` are the worked examples.
+
+Better still, do not build the filter at all: read through the relation (`$commentable->rootComments()`, `$comment->replies()`), which fills the morph columns from the model. `ListCommentThread` was rewritten to do that and the read path now constructs no morph value by hand.
+
+Best of all, keep morph existence checks out of Form Requests. A request cannot see the resolved target, so it has to rebuild the morph filter from the URL — the exact shape above. Whether a parent comment is on this thread is decided in `PublishComment\ValidateParentBelongsToCommentable`, in one query, against the model the flow already holds.
+
+(The legacy app had the opposite problem and is not evidence for this one: it registered no morph map at all, so its class-name comparisons matched correctly. Do not repeat the claim that they were broken.)
+
+## A route-bound child model must re-derive its parent's visibility
+**Principle.** A URL that names only the child — `comments/{comment}/replies`, `messages/{message}/pin` — carries no evidence that the parent is still visible, and route model binding will happily hand you a child of a hidden parent. It shipped twice: with a pet trashed, `comments.index` and the pet page 404'd while `comments.replies` still returned the whole discussion (text plus each author's name, username and location) at a guessable sequential id and `comments.like` still wrote likes; the same shape left a soft-deleted conversation's messages editable, pinnable and deletable. Decide it once on the child, not per route.
+
+**The mechanism depends on how the parent is hidden. Pick by that, not by habit.**
+
+- Parent hidden by a **global scope** (`SoftDeletes` on `Pet`, on `Conversation`) → a `resolveRouteBinding()` override on the child is the right tool. `loadMissing('parent')` and return null when the relation is null; the scope has already done the deciding, so a null relation is a *complete* answer. `Comment` and `Message` both do this, and returning null makes `ImplicitRouteBinding` raise `ModelNotFoundException` — the same 404 the parent's own page gives.
+- Parent hidden by **participation or ownership** → the binding override cannot see it and must not be trusted with it. `$message->conversation` is non-null for a conversation the viewer was never a participant in, so the null-check answers nothing there. That dimension belongs in a **policy**: `MessagePolicy::update/delete/pin` go through `Conversation::hasParticipant()`. The two are complementary, not alternatives — `Message` needs both, because a conversation can be hidden either way.
+
+**The override is not always reached.** `ImplicitRouteBinding::resolveForRoute()` picks one of four resolvers and only one of them is your override:
+
+1. `$child->resolveRouteBinding($value, $field)` — the default, and the only path an override on the child intercepts.
+2. `$child->resolveSoftDeletableRouteBinding()` — taken when the route calls `->withTrashed()` and the child `isSoftDeletable()`. It calls `resolveRouteBindingQuery(...)->withTrashed()->first()` directly, so the override is skipped. **Live for `Message`**, which soft-deletes.
+3. `$parent->resolveChildRouteBinding()` and 4. `$parent->resolveSoftDeletableChildRouteBinding()` — taken whenever the route has a parent parameter in the URI *and* (`->scopeBindings()` is on *or* the child has a binding field), unless `->withoutScopedBindings()`. Both resolve through the **parent's** `resolveChildRouteBindingQuery()` and never touch the child, so the override is dead code.
+
+Today no route hits 2–4: `messages/{message}` and `comments/{comment}` are top-level, nothing calls `withTrashed()`, and the only nested routes bind `{conversation}` alone. Keep it that way. If a scoped or trashed variant is ever needed, the visibility check has to move — to the parent's `resolveChildRouteBindingQuery()`, or to a policy — because the child override will silently stop running. Nothing fails loudly when it does.
+
+Do not put the check in the Action: `ListCommentReplies` is handed a comment the binding already vetted, and repeating it there would leave `like`/`update`/`destroy` uncovered and break the Action's query-count ceiling.
+
+**On the MorphTo:** do not repeat the claim that "`whereHas` cannot reach through a `MorphTo`" — it was the reason recorded here and in `Comment` for two phases, and it is false. `whereHasMorph()` exists and does reach through one. Constraining the binding query is declined, not unavailable: `whereHasMorph('commentable', '*')` resolves the wildcard with its own `distinct()->pluck()` over the whole comments table (so it buys no query back, and only finds morph types that already have rows), and an explicit type list hardcodes the commentable whitelist into the model where nothing keeps it in step with the morph map. Loading the relation costs the same one query and leaves the parent on the model the controller receives.
+
+## What deactivation means: `users.is_active`, settled
+`is_active` used to gate exactly one thing — message delivery, via `User::acceptsMessagesFrom()` — so a "deactivated" account could still sign in, publish a listing, comment, like and review. That was recorded here as a gap for a later phase to settle once. Phase 2e settled it.
+
+**The predicate lives in one place: `User::isActive()`.** Nothing reads the `is_active` column directly any more. Deactivated now means, in full:
+
+1. **No session.** `Http\Middleware\EnsureAccountIsActive` runs in the `web` group (appended, so ahead of `auth` and `verified` and ahead of `HandleInertiaRequests`). Any authenticated request from a deactivated account is logged out, the session invalidated and the CSRF token regenerated, then redirected to `login` with a `status`. It adds no query, though not for the obvious reason: nothing in the default `web` group resolves the user, so this middleware is the **first** thing to call `$request->user()` and is what triggers the guard's lookup. That lookup is memoized and `HandleInertiaRequests` shares the same user into every response, so the query was always going to happen and this only moves it earlier. `is_active` is then a column already on the row.
+2. **No usable sign-in.** Fortify's credential check is deliberately *not* overridden. `Fortify::authenticateUsing()` replaces the guard's whole credential check, so bolting an application rule onto it means reimplementing `fortify.lowercase_usernames`, `Fortify::username()` and rehash-on-login — and it still would not cover the passkey route, which does not go through it. A deactivated login succeeds and the next request ends it. One check, every way in.
+3. **No public profile.** `UserPolicy::view` returns `$profile->isActive()`, for everyone. There is no owner carve-out, because (1) means a deactivated account can never be the viewer. Verified by request, and the mechanism is not what it looks like: the policy is never asked at all — the middleware ends the session first, so a browser request is redirected to `login` and a JSON one is aborted 403, and the controller that would call `authorize()` never runs. `Gate::allows('view', $deactivated)` asked directly still returns false, which is what the policy test pins.
+4. **No incoming messages.** `User::acceptsMessagesFrom()`, unchanged.
+
+What it deliberately does **not** mean: existing listings, comments and reviews stay published. Retiring them would need every listing query to join `users`, on the busiest read path in the application, for a flag almost no row carries — and retiring content is a moderation action with its own audit trail, which belongs on the Nova resource in Phase 3.
+
+`is_active` is absent from `User`'s `#[Fillable]` and from every Form Request, so no request bag can flip it. Deactivation is set in Nova on the `admins` guard. Self-service deactivation, if it is ever wanted, is its own flow with its own confirmation — do not add a checkbox to the profile form.

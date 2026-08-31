@@ -69,9 +69,16 @@ return [
     | be used to protect your Nova routes. This option should match one
     | of the authentication guards defined in the "auth" config file.
     |
+    | The default is "admin" rather than null on purpose. Nova resolves its
+    | guard with `config('nova.guard') ?? config('auth.defaults.guard')`
+    | (Laravel\Nova\Util::userGuard), so leaving this null would silently put
+    | the back office on the "web" guard and let any registered App\Models\User
+    | sign in to /nova. The back office authenticates App\Models\Admin on the
+    | "admin" guard, which is backed by the "admins" provider in config/auth.php.
+    |
     */
 
-    'guard' => env('NOVA_GUARD', null),
+    'guard' => env('NOVA_GUARD', 'admin'),
 
     /*
     |--------------------------------------------------------------------------
@@ -82,9 +89,13 @@ return [
     | used when passwords are reset. This option should mirror one of
     | the password reset options defined in the "auth" config file.
     |
+    | Defaulted to the "admins" broker, which resets passwords against the
+    | admin_password_reset_tokens table. A null value falls back to the
+    | application's default broker, which resets App\Models\User passwords.
+    |
     */
 
-    'passwords' => env('NOVA_PASSWORDS', null),
+    'passwords' => env('NOVA_PASSWORDS', 'admins'),
 
     /*
     |--------------------------------------------------------------------------

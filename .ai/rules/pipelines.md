@@ -37,3 +37,23 @@ Steps used by more than one flow go in app/Pipelines/{Domain}/Shared/ and type h
 `App\Actions\Pets\CreatePet` (a class) and `App\Pipelines\Pets\CreatePet` (a namespace) were the same identifier, so every import read ambiguously. Flow directories are named for the flow, not for the Action that runs it: `Pipelines/Pets/Create`, `Pipelines/Pets/Update`, `Pipelines/Pets/BuildHomeFeed`.
 
 That rename fixed the **directory** collision only. A step and the Action it delegates to may still share a class name — `Pipelines/Pets/Create/AttachFeaturedImage` opens with `use App\Actions\Pets\AttachFeaturedImage as AttachFeaturedImageAction;` — which is tolerated, not solved. If you are naming a new step that delegates to an Action, prefer a verb the Action does not use (`UploadFeaturedImage` for a step calling `AttachFeaturedImage`) and skip the alias.
+
+## A DB cascade bypasses Eloquent, and polymorphic children have no FK to cascade on
+`comments.parent_id` is `cascadeOnDelete`, so deleting a comment removes the whole subtree — but the database fires no Eloquent events doing it, and `likes` / `reports` reference a comment through a morph column, which cannot carry a foreign key at all. Deleting a comment therefore strands the likes and reports of the root *and of every cascaded descendant*, silently.
+
+That is not cosmetic. A stranded `reports` row sits in the moderation queue with `reportable` resolving to null — an item nobody can act on or dismiss, and one more of them every time a parent is deleted. Stranded likes keep being counted by `withCount('likes')` and keep `isLikedBy()` true.
+
+**Retracted, and do not repeat it:** this paragraph used to add that "comment ids are recycled (SQLite hands out `max(id)+1` without AUTOINCREMENT; InnoDB's counter does not survive a restart), so a stranded report eventually collides with a genuine report on whichever comment inherits the id". That is false on this schema. `$table->id()` emits `integer primary key autoincrement`, verified in `sqlite_master` for `comments`, `reviews` and `reports`, and `sqlite_sequence` carries live rows for all three; AUTOINCREMENT is exactly what stops SQLite reusing a deleted id. The MySQL half was only true before InnoDB 8.0, which persists the counter. The full correction is in .ai/rules/migrations.md — read it before citing id reuse anywhere. One caveat that does survive: MySQL `TRUNCATE TABLE` resets `AUTO_INCREMENT` to 1, so a truncate-and-reseed of a parent table (a `migrate:fresh` equivalent, an import) does hand out ids that already exist in a *sibling* table's morph columns. That is an operational hazard for whoever truncates, not a reason a delete flow must clean up — the dangling-queue-item reason above is, and it stands on its own.
+
+Rule: never let a cascade be the only thing deleting a row that has polymorphic children. Collect the subtree first, delete each polymorphic child explicitly, then delete the root — all inside one transaction opened by the Action, not by a step. `Pipelines\Comments\DeleteCommentThread` is the worked example; a new polymorphic child of Comment is a new step in that flow, not a branch in an existing one.
+
+If `Comment` ever gains an observer or soft deletes, the cascade must stop being trusted for the descendants' `comments` rows too — it bypasses both. The subtree is already collected, so that is a one-step change.
+
+## Deleting medialibrary rows inside a transaction: defer with DB::afterCommit
+`MediaObserver::deleted()` calls `Filesystem::removeAllFiles()` the instant `$media->delete()` returns from the database — not on commit. Deleting a file is not transactional, so any `$media->delete()` inside a `DB::transaction()` that a later step can throw out of leaves a **live media row whose file is gone**: a permanently broken image on a save the user was told had failed.
+
+Reordering steps only narrows the window, since every later step can still throw. Register the delete with `DB::afterCommit()` instead: the callback is discarded on rollback and fires once the row is durable, including when a caller has wrapped the Action in its own transaction (which a post-`DB::transaction()` delete in the Action still gets wrong). `Pipelines\Profiles\UpdateProfile\ClearPreviousProfileImage` is the worked example.
+
+`DB::afterCommit()` works under `RefreshDatabase`/`LazilyRefreshDatabase`: `Illuminate\Foundation\Testing\DatabaseTransactionsManager` overrides `afterCommitCallbacksShouldBeExecuted()` to fire at level 1, so the test's wrapping transaction is skipped rather than swallowing the callback.
+
+The residual failure is the acceptable direction: an orphan file with no media row — unreferenced and unreachable, not visibly broken.

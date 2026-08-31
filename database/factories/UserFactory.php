@@ -41,7 +41,7 @@ class UserFactory extends Factory
 
         return [
             'name' => fake()->name(),
-            'username' => fake()->unique()->userName(),
+            'username' => $this->uniqueHandle(),
             'bio' => fake()->optional(0.7)->paragraph(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -62,6 +62,26 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * A public handle that satisfies the application's own rule for one.
+     *
+     * `App\Concerns\ProfileValidationRules::usernameRules()` is
+     * `alpha_dash|min:3|max:50`, and Faker's `userName()` joins its parts with a
+     * **dot** — `wilbert.hartmann` — which `alpha_dash` rejects. Every factory
+     * member therefore carried a handle its own profile form would 422, which
+     * went unnoticed while nothing revalidated an existing row and started
+     * mattering the moment App\Nova\User began enforcing the same rules.
+     *
+     * Swapping `.` for `_` keeps Faker's uniqueness guarantee intact rather than
+     * needing the random suffix CategoryFactory's slugs use: `_` never appears
+     * in Faker's own output for this generator, so the mapping is injective and
+     * two distinct draws cannot collide on the unique index.
+     */
+    protected function uniqueHandle(): string
+    {
+        return str_replace('.', '_', fake()->unique()->userName());
     }
 
     /**

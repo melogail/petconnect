@@ -9,14 +9,19 @@ use App\Models\Comment;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * What the detail payload costs: one query for the listing and one for each
- * relation the action eager loads. Measured against the fixture below rather
- * than guessed, so an eager load that stops covering what a resource walks
- * pushes the count past it.
+ * What LoadPetDetail::handle() plus serialisation costs: one query for the
+ * listing and one for each relation the Action eager loads. Measured against
+ * the fixture below rather than guessed, so an eager load that stops covering
+ * what a resource walks pushes the count past it.
+ *
+ * This is the Action's number, not the page's — the detail *route* costs more,
+ * and DETAIL_ROUTE_QUERY_CEILING is the figure to reach for when asking what a
+ * visit to a listing costs.
  *
  * A count alone cannot see every miss, which is why the second test exists.
  * Dropping a single-parent eager load such as `category.media` moves one query
@@ -25,7 +30,18 @@ use Illuminate\Support\Facades\Storage;
  * nothing throws either. Only the thread — many comment authors, many repliers
  * — turns a missing eager load into a count that grows.
  */
-const DETAIL_PAYLOAD_QUERY_CEILING = 13;
+const DETAIL_ACTION_QUERY_CEILING = 13;
+
+/**
+ * What a visit to the listing page costs end to end: the Action's queries plus
+ * the two PetController::show adds around them — route model binding resolving
+ * `{pet}`, and RecordPetView::handle() incrementing the counter.
+ *
+ * Measured through the route so the number means "the detail page", which the
+ * Action's ceiling above does not: read as the page's cost it is two queries
+ * short and any regression baseline drawn from it starts out wrong.
+ */
+const DETAIL_ROUTE_QUERY_CEILING = 15;
 
 /**
  * Give a user the avatar PetOwnerResource reads with getFirstMediaUrl().
@@ -37,7 +53,7 @@ const DETAIL_PAYLOAD_QUERY_CEILING = 13;
  */
 function attachDetailAvatar(User $user): void
 {
-    $user->addMedia(UploadedFile::fake()->create('avatar.jpg', 10))
+    $user->addMedia(UploadedFile::fake()->image('avatar.jpg'))
         ->withCustomProperties([MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $user->media_directory_name])
         ->toMediaCollection('users');
 }
@@ -51,7 +67,7 @@ function listingUnderDetail(User $owner): Pet
     attachDetailAvatar($owner);
 
     $category = Category::factory()->create();
-    $category->addMedia(UploadedFile::fake()->create('icon.jpg', 10))
+    $category->addMedia(UploadedFile::fake()->image('icon.jpg'))
         ->toMediaCollection('categories');
 
     $pet = Pet::factory()
@@ -60,7 +76,7 @@ function listingUnderDetail(User $owner): Pet
         ->for(Breed::factory()->for($category))
         ->create();
 
-    $pet->addMedia(UploadedFile::fake()->create('cover.jpg', 10))
+    $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->withCustomProperties([
             Pet::FEATURED_PROPERTY => true,
             MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $owner->media_directory_name,
@@ -115,6 +131,33 @@ function countPetDetailQueries(Pet $pet, ?User $viewer): int
     return $queries;
 }
 
+/**
+ * Render the listing page as a signed-in visitor and report how many queries
+ * the request took.
+ *
+ * The cache is flushed first because RecordPetView counts a visitor once per
+ * window: a second measurement with the same visitor would skip the increment
+ * and come back one query short of the first for a reason that has nothing to
+ * do with what is being measured. The visitor is not the owner, for the same
+ * reason — an owner's visit is never counted.
+ */
+function countPetDetailRouteQueries(Pet $pet, User $visitor): int
+{
+    Cache::flush();
+
+    test()->actingAs($visitor);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    test()->get(route('pets.show', $pet))->assertOk();
+
+    $queries = count(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    return $queries;
+}
+
 test('serialises the detail payload in a constant number of queries however long the comment thread is', function () {
     Storage::fake(config('media-library.disk_name'));
     $owner = User::factory()->create();
@@ -130,7 +173,25 @@ test('serialises the detail payload in a constant number of queries however long
     $atFiveComments = countPetDetailQueries($pet, $owner);
 
     expect($atTwoComments)->toBe($atFiveComments)
-        ->and($atFiveComments)->toBeLessThanOrEqual(DETAIL_PAYLOAD_QUERY_CEILING);
+        ->and($atFiveComments)->toBeLessThanOrEqual(DETAIL_ACTION_QUERY_CEILING);
+});
+
+test('renders the listing page in a constant number of queries however long the comment thread is', function () {
+    Storage::fake(config('media-library.disk_name'));
+    $owner = User::factory()->create();
+    $pet = listingUnderDetail($owner);
+    $visitor = User::factory()->create();
+
+    seedCommentThread($pet, comments: 2, repliesEach: 2);
+
+    $atTwoComments = countPetDetailRouteQueries($pet, $visitor);
+
+    seedCommentThread($pet, comments: 3, repliesEach: 2);
+
+    $atFiveComments = countPetDetailRouteQueries($pet, $visitor);
+
+    expect($atTwoComments)->toBe($atFiveComments)
+        ->and($atFiveComments)->toBeLessThanOrEqual(DETAIL_ROUTE_QUERY_CEILING);
 });
 
 test('serialises the detail payload without a further query, because every relation it walks is eager loaded', function () {

@@ -24,6 +24,18 @@ interface Likeable
     public function likes(): MorphMany;
 
     /**
+     * Toggle the given user's like, returning the resulting liked state.
+     *
+     * Declared here so App\Actions\Likes\ToggleLike can be one path for every
+     * likeable model without type hinting a concrete class or an intersection
+     * with Model. HasLikes already supplies it, so no implementation changes.
+     *
+     * The acting user is a parameter, never auth(): model code behaves the
+     * same in HTTP, queue and console contexts.
+     */
+    public function toggleLike(User $user): bool;
+
+    /**
      * Users who should be notified when this model is liked.
      *
      * @return Collection<int, User>

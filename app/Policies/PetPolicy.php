@@ -17,10 +17,12 @@ use App\Models\User;
  * each of them either creates public content or notifies another user.
  *
  * The methods type hint User rather than Admin|User on purpose: Nova
- * authenticates App\Models\Admin on its own guard, and Laravel's gate refuses a
- * policy method whose first parameter does not accept the acting user, so an
- * Admin cannot slip through this policy by accident. Nova authorization is
- * Phase 3 and belongs on the Nova resource.
+ * authenticates App\Models\Admin on its own guard, and an Admin therefore
+ * cannot be authorised by this policy. The hint is a tripwire rather than a
+ * gate — Gate::canBeCalledWithUser() short-circuits to true for any non-null
+ * user and only reads the signature for guests, so an Admin reaching one of
+ * these raises a TypeError rather than returning false — and the guard is what
+ * actually keeps them apart. Nova authorization lives on the Nova resource.
  */
 class PetPolicy
 {

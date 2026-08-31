@@ -82,7 +82,7 @@ function petFormPayload(Category $category, array $overrides = []): array
  */
 function attachGalleryPhoto(Pet $pet, string $name = 'gallery.jpg'): Media
 {
-    return $pet->addMedia(UploadedFile::fake()->create($name, 10))
+    return $pet->addMedia(UploadedFile::fake()->image($name))
         ->toMediaCollection(Pet::PHOTO_COLLECTION);
 }
 
@@ -111,6 +111,30 @@ describe('show', function () {
 
         $this->get(route('pets.show', $pet))->assertNotFound();
     });
+
+    /**
+     * This page hosts the comment composer, which cannot draw a counter for a
+     * ceiling it has not been told. The prop is read through the same
+     * CommentValidationRules accessor the `max:` rule is built from, so moving
+     * the config moves both — which is what a non-default value checks and a
+     * hardcoded prop would fail.
+     */
+    test('ships the comment length ceiling the composer draws its counter from', function () {
+        config(['petconnect.comments.max_length' => 140]);
+        $pet = Pet::factory()->create();
+
+        $this->get(route('pets.show', $pet))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('commentBounds', ['max_length' => 140]));
+
+        $this->actingAs(User::factory()->create())
+            ->from(route('pets.show', $pet))
+            ->post(route('comments.store', ['commentable_type' => 'pet', 'commentable_id' => $pet->getKey()]), [
+                'content' => str_repeat('a', 141),
+            ])
+            ->assertInvalid(['content']);
+    });
 });
 
 describe('create', function () {
@@ -129,6 +153,45 @@ describe('create', function () {
             ->get(route('pets.create'))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page->component('pets/Create'));
+    });
+
+    /**
+     * The photo step caps the gallery and compresses each file to fit the
+     * per-image ceiling before it is attached, and both numbers were hardcoded
+     * in `pets/Create.vue` against `config/petconnect.php`. The prop is read
+     * through the same PetPhotoRules accessors the `max:` rules are built from,
+     * so moving the config moves both — which is the whole point, and which
+     * only a **non-default** value can show: asserting 3 and 512 here would
+     * pass against a prop that was still hardcoded.
+     *
+     * The upload below is the other half of the pair. `->image()` writes real
+     * bytes (never `->create()`, per .ai/rules/tests.md) and `->size(300)` is
+     * what the `max:` rule reads, so a 300 KB cover photo is under the 512 KB
+     * default and over the 256 KB this test configures. If the rule stopped
+     * reading the accessor the prop is built from, this half fails while the
+     * prop assertion above still passes.
+     */
+    test('ships the photo ceilings the picker enforces, and enforces the same ones', function () {
+        config([
+            'petconnect.pets.max_gallery_images' => 5,
+            'petconnect.pets.max_image_kilobytes' => 256,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('pets.create'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('photoBounds', ['max_gallery_images' => 5, 'max_image_kilobytes' => 256]));
+
+        $category = Category::factory()->create();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('pets.store'), petFormPayload($category, [
+                'featuredImage' => UploadedFile::fake()->image('cover.jpg')->size(300),
+            ]))
+            ->assertInvalid(['featuredImage' => 'The featured image must not exceed 256 KB.']);
+
+        expect(Pet::query()->count())->toBe(0);
     });
 });
 
@@ -158,7 +221,7 @@ describe('store', function () {
         $category = Category::factory()->create();
 
         $response = $this->actingAs($owner)->post(route('pets.store'), petFormPayload($category, [
-            'featuredImage' => UploadedFile::fake()->create('cover.jpg', 10),
+            'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]));
 
         $pet = Pet::query()->sole();
@@ -181,7 +244,7 @@ describe('store', function () {
         $category = Category::factory()->create();
 
         $payload = petFormPayload($category, [
-            'featuredImage' => UploadedFile::fake()->create('cover.jpg', 10),
+            'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
         foreach (OPTIONAL_COLLECTION_KEYS as $key) {
@@ -212,7 +275,7 @@ describe('store', function () {
         $category = Category::factory()->create();
 
         $payload = petFormPayload($category, [
-            'featuredImage' => UploadedFile::fake()->create('cover.jpg', 10),
+            'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]);
         Arr::forget($payload, $omitted);
 
@@ -278,6 +341,28 @@ describe('edit', function () {
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('pets/Edit')
                 ->where('pet.id', $pet->getKey()));
+    });
+
+    /**
+     * `pets/Edit.vue` carried the same two hardcoded numbers `pets/Create.vue`
+     * did, so the edit form needs the prop as much as the create form. Only the
+     * prop is asserted here: `UpdatePetRequest` builds its `max:` rules from
+     * the same PetPhotoRules accessors `StorePetRequest` does, and the create
+     * test already proves the rule and the prop move together.
+     */
+    test('ships the same photo ceilings to the edit form', function () {
+        config([
+            'petconnect.pets.max_gallery_images' => 5,
+            'petconnect.pets.max_image_kilobytes' => 256,
+        ]);
+        $owner = User::factory()->create();
+        $pet = Pet::factory()->for($owner)->create();
+
+        $this->actingAs($owner)
+            ->get(route('pets.edit', $pet))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('photoBounds', ['max_gallery_images' => 5, 'max_image_kilobytes' => 256]));
     });
 });
 
@@ -407,7 +492,7 @@ describe('update', function () {
         $this->actingAs($owner)
             ->put(route('pets.update', $pet), petFormPayload($category, [
                 'name' => 'Renamed',
-                'images' => [UploadedFile::fake()->create('d.jpg', 10)],
+                'images' => [UploadedFile::fake()->image('d.jpg')],
             ]))
             ->assertInvalid(['images' => 'This listing can hold 3 additional images; the edit would leave it with 4.']);
 

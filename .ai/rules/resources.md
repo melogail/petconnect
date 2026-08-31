@@ -32,3 +32,46 @@ Related: **PUT on a pet is a full replacement, not a patch.** An omitted key is 
 PetDetailResource emitted `images` as attached media rows while PetValidationRules accepts `images` as file uploads, and the resource's own contract tells a client to send back every field it received — which would post media objects at an `image` rule and 422. The read side is now `photos`; the write side stays `images` because it is the file input's name and is referenced by string in `petMessages()` and `galleryImages()`.
 
 Rule: when the read and write shapes of the same concept differ, give them different key names and say so in the resource docblock. The other three that already differ — `category`/`breed` objects vs `category_id`/`breed_id`, and `featured_image` URL vs `featuredImage` upload — are listed there for the same reason.
+
+## Comment threads are two levels deep, and CommentResource is the only comment payload
+`App\Http\Resources\Comment\CommentResource` is the single comment payload — the pet feed card, the pet detail page, `comments.index` and `comments.replies` all emit it. `Pet\PetCommentResource` was provisional and is gone; do not reintroduce a per-domain comment resource.
+
+Threads are exactly two levels: `PublishComment\ValidateParentBelongsToCommentable` rejects a reply whose parent is itself a reply. That is enforced, not conventional — every loader (`LoadPetDetail`, `EagerLoadFeedRelations`, `ListCommentThread`) walks comments-then-replies and a grandchild would be written to a row nothing reads back.
+
+`likes_count`, `replies_count`, `is_liked` and `has_reported` are read with `??` and never through the relation, so a loader that forgets one ships a neutral value rather than an N+1 — and on a one-row result set `preventLazyLoading` would not catch it either. Every loader must therefore carry `withCount(['likes','replies'])->withLikedBy($viewer)->withReportedBy($viewer)` plus `user.media` for the author avatar. All four are subqueries on a query already being issued: measured, the thread endpoint is a flat 8 queries whether the thread holds 9 comments or 94.
+
+## Never derive a user-visible flag from updated_at
+`updated_at` is the row's last-write stamp, not a statement about any one column, so a flag inferred from it is forged by every unrelated write. `MessageResource::is_edited` was `updated_at?->gt($created_at)` and pinning a message — which changes nothing a reader can see about the text — published "edited" for it; a restore, or any delivery-state column a later phase adds, would have done the same. Same-second writes hide it in tests, because both columns store seconds.
+
+A flag that claims a specific thing happened gets its own column, written by the one flow that does that thing: `messages.edited_at` is written only by `Pipelines\Messages\Revise\PersistContent`, is outside `#[Fillable]`, and `Message::$is_edited` (an appended attribute) reads it. Mirror the `is_pinned`/`pinned_at` pair rather than inventing a derivation in a resource.
+
+## whenLoaded() drops the key silently — forgetting an eager load entirely is cheaper, not louder
+Measured on a 10-row `reviews` page serialised with `->response()->getContent()`:
+
+- `with('user.media')` — 4 queries, `author` key present.
+- `with('user')` only — LazyLoadingViolationException on `media` (getFirstMediaUrl lazy loads it; force_lazy_loading is inverted outside production so the guardrail fires).
+- no eager load at all — **2 queries, no exception, no `author` key**, payload ~25% smaller.
+
+So the *complete* miss is the silent one and the half-miss is the loud one. `Model::preventLazyLoading()` never sees a relation nobody touched, and a query-count assertion goes DOWN rather than up, so neither the guardrail nor a count-based test catches a dropped `whenLoaded()` relation. A test protecting an eager load behind `whenLoaded()` must assert the key is present in the serialised payload.
+
+This applies to **every** `whenLoaded()` in the app, not to a shortlist. There are 16 of them today, across `CommentResource`, `ConversationResource`, `MessageResource`, `PetCardResource`, `PetCategoryOptionResource`, `PetDetailResource` and `ReviewResource` — `grep -rn 'whenLoaded(' app/Http/Resources` is the current list and is the only list worth trusting. An earlier version of this rule said "applies to every `whenLoaded()` in the app" and then named three resources, which read as an exhaustive enumeration and left the other four looking exempt. Do not re-enumerate them here; the grep does not go stale.
+
+## Four page components are missing — several payloads have no consumer
+Do not read a controller's props as evidence that a page renders them. As of Phase 2e, four Inertia components named by `Inertia::render()` do not exist or were never rewritten:
+
+- `profile/Show.vue` — `Web\ProfileController::show` (route, payload and tests are real; the page is not)
+- `messaging/Index.vue` and `messaging/Show.vue` — `Web\ConversationController`, outstanding since Phase 2d
+- `settings/Profile.vue` — exists, but still renders `name` and `email` only and reads them from `page.props.auth.user`, so `ProfileFormResource`'s 17 keys and the `locales` prop beside it have **no consumer**
+
+Nothing is broken by this: the profile save is a PATCH and every new rule is `nullable`, so the two-field form keeps working. The consequence is for judgement, not correctness — renaming a key in one of these resources today breaks a test, not a page, so the key-parity tests are the only guard. All four are Phase 4's.
+
+## A per-row policy flag that needs a relation is made free with chaperone(), not reimplemented in Vue
+`.ai/rules/policies.md` says a policy asked per row must not query, and the first answer people reach for is to leave the flag off the payload and let the client re-derive it. That is the rule written twice — it happened with `MessagePolicy::pin`, which the thread page decided in Vue from `isVerified() && hasParticipant()`.
+
+The right answer has two halves:
+1. The loader `chaperone()`s the parent onto every child it returns, so the child carries the model the page already holds instead of lazy loading it. `Actions\Messaging\PaginateConversationMessages` (`$conversation->messages()->chaperone('conversation')`) and `Actions\Messaging\BuildInbox` (`'lastMessage' => fn (HasOne $r) => $r->chaperone('conversation')`) are the worked examples. It is pure PHP and adds no query; on an eager load `matchOneOrMany()` sets the real parent after the `afterQuery` hook has set the eager-load dummy, so the final state is correct.
+2. The predicate answers from the loaded relation when there is one — `Conversation::hasParticipant()` reads `$this->users` and only falls back to `exists()` when `users` is unloaded. That is what makes `MessagePolicy::create` (`ConversationResource::can_send`) and `::pin` (`MessageResource::can_pin`) free per row while still costing their one query when a controller asks them against a bare route-bound model.
+
+The resource then emits `false` when the relation it depends on is missing, rather than asking. Not `whenLoaded()`: that drops the key silently and a client reads `undefined` as allowed.
+
+Cost paid knowingly: `PaginateConversationMessages` does `loadMissing('users')`, which is one extra query on `conversations.messages.index` only (free on `conversations.show`, where LoadConversationParticipants already loaded it). Measured flat: inbox 7, thread 8, profile 10, unchanged before and after.

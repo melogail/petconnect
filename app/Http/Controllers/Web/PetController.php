@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Actions\Likes\ToggleLike;
 use App\Actions\Pets\CreatePet;
 use App\Actions\Pets\DeletePet;
 use App\Actions\Pets\ListPetCategories;
 use App\Actions\Pets\LoadPetDetail;
 use App\Actions\Pets\RecordPetView;
-use App\Actions\Pets\TogglePetLike;
 use App\Actions\Pets\TogglePetStatus;
 use App\Actions\Pets\UpdatePet;
+use App\Concerns\CommentValidationRules;
+use App\Concerns\PetPhotoRules;
 use App\Enums\HealthStatus;
 use App\Enums\ListingType;
 use App\Enums\PetGender;
 use App\Enums\PetStatus;
+use App\Enums\ReportCategory;
+use App\Enums\ReportReason;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pet\StorePetRequest;
 use App\Http\Requests\Pet\UpdatePetRequest;
@@ -30,9 +34,43 @@ use Inertia\Response;
  *
  * Every action authorizes through PetPolicy and then hands the work to one
  * Action or pipeline; no query or business rule lives here.
+ *
+ * ## Why a validation Concern is used by a controller
+ *
+ * `show` ships `commentBounds`, because this page hosts the comment composer
+ * and the composer cannot enforce, or count towards, a ceiling it has not been
+ * told. Both keys are read through App\Concerns\CommentValidationRules — the
+ * same accessors the store and update requests build their `max:` rule from and
+ * Actions\Comments\ListCommentThread paginates by — rather than from `config()`
+ * here, so `petconnect.comments.max_length` and `.thread_per_page` each have
+ * one spelling and one default, and neither the counter nor the thread's page
+ * cursor can drift from the server. Web\ProfileController and
+ * Web\ConversationController do the same for review and message bounds.
+ *
+ * `thread_per_page` is on that prop because the client genuinely cannot work it
+ * out: the first slice of roots rides `pet.comments` and is sized by
+ * `petconnect.pets.detail_comment_page_size`, while `comments.index` pages by
+ * `petconnect.comments.thread_per_page`, and the two are independent env vars.
+ * Assuming they matched made the first "load more" refetch the slice already on
+ * screen. Its companion is `pet.root_comments_count`, which is the total the
+ * shipped roots have to be compared against — `comments_count` counts replies
+ * too. See Http\Resources\Pet\PetDetailResource.
+ *
+ * `create` and `edit` ship `photoBounds` for the same reason and read it the
+ * same way, through App\Concerns\PetPhotoRules. The photo step caps the gallery
+ * and compresses each file to fit the per-image ceiling before it is attached,
+ * and both numbers were hardcoded in the Vue pages against
+ * `config/petconnect.php`. It is PetPhotoRules rather than PetValidationRules
+ * deliberately: that trait carries `featuredImage()` / `galleryImages()`, which
+ * call `Illuminate\Http\Request::file()` and would fatal on a controller, and
+ * rule methods that read `$this->input()`. PetPhotoRules is the half that is
+ * safe off a Form Request — App\Nova\Pet already uses it for that reason.
  */
 class PetController extends Controller
 {
+    use CommentValidationRules;
+    use PetPhotoRules;
+
     /**
      * Show the form for publishing a listing.
      */
@@ -46,6 +84,7 @@ class PetController extends Controller
             'statuses' => PetStatus::options(),
             'genders' => PetGender::options(),
             'healthStatuses' => HealthStatus::options(),
+            'photoBounds' => $this->photoBounds(),
         ]);
     }
 
@@ -70,6 +109,13 @@ class PetController extends Controller
 
     /**
      * Show a listing. Public: guests reach a shared link without signing in.
+     *
+     * The report vocabulary ships as props because this page hosts the *comment*
+     * report dialog, and ReportCategory / ReportReason had no route anywhere in
+     * the application — the report vertical shipped a write endpoint whose
+     * dialog had no source for its two select controls. Same arrangement
+     * `create` uses for the listing form's enums, and the same two props
+     * `profile.show` carries for the review report dialog.
      */
     public function show(
         Request $request,
@@ -83,6 +129,9 @@ class PetController extends Controller
 
         return Inertia::render('pets/Show', [
             'pet' => PetDetailResource::make($loadPetDetail->handle($pet, $request->user())),
+            'reportCategories' => ReportCategory::options(),
+            'reportReasons' => ReportReason::options(),
+            'commentBounds' => $this->commentBounds(),
         ]);
     }
 
@@ -108,6 +157,7 @@ class PetController extends Controller
             'statuses' => PetStatus::options(),
             'genders' => PetGender::options(),
             'healthStatuses' => HealthStatus::options(),
+            'photoBounds' => $this->photoBounds(),
         ]);
     }
 
@@ -164,12 +214,16 @@ class PetController extends Controller
 
     /**
      * Toggle the viewer's like on a listing.
+     *
+     * Actions\Likes\ToggleLike, not a pet-specific Action: comments are
+     * likeable too, and a second one-line wrapper is where a shared flow starts
+     * drifting per model. It replaced Actions\Pets\TogglePetLike.
      */
-    public function toggleLike(Request $request, Pet $pet, TogglePetLike $togglePetLike): RedirectResponse
+    public function toggleLike(Request $request, Pet $pet, ToggleLike $toggleLike): RedirectResponse
     {
         $this->authorize('like', $pet);
 
-        $togglePetLike->handle($pet, $request->user());
+        $toggleLike->handle($pet, $request->user());
 
         return back();
     }

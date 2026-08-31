@@ -16,6 +16,7 @@ test('rejects a mass assigned privileged column', function (string $column, mixe
     'delivery status' => ['status', MessageStatus::Sent],
     'pinning moderator' => ['pinned_by', 1],
     'pin timestamp' => ['pinned_at', '2026-01-01 00:00:00'],
+    'edit timestamp' => ['edited_at', '2026-01-01 00:00:00'],
 ]);
 
 test('sends a new message as unpinned with the default delivery status', function () {

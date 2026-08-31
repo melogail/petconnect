@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Pet;
 
+use App\Http\Resources\Comment\CommentResource;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -39,6 +40,39 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *   the `images` upload rule and 422'd. The write name stays `images` because it
  *   is the file input's name and is referenced by string in petMessages() and
  *   galleryImages().
+ *
+ * ## Two comment counters, counting different things
+ *
+ * `comments_count` is the whole morphMany — roots and replies together — and is
+ * what "N comments" on the page is drawn from. `root_comments_count` counts
+ * only top-level comments, which is what `comments.index` pages, and it exists
+ * so the client can decide whether there is another page of *roots* to fetch
+ * without inferring it from a total that also counts replies. The two are
+ * equal only on a thread nobody has replied to; do not treat either as a
+ * substitute for the other. Both are `withCount()` aliases set by
+ * Actions\Pets\LoadPetDetail and default to 0 when a caller omits them.
+ *
+ * ## `location.coordinates` is `string|float|null`, and that is driver-dependent
+ *
+ * `latitude` and `longitude` are emitted exactly as the model hands them over,
+ * with no cast and no formatting. `pets.latitude` is `decimal(10, 8)` and
+ * `pets.longitude` is `decimal(11, 8)`, so **the PHP type is whichever the
+ * driver returns**: MySQL returns DECIMAL as a string, SQLite gives the column
+ * NUMERIC affinity and PDO returns a float. The `@property string|null` these
+ * carried on Pet was only half true, and the false half is the one a typed
+ * client would have been built on.
+ *
+ * A `decimal:8` cast is **declined**, and this is the same settled decision
+ * `users.lat` / `users.lng` records — read the long version in
+ * Http\Resources\Profile\ProfileFormResource. In short: it is a formatting
+ * cast, so it would emit `"31.20000000"` where the row holds `31.2` and the
+ * edit form would post back a differently spelled value than it was given; and
+ * these are one of two coordinate pairs in the application, so casting one
+ * alone would give the frontend two shapes to reason about instead of one. If
+ * this is ever tightened, tighten both pairs in one change.
+ *
+ * A client should widen to `number | string | null` and coerce once. `numeric`
+ * accepts either on the way back in.
  *
  * ## PUT is a full replacement
  *
@@ -112,8 +146,9 @@ class PetDetailResource extends JsonResource
 
             'likes_count' => (int) ($this->likes_count ?? 0),
             'comments_count' => (int) ($this->comments_count ?? 0),
+            'root_comments_count' => (int) ($this->root_comments_count ?? 0),
             'is_liked' => (bool) ($this->is_liked ?? false),
-            'comments' => PetCommentResource::collection($this->whenLoaded('comments')),
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
 
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

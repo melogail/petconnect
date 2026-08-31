@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\HasComments;
 use App\Concerns\HasLikes;
 use App\Concerns\HasSaves;
+use App\Contracts\Commentable;
 use App\Contracts\Likeable;
 use App\Enums\HealthStatus;
 use App\Enums\ListingType;
@@ -49,8 +50,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $state
  * @property string|null $postal_code
  * @property string $country
- * @property string|null $latitude
- * @property string|null $longitude
+ * @property string|float|null $latitude Uncast decimal(10, 8): a string on MySQL, a float on SQLite.
+ * @property string|float|null $longitude Uncast decimal(11, 8): see $latitude, and PetDetailResource.
  * @property HealthStatus $health_status
  * @property bool $vaccinated
  * @property bool $spayed_neutered
@@ -102,7 +103,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'traits',
     'additional_info',
 ])]
-class Pet extends Model implements HasMedia, Likeable
+class Pet extends Model implements Commentable, HasMedia, Likeable
 {
     /** @use HasFactory<PetFactory> */
     use HasComments, HasFactory, HasLikes, HasSaves, InteractsWithMedia, SoftDeletes;
@@ -212,6 +213,27 @@ class Pet extends Model implements HasMedia, Likeable
      * @return Collection<int, User>
      */
     public function likeNotificationRecipients(): Collection
+    {
+        $this->loadMissing('user');
+
+        return collect([$this->user])->filter()->values();
+    }
+
+    /**
+     * The listing owner is notified when somebody comments on their pet.
+     *
+     * A reply notifies the comment it answers, not the owner, so this is only
+     * consulted for a top-level comment;
+     * Pipelines\Comments\PublishComment\NotifyCommentable drops the author
+     * from the result, which is what keeps an owner's own comment silent.
+     *
+     * loadMissing() for the same reason likeNotificationRecipients() uses it:
+     * Model::preventLazyLoading() is on outside production and the instance the
+     * publish flow resolved is not guaranteed to carry the owner.
+     *
+     * @return Collection<int, User>
+     */
+    public function commentNotificationRecipients(): Collection
     {
         $this->loadMissing('user');
 

@@ -2,6 +2,8 @@
 
 use App\Models\Pet;
 use Illuminate\Database\Eloquent\MassAssignmentException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('nearby keeps a listing at the exact search point', function () {
     Pet::factory()->at(0.0, 0.0)->create();
@@ -130,4 +132,22 @@ test('rejects a mass assigned view count', function () {
         ->toThrow(MassAssignmentException::class);
 
     expect($pet->fresh()->views)->toBe(7);
+});
+
+test('generates a cropped thumb and a contained display derivative for a listing photo', function () {
+    Storage::fake(config('media-library.disk_name'));
+    $pet = Pet::factory()->create();
+
+    $media = $pet->addMedia(UploadedFile::fake()->image('cover.jpg', 1600, 1200))
+        ->toMediaCollection(Pet::PHOTO_COLLECTION);
+
+    $disk = Storage::disk(config('media-library.disk_name'));
+    $disk->assertExists($media->getPathRelativeToRoot('thumb'));
+    $disk->assertExists($media->getPathRelativeToRoot('display'));
+
+    expect(getimagesize($disk->path($media->getPathRelativeToRoot('thumb'))))
+        ->toMatchArray([0 => 400, 1 => 400, 'mime' => 'image/jpeg']);
+
+    expect(getimagesize($disk->path($media->getPathRelativeToRoot('display'))))
+        ->toMatchArray([0 => 1280, 1 => 960, 'mime' => 'image/jpeg']);
 });

@@ -18,3 +18,12 @@ Inertia serialises to FormData as soon as the payload contains a File, and `obje
 Two obligations follow. Send `null`, not `[]` or `{}`, when the intent is "explicitly cleared" and the backend distinguishes the two. And do not assume a backend `present` rule can be satisfied by an empty collection — it cannot; the backend rules deliberately omit `present` on collection keys for this reason (see .ai/rules/requests.md).
 
 The pet create form is the live case: it always posts a required `featuredImage`, so it is always multipart, and a listing with no traits/vaccinations/medications/allergies/extras/map pin sends six fewer keys than the same listing edited without a new photo.
+
+## Regenerating Wayfinder by hand needs --with-form, or it silently drops the form variants
+`vite.config.ts` configures `wayfinder({ formVariants: true })`, so the build emits a `.form` helper next to every route/action function. A bare `php artisan wayfinder:generate` does **not** read `vite.config.ts` — form variants are opt-in per invocation — so it overwrites `resources/js/{actions,routes}/**` with a tree that has no `.form` on anything.
+
+Nothing fails at generation time. It surfaces later and somewhere else: `npm run types:check` reports `TS2339: Property 'form' does not exist` at every existing `v-bind="store.form()"` call site (15 of them, all pre-existing scaffold pages such as `resources/js/pages/auth/Login.vue`), which reads like the *pages* are broken. They are not; the generated tree is.
+
+Regenerate with `php artisan wayfinder:generate --with-form --no-interaction`, or just run `npm run build` and let the vite plugin do it with the configured options. Then confirm with `npm run types:check`.
+
+`resources/js/{actions,routes,wayfinder}/**` is generated output: regenerate it, never hand-edit it, and never "fix" a `.form` error by changing the `.vue` call site.

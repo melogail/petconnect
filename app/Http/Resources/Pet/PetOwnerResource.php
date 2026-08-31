@@ -2,38 +2,25 @@
 
 namespace App\Http\Resources\Pet;
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\User\UserSummaryResource;
 
 /**
- * The listing owner as a pet payload shows them: enough to render a byline and
- * link to a profile, and nothing more.
+ * The listing owner as a pet payload shows them.
  *
- * Deliberately narrow. The legacy pet payloads embedded a full UserResource,
- * which put the owner's email, phone and exact coordinates on a public page.
+ * The five keys and the reasoning behind them now live in
+ * App\Http\Resources\User\UserSummaryResource, which this class and
+ * Http\Resources\Comment\CommentAuthorResource both extend. Both used to carry
+ * their own copy of the same toArray(); the messaging vertical needed the same
+ * shape a third time, which is where that stopped being a deferrable cost.
  *
- * The avatar is read with getFirstMediaUrl(), so **whoever loads the User must
- * eager load `user.media`**. Model::preventLazyLoading() will not catch a miss
- * here: medialibrary's force_lazy_loading turns the access into a loadMissing(),
- * which the guardrail permits, so the cost is a silent query per rendered
- * avatar (measured: 48 on a 12-card feed). See .ai/rules/app.md.
+ * The subclass survives so a pet payload can name its owner "the owner" without
+ * the Pet namespace importing a class called CommentAuthorResource to say so,
+ * and so a future owner-only key (response rate, verified-seller badge) has
+ * somewhere to go that does not widen every user summary in the app.
  *
- * @mixin User
+ * The eager-loading contract is unchanged and is the parent's: whoever loads
+ * the User must eager load `user.media`, because the avatar is a
+ * getFirstMediaUrl() call — measured at 48 silent queries on a 12-card feed
+ * before the loaders carried it.
  */
-class PetOwnerResource extends JsonResource
-{
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'username' => $this->username,
-            'location' => $this->location,
-            'avatar' => $this->getFirstMediaUrl('users', 'thumb') ?: null,
-        ];
-    }
-}
+class PetOwnerResource extends UserSummaryResource {}

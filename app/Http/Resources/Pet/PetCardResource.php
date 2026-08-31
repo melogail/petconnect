@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Pet;
 
+use App\Http\Resources\Comment\CommentResource;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -62,7 +63,7 @@ class PetCardResource extends JsonResource
             'likes_count' => (int) ($this->likes_count ?? 0),
             'comments_count' => (int) ($this->comments_count ?? 0),
             'is_liked' => (bool) ($this->is_liked ?? false),
-            'comments' => PetCommentResource::collection($this->whenLoaded('comments')),
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
 
             'distance' => $this->when(
                 $this->distance !== null,

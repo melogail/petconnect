@@ -18,3 +18,8 @@ Two reasons, both measured or bitten before: (1) `$media->model` is an unhydrate
 The owner segment comes from the `owner_directory` custom property (`MediaPathGenerator::OWNER_DIRECTORY_PROPERTY`), which whatever attaches media MUST set to the owner's `media_directory_name`. The DB lookup in the generator is a fallback only. The generator is bound `scoped` in `AppServiceProvider::register()` so that fallback can memoise per request; do not memoise statically, it would go stale across a refreshed test database.
 
 The trailing media-id segment is deliberate: without it two same-named uploads on one model overwrite each other, which the legacy generator allowed.
+
+## The owner lookup lives in OwnerDirectoryResolver, and the fallback should now never run
+Amends the MediaPathGenerator note above. The owner-directory lookup and its memo moved out of the generator into `App\MediaLibrary\OwnerDirectoryResolver`, because two callers need the same answer for opposite reasons: `Observers\MediaOwnerDirectoryObserver` asks once on `creating` so it can stamp the property before the file is written, and the generator asks on every generated URL where it is a fallback. Both `OwnerDirectoryResolver` and `MediaPathGenerator` are bound `scoped` in `AppServiceProvider::register()`, so the memo still lives exactly one request — do not memoise statically.
+
+Consequence: the database fallback is now expected never to run, because the observer stamps `owner_directory` on any row that arrives without it (see .ai/rules/observers.md). "Whatever attaches media MUST set it" is no longer a rule callers can break — but keep setting it in the Actions that already do, since that path costs no query at all.

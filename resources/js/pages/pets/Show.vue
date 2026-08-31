@@ -1,100 +1,102 @@
 <script setup lang="ts">
-// Placeholder page — proves the pet detail props arrive. Replaced in Phase 4.
-import { Head, Link } from '@inertiajs/vue3';
-import { home } from '@/routes';
-import { edit as editPet } from '@/routes/pets';
-import type { PetDetail } from '@/types';
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import CommentThread from '@/components/comments/CommentThread.vue';
+import PetAboutCard from '@/components/pets/PetAboutCard.vue';
+import PetAttributesCard from '@/components/pets/PetAttributesCard.vue';
+import PetDetailHeader from '@/components/pets/PetDetailHeader.vue';
+import PetGallery from '@/components/pets/PetGallery.vue';
+import PetHealthCard from '@/components/pets/PetHealthCard.vue';
+import PetLocationCard from '@/components/pets/PetLocationCard.vue';
+import PetOwnerCard from '@/components/pets/PetOwnerCard.vue';
+import type {
+    CommentBounds,
+    PetDetail,
+    ReportCategory,
+    ReportReason,
+    SelectOption,
+} from '@/types';
 
-defineProps<{
+/**
+ * One listing. Public — a shared link has to work for somebody with no account.
+ *
+ * Three things about the payload drive this page:
+ *
+ * - The **owner-only leaves** (`location.address`, `location.detailedAddress`,
+ *   `location.coordinates`, `health.medications`, `health.allergies`,
+ *   `health.vetName`, `health.vetPhone`) are *absent*, not null, for anybody
+ *   who cannot update the listing. Each panel gates on `is_owner` and still
+ *   coalesces every leaf.
+ * - The **comment thread is bounded**: at most 20 roots with at most 3 replies
+ *   each, while `comments_count` is the true total and `root_comments_count`
+ *   the total of top-level comments alone. `CommentThread` pages the rest from
+ *   `comments.index` / `comments.replies`, and needs the root count because the
+ *   endpoint pages roots.
+ * - `commentBounds` carries both of the thread's bounds. `max_length` is the
+ *   composer's ceiling, built from the same accessor the `max:` rule is, and
+ *   `thread_per_page` is the endpoint's page size, which the client cannot
+ *   infer from the size of the slice it was shipped. Nothing here hardcodes
+ *   either.
+ *
+ * The report vocabulary ships as props because this page hosts the *comment*
+ * report dialog; a pet is not reportable at all (`Enums\Reportable` is
+ * `comment|review`), so there is no report control on the listing itself.
+ */
+const { pet } = defineProps<{
     pet: PetDetail;
+    reportCategories: SelectOption<ReportCategory>[];
+    reportReasons: SelectOption<ReportReason>[];
+    commentBounds: CommentBounds;
 }>();
+
+const page = usePage();
+
+/** Every write on this page needs an account; the backend needs it verified. */
+const isSignedIn = computed(() => Boolean(page.props.auth.user));
+
+const canMessageOwner = computed(() => isSignedIn.value && !pet.is_owner);
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-3xl space-y-6 p-6">
+    <div class="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
         <Head :title="pet.name" />
 
-        <header class="space-y-1">
-            <h1 class="text-2xl font-semibold">{{ pet.name }}</h1>
-            <p class="text-muted-foreground text-sm">
-                Placeholder listing page — the real UI lands in Phase 4.
-            </p>
-            <nav class="flex gap-3 text-sm underline">
-                <Link :href="home()">Home</Link>
-                <Link v-if="pet.is_owner" :href="editPet(pet.id)">Edit</Link>
-            </nav>
-        </header>
+        <PetGallery
+            :photos="pet.photos"
+            :featured-image="pet.featured_image"
+            :name="pet.name"
+        />
 
-        <!-- Top-level scalars are snake_case; the nested groups are camelCase. -->
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <dt>Listing type</dt>
-            <dd>{{ pet.listing_type }}</dd>
-            <dt>Status</dt>
-            <dd>{{ pet.status }}</dd>
-            <dt>Gender</dt>
-            <dd>{{ pet.gender }}</dd>
-            <dt>Category</dt>
-            <dd>{{ pet.category?.name ?? '—' }}</dd>
-            <dt>Breed</dt>
-            <dd>{{ pet.breed?.name ?? '—' }}</dd>
-            <dt>Owner</dt>
-            <dd>{{ pet.user?.name ?? '—' }}</dd>
-            <dt>City</dt>
-            <dd>{{ pet.location.city }}</dd>
-            <dt>Postal code</dt>
-            <dd>{{ pet.location.postalCode ?? '—' }}</dd>
-            <dt>Health</dt>
-            <dd>{{ pet.health.status }}</dd>
-            <dt>Spayed / neutered</dt>
-            <dd>{{ pet.health.spayedNeutered ? 'yes' : 'no' }}</dd>
-            <dt>Special needs</dt>
-            <dd>{{ pet.health.specialNeeds ?? '—' }}</dd>
-            <dt>Last vet visit</dt>
-            <dd>{{ pet.health.lastVetVisit ?? '—' }}</dd>
-            <dt>Traits</dt>
-            <dd>{{ pet.traits?.join(', ') ?? '—' }}</dd>
-            <dt>Additional info</dt>
-            <dd>{{ Object.keys(pet.additionalInfo ?? {}).length }} entries</dd>
-            <dt>Views / likes / comments</dt>
-            <dd>
-                {{ pet.views }} / {{ pet.likes_count }} /
-                {{ pet.comments_count }}
-            </dd>
-            <dt>Photos</dt>
-            <dd>{{ pet.photos?.length ?? 0 }}</dd>
-        </dl>
+        <PetDetailHeader :pet="pet" :can-like="isSignedIn" />
 
-        <!--
-            The thread is bounded: at most 20 top-level comments, each with at
-            most 3 replies. `comments_count` is the true total.
-        -->
-        <section class="space-y-1 text-sm">
-            <h2 class="font-medium">
-                Comments ({{ pet.comments?.length ?? 0 }} of
-                {{ pet.comments_count }} loaded)
-            </h2>
-            <ul>
-                <li v-for="comment in pet.comments" :key="comment.id">
-                    {{ comment.user?.name ?? 'Someone' }} —
-                    {{ comment.replies?.length ?? 0 }} replies
-                </li>
-            </ul>
-        </section>
+        <div class="grid gap-6 lg:grid-cols-3">
+            <div class="space-y-6 lg:col-span-2">
+                <PetAboutCard :pet="pet" />
+                <PetAttributesCard :pet="pet" />
+                <PetHealthCard :pet="pet" />
+            </div>
 
-        <!-- Owner-only leaves are absent, not null, for everybody else. -->
-        <section v-if="pet.is_owner" class="space-y-1 text-sm">
-            <h2 class="font-medium">Owner-only</h2>
-            <p>Address: {{ pet.location.address ?? '—' }}</p>
-            <p>Detailed address: {{ pet.location.detailedAddress ?? '—' }}</p>
-            <p>
-                Coordinates:
-                {{ pet.location.coordinates?.lat ?? '—' }},
-                {{ pet.location.coordinates?.lng ?? '—' }}
-            </p>
-            <p>Vet: {{ pet.health.vetName ?? '—' }}</p>
-            <p>Vet phone: {{ pet.health.vetPhone ?? '—' }}</p>
-            <p>Medications: {{ pet.health.medications?.length ?? 0 }}</p>
-            <p>Allergies: {{ pet.health.allergies?.join(', ') ?? '—' }}</p>
-        </section>
+            <div class="space-y-6">
+                <PetOwnerCard
+                    v-if="pet.user"
+                    :owner="pet.user"
+                    :can-message="canMessageOwner"
+                />
+                <PetLocationCard :pet="pet" />
+            </div>
+        </div>
+
+        <CommentThread
+            :comments="pet.comments"
+            :comments-count="pet.comments_count"
+            :root-comments-count="pet.root_comments_count"
+            commentable-type="pet"
+            :commentable-id="pet.id"
+            :max-length="commentBounds.max_length"
+            :thread-per-page="commentBounds.thread_per_page"
+            :can-interact="isSignedIn"
+            :report-categories="reportCategories"
+            :report-reasons="reportReasons"
+        />
     </div>
 </template>

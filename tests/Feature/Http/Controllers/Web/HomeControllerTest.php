@@ -1,9 +1,14 @@
 <?php
 
+use App\MediaLibrary\MediaPathGenerator;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Pet;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -69,4 +74,50 @@ test('the feed costs the same number of queries whatever the page size', functio
 
     expect($atTwelve)->toBe($atTwentyFour)
         ->and($atTwelve)->toBeLessThanOrEqual(12);
+});
+
+/**
+ * Give a user the avatar the feed card's comment bylines read with
+ * getFirstMediaUrl(), stamping the owner directory the way the upload pipeline
+ * does so MediaPathGenerator never looks the owner up again — that fallback is
+ * a query of its own and would count here as a missing eager load.
+ */
+function attachFeedAvatar(User $user): void
+{
+    $user->addMedia(UploadedFile::fake()->image('avatar.jpg'))
+        ->withCustomProperties([MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $user->media_directory_name])
+        ->toMediaCollection('users');
+}
+
+/**
+ * Comment on every listing in the feed, each comment written by an author of
+ * its own carrying an avatar.
+ *
+ * @param  Collection<int, Pet>  $pets
+ */
+function commentOnEveryListing(Collection $pets): void
+{
+    foreach ($pets as $pet) {
+        $author = User::factory()->create();
+        attachFeedAvatar($author);
+
+        Comment::factory()->for($author)->for($pet, 'commentable')->create();
+    }
+}
+
+test('the feed costs the same number of queries however many comments its cards carry', function () {
+    Storage::fake(config('media-library.disk_name'));
+    $pets = Pet::factory()->available()->count(3)->create();
+
+    commentOnEveryListing($pets);
+
+    $atOneCommentEach = countFeedQueries($this, 12);
+
+    commentOnEveryListing($pets);
+    commentOnEveryListing($pets);
+
+    $atThreeCommentsEach = countFeedQueries($this, 12);
+
+    expect($atOneCommentEach)->toBe($atThreeCommentsEach)
+        ->and($atThreeCommentsEach)->toBeLessThanOrEqual(12);
 });

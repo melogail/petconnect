@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Concerns\HasLikes;
 use App\Concerns\HasReviews;
 use App\Contracts\Likeable;
+use App\Contracts\Reviewable;
+use App\Notifications\VerifyEmailNotification;
 use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -43,8 +45,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $state
  * @property string|null $city
  * @property string|null $address
- * @property string|null $lat
- * @property string|null $lng
+ * @property string|float|null $lat Uncast decimal(10, 8): a string on MySQL, a float on SQLite.
+ * @property string|float|null $lng Uncast decimal(11, 8): see $lat, and ProfileFormResource.
  * @property string|null $timezone
  * @property string $locale
  * @property bool $is_active
@@ -76,7 +78,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 ])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 #[ObservedBy([UserObserver::class])]
-class User extends Authenticatable implements HasLocalePreference, HasMedia, Likeable, MustVerifyEmail, PasskeyUser
+class User extends Authenticatable implements HasLocalePreference, HasMedia, Likeable, MustVerifyEmail, PasskeyUser, Reviewable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasLikes, HasReviews, InteractsWithMedia, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -95,6 +97,29 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Bind `{user}` by **id**, never by `username`.
+     *
+     * Stated explicitly and redundantly — `id` is already the default — because
+     * this is the one file somebody would change it in, and changing it breaks
+     * far more than the profile route they would be looking at.
+     * App\Concerns\ResolvesMorphTarget::findVisibleOrFail() resolves every
+     * Reviewable and Reportable target through `getRouteKeyName()`, so a User
+     * keyed on a string column would have all of those lookups compare an
+     * integer morph id against `users.username`. On SQLite that matches nothing
+     * and returns a 404; on MySQL it is a silent type-juggled comparison. The
+     * profile route pins the other half with `whereNumber('user')`.
+     *
+     * A `/@handle` URL is a routing change, not a model change: give it its own
+     * route with its own explicit `->where(...)` binding and leave this alone.
+     * The same reasoning is recorded in ProfileValidationRules::usernameRules(),
+     * routes/web.php and Web\ProfileController::show.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
     }
 
     /**
@@ -129,6 +154,73 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     }
 
     /**
+     * Whether this account may be used at all.
+     *
+     * The single definition of "deactivated" in the application. Everything
+     * that acts on the flag asks this method rather than reading `is_active`:
+     * Http\Middleware\EnsureAccountIsActive (which ends the session on the
+     * next request, whatever established it — password, passkey or an existing
+     * cookie), UserPolicy::view (which refuses the public profile) and
+     * acceptsMessagesFrom() below (which refuses delivery). Read that
+     * middleware's docblock for what the three of them add up to.
+     *
+     * `is_active` is deliberately absent from #[Fillable], so no request bag
+     * can flip it — the profile form cannot deactivate an account and neither
+     * can a forged field. It is a moderation decision, set in Nova on the
+     * `admins` guard, and self-service deactivation would be its own flow with
+     * its own confirmation.
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    /**
+     * A fresh opaque directory name for this user's uploaded files.
+     *
+     * The one place the value is drawn. UserObserver::creating is the one place
+     * it is *assigned* — factories, seeders, Nova and the registration flow all
+     * arrive there — and Actions\Users\RegisterUser retries a create() when the
+     * unique index refuses a draw, which re-runs the observer and therefore
+     * redraws through this method.
+     *
+     * 10^15 to 10^18 inclusive, so 16 to 19 digits. Uniqueness is the DB unique
+     * index's guarantee, not this method's: it draws at random and checks
+     * nothing.
+     */
+    public static function freshMediaDirectoryName(): string
+    {
+        return (string) random_int(10 ** 15, 10 ** 18);
+    }
+
+    /**
+     * Whether this user will accept a message written by the given sender.
+     *
+     * The single definition of recipient-side consent in the application. Both
+     * write paths ask it — Pipelines\Messages\Send\EnsureRecipientAccepts for
+     * every message, and Pipelines\Messages\StartDirectConversation\
+     * EnsureRecipientAccepts for a thread opened with no message at all — via
+     * Conversation::acceptsMessagesFrom(), so a rule added here takes effect on
+     * both without either flow being edited.
+     *
+     * Today it is `is_active`: a deactivated account receives nothing. A
+     * recipient-side block list and per-recipient message settings are their
+     * own vertical (a table, a UI, a policy of their own) and land as further
+     * checks in this method — including the initiator-side half, "has this user
+     * blocked the sender", which is why the sender is a parameter rather than
+     * this being an `acceptsMessages()` predicate about one account.
+     *
+     * `is_active` used to gate *only* this, so a deactivated account could
+     * still sign in, publish, comment and like. It no longer does: deactivation
+     * now also ends the session, refuses the sign-in and hides the public
+     * profile. See isActive() and Http\Middleware\EnsureAccountIsActive.
+     */
+    public function acceptsMessagesFrom(User $sender): bool
+    {
+        return $this->isActive();
+    }
+
+    /**
      * Get the user's preferred locale for notifications and mail.
      */
     public function preferredLocale(): string
@@ -136,10 +228,24 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
         $fallback = (string) config('app.locale', 'en');
         $locale = (string) ($this->locale ?: $fallback);
 
-        /** @var array<int, string> $available */
-        $available = config('app.available_locales', ['en', 'ar']);
+        /** @var list<string> $supported */
+        $supported = config('petconnect.locales.supported', ['en']);
 
-        return in_array($locale, $available, true) ? $locale : $fallback;
+        return in_array($locale, $supported, true) ? $locale : $fallback;
+    }
+
+    /**
+     * Send the branded, locale-aware verification email instead of Laravel's
+     * plain one.
+     *
+     * Overriding the method rather than swapping the notification in a listener
+     * keeps every sender — Fortify's registration controller, the
+     * `verification.send` route, a console command — on the same mail without
+     * any of them knowing about it. See App\Notifications\VerifyEmailNotification.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
     }
 
     /**
@@ -202,11 +308,15 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     }
 
     /**
-     * @return BelongsToMany<Conversation, $this>
+     * The inverse of Conversation::users(); both sides must name the same pivot
+     * model, or last_read_at is a Carbon on one relation and a string on the other.
+     *
+     * @return BelongsToMany<Conversation, $this, ConversationUser>
      */
     public function conversations(): BelongsToMany
     {
         return $this->belongsToMany(Conversation::class, 'conversation_user', 'user_id', 'conversation_id')
+            ->using(ConversationUser::class)
             ->withPivot('last_read_at')
             ->withTimestamps();
     }
@@ -217,6 +327,21 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      * @return Collection<int, User>
      */
     public function likeNotificationRecipients(): Collection
+    {
+        return collect([$this]);
+    }
+
+    /**
+     * A review of a user is about that user: they are told about it, and they
+     * are the one person who may not write it.
+     *
+     * Both halves come from this one method on purpose — see
+     * App\Contracts\Reviewable. It costs no query, because the subject is the
+     * model already in hand.
+     *
+     * @return Collection<int, User>
+     */
+    public function reviewSubjects(): Collection
     {
         return collect([$this]);
     }

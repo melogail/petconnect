@@ -49,7 +49,7 @@ function listingUnderEdit(string $name = 'Original'): Pet
  */
 function attachUpdateGalleryPhoto(Pet $pet, string $name = 'gallery.jpg'): Media
 {
-    return $pet->addMedia(UploadedFile::fake()->create($name, 10))
+    return $pet->addMedia(UploadedFile::fake()->image($name))
         ->toMediaCollection(Pet::PHOTO_COLLECTION);
 }
 
@@ -59,7 +59,7 @@ function attachUpdateGalleryPhoto(Pet $pet, string $name = 'gallery.jpg'): Media
  */
 function attachUpdateFeaturedPhoto(Pet $pet, string $name = 'cover.jpg'): Media
 {
-    return app(AttachFeaturedImage::class)->handle($pet, UploadedFile::fake()->create($name, 10));
+    return app(AttachFeaturedImage::class)->handle($pet, UploadedFile::fake()->image($name));
 }
 
 beforeEach(function () {
@@ -77,7 +77,7 @@ describe('gallery capacity', function () {
         $updated = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            galleryImages: [UploadedFile::fake()->create('c.jpg', 10)],
+            galleryImages: [UploadedFile::fake()->image('c.jpg')],
         );
 
         expect($updated->galleryPhotos())->toHaveCount(3);
@@ -93,7 +93,7 @@ describe('gallery capacity', function () {
         $edit = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            galleryImages: [UploadedFile::fake()->create('d.jpg', 10)],
+            galleryImages: [UploadedFile::fake()->image('d.jpg')],
         );
 
         expect($edit)->toThrow(PetGalleryLimitExceeded::class);
@@ -110,7 +110,7 @@ describe('gallery capacity', function () {
         $updated = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            galleryImages: [UploadedFile::fake()->create('d.jpg', 10)],
+            galleryImages: [UploadedFile::fake()->image('d.jpg')],
             deletedMediaIds: [$doomed->getKey()],
         );
 
@@ -126,7 +126,7 @@ describe('gallery capacity', function () {
         $edit = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            galleryImages: [UploadedFile::fake()->create('d.jpg', 10)],
+            galleryImages: [UploadedFile::fake()->image('d.jpg')],
             deletedMediaIds: [$strangerPhoto->getKey()],
         );
 
@@ -143,7 +143,7 @@ describe('gallery capacity', function () {
         $edit = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            galleryImages: [UploadedFile::fake()->create('d.jpg', 10)],
+            galleryImages: [UploadedFile::fake()->image('d.jpg')],
             deletedMediaIds: [$cover->getKey()],
         );
 
@@ -195,7 +195,7 @@ describe('deleted media', function () {
         $updated = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            featuredImage: UploadedFile::fake()->create('new-cover.jpg', 10),
+            featuredImage: UploadedFile::fake()->image('new-cover.jpg'),
             deletedMediaIds: [$doomed->getKey()],
         );
 
@@ -214,7 +214,7 @@ describe('cover photo', function () {
         $updated = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
-            featuredImage: UploadedFile::fake()->create('new-cover.jpg', 10),
+            featuredImage: UploadedFile::fake()->image('new-cover.jpg'),
         );
 
         $this->assertModelMissing($oldCover);

@@ -29,3 +29,14 @@ Rule: `present` goes on a scalar key, or on a group whose leaves are themselves 
 No feature test can catch a violation: Laravel's test client hands PHP arrays to the request whatever transport is declared, so `->post(..., ['traits' => []])` passes a `present` rule that a real browser would 422. Reason it through from the payload the frontend actually builds.
 
 Cost of the exemption: renaming a collection key silently wipes it instead of 422ing. The resource↔Form-Request key-parity test is the guard for that.
+
+## `sometimes` may never sit on a cross-field or presence rule
+`Validator::isValidatable()` calls `passesOptionalCheck()`, which returns false the moment an attribute carrying `sometimes` is absent from the payload. That skips **every** rule on that attribute, including implicit ones like `required_with` and `required_without` — so the rule never fires for the case it exists to catch, the key being missing. Reordering does not help; the gate sits ahead of the rule list.
+
+Measured twice. `ProfileValidationRules::passwordChangeRules()` accepted `password` with `current_password` omitted. `ProfileValidationRules::latitudeRules()`/`longitudeRules()` were `sometimes|nullable|numeric|between|required_with:...`, so `PUT /nova-api/users/{id}` and `PATCH settings/profile` with `lat` alone both succeeded and wrote `lat = 51.5, lng = null`. Both pair rules are now `['nullable', 'required_with:<other>', 'numeric', 'between:...']` and both entry points 422.
+
+Standing rule for new code: `sometimes` may never sit on an attribute that also carries `required_with`, `required_without`, `required_if`, `confirmed`, `same`, `different`, `after`, `before`, `gte` or `lte`. Use `nullable` for the optionality, or compute the presence rule from `$this->filled()` the way `ListHomeFeedRequest` does for latitude/longitude. Order the presence rule before the rule that inspects the value, so the missing-field message wins when both could fire. `validated()` omits absent keys either way — it decides on a `$missingValue` sentinel from `data_get()` and never consults `sometimes` — so dropping it never changes PATCH semantics.
+
+Still-safe uses, after a full sweep of app/ (only two files use it): `ProfileValidationRules` phone/bio/addressLine/timezone/username/locale/avatar carry value rules only, and `MessageValidationRules::messageTypeRules()` is `['sometimes', Rule::enum]`.
+
+(Mirrored from .ai/rules/concerns.md, because the rules that carry this trap live in `App\Concerns\*ValidationRules` but the person who reintroduces it is editing a Form Request. Edit both copies together.)

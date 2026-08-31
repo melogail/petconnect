@@ -18,3 +18,10 @@ Actions with no policy-governed model do not call it. The Settings controllers a
 Form Requests validate only; do not implement authorize() in them, and do not use Gate::authorize() in controllers.
 
 Why: the legacy app split the same decision three ways — StorePetRequest::authorize() returned true while its controller never called the policy (anyone could publish), UpdatePetRequest checked the policy itself, and PetController::edit checked nothing at all (any verified account could read another owner's vet details, exact coordinates and medications). One convention, one place to audit.
+
+## A GET action never writes: Inertia v3 prefetching makes it a bug, not a purity argument
+The legacy ConversationController::show called markAsRead inside the GET, so rendering the page mutated state. Under Inertia v3 that is not just non-idempotent: link prefetching and instant visits issue real GET requests on hover and on intent, so a hovered inbox row would mark a thread read that nobody opened and the unread badge would clear itself as the pointer crossed the list. Browsers and proxies may also repeat a GET.
+
+`conversations.show` is therefore a pure read and the read cursor moves on POST `conversations.read`, which the thread page fires after it renders; `unread` is on the inbox payload so the client can skip the POST for threads already read. Cost is one extra request per thread opened.
+
+Rule: if a GET action needs to record that something was seen, split the write onto its own POST route. RecordPetView is the exception that proves it — it is deduped per visitor per window precisely because it sits on a GET.

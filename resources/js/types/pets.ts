@@ -1,3 +1,6 @@
+import type { Comment, CommentPreview } from './comments';
+import type { Coordinate } from './profile';
+
 export type PetListingType = 'adoption' | 'sale' | 'mating';
 export type PetStatus = 'available' | 'unavailable';
 export type PetGender = 'male' | 'female';
@@ -50,36 +53,6 @@ export type PetMedia = {
     featured: boolean;
 };
 
-type PetCommentFields = {
-    id: number;
-    content: string;
-    parent_id: number | null;
-    /** Only present when the backend eager loaded the author. */
-    user?: PetOwner;
-    has_reported: boolean;
-    created_at: string;
-};
-
-/**
- * A comment that carries no thread of its own.
- *
- * This is what a feed card's `comments` preview holds — the backend loads no
- * replies for a card at all, so the key is absent rather than empty — and what
- * a reply on the detail page is, replies being one level deep.
- */
-export type PetCommentPreview = PetCommentFields;
-
-/**
- * A top-level comment on the detail page, with a bounded preview of its replies.
- *
- * Both the thread and each reply list are capped by the backend
- * (`petconnect.pets.detail_comment_page_size` / `detail_reply_preview`);
- * `comments_count` on the pet carries the true total.
- */
-export type PetComment = PetCommentFields & {
-    replies?: PetCommentPreview[];
-};
-
 /** One clinical record in the health group's vaccination repeater. */
 export type PetVaccination = {
     name: string;
@@ -125,7 +98,7 @@ export type PetCard = {
     comments_count: number;
     is_liked: boolean;
     /** A bounded preview of the newest top-level comments, never their replies. */
-    comments?: PetCommentPreview[];
+    comments?: CommentPreview[];
     /** Only present when the feed query ran with a distance calculation. */
     distance?: number;
     created_at: string;
@@ -177,7 +150,12 @@ export type PetDetail = {
         postalCode: string | null;
         address?: string | null;
         detailedAddress?: string | null;
-        coordinates?: { lat: number | null; lng: number | null };
+        /**
+         * Uncast `decimal` columns, so each leaf is whatever the driver
+         * returned — a float on SQLite, a string on MySQL. Coerce once with
+         * `@/lib/coordinates`; a `decimal:8` cast is a settled refusal.
+         */
+        coordinates?: { lat: Coordinate; lng: Coordinate };
     };
     health: {
         status: PetHealthStatus;
@@ -201,8 +179,18 @@ export type PetDetail = {
     likes_count: number;
     /** The true total, not the length of the bounded `comments` thread below. */
     comments_count: number;
+    /**
+     * Top-level comments only — a different number from `comments_count`, which
+     * counts replies too.
+     *
+     * `comments.index` pages roots, so this is the one `CommentThread` compares
+     * the roots it holds against. Comparing against `comments_count` instead is
+     * what lit "load more" up on any thread with a single reply. The two are
+     * equal only where nobody has replied to anything.
+     */
+    root_comments_count: number;
     is_liked: boolean;
-    comments?: PetComment[];
+    comments?: Comment[];
     created_at: string;
     updated_at: string;
 };
@@ -224,4 +212,60 @@ export type HomeFeedBounds = {
     max_age_years: number;
     default_age_min: number;
     default_age_max: number;
+};
+
+/**
+ * The comment ceiling — the `commentBounds` prop on `pets.show`.
+ *
+ * Built by `App\Concerns\CommentValidationRules::commentBounds()` from the same
+ * accessor the `max:` rule is built from, so the counter under the composer
+ * and the validator cannot disagree.
+ */
+export type CommentBounds = {
+    max_length: number;
+    /**
+     * `petconnect.comments.thread_per_page` — the page size `comments.index`
+     * answers with, which is not the size of the slice the page shipped.
+     *
+     * `CommentThread` needs it to know where the shipped roots stop and the
+     * endpoint's next page begins: the first page worth asking for is
+     * `floor(rootsInHand / thread_per_page) + 1`. The two sizes are independent
+     * env vars, so neither can be inferred from the other.
+     */
+    thread_per_page: number;
+};
+
+/**
+ * The message ceiling — the `messageBounds` prop on `conversations.show`.
+ */
+export type MessageBounds = {
+    max_length: number;
+};
+
+/**
+ * The five option lists both pet form pages carry.
+ *
+ * `categories` arrives with its `breeds` eager loaded, so the breed select is
+ * a filter over the chosen category rather than a second request.
+ */
+export type PetFormOptions = {
+    categories: PetCategoryOption[];
+    listingTypes: SelectOption<PetListingType>[];
+    statuses: SelectOption<PetStatus>[];
+    genders: SelectOption<PetGender>[];
+    healthStatuses: SelectOption<PetHealthStatus>[];
+};
+
+/**
+ * The upload ceilings the photo step enforces client-side.
+ *
+ * Shipped as the `photoBounds` prop by `Web\PetController::create` and
+ * `::edit`, built by `App\Concerns\PetPhotoRules::photoBounds()` from the same
+ * accessors the `max:` validation rules are built from. So the gallery cap, the
+ * size the picker compresses down to and the validator cannot disagree — never
+ * hardcode these numbers in a page.
+ */
+export type PetPhotoBounds = {
+    max_gallery_images: number;
+    max_image_kilobytes: number;
 };

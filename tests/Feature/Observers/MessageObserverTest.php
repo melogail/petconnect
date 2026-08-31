@@ -12,6 +12,21 @@ test('sets the conversation cursor to the created message time', function () {
         ->toBe($message->created_at->toDateTimeString());
 });
 
+/**
+ * The observer's `created` hook returns early when the cursor already sits at
+ * or ahead of the new message's timestamp. Every other test here inserts in
+ * ascending order, which never reaches that branch — a backdated import or a
+ * restored archive does.
+ */
+test('leaves the cursor alone when a message older than the cursor is created', function () {
+    $conversation = Conversation::factory()->direct()->create();
+    Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
+
+    Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+
+    expect($conversation->fresh()->last_message_at->toDateTimeString())->toBe('2026-01-02 10:00:00');
+});
+
 test('falls back to the next newest message when the newest is deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
     $older = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);

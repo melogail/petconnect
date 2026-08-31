@@ -2,10 +2,6 @@
 
 namespace App\MediaLibrary;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGenerator;
 
@@ -33,11 +29,11 @@ use Spatie\MediaLibrary\Support\PathGenerator\PathGenerator;
  *    would orphan every file. See .ai/rules/models.md.
  *
  * The owner directory is read from the OWNER_DIRECTORY_PROPERTY custom property
- * persisted on the media row at upload time. The database lookup below is a
- * fallback for rows written without it and should not be relied on; it is
- * memoised per resolved owner, which is safe because AppServiceProvider binds
- * this generator as a scoped singleton, so the memo lives no longer than one
- * request and cannot survive a refreshed test database.
+ * persisted on the media row at upload time, and
+ * Observers\MediaOwnerDirectoryObserver stamps it on `creating` for any row
+ * that arrives without one — a Nova upload, a factory, a package that attaches
+ * media itself — so no upload path can forget it. OwnerDirectoryResolver's
+ * database fallback is therefore expected never to run here.
  */
 class MediaPathGenerator implements PathGenerator
 {
@@ -48,12 +44,7 @@ class MediaPathGenerator implements PathGenerator
      */
     public const OWNER_DIRECTORY_PROPERTY = 'owner_directory';
 
-    /**
-     * Fallback lookups already performed, keyed by "{model type}:{model id}".
-     *
-     * @var array<string, string|null>
-     */
-    protected array $ownerDirectories = [];
+    public function __construct(protected readonly OwnerDirectoryResolver $ownerDirectories) {}
 
     public function getPath(Media $media): string
     {
@@ -83,82 +74,6 @@ class MediaPathGenerator implements PathGenerator
      */
     protected function ownerDirectory(Media $media): ?string
     {
-        $stored = $media->getCustomProperty(self::OWNER_DIRECTORY_PROPERTY);
-
-        if (is_string($stored) && $stored !== '') {
-            return $stored;
-        }
-
-        return $this->lookUpOwnerDirectory((string) $media->model_type, $media->model_id);
-    }
-
-    /**
-     * Fallback resolution for media rows missing the custom property.
-     */
-    protected function lookUpOwnerDirectory(string $modelType, int|string|null $modelId): ?string
-    {
-        if ($modelType === '' || $modelId === null) {
-            return null;
-        }
-
-        $key = "{$modelType}:{$modelId}";
-
-        if (array_key_exists($key, $this->ownerDirectories)) {
-            return $this->ownerDirectories[$key];
-        }
-
-        return $this->ownerDirectories[$key] = $this->resolveOwnerDirectory($modelType, $modelId);
-    }
-
-    /**
-     * Read the owning user's directory name out of the database.
-     */
-    protected function resolveOwnerDirectory(string $modelType, int|string $modelId): ?string
-    {
-        $modelClass = Relation::getMorphedModel($modelType) ?? $modelType;
-
-        if (! is_string($modelClass) || ! is_a($modelClass, Model::class, true)) {
-            return null;
-        }
-
-        if (is_a($modelClass, User::class, true)) {
-            return $this->userDirectory($modelId);
-        }
-
-        $ownerId = $this->ownerIdFor($modelClass, $modelId);
-
-        return $ownerId === null ? null : $this->userDirectory($ownerId);
-    }
-
-    /**
-     * The id of the user a model belongs to, read straight from its foreign key.
-     *
-     * @param  class-string<Model>  $modelClass
-     */
-    protected function ownerIdFor(string $modelClass, int|string $modelId): int|string|null
-    {
-        $instance = new $modelClass;
-
-        if (! method_exists($instance, 'user')) {
-            return null;
-        }
-
-        $relation = $instance->user();
-
-        if (! $relation instanceof BelongsTo || ! $relation->getRelated() instanceof User) {
-            return null;
-        }
-
-        return $modelClass::query()
-            ->withoutGlobalScopes()
-            ->whereKey($modelId)
-            ->value($relation->getForeignKeyName());
-    }
-
-    protected function userDirectory(int|string $userId): ?string
-    {
-        $directory = User::query()->whereKey($userId)->value('media_directory_name');
-
-        return is_string($directory) && $directory !== '' ? $directory : null;
+        return $this->ownerDirectories->forMedia($media);
     }
 }

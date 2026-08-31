@@ -114,9 +114,60 @@ class Conversation extends Model
             ->has('users', '=', 2);
     }
 
+    /**
+     * Whether the given user is in this thread.
+     *
+     * Answers from the loaded `users` collection when there is one, and only
+     * falls back to an `exists()` when there is not. That is not a
+     * micro-optimisation: it is what makes MessagePolicy::create and
+     * MessagePolicy::pin query-free on a page that has already eager loaded the
+     * participants, which is what lets
+     * Http\Resources\Conversation\ConversationResource emit `can_send` per
+     * inbox row and Http\Resources\Message\MessageResource emit `can_pin` per
+     * message without a query apiece (.ai/rules/policies.md).
+     *
+     * The two branches answer the same question. `users` is a plain
+     * belongsToMany with no constraint on it, so a loaded collection is the
+     * whole membership rather than a slice of it — there is no filtered
+     * variant of the relation anywhere in the application, and if one is ever
+     * added it must not be loaded under the `users` name.
+     */
     public function hasParticipant(User $user): bool
     {
+        if ($this->relationLoaded('users')) {
+            return $this->users->contains(
+                fn (User $participant): bool => (int) $participant->getKey() === (int) $user->getKey()
+            );
+        }
+
         return $this->users()->whereKey($user->getKey())->exists();
+    }
+
+    /**
+     * Whether everybody else in this thread will accept a message from the
+     * given sender.
+     *
+     * The recipient-side consent question, asked about a thread rather than
+     * about one account so that both write paths can ask it the same way:
+     * MessagePolicy::create asks it once per request (this is the query it is
+     * allowed to make), and Pipelines\Messages\Send\EnsureRecipientAccepts asks
+     * it again as the domain invariant, for free, off the `users` collection
+     * Send\EnsureParticipant has already loaded. The rule itself is
+     * User::acceptsMessagesFrom(); this only decides who to ask.
+     *
+     * `every` is right while ConversationType has only a Direct case, where
+     * "everybody else" is one person. When a group case lands, refusing the
+     * whole send because one member is deactivated is the wrong answer — the
+     * question becomes per-recipient, filtered in Send\NotifyRecipient and in
+     * whatever delivers, not a veto here.
+     */
+    public function acceptsMessagesFrom(User $sender): bool
+    {
+        $this->loadMissing('users');
+
+        return $this->users
+            ->reject(fn (User $participant): bool => $participant->is($sender))
+            ->every(fn (User $participant): bool => $participant->acceptsMessagesFrom($sender));
     }
 
     public function markAsReadFor(User $user): void

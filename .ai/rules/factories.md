@@ -24,3 +24,10 @@ MessageFactory also sets status => MessageStatus::Sent, and ReportFactory draws 
 
 ## Wrap an optional()->passthrough() argument in a closure
 fake()->optional(0.7)->passthrough($this->records()) evaluates the helper every time and throws the result away 30% of the time. Pass fn (array $attributes) => $this->records() instead: Factory::expandAttributes() resolves closures in the definition after the optional() draw.
+
+## Factory fixtures must satisfy the app's own validation rules
+`UserFactory` used `fake()->unique()->userName()`, which joins its parts with a **dot** — `wilbert.hartmann`. `ProfileValidationRules::usernameRules()` is `alpha_dash|min:3|max:50`, so every factory member carried a handle its own profile form would 422. Nothing noticed while no code path revalidated an existing row; it started mattering the moment `App\Nova\User` began enforcing the same rules, and every seeded account became unsaveable in the back office.
+
+Now `uniqueHandle()`: `str_replace('.', '_', fake()->unique()->userName())`. That keeps Faker's uniqueness guarantee without the random suffix CategoryFactory's slugs need — `_` never appears in this generator's own output, so the mapping is injective and two draws cannot collide on the unique index.
+
+General point: a factory value that the application's own Form Request would reject is a latent bug, not just untidy fixture data. Check generated values against the rules in `app/Concerns/*ValidationRules.php` when adding one.

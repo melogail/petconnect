@@ -2,6 +2,7 @@
 
 namespace App\Actions\Pets;
 
+use App\Concerns\PetPhotoRules;
 use App\Models\Pet;
 use App\Pipelines\Pets\Shared\AttachGalleryImages;
 use App\Pipelines\Pets\Shared\NormalizeAdditionalInfo;
@@ -36,7 +37,12 @@ use Illuminate\Pipeline\Pipeline;
  *
  * This Action is where the flow's one tunable — the lifetime gallery cap — is
  * resolved, so EnsureGalleryCapacity never reads config() and the whole flow can
- * be driven with an explicit value from a test or the console.
+ * be driven with an explicit value from a test or the console. It is resolved
+ * through App\Concerns\PetPhotoRules::maxGalleryImages(), the accessor the
+ * `max:` rule and the `photoBounds` prop are both built from, rather than a
+ * `config()` call here: this was the third spelling of that key, and the point
+ * of the accessor is that the rule, the prop and the flow cannot disagree about
+ * how many photos a listing may carry.
  *
  * The write is a full replacement rather than a patch — see
  * Pipelines\Pets\Update\PersistPet for why, and PetDetailResource for the
@@ -44,6 +50,8 @@ use Illuminate\Pipeline\Pipeline;
  */
 class UpdatePet
 {
+    use PetPhotoRules;
+
     public function __construct(private readonly Pipeline $pipeline) {}
 
     /**
@@ -64,7 +72,7 @@ class UpdatePet
             featuredImage: $featuredImage,
             galleryImages: $galleryImages,
             deletedMediaIds: $deletedMediaIds,
-            maxGalleryImages: (int) config('petconnect.pets.max_gallery_images', 3),
+            maxGalleryImages: $this->maxGalleryImages(),
         );
 
         return $this->pipeline
