@@ -5,11 +5,13 @@ namespace App\Nova\Actions;
 use App\Actions\Pets\PurgePet;
 use App\Models\Pet;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Laravel\Nova\Actions\ActionResponse;
 use Laravel\Nova\Actions\DestructiveAction;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Throwable;
 
 /**
  * Permanently destroy listings, through the one supported code path.
@@ -44,6 +46,39 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  * The Action is resolved from the container rather than constructed here,
  * because it constructor-injects Illuminate\Pipeline\Pipeline;
  * Laravel\Nova\Makeable is `new static(...$arguments)` and cannot satisfy that.
+ *
+ * ## The selection is one transaction, and a failure is a sentence
+ *
+ * `Actions\Pets\PurgePet` wraps one listing, which made each listing's state
+ * safe and the *selection* state arbitrary: a bare `$models->each(...)` left a
+ * throw on the third of five as two listings permanently gone, three intact and
+ * a 500 with a stack trace the admin could neither read nor act on — and this
+ * is the one action in the back office with no undo at all, so guessing which
+ * two went is not a recoverable position. An outer transaction makes the
+ * selection all-or-nothing (the inner ones become savepoints) and the catch
+ * turns the failure into a sentence. That is the shape
+ * .ai/rules/nova-actions.md makes non-negotiable for every bulk action, and the
+ * one DeleteCategory, DeleteCommentThread, DeleteReview and DeleteUserAccount
+ * already have.
+ *
+ * ## The rollback restores rows, not bytes — which is why this message is longer
+ *
+ * The asymmetry is worth stating precisely, because it is invisible from the
+ * call site. Everything `PurgePet` writes to the database is inside the
+ * transaction and comes back on a rollback, savepoints included. The *files* do
+ * not: medialibrary removes the bytes from an Eloquent `deleting` hook, and a
+ * filesystem has no rollback and takes no part in the transaction. So a
+ * selection that fails half way can leave a restored `pets` row, with its
+ * `media` rows restored alongside it, pointing at photos that are already gone
+ * from disk — a listing that exists again but renders a broken image.
+ *
+ * That is still strictly better than leaving half a selection permanently
+ * destroyed, so the transaction stays. But the admin has to be told, which is
+ * why this action's danger message carries the extra disk caveat the other four
+ * do not: DeleteCategory touches nothing on disk and the report and account
+ * status actions only write columns, so for those the rollback really does undo
+ * everything the run did. DeleteUserAccount, which also deletes media, says the
+ * same thing here for the same reason.
  */
 class PurgePetListing extends DestructiveAction
 {
@@ -63,9 +98,19 @@ class PurgePetListing extends DestructiveAction
      */
     public function handle(ActionFields $fields, Collection $models): ActionResponse
     {
-        $models->each(function (Pet $pet): void {
-            $this->purgePet->handle($pet);
-        });
+        try {
+            DB::transaction(function () use ($models): void {
+                $models->each(function (Pet $pet): void {
+                    $this->purgePet->handle($pet);
+                });
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ActionResponse::danger(
+                'Nothing was deleted. One of the selected listings could not be removed, so the whole selection was rolled back. The failure has been logged; some uploaded photos may already have been removed from disk, which no transaction can undo.',
+            );
+        }
 
         return ActionResponse::message($models->count() === 1
             ? '1 listing permanently deleted, along with its comment thread, reactions, saves, reports and photos.'

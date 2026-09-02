@@ -309,7 +309,10 @@ export function toPetPayload(state: PetFormState): Record<string, unknown> {
         .filter((row) => row.name !== '');
 
     const medications = state.health.medications
-        .map((row) => ({ name: trimmedInput(row.name), usage: text(row.usage) }))
+        .map((row) => ({
+            name: trimmedInput(row.name),
+            usage: text(row.usage),
+        }))
         .filter((row) => row.name !== '');
 
     const allergies = state.health.allergies

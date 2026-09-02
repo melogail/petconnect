@@ -174,11 +174,7 @@ function pickCategory(value: string): void {
             :error="errors.weight"
             hint="Leave blank if you would rather not say."
         >
-            <Input
-                id="pet-weight"
-                v-model="form.weight"
-                inputmode="decimal"
-            />
+            <Input id="pet-weight" v-model="form.weight" inputmode="decimal" />
         </FormField>
 
         <FormField
@@ -206,11 +202,7 @@ function pickCategory(value: string): void {
             :required="isSale"
             :hint="isSale ? undefined : 'Optional unless this is a sale.'"
         >
-            <Input
-                id="pet-price"
-                v-model="form.price"
-                inputmode="decimal"
-            />
+            <Input id="pet-price" v-model="form.price" inputmode="decimal" />
         </FormField>
 
         <FormField

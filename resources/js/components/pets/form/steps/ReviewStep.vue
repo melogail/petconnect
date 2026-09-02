@@ -160,7 +160,8 @@ const extras = computed<DetailItem[]>(() =>
     form.additionalInfo
         .filter(
             (row) =>
-                trimmedInput(row.label) !== '' && trimmedInput(row.value) !== '',
+                trimmedInput(row.label) !== '' &&
+                trimmedInput(row.value) !== '',
         )
         .map((row) => ({ label: row.label, value: row.value })),
 );

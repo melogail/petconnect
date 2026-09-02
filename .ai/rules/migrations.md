@@ -9,7 +9,7 @@ paths:
 `pets.category_id` is `restrictOnDelete` and `pets` uses `softDeletes()`. A soft-deleted pet still holds its `category_id` row, so deleting a Category (in Nova or anywhere) throws a raw DB foreign-key constraint error even when every visible pet has been "deleted". Phase 3 must add an explicit guard (block the delete, or force-delete/reassign trashed pets first) and surface a friendly message instead of the driver exception. The same trap applies to any future RESTRICT FK pointing at a soft-deleting table.
 
 ## The database is MySQL in development and SQLite under test — check before you reason about a plan
-**Corrected 2026-08-31.** This file used to open "This project runs SQLite (`DB_CONNECTION=sqlite` in `.env`, `.env.example`, `phpunit.xml`)". That is wrong and it was the stated justification for every index decision in this port. Measured: `.env` is `DB_CONNECTION=mysql` and `php artisan db:show` reports **MySQL 8.0.46**, database `petconnect`. Only `.env.example` and `phpunit.xml` are SQLite — so the split is **MySQL in dev (and therefore whatever prod becomes), SQLite in memory under test**.
+**Corrected 2026-08-31.** This file used to open "This project runs SQLite (`DB_CONNECTION=sqlite` in `.env`, `.env.example`, `phpunit.xml`)". That is wrong and it was the stated justification for every index decision in this port. Measured: `.env` is `DB_CONNECTION=mysql` and `php artisan db:show` reports **MySQL 8.0.46**, database `petconnect`. `.env.example`, `phpunit.xml` and `.env.testing` (added 2026-09-02, see the `--env=testing` note below) are the SQLite ones — so the split is **MySQL in dev (and therefore whatever prod becomes), SQLite in memory under test**.
 
 Consequences to keep in mind: an `EXPLAIN QUERY PLAN` measurement proves nothing about the driver the application actually runs on, and the two optimisers differ in exactly the place index work lives (SQLite will happily `USE TEMP B-TREE FOR ORDER BY` where InnoDB reaches for a second index and a backward scan). Measure a plan on both, or say which one you measured. `database/database.sqlite` is still in the tree and is *not* the dev database; it is a leftover from before the MySQL switch and should be deleted once someone confirms no local checkout points at it.
 
@@ -51,12 +51,14 @@ There is no `morphs()` variant that skips the index, so both migrations declare 
 
 `notifications` is the framework's own table with a UUID string primary key; it is edited in place like the rest of this unreleased schema.
 
-## --env=testing is NOT a safety flag here: it drops the real MySQL dev database
-Verified 2026-09-02: there is **no `.env.testing`** in this project (only `.env` and `.env.example` exist at root). `.env` is `DB_CONNECTION=mysql`, `DB_DATABASE=petconnect` — the real development database. Only `.env.example` and `phpunit.xml` are SQLite; see the "MySQL in development and SQLite under test" note above in this file.
+## --env=testing now resolves to in-memory SQLite, because `.env.testing` exists
+**Corrected 2026-09-02.** This section used to open "there is **no `.env.testing`** in this project (only `.env` and `.env.example` exist at root)" and conclude that `php artisan migrate:fresh --env=testing` **drops every table in the live MySQL dev database**. Both sentences are now false and neither should be repeated: `.env.testing` was committed in `7125ba2` precisely to close that hole.
 
-Consequence: `php artisan migrate:fresh --env=testing` loads plain `.env` with nothing but `APP_ENV` overridden, so it **drops every table in the live MySQL dev database**. It reads like a safety flag and is not one. An orchestrator issued exactly that command this phase; the agent checked what the override actually resolved to before running anything destructive, declined it, and migrated into a throwaway SQLite file using explicit shell env overrides instead.
+Measured state: `.env.testing` is at the project root, tracked, and pins `DB_CONNECTION=sqlite` / `DB_DATABASE=:memory:` — mirroring `phpunit.xml`'s `<php><env>` entries key for key. Config resolution verified by execution, not by reading: `php artisan config:show database.default --env=testing` reports `sqlite` and `database.connections.sqlite.database` reports `:memory:`, while `php artisan config:show database.default` with no flag reports `mysql`. The dev database is still MySQL `petconnect` — see the "MySQL in development and SQLite under test" note above in this file.
 
-Safe pattern: any destructive command needs an explicit `DB_CONNECTION=`/`DB_DATABASE=` override (or a real `.env.testing` created first). Resolve what an env flag actually points at before running anything that writes.
+What was true before the fix, and why the flag felt safe when it was not: without `.env.testing`, Laravel falls back to plain `.env` with only `APP_ENV` overridden. An orchestrator issued `migrate:fresh --env=testing` under exactly those conditions this phase; the agent resolved what the override actually pointed at before running anything destructive, declined it, and migrated into a throwaway SQLite file using explicit shell env overrides instead.
+
+Safe pattern that still stands: resolve what an env flag actually points at before running anything that writes, and give any destructive command an explicit `DB_CONNECTION=`/`DB_DATABASE=` override when you are not certain. Keep `.env.testing` and `phpunit.xml` in agreement — change one, change the other in the same commit, or the suite and `--env=testing` will quietly disagree.
 
 General lesson: verifying a destructive command's real effect and declining an instruction that would destroy data is correct behaviour even when the instruction comes from the orchestrator.
 
@@ -68,3 +70,10 @@ Query shapes (verified in `Laravel\Nova\Http\Requests\NotificationRequest`): the
 Why deferred: it is a **vendor** migration (`vendor/laravel/nova/database/migrations/2021_08_25_193039_create_nova_notifications_table.php`), not in `database/migrations/`, so it cannot be edited in place like the others. Fixing it means publishing the vendor migration or carrying a standalone `ALTER` migration — both add maintenance surface that has to survive Nova upgrades. And it backs the **admin** notification panel, not the member bell, so row growth and read volume are a fraction of `notifications`.
 
 Revisit when: admin notification volume becomes non-trivial, or the admin panel goes slow. Then `EXPLAIN` the two queries above on MySQL 8 at the real row count before adding anything.
+
+## migrate:fresh --env=testing is now safe but inert — do not "improve" :memory: into a file
+Since `.env.testing` landed (7125ba2), `php artisan migrate:fresh --env=testing` resolves to `DB_CONNECTION=sqlite` / `DB_DATABASE=:memory:`. Verified: `config:show database.default --env=testing` is `sqlite`, `:memory:`; without the flag it is `mysql`. So the command destroys nothing — and accomplishes nothing, because the database dies with the process. It is safe, and it is inert. Do not report it as a from-scratch migration check.
+
+The trap: nobody should "improve" `:memory:` into a file path so the result survives. That silently breaks the key-for-key agreement with `phpunit.xml` that `.env.testing` exists to uphold, and makes `migrate:fresh --env=testing` genuinely destructive again the moment someone points it somewhere real.
+
+If you actually need to prove the migrations run from scratch, run them against an explicitly-named scratch database via explicit `DB_CONNECTION=`/`DB_DATABASE=` shell overrides. Never against the dev `petconnect` MySQL database.

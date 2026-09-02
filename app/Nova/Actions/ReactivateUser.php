@@ -10,6 +10,7 @@ use Laravel\Nova\Actions\ActionResponse;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Throwable;
 
 /**
  * Restore a deactivated member account.
@@ -24,6 +25,15 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  * toggle run over a mixed selection would deactivate half the rows and
  * reactivate the other half from a single confirmation, which is not something
  * a moderator can mean.
+ *
+ * ## The selection is one transaction, and a failure is a sentence
+ *
+ * Same shape and same trap as DeactivateUser, which spells the reasoning out:
+ * the catch must `return`, and `$affected` must stay the value
+ * `DB::transaction()` returns rather than a pre-initialised or by-reference
+ * variable. Otherwise a run that threw and rolled back falls through to the
+ * `=== 0` branch and reports "Nothing to do: every selected account was already
+ * active." — a success sentence about a failure.
  */
 class ReactivateUser extends Action
 {
@@ -41,15 +51,23 @@ class ReactivateUser extends Action
      */
     public function handle(ActionFields $fields, Collection $models): ActionResponse
     {
-        $affected = DB::transaction(function () use ($models): int {
-            return $models
-                ->reject(fn (User $user): bool => $user->isActive())
-                ->each(function (User $user): void {
-                    $user->is_active = true;
-                    $user->save();
-                })
-                ->count();
-        });
+        try {
+            $affected = DB::transaction(function () use ($models): int {
+                return $models
+                    ->reject(fn (User $user): bool => $user->isActive())
+                    ->each(function (User $user): void {
+                        $user->is_active = true;
+                        $user->save();
+                    })
+                    ->count();
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ActionResponse::danger(
+                'Nothing was changed. One of the selected accounts could not be reactivated, so the whole selection was rolled back. The failure has been logged.',
+            );
+        }
 
         if ($affected === 0) {
             return ActionResponse::message('Nothing to do: every selected account was already active.');

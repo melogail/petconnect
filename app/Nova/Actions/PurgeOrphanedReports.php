@@ -10,6 +10,7 @@ use Laravel\Nova\Actions\DestructiveAction;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Throwable;
 
 /**
  * Clear reports whose target no longer exists.
@@ -42,6 +43,24 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  *
  * `runDestructiveAction` in the policy is what lets this past the same `delete`
  * refusal it relies on.
+ *
+ * ## The selection is one transaction, and a failure is a sentence
+ *
+ * The guard is not the only way this can fail — a report can acquire a target
+ * again between the check and the delete, and `reports` is read and written by
+ * observers — so the delete itself needs the shape .ai/rules/nova-actions.md
+ * makes non-negotiable: DB::transaction around the whole selection and a
+ * `catch (Throwable)` returning ActionResponse::danger(), so the admin is told
+ * nothing happened rather than being left guessing which half did.
+ *
+ * The guard stays **outside and before** the try, exactly as DeleteCategory's
+ * does. That is a choice, not an oversight: a refusal is a decision this action
+ * has made and reported by name, and folding it into the try would let a throw
+ * from the guard's own `loadMissing('reportable')` be reported as "the whole
+ * selection was rolled back" when nothing had been attempted yet. The trade-off
+ * accepted here is the reverse — a failure inside `stillTargeted()` is not
+ * caught and still surfaces as a 500. It writes nothing, so there is no partial
+ * state to explain; the sentence exists for the half that writes.
  */
 class PurgeOrphanedReports extends DestructiveAction
 {
@@ -65,11 +84,19 @@ class PurgeOrphanedReports extends DestructiveAction
             return ActionResponse::danger($this->refusal($stillTargeted));
         }
 
-        DB::transaction(function () use ($models): void {
-            $models->each(function (Report $report): void {
-                $report->delete();
+        try {
+            DB::transaction(function () use ($models): void {
+                $models->each(function (Report $report): void {
+                    $report->delete();
+                });
             });
-        });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ActionResponse::danger(
+                'Nothing was deleted. One of the selected reports could not be cleared, so the whole selection was rolled back. The failure has been logged.',
+            );
+        }
 
         return ActionResponse::message($models->count() === 1
             ? '1 orphaned report cleared.'

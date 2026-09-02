@@ -3,6 +3,7 @@
 use App\Enums\ReportStatus;
 use App\Models\Admin;
 use App\Models\Report;
+use Illuminate\Support\Facades\Event;
 
 /**
  * The only writer of `reports.status` in the application.
@@ -97,4 +98,47 @@ test('returns 422 when no status is chosen', function () {
         ->assertJsonValidationErrors(['status' => 'The Status field is required.']);
 
     $this->assertDatabaseHas('reports', ['id' => $report->getKey(), 'status' => 'pending']);
+});
+
+/**
+ * A moderation queue that half moved is worse than one that did not move at
+ * all: the statuses are the audit trail, and an admin who reads "something went
+ * wrong" has no way to tell which of the fifty reports they selected now
+ * carries a decision nobody made. The transaction is what keeps the selection
+ * one unit of work and the `catch (Throwable)` is what turns the failure into
+ * a sentence instead of a 500.
+ *
+ * The throw is injected on the second save, so the first report has genuinely
+ * been moved and rolled back rather than never having been touched;
+ * `$resolvedMidFlight` is what proves that, and without it the
+ * still-pending assertions below would pass on a run that wrote nothing.
+ */
+test('leaves every selected report on its original status when one cannot be saved', function () {
+    $admin = Admin::factory()->create();
+    $first = Report::factory()->pending()->create();
+    $second = Report::factory()->pending()->create();
+    $attempts = 0;
+    $resolvedMidFlight = null;
+
+    Event::listen('eloquent.saving: '.Report::class, function () use (&$attempts, &$resolvedMidFlight): void {
+        if (++$attempts === 1) {
+            return;
+        }
+
+        $resolvedMidFlight = Report::query()->where('status', ReportStatus::Resolved)->count();
+
+        throw new RuntimeException('The report could not be saved.');
+    });
+
+    $this->actingAs($admin, 'admin')
+        ->postJson('/nova-api/reports/action?action=change-status', [
+            'resources' => [$first->getKey(), $second->getKey()],
+            'status' => ReportStatus::Resolved->value,
+        ])
+        ->assertOk()
+        ->assertJsonPath('danger', 'Nothing was changed. One of the selected reports could not be moved to the new status, so the whole selection was rolled back. The failure has been logged.');
+
+    expect($resolvedMidFlight)->toBe(1);
+    $this->assertDatabaseHas('reports', ['id' => $first->getKey(), 'status' => 'pending']);
+    $this->assertDatabaseHas('reports', ['id' => $second->getKey(), 'status' => 'pending']);
 });

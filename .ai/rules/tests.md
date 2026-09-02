@@ -46,3 +46,10 @@ Two dead ends worth not re-deriving, both about `storage/media-library/temp`.
 **`du` measures the wrong thing here.** ext4 never gives directory blocks back, so `du -sh storage/media-library/temp` reported 444K on a directory that had already been emptied. Count entries instead: `find storage/media-library/temp -type f | wc -l`, or `find storage/media-library/temp -maxdepth 1 -mindepth 1 -type d | wc -l`.
 
 Measured after the `finally` fix landed (`App\MediaLibrary\TemporaryDirectoryCleaningFileManipulator`), across ~380 tests including every media-touching suite: **0 directories, 0 files**. The earlier "7,172 / 29 MB" and "9 / 480 KB" snapshots were each accurate when taken — they were uncleaned trees at two different moments, not wrong readings.
+
+## Exceptions::fake() cannot pin a report() made inside a Nova action
+Do not write a test that asserts `Exceptions::reported(...)` for a `report($e)` raised inside `app/Nova/Actions/**`, and do not conclude from an empty result that the action fails to report. Nova replaces the container's `ExceptionHandler` with `NovaExceptionHandler` for the duration of a Nova request, so the fake is never the handler that runs. Measured: the danger response asserts fine, `Exceptions::reported()` is empty.
+
+The gap this leaves is real and currently unclosed: five Nova bulk actions promise "The failure has been logged" in their response and no test covers the logging. Removing a `report()` line there keeps the suite green.
+
+`Log::spy()` would observe it and was deliberately declined — it pins how the framework's handler happens to log rather than the behaviour under test. If you reopen this, reopen it with that trade-off in view.

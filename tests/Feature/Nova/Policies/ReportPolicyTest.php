@@ -59,6 +59,11 @@ test('returns 403 to a report filed through Nova', function () {
  * empties the whole moderation queue in two clicks with no undo. That is
  * exactly the evidence `update: false` above exists to preserve, so the
  * built-in route must remove nothing at all.
+ *
+ * The one job that does need a delete — clearing a report whose target has
+ * already gone — goes through PurgeOrphanedReports and `runDestructiveAction`
+ * instead. That action's own guard, happy path and rollback are pinned in
+ * tests/Feature/Nova/Actions/PurgeOrphanedReportsTest.php.
  */
 test('removes nothing when reports are deleted through the built-in delete', function () {
     $admin = Admin::factory()->create();
@@ -69,51 +74,4 @@ test('removes nothing when reports are deleted through the built-in delete', fun
         ->assertOk();
 
     expect(Report::query()->pluck('id')->all())->toBe($reports->modelKeys());
-});
-
-/**
- * The narrow job that does need a delete: a report whose target has already
- * gone resolves to a null `reportable` and can neither be acted on nor
- * dismissed, because every decision ChangeReportStatus offers is a decision
- * *about* something. PurgeOrphanedReports is the only route to clearing one,
- * and `runDestructiveAction` is what lets it past the `delete` refusal.
- *
- * It refuses by name rather than skipping, and refuses the run as a whole, so
- * the orphan selected alongside live evidence survives too.
- */
-test('refuses to purge a report whose target still resolves, naming it', function () {
-    $admin = Admin::factory()->create();
-    $live = Report::factory()->pending()->create();
-    $orphan = Report::factory()->pending()->create();
-    $orphan->reportable->delete();
-
-    $this->actingAs($admin, 'admin')
-        ->postJson('/nova-api/reports/action?action=purge-orphaned-reports', [
-            'resources' => [$orphan->getKey(), $live->getKey()],
-        ])
-        ->assertOk()
-        ->assertJsonPath('danger', sprintf(
-            'Nothing was deleted. Report #%d still points at a comment or review that exists, so it is evidence rather than an orphan. Open it and decide with Change Status instead.',
-            $live->getKey(),
-        ));
-
-    $this->assertModelExists($live);
-    $this->assertModelExists($orphan);
-});
-
-test('purges a report whose target no longer exists', function () {
-    $admin = Admin::factory()->create();
-    $orphan = Report::factory()->pending()->create();
-    $survivor = Report::factory()->pending()->create();
-    $orphan->reportable->delete();
-
-    $this->actingAs($admin, 'admin')
-        ->postJson('/nova-api/reports/action?action=purge-orphaned-reports', [
-            'resources' => [$orphan->getKey()],
-        ])
-        ->assertOk()
-        ->assertJsonPath('message', '1 orphaned report cleared.');
-
-    $this->assertModelMissing($orphan);
-    $this->assertModelExists($survivor);
 });

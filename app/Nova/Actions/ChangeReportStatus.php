@@ -13,6 +13,7 @@ use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Throwable;
 
 /**
  * Move one or more reports to a new moderation status.
@@ -28,6 +29,26 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  * It is one action with a Select rather than four one-status actions, so that
  * adding a case to App\Enums\ReportStatus needs no new class and no edit here:
  * the options come from the enum.
+ *
+ * ## The selection is one transaction, and a failure is a sentence
+ *
+ * The transaction was already here; the catch is what makes it legible. Without
+ * it a throw on the third of five rolled the writes back correctly and still
+ * handed the admin a 500 with a stack trace, so the state was right and
+ * unreadable — the shape .ai/rules/nova-actions.md makes non-negotiable for
+ * every bulk action, and the one DeleteCategory and DeleteReview have. The
+ * message says "changed" rather than "deleted" because this action writes a
+ * column and removes nothing.
+ *
+ * `ReportStatus::from()` is resolved **inside** the try on purpose. The Select
+ * validates against `Rule::enum`, but the field is not the only way a value
+ * reaches `handle()` — an action request carries the field bag, and `from()`
+ * throws a `ValueError`, not a validation failure, on anything the enum does
+ * not know. Outside the try that escaped as a 500 before a single row was
+ * touched; inside it the admin reads the same sentence, which is true — nothing
+ * was changed. `$status` is assigned and used entirely within the try, and the
+ * success message returns from there too, so it is never read in a scope where
+ * the `from()` call might not have completed.
  */
 class ChangeReportStatus extends Action
 {
@@ -45,20 +66,28 @@ class ChangeReportStatus extends Action
      */
     public function handle(ActionFields $fields, Collection $models): ActionResponse
     {
-        $status = ReportStatus::from((string) $fields->status);
+        try {
+            $status = ReportStatus::from((string) $fields->status);
 
-        DB::transaction(function () use ($models, $status): void {
-            $models->each(function (Report $report) use ($status): void {
-                $report->status = $status;
-                $report->save();
+            DB::transaction(function () use ($models, $status): void {
+                $models->each(function (Report $report) use ($status): void {
+                    $report->status = $status;
+                    $report->save();
+                });
             });
-        });
 
-        return ActionResponse::message(sprintf(
-            '%d report(s) marked as %s.',
-            $models->count(),
-            $status->label(),
-        ));
+            return ActionResponse::message(sprintf(
+                '%d report(s) marked as %s.',
+                $models->count(),
+                $status->label(),
+            ));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ActionResponse::danger(
+                'Nothing was changed. One of the selected reports could not be moved to the new status, so the whole selection was rolled back. The failure has been logged.',
+            );
+        }
     }
 
     /**

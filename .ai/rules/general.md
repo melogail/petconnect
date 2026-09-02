@@ -22,16 +22,16 @@ Measured this phase: an agent working only in `database/migrations/**` ran `pint
 
 Rule: when more than one agent may be working concurrently, run `vendor/bin/pint --format agent path/one.php path/two.php` with explicit paths. `--dirty` is fine only for a single agent working alone.
 
-## PHPStan is red and predates Phase 6 — separate work, deliberately not absorbed
-`composer ci:check` was already failing before Phase 6 began, and it still is. Do not read that as a regression this phase introduced.
+## PHPStan works and is red: 145 pre-existing errors, a backlog item and not a broken tool
+`composer ci:check` was already failing before Phase 6 began, and it still is, because the analyser finds real errors — not because it cannot run. Do not read the failure as a regression from this phase, and do not read it as a broken toolchain.
 
-State of it, level 7 over `app/`, `bootstrap/app.php`, `config/`, `database/`, `routes/`, with **no baseline** in `phpstan.neon`: earlier agents this phase counted 12 errors in a narrow scope and ~144 on a full run. **None** of them are in any file touched during Phase 6.
+**Corrected 2026-09-02, by running it.** This section used to claim that on this branch `vendor/bin/phpstan analyse` (and `composer types:check`, same binary) "does not complete an analysis at all — it aborts with `Undefined constant \"Larastan\\Larastan\\LARAVEL_VERSION\"` from LarastanStubFilesExtension.php:25 and exits 1 without reporting a single error", and that `composer ci:check` therefore passed the type gate without analysing anything. **That is false.** It was inferred from version numbers and vendor source, never executed, and it was self-sealing: it told every subsequent agent the analyser was broken, so nobody ran the tool that would have disproved it, and it reached the user twice as fact.
 
-Re-verified at the end of the phase and the picture is now worse, not better: on this branch `vendor/bin/phpstan analyse` (and `composer types:check`, same binary) does not complete an analysis at all — it aborts with `Undefined constant "Larastan\Larastan\LARAVEL_VERSION"` from LarastanStubFilesExtension.php:25 and exits 1 without reporting a single error. larastan/larastan 3.10.0 against laravel/framework 13.29.0; larastan 3.x does not claim Laravel 13. So the ~144 figure is a *previous* measurement, not something you can reproduce today.
+Measured: `vendor/bin/phpstan analyse --no-progress` runs correctly at level 7 over `app/`, `bootstrap/app.php`, `config/`, `database/`, `routes/` with **no baseline** in `phpstan.neon`, and reports **145 errors** across `app/`. Narrowed, `vendor/bin/phpstan analyse app/Nova/Actions` reports 2, both pre-existing at HEAD. No abort, no undefined constant, no zero-error false pass. larastan/larastan 3.10.0 against laravel/framework 13.29.0 analyses this codebase fine.
 
-Phase 6's success criteria were, deliberately and in full: the Pest suite, `npm run build`, `vue-tsc`, and Pint on the touched files. PHPStan was excluded on purpose — fixing 144 errors with no baseline, on a toolchain whose analyser will not start, is its own piece of work with its own risk, not a side quest inside a rate-limit sweep.
+The findings are substantive Laravel-generics work, not noise: undefined `withLikedBy()` on `Relation`; `MorphMany` child-return-type incompatibilities across the `HasComments` / `HasLikes` / `HasReport` concerns; `Admin|User|null` passed where `User` is required in `ProfileController`; undefined `passkeys()` on the `Admin|User` union in `SecurityController`. **None** were introduced by the Laravel 13 upgrade — they predate it and were deliberately deferred as separate work.
 
-If you pick it up: the first question is the larastan/Laravel 13 compatibility bump, not the error list. Do not sink time debugging the phar — one agent burned 17 minutes on it. Either the dependency moves (needs approval) or a baseline is generated once the analyser runs again.
+So: this is a backlog item with a known, reproducible error list, and the first question when you pick it up is the error list itself — read the 145, decide which are real type bugs and which want a generics annotation, and fix or baseline deliberately. It is not a dependency-compatibility problem, and there is nothing to debug in the phar.
 
 ## A rule's glob must cover where the mistake gets made, not where the fix lives
 When you record a rule, the glob decides who ever reads it. Scope it to the directories where the mistake gets *written*, not the directory the correct implementation now sits in — those are usually different, and the difference is invisible at the moment of recording, because at that moment you are looking at the fix.
@@ -41,3 +41,11 @@ Worked example, cost a live bug: the "walk a comment subtree with ListCommentSub
 Prefer the widest glob whose files could plausibly contain the mistake, and prefer a wildcard over enumerated directories (`app/Pipelines/**` over `app/Pipelines/Comments/**` + `app/Pipelines/Pets/Purge/**`) — an enumeration re-creates the same gap the moment a fourth flow gets its own directory. If a rule extends an existing section, record it into that section's file so the two stay together.
 
 Second instance this phase of rule *reach* rather than rule *content* being the defect; the first was `index.md`'s preamble telling agents to read only the first matching file. Both were silent: the rule existed, was correct, and was never delivered.
+
+## Establish runtime behaviour by running it, not by reading the source
+Four false claims in one close-out shared one root: predicting runtime behaviour instead of observing it. Reading a dependency's source tells you what it *should* do; only running it establishes what it *does*.
+
+- larastan was declared broken from version numbers and vendor source. Running `vendor/bin/phpstan analyse --no-progress` shows it works and reports 145 real errors.
+- SSR was declared broken by reading `@inertiajs/vite`'s resolver and reasoning that the `app.ts` fallback exports nothing and must throw. `npm run build:ssr` exits 0 and emits `bootstrap/ssr/app.js` — Inertia v3's simplified SSR has the Vite plugin handle the entry itself.
+
+Second half of the same rule: absence of the artefact you searched for is not absence of the thing itself. A grep for `DB::transaction` without a `catch` structurally could not find the action that had no transaction at all — the most dangerous one. A coverage check that grepped for a test file named after an Action concluded "no coverage" when the coverage lived in a policy test. Enumerate the behaviour and ask what covers it, rather than searching for the shape you expect to find.

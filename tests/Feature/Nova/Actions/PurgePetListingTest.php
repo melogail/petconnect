@@ -10,6 +10,7 @@ use App\Models\Report;
 use App\Models\Save;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
 const PURGE_LISTING_ACTION = '/nova-api/pets/action?action=permanently-delete-listing-with-all-content';
@@ -93,6 +94,52 @@ test('permanently deletes several listings at once', function () {
         ->assertJsonPath('message', '2 listings permanently deleted, along with their comment threads, reactions, saves, reports and photos.');
 
     expect(Pet::withTrashed()->pluck('id')->all())->toBe([$survivor->getKey()]);
+});
+
+/**
+ * The unit of work here is the selection, not the listing. PurgePet opens its
+ * own transaction per listing, so that inner one is no protection at all
+ * against a throw on the *next* listing: without this action's outer
+ * transaction the first listing and everything that pointed at it would be
+ * permanently gone while the admin read a message about a failure, and `pets`
+ * soft deleting is no comfort — this is the route that force deletes.
+ *
+ * The throw is injected on the second listing's own delete, which is inside
+ * PurgePet's pipeline and therefore inside both transactions, so the first
+ * listing has genuinely been destroyed by the time it fires.
+ * `$remainingMidFlight` is what proves that: without it the surviving-row
+ * assertions below would pass just as well on a run that had written nothing.
+ */
+test('restores every listing and its content when one of the selection cannot be purged', function () {
+    $admin = Admin::factory()->create();
+    $first = Pet::factory()->create();
+    $second = Pet::factory()->create();
+    $comment = Comment::factory()->forPet($first)->create();
+    $like = Like::factory()->forPet($first)->create();
+    $attempts = 0;
+    $remainingMidFlight = null;
+
+    Event::listen('eloquent.deleting: '.Pet::class, function () use (&$attempts, &$remainingMidFlight): void {
+        if (++$attempts === 1) {
+            return;
+        }
+
+        $remainingMidFlight = Pet::withTrashed()->count();
+
+        throw new RuntimeException('The listing could not be removed.');
+    });
+
+    $this->actingAs($admin, 'admin')
+        ->postJson(PURGE_LISTING_ACTION, ['resources' => [$first->getKey(), $second->getKey()]])
+        ->assertOk()
+        ->assertJsonPath('danger', 'Nothing was deleted. One of the selected listings could not be removed, so the whole selection was rolled back. The failure has been logged; some uploaded photos may already have been removed from disk, which no transaction can undo.');
+
+    expect($remainingMidFlight)->toBe(1);
+    $this->assertModelExists($first);
+    $this->assertNotSoftDeleted($first);
+    $this->assertModelExists($second);
+    $this->assertModelExists($comment);
+    $this->assertModelExists($like);
 });
 
 /**
