@@ -53,6 +53,12 @@ import type { PetCard } from '@/types';
  * (`scrollWidth` 628px). The same fixture in `rtl`, whose Arabic strings give a
  * 456.359px line, comes out at 490.359px: a different pair, the same +34.
  * Control-measured both ways, in both directions, before this was written down.
+ *
+ * These figures came off the harness described in `card/PetCardCommentPreview`
+ * and only mean something on it: the `resources/css/app.css` manifest key (not
+ * the `resources/js/app.ts` one), an explicit `document.fonts.load` per face
+ * and weight, and the stylesheet-live and `innerWidth` assertions. Re-run them
+ * there before trusting a re-measurement here.
  */
 const { pet } = defineProps<{ pet: PetCard }>();
 
