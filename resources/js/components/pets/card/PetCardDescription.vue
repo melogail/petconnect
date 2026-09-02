@@ -7,9 +7,10 @@
  * `<PetCardDescription :description="pet.description" />` with no `v-if`, and
  * both of its consumers — `PetFeed.vue` and `profile/ProfileListings.vue` —
  * go through that one call site. The `v-if` below is therefore the only guard
- * there is; do not delete it on the assumption that a caller filters first. Clamped to two lines: the card is a teaser, and an
- * unclamped description makes tiles in the same grid row wildly different
- * heights.
+ * there is; do not delete it on the assumption that a caller filters first.
+ *
+ * Clamped to two lines: the card is a teaser, and an unclamped description
+ * makes tiles in the same grid row wildly different heights.
  */
 defineProps<{
     description: string;

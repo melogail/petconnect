@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import PetCardActions from '@/components/pets/card/PetCardActions.vue';
 import PetCardAttributeIcons from '@/components/pets/card/PetCardAttributeIcons.vue';
 import PetCardBadges from '@/components/pets/card/PetCardBadges.vue';
+import PetCardCommentTeaser from '@/components/pets/card/PetCardCommentTeaser.vue';
 import PetCardDescription from '@/components/pets/card/PetCardDescription.vue';
 import PetCardHeader from '@/components/pets/card/PetCardHeader.vue';
 import PetCardMedia from '@/components/pets/card/PetCardMedia.vue';
@@ -11,12 +13,20 @@ import { useLocale } from '@/composables/useLocale';
 import type { PetCard } from '@/types';
 
 /**
- * One listing, as a grid tile. Read-only: it links, it does not act.
+ * One listing, as a grid tile.
  *
  * The card used to be a single `<Link>` wrapping everything. It is now three
  * discrete targets to the same page — the photo, the name, and an explicit
- * "View details" — each with its own accessible name, so a control can be
- * added to the action row without nesting a button inside an anchor.
+ * "View details" — each with its own accessible name, which is what let the
+ * like, comment, message and share controls land in `PetCardActions` without
+ * nesting a button inside an anchor.
+ *
+ * `canInteract` is derived here, off `auth.user`, exactly as
+ * `pages/pets/Show.vue` derives `isSignedIn`. It cannot be a prop: both
+ * consumers of this card — `PetFeed.vue` (via `Home.vue`) and
+ * `profile/ProfileListings.vue` — pass nothing but `pet`, and neither should
+ * have to learn about authentication to render a tile. `auth.user` is null for
+ * a guest whatever `types/auth.ts` says, hence the `Boolean`.
  *
  * `overflow-hidden` on the root is not only for the photo's rounded corner. The
  * card is a grid item in both consumers (`PetFeed.vue`,
@@ -47,6 +57,11 @@ import type { PetCard } from '@/types';
 const { pet } = defineProps<{ pet: PetCard }>();
 
 const { tag } = useLocale();
+
+const page = usePage();
+
+/** A signed-in viewer. Every write the action row offers needs one. */
+const canInteract = computed(() => Boolean(page.props.auth.user));
 
 const place = computed(() =>
     [pet.city, pet.state, pet.country].filter(Boolean).join(', '),
@@ -106,7 +121,14 @@ const kind = computed(() => pet.breed?.name ?? pet.category?.name ?? 'Pet');
 
             <PetCardDescription :description="pet.description" />
 
-            <PetCardActions :pet-id="pet.id" :name="pet.name" />
+            <PetCardActions :pet="pet" :can-interact="canInteract" />
+
+            <PetCardCommentTeaser
+                :pet-id="pet.id"
+                :name="pet.name"
+                :comments="pet.comments"
+                :comments-count="pet.comments_count"
+            />
         </CardContent>
     </Card>
 </template>
