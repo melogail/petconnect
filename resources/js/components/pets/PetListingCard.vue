@@ -1,14 +1,49 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { Heart, MapPin, MessageSquare, PawPrint } from '@lucide/vue';
 import { computed } from 'vue';
-import { Badge } from '@/components/ui/badge';
+import PetCardActions from '@/components/pets/card/PetCardActions.vue';
+import PetCardAttributeIcons from '@/components/pets/card/PetCardAttributeIcons.vue';
+import PetCardBadges from '@/components/pets/card/PetCardBadges.vue';
+import PetCardDescription from '@/components/pets/card/PetCardDescription.vue';
+import PetCardHeader from '@/components/pets/card/PetCardHeader.vue';
+import PetCardMedia from '@/components/pets/card/PetCardMedia.vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocale } from '@/composables/useLocale';
-import { show as showPet } from '@/routes/pets';
 import type { PetCard } from '@/types';
 
-/** One listing, as a grid tile. Read-only: it links, it does not act. */
+/**
+ * One listing, as a grid tile. Read-only: it links, it does not act.
+ *
+ * The card used to be a single `<Link>` wrapping everything. It is now three
+ * discrete targets to the same page — the photo, the name, and an explicit
+ * "View details" — each with its own accessible name, so a control can be
+ * added to the action row without nesting a button inside an anchor.
+ *
+ * `overflow-hidden` on the root is not only for the photo's rounded corner. The
+ * card is a grid item in both consumers (`PetFeed.vue`,
+ * `profile/ProfileListings.vue`), and a grid item's automatic minimum size is
+ * its min-content width — except that a box whose `overflow` is not `visible`
+ * gets an automatic minimum size of zero instead. `PetCardHeader`'s
+ * `kind · place` line is `truncate`, i.e. `white-space: nowrap`, so it
+ * contributes its whole unwrapped width.
+ *
+ * The absolute widths are a function of the string being measured, so the
+ * invariant is the part worth recording: without `overflow-hidden` the card is
+ * sized to that nowrap line's min-content width **plus 34px** — `CardContent`'s
+ * `p-4` contributing 16px of padding per side and `Card`'s `border` 1px per
+ * side (measured on the rendered card as `padding-left`/`padding-right` 16px,
+ * `border-left-width`/`border-right-width` 1px). With `overflow-hidden` the
+ * card is the grid track's width instead and the ellipsis applies.
+ *
+ * Worked example, naming its input so it can be re-run: at a 320px viewport,
+ * with kind "Golden Retriever" and place "Sheikh Zayed City, Sixth of October
+ * Governorate, Arab Republic of Egypt", that line's min-content measures
+ * 592.625px. With `overflow-hidden` the card measures 320px and the document
+ * does not scroll sideways (`documentElement.scrollWidth` 320px); remove the
+ * class and the card measures 626.625px — 592.625 + 34 — and the document does
+ * (`scrollWidth` 628px). The same fixture in `rtl`, whose Arabic strings give a
+ * 456.359px line, comes out at 490.359px: a different pair, the same +34.
+ * Control-measured both ways, in both directions, before this was written down.
+ */
 const { pet } = defineProps<{ pet: PetCard }>();
 
 const { tag } = useLocale();
@@ -34,71 +69,44 @@ const price = computed(() =>
               maximumFractionDigits: 2,
           }).format(Number(pet.price)),
 );
+
+/** Breed names the listing best; category is the fallback, then a generic. */
+const kind = computed(() => pet.breed?.name ?? pet.category?.name ?? 'Pet');
 </script>
 
 <template>
     <Card class="overflow-hidden py-0 transition-shadow hover:shadow-md">
-        <Link :href="showPet(pet.id)" class="block">
-            <div
-                class="bg-muted relative flex aspect-4/3 items-center justify-center"
-            >
-                <img
-                    v-if="pet.image"
-                    :src="pet.image"
-                    :alt="pet.name"
-                    class="size-full object-cover"
-                    loading="lazy"
-                />
-                <PawPrint v-else class="text-muted-foreground size-10" />
+        <PetCardMedia
+            :pet-id="pet.id"
+            :name="pet.name"
+            :image="pet.image"
+            :distance="distance"
+        />
 
-                <Badge
-                    v-if="distance"
-                    variant="secondary"
-                    class="absolute top-2 left-2"
-                >
-                    <MapPin class="size-3" />
-                    {{ distance }}
-                </Badge>
-            </div>
+        <CardContent class="space-y-3 p-4">
+            <PetCardBadges
+                :status="pet.status"
+                :listing-type="pet.listing_type"
+            />
 
-            <CardContent class="space-y-2 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h3 class="truncate font-medium">{{ pet.name }}</h3>
-                    <Badge
-                        :variant="
-                            pet.status === 'available' ? 'default' : 'secondary'
-                        "
-                        class="capitalize"
-                    >
-                        {{ pet.status }}
-                    </Badge>
-                </div>
+            <PetCardHeader
+                :pet-id="pet.id"
+                :name="pet.name"
+                :kind="kind"
+                :place="place"
+                :price="price"
+            />
 
-                <p class="text-muted-foreground truncate text-sm">
-                    {{ pet.breed?.name ?? pet.category?.name ?? 'Pet' }}
-                    <template v-if="place"> · {{ place }}</template>
-                </p>
+            <PetCardAttributeIcons
+                :age="pet.age"
+                :gender="pet.gender"
+                :vaccinated="pet.vaccinated"
+                :spayed-neutered="pet.spayed_neutered"
+            />
 
-                <div
-                    class="text-muted-foreground flex items-center gap-3 text-xs"
-                >
-                    <span class="capitalize">{{ pet.listing_type }}</span>
-                    <span v-if="price" class="text-foreground font-medium">
-                        {{ price }}
-                    </span>
-                    <span class="ms-auto flex items-center gap-1">
-                        <Heart
-                            class="size-3.5"
-                            :class="pet.is_liked ? 'fill-current' : ''"
-                        />{{ pet.likes_count }}
-                    </span>
-                    <span class="flex items-center gap-1">
-                        <MessageSquare class="size-3.5" />{{
-                            pet.comments_count
-                        }}
-                    </span>
-                </div>
-            </CardContent>
-        </Link>
+            <PetCardDescription :description="pet.description" />
+
+            <PetCardActions :pet-id="pet.id" :name="pet.name" />
+        </CardContent>
     </Card>
 </template>

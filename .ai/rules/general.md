@@ -4,7 +4,6 @@ paths:
   - composer.lock
   - '**/*.php'
   - '**'
-  - vite.config.ts
 ---
 
 # General
@@ -51,19 +50,10 @@ Four false claims in one close-out shared one root: predicting runtime behaviour
 
 Second half of the same rule: absence of the artefact you searched for is not absence of the thing itself. A grep for `DB::transaction` without a `catch` structurally could not find the action that had no transaction at all — the most dangerous one. A coverage check that grepped for a test file named after an Action concluded "no coverage" when the coverage lived in a policy test. Enumerate the behaviour and ask what covers it, rather than searching for the shape you expect to find.
 
-## Vite watcher ignores extend the defaults; count directories, not files
-Three settled points about `server.watch.ignored`, from Phase 1.
-
-**inotify allocates one watch per directory, not per file.** File counts are the wrong metric and produced two wrong diagnoses this phase. When you size a watch list, count directories.
-
-**Vite prepends its own defaults — the user array extends, it does not replace.** `resolveChokidarOptions` spreads the user array *after* `.git`, `node_modules`, `test-results` and the cache dir, so anything already on that default list is redundant in `server.watch.ignored`. This was established **by reading the installed Vite source**, not by measurement — weigh it as such, and if it ever matters more than it does now, run it.
-
-**The numbers, each named against what it was measured on.** `storage/app/public/media` is **17,878 directories** and is the entry that actually matters. `vendor` (**2,529 directories**) is real work because it is *not* a Vite default. `public` (**6 directories**) is not worth the reload-on-change it costs.
-
 ## A claim must say how it was established
 Twelve defects in one phase shared a single root: **a claim and its consumer drifting apart, with nothing in the build failing when they disagree.**
 
-The instances: a config file whose prose said it was live while the build ignored it; a CSS comment whose hex and HSL disagreed with each other; a "violet-500 cannot carry text" warning contradicted by a component three files away; a contrast ratio measured against a reference the token never uses; a green presence dot for a state the schema deliberately does not track; an agent-instruction file that was wrong about its own build; and one where **no comment existed at all**, which let a wrong model survive two readers.
+Seven of the twelve: a config file whose prose said it was live while the build ignored it; a CSS comment whose hex and HSL disagreed with each other; a "violet-500 cannot carry text" warning contradicted by a component three files away; a contrast ratio measured against a reference the token never uses; a green presence dot for a state the schema deliberately does not track; an agent-instruction file that was wrong about its own build; and one where **no comment existed at all**, which let a wrong model survive two readers.
 
 Five of the twelve were caught by **measurement** rather than by reading. Three had already been written down correctly **elsewhere in the same repo**.
 
