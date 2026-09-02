@@ -13,7 +13,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | database/data/** | .ai/rules/data.md |
 | app/Enums/** | .ai/rules/enums.md |
 | database/factories/** | .ai/rules/factories.md |
-| composer.json, composer.lock, **/*.php, ** | .ai/rules/general.md |
+| composer.json, composer.lock, **/*.php, **, vite.config.ts | .ai/rules/general.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |
 | app/MediaLibrary/** | .ai/rules/media-library.md |

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
 import PublicHeader from '@/components/PublicHeader.vue';
-import { help, support } from '@/routes';
+import PublicFooter from '@/components/shell/PublicFooter.vue';
 
 /**
  * The shell for pages a guest may reach: the feed, a listing, a public
@@ -11,12 +10,21 @@ import { help, support } from '@/routes';
  * `auth.user`, which is why `app.ts` mapped these to `null` and left a note
  * asking Phase 4 for a real public layout. This is it.
  *
- * This footer is the only route to `help` and `support` a guest has, and for
- * `support` it is very nearly the only one anybody has. No sidebar carries
- * either link — `AppSidebar` has neither — and the signed-in path to `help` is
- * one item in the account dropdown (`UserMenuContent`), which `PublicHeader`
- * also renders once there is a user. Nothing but this footer and the button at
- * the bottom of `Help` links `support` at all.
+ * The bottom padding on `<main>` is not decoration: `PublicFooter` is fixed
+ * from `md` up, so it is out of flow there and would sit on top of the last
+ * screenful of every page without it. Each value is the footer's measured
+ * height at that breakpoint rounded up to the next spacing step:
+ *
+ * | width      | footer  | reserved      |
+ * | ---------- | ------- | ------------- |
+ * | 320–767    | in flow | none needed   |
+ * | 768–1023   | 97px    | `md:pb-28` 112px |
+ * | 1024+      | 73px    | `lg:pb-20` 80px  |
+ *
+ * Below `md` the footer is static, so it takes its own space and nothing is
+ * reserved: it is 145px tall in English and 169px in Arabic at 320px wide,
+ * which a fixed bar cannot carry under the sticky header at 400% zoom (WCAG
+ * 1.4.10). Change the footer's padding or type scale and re-measure these.
  */
 </script>
 
@@ -24,21 +32,10 @@ import { help, support } from '@/routes';
     <div class="bg-background flex min-h-screen flex-col">
         <PublicHeader />
 
-        <main class="flex-1">
+        <main class="flex-grow md:pb-28 lg:pb-20">
             <slot />
         </main>
 
-        <footer class="border-border border-t">
-            <div
-                class="text-muted-foreground mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-6 text-sm sm:px-6"
-            >
-                <Link :href="help()" class="hover:text-foreground">
-                    Help Center
-                </Link>
-                <Link :href="support()" class="hover:text-foreground">
-                    Support
-                </Link>
-            </div>
-        </footer>
+        <PublicFooter />
     </div>
 </template>
