@@ -22,8 +22,12 @@ use Illuminate\Support\Facades\Storage;
  * outside production precisely so that miss throws, but a resource that reads
  * an avatar through `getFirstMediaUrl()` on a single-row page is unguarded
  * (see .ai/rules/app.md).
+ *
+ * Asserted as an equality, not a ceiling: under a ceiling a regression of one
+ * query passes silently until it happens to cross the bound, by which point the
+ * commit that spent it is long gone.
  */
-const INBOX_PAYLOAD_QUERY_CEILING = 7;
+const INBOX_PAYLOAD_QUERY_COST = 7;
 
 /**
  * Give a user the avatar UserSummaryResource reads with getFirstMediaUrl().
@@ -158,5 +162,5 @@ test('serialises a page of the inbox in a constant number of queries however man
 
     expect($atTwoThreads)->toBe($atSixThreads)
         ->and($atSixThreads)->toBe($atFifteenThreads)
-        ->and($atFifteenThreads)->toBeLessThanOrEqual(INBOX_PAYLOAD_QUERY_CEILING);
+        ->and($atFifteenThreads)->toBe(INBOX_PAYLOAD_QUERY_COST);
 });

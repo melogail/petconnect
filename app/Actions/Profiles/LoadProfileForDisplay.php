@@ -10,6 +10,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 /**
  * Everything the public profile page renders, in three queries plus paging.
  *
+ * That count is Action-scoped and measured under phpunit.xml's
+ * `SESSION_DRIVER=array`; a real request pays 2-3 more for the `sessions` and
+ * `cache` tables while `.env` keeps the `database` drivers. See
+ * .ai/rules/app.md.
+ *
  * The page is three things — the person, their listings and their reputation —
  * and each is a separate paginator or model rather than one nested eager load,
  * because two of them page independently.

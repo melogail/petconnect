@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLocale } from '@/composables/useLocale';
+import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import { home } from '@/routes';
 import type {
     HomeFeedBounds,
@@ -48,6 +49,12 @@ import type { QueryParams } from '@/wayfinder';
  * `categories` is a deferred prop. The router fetches it by itself off the
  * `deferredProps` announcement, so `<Deferred>` only gates the markup; the
  * sheet issues no reload of its own and needs no `onMounted`.
+ *
+ * The two age boxes are `inputmode="decimal"` text, not `type="number"`, and
+ * their refs are `InputValue`. A numeric input's `v-model` casts the DOM value
+ * unconditionally, so these refs held a `number` the moment anyone typed a
+ * bound and `apply()` threw on `.trim()` before the visit was ever made — the
+ * same defect that made the pet form unpublishable. See `lib/inputValue`.
  */
 const { filters, bounds, listingTypes, categories } = defineProps<{
     filters: HomeFeedFilters;
@@ -64,8 +71,8 @@ const open = ref(false);
 const categoryIds = ref<(string | number)[]>([]);
 const breedIds = ref<(string | number)[]>([]);
 const listingTypeValues = ref<(string | number)[]>([]);
-const ageMin = ref('');
-const ageMax = ref('');
+const ageMin = ref<InputValue>('');
+const ageMax = ref<InputValue>('');
 const vaccinated = ref(false);
 
 /** Reseed from the server's normalised bag every time the sheet is opened. */
@@ -139,8 +146,8 @@ function apply(): void {
         listing_types: listingTypeValues.value.length
             ? listingTypeValues.value
             : null,
-        age_min: ageMin.value.trim() === '' ? null : ageMin.value.trim(),
-        age_max: ageMax.value.trim() === '' ? null : ageMax.value.trim(),
+        age_min: trimmedInput(ageMin.value) || null,
+        age_max: trimmedInput(ageMax.value) || null,
         vaccinated: vaccinated.value ? 1 : null,
     });
 }
@@ -239,10 +246,7 @@ function clear(): void {
                             <Input
                                 id="filter-age-min"
                                 v-model="ageMin"
-                                type="number"
-                                min="0"
-                                :max="bounds.max_age_years"
-                                step="0.5"
+                                inputmode="decimal"
                                 :placeholder="String(bounds.default_age_min)"
                             />
                         </div>
@@ -251,10 +255,7 @@ function clear(): void {
                             <Input
                                 id="filter-age-max"
                                 v-model="ageMax"
-                                type="number"
-                                min="0"
-                                :max="bounds.max_age_years"
-                                step="0.5"
+                                inputmode="decimal"
                                 :placeholder="String(bounds.default_age_max)"
                             />
                         </div>

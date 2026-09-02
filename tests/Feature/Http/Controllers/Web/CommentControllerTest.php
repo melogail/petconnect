@@ -27,6 +27,26 @@ describe('index', function () {
             ->assertJsonPath('data.0.content', $comment->content);
     });
 
+    /**
+     * The other end of `pets.show`'s `commentBounds.thread_per_page`: the page
+     * size the client is told about has to be the size the endpoint actually
+     * pages at, or the client's `floor(rootsInHand / thread_per_page) + 1` asks
+     * for the wrong page and a root is skipped or repeated. Asserted against a
+     * re-`config()`d value, because a size frozen at today's default agrees
+     * with the drift this pins.
+     */
+    test('pages the thread at the configured size', function () {
+        config(['petconnect.comments.thread_per_page' => 3]);
+        $pet = Pet::factory()->create();
+        Comment::factory()->count(5)->for($pet, 'commentable')->create();
+
+        $this->get(route('comments.index', threadRouteParameters($pet)))
+            ->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('meta.per_page', 3)
+            ->assertJsonPath('meta.total', 5);
+    });
+
     test('returns 404 for a commentable type that is not on the whitelist', function () {
         $this->get('/comments/dragon/1')->assertNotFound();
     });

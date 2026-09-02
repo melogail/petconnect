@@ -19,8 +19,15 @@ use Illuminate\Support\Facades\Storage;
  * the fixture below rather than guessed, so an eager load that stops covering
  * what a resource walks pushes the count past it.
  *
+ * Asserted as an equality rather than a ceiling. This number is the frontend's
+ * only performance contract for the listing page, and a ceiling lets a
+ * regression of one query pass silently until it happens to cross the bound —
+ * the point at which nobody can tell which change spent it. An equality fails
+ * on the commit that added the query, and a deliberate one is a one-line edit
+ * here with a reason in the diff.
+ *
  * This is the Action's number, not the page's — the detail *route* costs more,
- * and DETAIL_ROUTE_QUERY_CEILING is the figure to reach for when asking what a
+ * and DETAIL_ROUTE_QUERY_COST is the figure to reach for when asking what a
  * visit to a listing costs.
  *
  * A count alone cannot see every miss, which is why the second test exists.
@@ -30,7 +37,7 @@ use Illuminate\Support\Facades\Storage;
  * nothing throws either. Only the thread — many comment authors, many repliers
  * — turns a missing eager load into a count that grows.
  */
-const DETAIL_ACTION_QUERY_CEILING = 13;
+const DETAIL_ACTION_QUERY_COST = 13;
 
 /**
  * What a visit to the listing page costs end to end: the Action's queries plus
@@ -38,10 +45,10 @@ const DETAIL_ACTION_QUERY_CEILING = 13;
  * `{pet}`, and RecordPetView::handle() incrementing the counter.
  *
  * Measured through the route so the number means "the detail page", which the
- * Action's ceiling above does not: read as the page's cost it is two queries
+ * Action's cost above does not: read as the page's cost it is two queries
  * short and any regression baseline drawn from it starts out wrong.
  */
-const DETAIL_ROUTE_QUERY_CEILING = 15;
+const DETAIL_ROUTE_QUERY_COST = 15;
 
 /**
  * Give a user the avatar PetOwnerResource reads with getFirstMediaUrl().
@@ -173,7 +180,7 @@ test('serialises the detail payload in a constant number of queries however long
     $atFiveComments = countPetDetailQueries($pet, $owner);
 
     expect($atTwoComments)->toBe($atFiveComments)
-        ->and($atFiveComments)->toBeLessThanOrEqual(DETAIL_ACTION_QUERY_CEILING);
+        ->and($atFiveComments)->toBe(DETAIL_ACTION_QUERY_COST);
 });
 
 test('renders the listing page in a constant number of queries however long the comment thread is', function () {
@@ -191,7 +198,7 @@ test('renders the listing page in a constant number of queries however long the 
     $atFiveComments = countPetDetailRouteQueries($pet, $visitor);
 
     expect($atTwoComments)->toBe($atFiveComments)
-        ->and($atFiveComments)->toBeLessThanOrEqual(DETAIL_ROUTE_QUERY_CEILING);
+        ->and($atFiveComments)->toBe(DETAIL_ROUTE_QUERY_COST);
 });
 
 test('serialises the detail payload without a further query, because every relation it walks is eager loaded', function () {

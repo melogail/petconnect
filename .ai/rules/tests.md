@@ -14,7 +14,9 @@ Consequence, measured: every `addMedia(UploadedFile::fake()->create(...))` in th
         return $this;
     }
 
-and returns **before** `$temporaryDirectory->delete()`. There is no `try`/`finally`, so the same early return also leaks whenever a conversion throws. `Storage::fake()` does not help: the temp path is a raw `storage_path('media-library/temp')`, not a disk, so it is never redirected and the litter lands in the real project tree. Three tests in `LoadPetDetailTest` left 90 directories; the suite had accumulated 7,172 (29 MB), every leaked file exactly 0 bytes.
+and returns **before** `$temporaryDirectory->delete()`. There is no `try`/`finally`, so the same early return also leaks whenever a conversion throws. `Storage::fake()` does not help: the temp path is a raw `storage_path('media-library/temp')`, not a disk, so it is never redirected and the litter lands in the real project tree.
+
+**Scale, corrected 2026-08-31.** This used to record "the suite had accumulated 7,172 directories (29 MB)". Re-measured: **9 directories, 480 KB**. The mechanism and the `->image()` guidance below are unchanged and still right; the figure was a snapshot of a tree nobody had cleaned, not a live crisis, and it should not be read as one. What it grows by is a few directories per suite run, every leaked file exactly 0 bytes.
 
 Seeding is not the cause — no seeder or factory attaches media, and `migrate:fresh --seed` leaves the count unchanged. It is the test suite, and only the test suite.
 
@@ -26,8 +28,12 @@ The upstream leak is spatie/laravel-medialibrary 11.23.5 `Conversions/FileManipu
 - half-miss (`with('user')` where the payload reaches `user.media`) — `LazyLoadingViolationException`, or the query count goes **up**;
 - complete miss (no eager load at all) — no exception, no key, and the query count goes **DOWN**.
 
-Measured twice on this codebase: `ListReviews` fell 5 queries → 3 and `BuildInbox` had the same shape, both with a green suite. So a count assertion *agrees with* the regression it is supposed to catch, and `Model::preventLazyLoading()` never sees a relation nobody touched.
+Measured twice on this codebase: `ListReviews` fell 5 queries → 3 and `BuildInbox` fell 7 → 2, both with a green suite, and `Model::preventLazyLoading()` never sees a relation nobody touched.
 
-Rule: any test that exists to protect an eager load behind `whenLoaded()` must serialise the payload (`->response()->getContent()`, or the Inertia prop) and assert the key is there — `expect($payload)->toHaveKey('author')` — as well as counting queries. Counting alone covers the half-miss only. Note also that `preventLazyLoading` is off entirely on result sets of 0 or 1 row (see .ai/rules/app.md), so the fixture needs at least two rows of whatever is being iterated.
+**Corrected 2026-08-31.** This used to conclude "a count assertion *agrees with* the regression it is supposed to catch". That holds for a **ceiling** — `toBeLessThanOrEqual(7)` passes on 2 — and not for an **equality**: `toBe(7)` fails on 2, and every pin in this suite is an equality. So the pins do catch the complete miss. Do not read the old wording as licence to treat them as worthless, and do not loosen one to a ceiling without replacing what it was catching.
+
+Rule: any test that exists to protect an eager load behind `whenLoaded()` must serialise the payload (`->response()->getContent()`, or the Inertia prop) and assert the key is there — `expect($payload)->toHaveKey('author')` — as well as counting queries. The key assertion is still worth writing next to an equality pin: it states what the test is *for*, it names the regression in the failure message instead of reporting "expected 7, got 2", and it is what survives if the pin is ever relaxed. Counting alone, at a ceiling, covers the half-miss only.
+
+Note also that these pins are measured under this file's `SESSION_DRIVER=array` and `CACHE_STORE=array` (phpunit.xml). A real request on `.env`'s `database` drivers pays 2-3 more queries for `sessions` and `cache` — same feed request, 9 queries under the array driver, 12 for a guest and 11 authenticated under the database one. A pin here is not a whole-request cost. Note also that `preventLazyLoading` is off entirely on result sets of 0 or 1 row (see .ai/rules/app.md), so the fixture needs at least two rows of whatever is being iterated.
 
 `grep -rn 'whenLoaded(' app/Http/Resources` is the live list of what this covers; do not work from an enumeration in a rule file.

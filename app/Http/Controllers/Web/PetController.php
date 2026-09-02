@@ -231,12 +231,39 @@ class PetController extends Controller
     /**
      * The key a view is deduplicated against.
      *
-     * A signed-in visitor is keyed by id so the dedup follows them across
-     * devices; a guest by session id, which survives a changing IP and does not
-     * lump every visitor behind one NAT together.
+     * A signed-in visitor is keyed by id, so the dedup follows them across
+     * devices. A guest is keyed by their IP address — **not** by the session
+     * id, which is what this used to do.
+     *
+     * The session id looked like the privacy-preserving choice and was in fact
+     * the inflatable one: it comes from a cookie the client controls, so a
+     * caller that keeps no cookie jar draws a brand new session, and therefore
+     * a brand new dedup key, on every single request. `curl` in a loop against
+     * a public, unthrottled GET incremented `views` once per request with no
+     * window applying at all. Whatever the counter is worth, it should not be
+     * that easy to write to.
+     *
+     * The IP is hashed rather than stored: the cache key needs to be stable per
+     * visitor, not readable, and `pet-view:{id}:{key}` rows would otherwise be a
+     * log of who read which listing. xxh128 is a non-cryptographic hash chosen
+     * for speed — this is a cache key, not a credential — and the addresses it
+     * covers are guessable by construction, so it is obfuscation, not secrecy.
+     *
+     * The cost, paid knowingly: everyone behind one NAT now shares a key, so a
+     * household or an office counts once per window. That is the right way for
+     * a vanity number to be wrong — it undercounts honest traffic rather than
+     * overcounting a script. A caller with a pool of addresses can still
+     * inflate it, which is why RecordPetView's docblock says not to build
+     * anything on `views`.
      */
     private function visitorKey(Request $request): string
     {
-        return (string) ($request->user()?->getKey() ?? $request->session()->getId());
+        $user = $request->user();
+
+        if ($user !== null) {
+            return 'user:'.$user->getKey();
+        }
+
+        return 'guest:'.hash('xxh128', (string) $request->ip());
     }
 }

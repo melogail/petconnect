@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ThrottleAuthRoutes;
 use Illuminate\Http\Middleware\CheckResponseForModifications;
 use Laravel\Nova\Actions\ActionResource;
 use Laravel\Nova\Http\Middleware\Authenticate;
@@ -114,8 +115,18 @@ return [
         'nova:serving',
     ],
 
+    /*
+     * ThrottleAuthRoutes is here for one route: Nova registers
+     * `nova.password.confirm` (POST nova/user-security/confirm-password) with
+     * this list and nothing else, and Nova reads `fortify.limiters` for its
+     * login, passkey, two-factor and verification routes but has no slot for
+     * this one. Unthrottled it is a password oracle for an admin account. The
+     * middleware no-ops on every other route in this group — every Nova page
+     * and every `nova-api/*` call pays one array lookup for it.
+     */
     'api_middleware' => [
         'nova',
+        ThrottleAuthRoutes::class,
         Authenticate::class,
         // \Laravel\Nova\Http\Middleware\AuthenticateSession::class,
         // \Laravel\Nova\Http\Middleware\EnsureEmailIsVerified::class,

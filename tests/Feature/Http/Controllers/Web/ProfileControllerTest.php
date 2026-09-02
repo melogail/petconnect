@@ -11,25 +11,26 @@ use App\Models\User;
 use App\Notifications\ModelLikedNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 
 /**
  * What a visit to the profile page costs end to end: the twelve queries
- * LoadProfileForDisplay issues (see PROFILE_ACTION_QUERY_CEILING in
+ * LoadProfileForDisplay issues (see PROFILE_ACTION_QUERY_COST in
  * tests/Feature/Actions/Profiles/LoadProfileForDisplayTest) plus the one the
  * router adds around them, resolving `{user}`.
  *
  * Measured through the route so the number means "the profile page", which the
- * Action's ceiling does not: read as the page's cost it is one query short and
+ * Action's cost does not: read as the page's cost it is one query short and
  * any regression baseline drawn from it starts out wrong.
  *
  * Two listings and two reviews minimum in every fixture below:
  * `preventLazyLoading` is off on result sets of one row (.ai/rules/app.md), so a
  * one-row fixture proves nothing about the eager loads.
  */
-const PROFILE_ROUTE_QUERY_CEILING = 13;
+const PROFILE_ROUTE_QUERY_COST = 13;
 
 /**
  * Give a user the avatar ProfileResource and ReviewAuthorResource read with
@@ -127,14 +128,30 @@ test('renders the profile for an unverified visitor', function () {
         ->assertOk();
 });
 
-test('returns 403 for a deactivated profile, to a guest and to a signed in visitor alike', function () {
+/**
+ * A 404, not the 403 this used to assert, and the change of status is the
+ * point. User::resolveRouteBinding() refuses to bind an inactive account, so
+ * the page is a ModelNotFoundException before ProfileController::show can call
+ * authorize() — the same answer Comment::resolveRouteBinding() gives for a
+ * comment on a hidden listing, and the stronger one: a 403 confirms the account
+ * exists at a guessable sequential id and a 404 does not.
+ *
+ * The Gate assertions are what say the policy was not gutted when the binding
+ * took over. `view` is no longer what produces this status code, but it is
+ * still the answer to the question asked directly, and it is what any future
+ * page reaching a User through a relation rather than a URL will get. The full
+ * matrix for both abilities lives in tests/Feature/Policies/UserPolicyTest.
+ */
+test('returns 404 for a deactivated profile, to a guest and to a signed in visitor alike', function () {
     $deactivated = User::factory()->inactive()->create();
 
-    $this->get(route('profile.show', $deactivated))->assertForbidden();
+    $this->get(route('profile.show', $deactivated))->assertNotFound();
 
     $this->actingAs(User::factory()->create())
         ->get(route('profile.show', $deactivated))
-        ->assertForbidden();
+        ->assertNotFound();
+
+    expect(Gate::forUser(null)->allows('view', $deactivated))->toBeFalse();
 });
 
 /**
@@ -392,16 +409,23 @@ describe('like', function () {
     });
 
     /**
-     * UserPolicy::like re-derives what UserPolicy::view already decided about a
-     * deactivated account: a profile whose page is a 403 must not stay likeable
-     * at a guessable sequential id.
+     * A 404 rather than the 403 this used to assert, for the same reason the
+     * page above is: User::resolveRouteBinding() will not bind an inactive
+     * account, so this route never reaches UserPolicy::like. The write half is
+     * unchanged — no row either way — and the Gate assertion pins that the
+     * policy still refuses when asked directly, which is what keeps this
+     * profile unlikeable through any caller that reaches a User without a URL.
      */
-    test('returns 403 for a deactivated profile and records no like', function () {
+    test('returns 404 for a deactivated profile and records no like', function () {
+        $deactivated = User::factory()->inactive()->create();
+
         $this->actingAs(User::factory()->create())
-            ->post(route('profile.like', User::factory()->inactive()->create()))
-            ->assertForbidden();
+            ->post(route('profile.like', $deactivated))
+            ->assertNotFound();
 
         $this->assertDatabaseEmpty('likes');
+
+        expect(User::factory()->create()->can('like', $deactivated))->toBeFalse();
     });
 
     /**
@@ -450,11 +474,11 @@ describe('like', function () {
 });
 
 describe('the query budget', function () {
-    test('renders for a guest inside the page query ceiling', function () {
+    test('renders for a guest at the recorded page query cost', function () {
         Storage::fake(config('media-library.disk_name'));
         $profile = profileWithListingsAndReviews();
 
-        expect(countProfilePageQueries($profile, null))->toBe(PROFILE_ROUTE_QUERY_CEILING);
+        expect(countProfilePageQueries($profile, null))->toBe(PROFILE_ROUTE_QUERY_COST);
     });
 
     test('does not grow when the profile holds more listings and more reviews', function () {

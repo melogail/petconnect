@@ -14,6 +14,11 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * categories exist. `media` is in the list because
  * PetCategoryOptionResource calls getFirstMediaUrl(): without it the tree cost
  * one extra query per category (measured: 9 queries for 7 categories).
+ *
+ * Those figures are Action-scoped and measured under phpunit.xml's
+ * `SESSION_DRIVER=array`; a real request pays 2-3 more for the `sessions` and
+ * `cache` tables while `.env` keeps the `database` drivers. See
+ * .ai/rules/app.md.
  */
 class ListPetCategories
 {

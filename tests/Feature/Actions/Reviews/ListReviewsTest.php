@@ -17,10 +17,10 @@ use Illuminate\Support\Facades\DB;
  *
  * Measured, not guessed, and flat — `has_reported` is a withExists() subquery
  * on the query already being issued, so it adds a column rather than a round
- * trip. The test beside the ceiling grows the page instead of trusting the
+ * trip. The test beside the cost grows the page instead of trusting the
  * number alone.
  */
-const REVIEWS_PAGE_QUERY_CEILING = 5;
+const REVIEWS_PAGE_QUERY_COST = 5;
 
 /**
  * Give a user the avatar ReviewAuthorResource reads with getFirstMediaUrl().
@@ -152,7 +152,7 @@ test('raises a model not found exception for a target that does not exist', func
 });
 
 /**
- * The ceiling is flat because every extra fact the page needs is a subquery on
+ * The cost is flat because every extra fact the page needs is a subquery on
  * a query already being issued. Three page sizes, because a per-row query only
  * shows up as growth.
  */
@@ -163,7 +163,7 @@ test('costs the same number of queries however many reviews are on the page', fu
 
     $page = measureReviewsPage($subject, User::factory()->create());
 
-    expect($page['queries'])->toBe(REVIEWS_PAGE_QUERY_CEILING);
+    expect($page['queries'])->toBe(REVIEWS_PAGE_QUERY_COST);
 })->with([
     '2 reviews' => 2,
     '10 reviews' => 10,
@@ -176,7 +176,7 @@ test('costs the same number of queries however many reviews are on the page', fu
  * ReviewResource emits the author through `whenLoaded('user')`, so dropping the
  * eager load entirely does not lazy load and does not throw — it silently drops
  * the `author` key and the count goes *down*. Neither preventLazyLoading nor
- * the ceiling above sees it, which is why this asserts the key. See
+ * the count above sees it, which is why this asserts the key. See
  * .ai/rules/resources.md.
  */
 test('serialises every review with its author, so a dropped eager load cannot pass as a cheaper page', function () {

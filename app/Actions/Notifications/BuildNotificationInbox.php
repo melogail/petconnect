@@ -19,6 +19,11 @@ use Illuminate\Notifications\DatabaseNotification;
  *
  * Measured flat at 3 queries whether the account holds 5 notifications or 500.
  *
+ * That figure is Action-scoped and measured under phpunit.xml's
+ * `SESSION_DRIVER=array`; a real request pays 2-3 more for the `sessions` and
+ * `cache` tables while `.env` keeps the `database` drivers. See
+ * .ai/rules/app.md.
+ *
  * ## Why this is a route and not a shared Inertia prop
  *
  * The legacy NotificationInboxService::sharedPropsFor() ran on **every page

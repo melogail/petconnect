@@ -45,7 +45,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * `reviews_avg_rate` come from HasReviews::withReviewStats().
  *
  * The avatar is read with getFirstMediaUrl(), so whoever loads the user must
- * eager load `media`.
+ * eager load `media`. It asks for the `display` conversion, which is only a
+ * real answer because `User::registerMediaConversions()` generates that one
+ * inline — a queued conversion would never be generated here (no worker runs)
+ * and `getFirstMediaUrl()` would quietly hand back the raw upload instead.
+ * Read that method's docblock before changing either end.
  *
  * ## The two viewer-relative flags, and what each is for
  *

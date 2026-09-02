@@ -47,7 +47,14 @@ trait ResolvesMorphTarget
      * answers it — it refuses to bind a comment whose commentable is hidden, so
      * a soft-deleted listing's discussion cannot be read at a guessable
      * sequential id — and `Review::resolveRouteBinding()` refuses a review
-     * whose target is gone. Re-deriving that per flow would leave each new
+     * whose target is gone, and `User::resolveRouteBinding()` refuses a
+     * deactivated account. That last one is what this method is *for*: the
+     * reviews vertical is the only place a User is addressed by bare id
+     * without a route binding, and until the override landed it fell through
+     * to Eloquent's default and answered "yes" for an account whose own
+     * profile was already refused — so the reviews *about* a deactivated
+     * account stayed publicly readable and a new one could still be written
+     * and delivered. Re-deriving that per flow would leave each new
      * caller free to forget it, which is how the same class of bug shipped
      * twice already (.ai/rules/app.md, "A route-bound child model must
      * re-derive its parent's visibility"). Delegating means there is one

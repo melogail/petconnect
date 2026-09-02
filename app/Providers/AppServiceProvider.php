@@ -60,10 +60,16 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Define the named rate limiters the routes attach.
      *
-     * Every limiter here guards a write that turns into a database
-     * notification for somebody else, so an unthrottled tap loop is a
-     * notification flood rather than a wasted write. The legacy app throttled
-     * nothing at all, anywhere.
+     * Most limiters here guard a write that turns into a database notification
+     * for somebody else, so an unthrottled tap loop is a notification flood
+     * rather than a wasted write. The legacy app throttled nothing at all,
+     * anywhere.
+     *
+     * The last five are a different shape and are documented separately below:
+     * three guard credential and mail flows that Fortify and Nova register
+     * without a limiter slot (see Http\Middleware\ThrottleAuthRoutes, which is
+     * what attaches them), and two guard the only writes in the application
+     * that consume disk and image-conversion CPU.
      *
      * - `pet-likes` guards POST pets/{pet}/like.
      * - `comment-likes` guards POST comments/{comment}/like. Same shape and
@@ -102,10 +108,59 @@ class AppServiceProvider extends ServiceProvider
      *   spammer needs thousands for the tactic to pay. Legacy had no throttle
      *   at all on conversation creation or on message sending.
      *
+     * - `pet-listings` guards POST pets. It is the heaviest write in the
+     *   application — up to four images, each stored and put through two
+     *   conversions — and it was the only one of the two heavy ones with no
+     *   ceiling of any kind: measured, one account published 25 listings with
+     *   real uploads in one burst, all 302. `comments` caps a text row at 10 a
+     *   minute while this cost nothing to repeat. Two limits, because the two
+     *   costs decay differently: 5 a minute bounds the CPU spike, and 30 an
+     *   hour bounds the disk, while still leaving a rescue posting a hundred
+     *   listings a day room to do it.
+     * - `profile-updates` guards PATCH settings/profile, for the same reason
+     *   minus the durable half: an avatar upload runs two conversions and
+     *   replaces the previous file, so a loop is CPU rather than storage. One
+     *   limit at 10 a minute — a human saves a settings form once and then
+     *   corrects a typo, not sixty times.
+     *
+     * ## Credential and mail flows
+     *
+     * These three are not attached on a route, because this application does
+     * not declare the routes they guard — Fortify and Nova do, and neither
+     * offers a limiter slot for them. Http\Middleware\ThrottleAuthRoutes is
+     * what attaches them and carries the full reasoning.
+     *
+     * - `password-confirmations` guards POST user/confirm-password and Nova's
+     *   POST nova/user-security/confirm-password. Unthrottled, both were a
+     *   clean yes/no password oracle behind nothing but a session cookie, and
+     *   a confirmation unlocks the two-factor recovery codes and passkey
+     *   registration. 5 a minute matches Fortify's own `login` limiter, since
+     *   it is the same act — "prove you know this password" — and 20 an hour is
+     *   what makes a patient guesser hopeless rather than merely slow. A user
+     *   who has genuinely forgotten their password has `password.request`.
+     * - `registrations` guards POST register. Keyed on the caller's IP (the
+     *   route is `guest`, so there is never a user), which is the only handle
+     *   there is: every other field is attacker-chosen, including the address
+     *   the verification mail goes to. 5 a minute stops the script and 25 a day
+     *   stops the patient one. That is deliberately per-IP even though a large
+     *   NAT shares one: 25 sign-ups a day from a single address is already
+     *   extraordinary, and the alternative — an unbounded mail relay pointed at
+     *   third parties — costs the whole domain's deliverability. A CAPTCHA or
+     *   WAF is the answer if a legitimate shared address ever hits it.
+     * - `password-reset-links` guards POST forgot-password.
+     *   `config('auth.passwords.users.throttle')` already bounds resends per
+     *   *email address*; this bounds the *caller*, which is the half that was
+     *   missing — walking an address list was 40 sends from one IP with no
+     *   resistance. 3 a minute and 15 an hour: a real person mistypes their
+     *   address once or twice.
+     *
      * All of them are keyed by user id, falling back to the IP so a request that
-     * somehow arrives unauthenticated is still bounded. The two limits on
-     * `conversations` prefix their keys, because Laravel evaluates limits in a
-     * shared bucket namespace and identical `by` values would collide.
+     * somehow arrives unauthenticated is still bounded — except
+     * `password-confirmations`, which combines the two (`user id|ip`) because
+     * the account under attack and the machine attacking it are different
+     * dimensions and both have to be bounded. Every limiter with two limits
+     * prefixes its keys, because Laravel evaluates limits in a shared bucket
+     * namespace and identical `by` values would collide.
      *
      * Throttling lives here rather than in the publish pipeline on purpose: a
      * rate limit's only meaningful outcome is a 429 with Retry-After, which is
@@ -138,6 +193,29 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('minute:'.$this->rateLimitKey($request)),
             Limit::perDay(30)->by('day:'.$this->rateLimitKey($request)),
         ]);
+
+        RateLimiter::for('pet-listings', fn (Request $request): array => [
+            Limit::perMinute(5)->by('minute:'.$this->rateLimitKey($request)),
+            Limit::perHour(30)->by('hour:'.$this->rateLimitKey($request)),
+        ]);
+
+        RateLimiter::for('profile-updates', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by($this->rateLimitKey($request)));
+
+        RateLimiter::for('password-confirmations', fn (Request $request): array => [
+            Limit::perMinute(5)->by('minute:'.$this->passwordConfirmationKey($request)),
+            Limit::perHour(20)->by('hour:'.$this->passwordConfirmationKey($request)),
+        ]);
+
+        RateLimiter::for('registrations', fn (Request $request): array => [
+            Limit::perMinute(5)->by('minute:'.$this->rateLimitKey($request)),
+            Limit::perDay(25)->by('day:'.$this->rateLimitKey($request)),
+        ]);
+
+        RateLimiter::for('password-reset-links', fn (Request $request): array => [
+            Limit::perMinute(3)->by('minute:'.$this->rateLimitKey($request)),
+            Limit::perHour(15)->by('hour:'.$this->rateLimitKey($request)),
+        ]);
     }
 
     /**
@@ -147,6 +225,34 @@ class AppServiceProvider extends ServiceProvider
     protected function rateLimitKey(Request $request): string
     {
         return (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+    }
+
+    /**
+     * Who a password confirmation is counted against: the account whose
+     * password is being guessed **and** the machine guessing it.
+     *
+     * Both halves are load bearing, which is why this does not reuse
+     * rateLimitKey(). Keyed on the account alone, an attacker with two stolen
+     * sessions gets two budgets; keyed on the IP alone, a shared NAT would lock
+     * colleagues out of their own settings page.
+     *
+     * The guard has to be asked twice because the two routes this key serves
+     * sit on different ones: Fortify's confirm-password is `web`, Nova's is
+     * `config('nova.guard')` — `admin` here — and this limiter runs ahead of
+     * Nova's own Authenticate middleware, so `$request->user()` on the default
+     * guard is null for an admin. `guest` is the fallback that cannot happen on
+     * either route (both are behind auth) and exists so the key is never the
+     * bare IP by accident.
+     */
+    protected function passwordConfirmationKey(Request $request): string
+    {
+        $novaGuard = config('nova.guard');
+
+        $identifier = $request->user()?->getAuthIdentifier()
+            ?? $request->user(is_string($novaGuard) ? $novaGuard : null)?->getAuthIdentifier()
+            ?? 'guest';
+
+        return $identifier.'|'.$request->ip();
     }
 
     /**

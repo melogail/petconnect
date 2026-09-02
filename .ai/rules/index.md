@@ -16,9 +16,11 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/** | .ai/rules/js.md |
 | lang/** | .ai/rules/lang.md |
 | app/MediaLibrary/** | .ai/rules/media-library.md |
+| app/Http/Middleware/** | .ai/rules/middleware.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Models/** | .ai/rules/models.md |
 | app/Notifications/** | .ai/rules/notifications.md |
+| app/Nova/Actions/** | .ai/rules/nova-actions.md |
 | app/Nova/Policies/** | .ai/rules/nova-policies.md |
 | app/Nova/** | .ai/rules/nova.md |
 | app/Observers/** | .ai/rules/observers.md |

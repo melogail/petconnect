@@ -38,12 +38,24 @@ use App\Models\User;
  *
  * A deactivated account's profile is not readable, by anyone. That is one of
  * the things `is_active` now means — see Http\Middleware\EnsureAccountIsActive
- * for the whole definition — and it lives in a policy rather than in a route
- * binding on purpose: .ai/rules/app.md draws the line at "hidden by a global
- * scope goes in resolveRouteBinding, hidden by state or ownership goes in a
- * policy", and `is_active` is state. Putting it in User::resolveRouteBinding()
- * would also have reached App\Enums\Reviewable::findVisibleOrFail(), silently
- * changing which users can be reviewed and which reviews bind.
+ * for the whole definition.
+ *
+ * **This is no longer the only enforcement point, and it is no longer the one
+ * that answers `profile.show`.** This docblock used to record a decision to
+ * keep the check *out* of User::resolveRouteBinding(), on the grounds that
+ * `is_active` is state rather than a global scope and that a binding override
+ * "would also have reached App\Enums\Reviewable::findVisibleOrFail(), silently
+ * changing which users can be reviewed". Reaching findVisibleOrFail() was the
+ * thing that needed to happen: without it, a deactivated account's reviews
+ * stayed publicly readable and — the sharp end — anyone could still write a new
+ * review about them and deliver the notification, because the reviews vertical
+ * resolves its target by bare id and never asks this policy. The override is
+ * now on the model and carries the measurements.
+ *
+ * So `profile.show` and `profile.like` 404 before a controller runs, and this
+ * method is what still answers `Gate::allows('view', $deactivated)` asked
+ * directly, plus any future page that reaches a User through a relation rather
+ * than a URL. Both are kept on purpose; neither is redundant.
  *
  * There is deliberately **no "except the owner" carve-out**, and that is a
  * measured decision rather than an omission. EnsureAccountIsActive logs a
@@ -61,8 +73,8 @@ use App\Models\User;
  * not merely a branch that always evaluates false; it is a branch in a method
  * no deactivated viewer can reach. `view` returning false for that pair is
  * still the correct answer — Gate::allows() asked directly agrees, and that is
- * what the policy test pins — but the 403 a client sees comes from the
- * middleware, not from here.
+ * what the policy test pins — but the status a client sees comes from the
+ * middleware or from the route binding, not from here.
  *
  * ## Query-free by construction
  *
@@ -91,11 +103,11 @@ class UserPolicy
      * The second clause has no counterpart on those two, and is not decoration:
      * `like` is the one write in the application that names a *user* as its
      * target, so it is the one that has to re-derive what `view` already
-     * decided about a deactivated account. Without it, a profile whose page is
-     * a 403 for everybody would still be likeable at a guessable sequential id
-     * — the same shape as a comment on a retired listing, decided in a policy
-     * here rather than in a route binding because `is_active` is state
-     * (.ai/rules/app.md).
+     * decided about a deactivated account. It is now belt and braces rather
+     * than the only defence — User::resolveRouteBinding() refuses to bind a
+     * deactivated account at all, so this route 404s before the policy is
+     * asked — and it stays because the clause costs nothing and answers the
+     * question for any caller that reaches a User without a URL.
      *
      * There is deliberately no self-like clause. Neither of the other two like
      * policies has one, and a self-like is already silent: LikeObserver filters

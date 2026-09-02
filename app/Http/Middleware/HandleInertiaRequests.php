@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Actions\Localization\BuildTranslationCatalogue;
+use App\Http\Resources\User\AuthenticatedUserResource;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -186,17 +187,37 @@ class HandleInertiaRequests extends Middleware
     /**
      * Define the props that are shared by default.
      *
+     * ## `auth.user` goes through a Resource, and that is the point
+     *
+     * This used to be `'user' => $request->user()`, which let the model's own
+     * toArray() decide the payload — i.e. every column except User's four
+     * `#[Hidden]` ones. That put the viewer's `address`, `lat`, `lng`, `phone`,
+     * `media_directory_name`, `two_factor_confirmed_at` and `last_seen_at` into
+     * the props of every page in the application, the public feed included.
+     * Nothing leaked between users; it went into every browser cache, history
+     * entry and screen share the viewer's own pages touch.
+     *
+     * Http\Resources\User\AuthenticatedUserResource is the payload, and its
+     * docblock owns the key list and what is deliberately not on it.
+     *
+     * The ternary is load bearing: `auth.user` is **null for a guest** on every
+     * public page, and the resource reads properties off the model, so it must
+     * never be constructed around null. See .ai/rules/types.md — the client type
+     * says non-nullable and is wrong on purpose.
+     *
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user === null ? null : AuthenticatedUserResource::make($user),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => $this->localeProps(),

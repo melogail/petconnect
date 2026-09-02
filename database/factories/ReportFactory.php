@@ -76,4 +76,18 @@ class ReportFactory extends Factory
             'status' => ReportStatus::Pending,
         ]);
     }
+
+    /**
+     * Close the report, a moderator having acted on it.
+     *
+     * The companion of pending(): the default draws a random ReportStatus, so a
+     * test that needs a report the moderation queue must *not* count cannot get
+     * one from the definition.
+     */
+    public function resolved(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'status' => ReportStatus::Resolved,
+        ]);
+    }
 }

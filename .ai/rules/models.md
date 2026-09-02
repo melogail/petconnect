@@ -53,3 +53,15 @@ Verified against what the legacy form actually submits (petconnect-old Create.vu
 - allergies: array<int, string> — a plain list of strings.
 - additional_info: array<string, mixed> — a fixed key map, deliberately NOT legacy's [{key, value}] repeater. The legacy detail page case-insensitively string-matched user-typed keys against hardcoded English labels, which breaks the moment a user types Arabic or a typo.
 The casts stay 'array'; the shape is enforced by the Form Request and documented in the @property block. Phase 2/4 forms build against these shapes.
+
+## Deactivation is enforced in User::resolveRouteBinding(), so a deactivated profile is 404 not 403
+`User::resolveRouteBinding()` returns null for `! isActive()`. This reverses the earlier decision recorded in UserPolicy ("is_active is state, so it belongs in a policy, not a binding"), which the Phase 6 audit measured as leaving the reviews vertical open: `GET /reviews/user/{id}` returned the full list and `POST /reviews/user/{id}` wrote a review and delivered a notification, because `App\Enums\Reviewable::findVisibleOrFail()` delegates to `resolveRouteBinding()` and never asks the policy.
+
+Consequences to know: `profile.show` and `profile.like` now 404 (the binding refuses before the controller), not 403 — a policy-produced status was replaced by a binding-produced one, and two ProfileControllerTest assertions were written against the old status. `UserPolicy::view` / `::like` keep their `isActive()` checks as belt and braces and still answer `Gate::allows()` asked directly. Nova is unaffected: it resolves resources with its own keyed queries and never calls `resolveRouteBinding()`, so an admin can still open and reactivate a deactivated account.
+
+So the line in .ai/rules/app.md — "hidden by a global scope goes in resolveRouteBinding, hidden by state goes in a policy" — is about whether the override can answer *completely*, not about scopes. `is_active` is a column on the row the binding just fetched, so it can. Participation/ownership still cannot and still belong in a policy.
+
+## No queue worker exists: a queued media conversion is never generated
+`QUEUE_CONNECTION=database` and nothing runs `queue:work` — no dev script entry, no supervisor config, no Horizon. A conversion left queued (the package default) is written to `jobs` and never generated; `getFirstMediaUrl()` then silently serves the ORIGINAL upload, so nothing looks broken while a 2 MB avatar ships where a 40 KB crop was intended. `Media::getUrl('display')` does not even fall back — it returns a URL to a file that was never written.
+
+`User`'s `thumb` and `display` are both `->nonQueued()` for this reason (see that method's docblock). `Pet`, `Category` and `Breed` still queue `display` and still have the silent fallback. Either mark a conversion `nonQueued()` or deploy a worker and document it — do not leave it queued and assume it ran.

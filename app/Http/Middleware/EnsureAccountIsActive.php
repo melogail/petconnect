@@ -34,14 +34,27 @@ use Symfony\Component\HttpFoundation\Response;
  *    `Fortify::username()` and the rehash-on-login behaviour, and it would
  *    still not cover the passkey route, which does not go through it. One
  *    check, on every authenticated request, covers every way in.
- * 3. **No public profile.** UserPolicy::view refuses it — to everyone,
- *    including the account itself, because point 1 means the account can never
- *    be the viewer.
+ * 3. **Not addressable by id, anywhere.** User::resolveRouteBinding() refuses
+ *    to bind a deactivated account, so `profile.show` and `profile.like` are a
+ *    404 before a controller runs, and so is every flow that resolves a user
+ *    through App\Enums\Reviewable / Reportable::findVisibleOrFail(). That last
+ *    part is the Phase 6 fix: the check used to live only in UserPolicy::view,
+ *    which the reviews vertical never asks, so `GET reviews/user/{id}` returned
+ *    the full list and `POST reviews/user/{id}` wrote a review about — and
+ *    notified — an account the system had decided was not addressable.
+ *    UserPolicy::view still refuses the profile and is what answers
+ *    `Gate::allows('view', $deactivated)`; it is no longer the only enforcement
+ *    point.
  * 4. **No incoming messages.** User::acceptsMessagesFrom(), unchanged.
  *
  * What it deliberately does *not* mean: the account's existing listings,
- * comments and reviews stay published. They are content about pets and about
- * other people, other users are still reading and answering them, and retiring
+ * comments and the reviews it *wrote about other people* stay published. (The
+ * reviews written *about* the deactivated account are a different thing and are
+ * covered by point 3 — `reviews/user/{id}` names the account itself, so it is
+ * an address the binding refuses. Nothing was unpublished to achieve that; the
+ * one endpoint that reads them by that id stopped answering.) They are content
+ * about pets and about other people, other users are still reading and
+ * answering them, and retiring
  * them would need every listing query to join `users` — a cost on the busiest
  * read path in the application for a flag almost no row carries. Retiring
  * content is a moderation action with its own audit trail, and it belongs on
@@ -56,16 +69,32 @@ use Symfony\Component\HttpFoundation\Response;
  * expired, which for a moderator deactivating an abusive account is the whole
  * point.
  *
- * It adds no query — but not for the reason this used to give. Nothing in the
- * default `web` group resolves the authenticated user (StartSession,
- * ShareErrorsFromSession, ValidateCsrfToken, SubstituteBindings do not), and
- * this middleware is appended ahead of `auth`, so it is in fact the **first**
- * thing to call `$request->user()` and it is what triggers the guard's lookup.
- * The lookup is memoized on the guard, and HandleInertiaRequests two entries
- * later shares the same user into every response's props, so that one query was
- * always going to be issued and this middleware only moves it earlier. Once it
- * has the row, `is_active` is a column already on it — no relation, no second
- * read.
+ * It adds no query, and the reason depends on the route. On anything behind
+ * `auth`, `Illuminate\Auth\Middleware\Authenticate` has already resolved the
+ * user and the guard memoizes it, so `$request->user()` here is free. On a
+ * public route nothing else resolves one — StartSession,
+ * ShareErrorsFromSession, PreventRequestForgery and SubstituteBindings all do
+ * not — so this middleware is what triggers the lookup, and
+ * HandleInertiaRequests shares the same memoized user into the response's props
+ * a few entries later. Either way the row was always going to be read, and once
+ * it is in hand `is_active` is a column on it: no relation, no second read.
+ *
+ * ## Where in the stack it actually runs
+ *
+ * Appended `web` middleware are written before route middleware but do not
+ * necessarily *run* first: Kernel::$middlewarePriority is applied to the whole
+ * gathered stack, and `Authenticate`, `ThrottleRequests` and
+ * `SubstituteBindings` are all on it, so they are pulled ahead of every
+ * unlisted entry. Measured on `pets.store` (`['auth', 'verified']`), this
+ * middleware is **ninth**: after Authenticate, ThrottleRequests and
+ * SubstituteBindings, before SetLocale, HandleInertiaRequests and
+ * EnsureEmailIsVerified.
+ *
+ * That is the ordering the guarantees above depend on, and none of them need it
+ * to precede `auth`: an earlier version of this docblock and of bootstrap/app.php
+ * both claimed it did. What matters is that it runs before any controller,
+ * before `verified`, and before any prop is built — which it does, on a guarded
+ * route and a public one alike.
  *
  * Placed in the `web` group rather than inside `auth`, so it also covers routes
  * that are merely user-aware — the public feed, a public profile — where a

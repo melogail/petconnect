@@ -48,6 +48,11 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * run, so they add rows to a result set rather than round trips: the page costs
  * the same number of queries whether it holds one comment or fifty.
  *
+ * Any query figure pinned for this Action is Action-scoped and measured under
+ * phpunit.xml's `SESSION_DRIVER=array`; a real request pays 2-3 more for the
+ * `sessions` and `cache` tables while `.env` keeps the `database` drivers. See
+ * .ai/rules/app.md.
+ *
  * A null viewer is a guest, and `is_liked` / `has_reported` are simply absent
  * for them; CommentResource defaults both to false.
  *

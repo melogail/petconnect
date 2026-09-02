@@ -5,6 +5,7 @@ import DetailList from '@/components/DetailList.vue';
 import type { DetailItem } from '@/components/DetailList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import type { PetFormState } from '@/lib/petForm';
 import type { PetFormOptions, SelectOption } from '@/types';
 
@@ -34,6 +35,23 @@ function label<T extends string>(
     return list.find((option) => option.value === value)?.label ?? null;
 }
 
+/**
+ * A numeric-ish box read back, with its unit, or null when it is blank.
+ *
+ * `age`, `weight` and `price` are `InputValue` — a `v-model` is free to write a
+ * `number` into any of them — so they are coerced here rather than compared
+ * against `''` and interpolated raw.
+ */
+function unit(value: InputValue, suffix?: string): string | null {
+    const text = trimmedInput(value);
+
+    if (text === '') {
+        return null;
+    }
+
+    return suffix === undefined ? text : `${text} ${suffix}`;
+}
+
 const coverPreview = ref<string | null>(null);
 
 watch(
@@ -56,6 +74,14 @@ onBeforeUnmount(() => {
 
 const cover = computed(() => coverPreview.value ?? currentFeaturedUrl);
 
+/** The pin, or null unless both boxes hold something. */
+const pin = computed(() => {
+    const lat = trimmedInput(form.location.lat);
+    const lng = trimmedInput(form.location.lng);
+
+    return lat === '' || lng === '' ? null : `${lat}, ${lng}`;
+});
+
 const basics = computed<DetailItem[]>(() => [
     { label: 'Name', value: form.name },
     {
@@ -72,15 +98,15 @@ const basics = computed<DetailItem[]>(() => [
                 .flatMap((category) => category.breeds ?? [])
                 .find((breed) => breed.id === form.breed_id)?.name ?? null,
     },
-    { label: 'Age', value: form.age === '' ? null : `${form.age} years` },
+    { label: 'Age', value: unit(form.age, 'years') },
     { label: 'Gender', value: label(options.genders, form.gender) },
     { label: 'Colour', value: form.color },
-    { label: 'Weight', value: form.weight === '' ? null : `${form.weight} kg` },
+    { label: 'Weight', value: unit(form.weight, 'kg') },
     {
         label: 'Listing type',
         value: label(options.listingTypes, form.listing_type),
     },
-    { label: 'Price', value: form.price },
+    { label: 'Price', value: unit(form.price) },
     { label: 'Status', value: label(options.statuses, form.status) },
 ]);
 
@@ -91,13 +117,7 @@ const location = computed<DetailItem[]>(() => [
     { label: 'Postal code', value: form.location.postalCode },
     { label: 'Address', value: form.location.address },
     { label: 'Building detail', value: form.location.detailedAddress },
-    {
-        label: 'Map pin',
-        value:
-            form.location.lat === '' || form.location.lng === ''
-                ? null
-                : `${form.location.lat}, ${form.location.lng}`,
-    },
+    { label: 'Map pin', value: pin.value },
 ]);
 
 const health = computed<DetailItem[]>(() => [
@@ -121,7 +141,7 @@ const records = computed<DetailItem[]>(() => [
         label: 'Vaccinations',
         value:
             form.health.vaccinations
-                .filter((row) => row.name.trim() !== '')
+                .filter((row) => trimmedInput(row.name) !== '')
                 .map((row) => row.name)
                 .join(', ') || null,
     },
@@ -129,7 +149,7 @@ const records = computed<DetailItem[]>(() => [
         label: 'Medications',
         value:
             form.health.medications
-                .filter((row) => row.name.trim() !== '')
+                .filter((row) => trimmedInput(row.name) !== '')
                 .map((row) => row.name)
                 .join(', ') || null,
     },
@@ -138,7 +158,10 @@ const records = computed<DetailItem[]>(() => [
 
 const extras = computed<DetailItem[]>(() =>
     form.additionalInfo
-        .filter((row) => row.label.trim() !== '' && row.value.trim() !== '')
+        .filter(
+            (row) =>
+                trimmedInput(row.label) !== '' && trimmedInput(row.value) !== '',
+        )
         .map((row) => ({ label: row.label, value: row.value })),
 );
 </script>

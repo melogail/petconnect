@@ -1,5 +1,5 @@
 import type { Comment, CommentPreview } from './comments';
-import type { Coordinate } from './profile';
+import type { Coordinate, DecimalColumn } from './profile';
 
 export type PetListingType = 'adoption' | 'sale' | 'mating';
 export type PetStatus = 'available' | 'unavailable';
@@ -81,7 +81,8 @@ export type PetCard = {
     description: string;
     status: PetStatus;
     listing_type: PetListingType;
-    price: number | null;
+    /** An uncast `decimal` column: a float on SQLite, a string on MySQL. */
+    price: DecimalColumn | null;
     vaccinated: boolean;
     spayed_neutered: boolean;
     city: string;
@@ -132,10 +133,12 @@ export type PetDetail = {
     age: string;
     gender: PetGender;
     color: string;
-    weight: number | null;
+    /** An uncast `decimal` column: a float on SQLite, a string on MySQL. */
+    weight: DecimalColumn | null;
     description: string;
     listing_type: PetListingType;
-    price: number | null;
+    /** An uncast `decimal` column: a float on SQLite, a string on MySQL. */
+    price: DecimalColumn | null;
     status: PetStatus;
     views: number;
     category?: PetCategoryOption;

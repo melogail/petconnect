@@ -1,4 +1,5 @@
 import { fromCoordinateInput, toCoordinateInput } from '@/lib/coordinates';
+import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import type {
     PetDetail,
     PetGender,
@@ -36,10 +37,18 @@ export type PetExtraRow = {
 /**
  * Everything the pet form holds, in the shape the inputs bind to.
  *
- * Deliberately **not** the wire shape. Every scalar is a string here because
- * that is what an `<input>` produces, and the repeaters are arrays of complete
- * rows because that is what a repeater renders. `toPetPayload()` is the single
- * boundary where this becomes what `App\Concerns\PetValidationRules` accepts.
+ * Deliberately **not** the wire shape. Every scalar is text as the user typed
+ * it, and the repeaters are arrays of complete rows because that is what a
+ * repeater renders. `toPetPayload()` is the single boundary where this becomes
+ * what `App\Concerns\PetValidationRules` accepts.
+ *
+ * The numeric-ish boxes — `age`, `weight`, `price` and the two coordinates —
+ * are `InputValue`, not `string`, because `v-model` on an `<input>` is free to
+ * write a `number` into them and did: a `type="number"` on those three fields
+ * made `age.trim()` throw before the POST ever fired, and no listing could be
+ * published or edited. `InputValue` is what makes `vue-tsc` refuse a bare
+ * string method here instead of leaving it to the browser. Nothing below
+ * touches form state without going through `trimmedInput()`.
  *
  * The naming split is the backend's and is preserved exactly: top-level scalars
  * are snake_case column names, the nested `location` / `health` groups and
@@ -51,13 +60,13 @@ export type PetFormState = {
     name: string;
     category_id: number | null;
     breed_id: number | null;
-    age: string;
+    age: InputValue;
     gender: PetGender | '';
     color: string;
-    weight: string;
+    weight: InputValue;
     description: string;
     listing_type: PetListingType | '';
-    price: string;
+    price: InputValue;
     status: PetStatus | '';
     location: {
         address: string;
@@ -66,8 +75,8 @@ export type PetFormState = {
         state: string;
         postalCode: string;
         country: string;
-        lat: string;
-        lng: string;
+        lat: InputValue;
+        lng: InputValue;
     };
     health: {
         status: PetHealthStatus | '';
@@ -193,8 +202,8 @@ export function petFormFromDetail(pet: PetDetail): PetFormState {
 }
 
 /** A trimmed string, or null when the field was left blank. */
-function text(value: string): string | null {
-    const trimmed = value.trim();
+function text(value: InputValue): string | null {
+    const trimmed = trimmedInput(value);
 
     return trimmed === '' ? null : trimmed;
 }
@@ -215,10 +224,10 @@ function text(value: string): string | null {
  * string precisely so `numeric` can reject it.
  */
 function coordinatePair(
-    latInput: string,
-    lngInput: string,
+    latInput: InputValue,
+    lngInput: InputValue,
 ): { lat: number | string | null; lng: number | string | null } | null {
-    if (latInput.trim() === '' && lngInput.trim() === '') {
+    if (trimmedInput(latInput) === '' && trimmedInput(lngInput) === '') {
         return null;
     }
 
@@ -229,8 +238,8 @@ function coordinatePair(
 }
 
 /** A number for `numeric` validation, or null when the field was left blank. */
-function numeric(value: string): number | null {
-    const trimmed = value.trim();
+function numeric(value: InputValue): number | null {
+    const trimmed = trimmedInput(value);
 
     if (trimmed === '') {
         return null;
@@ -296,26 +305,26 @@ export function toPetPayload(state: PetFormState): Record<string, unknown> {
     const coordinates = coordinatePair(state.location.lat, state.location.lng);
 
     const vaccinations = state.health.vaccinations
-        .filter((row) => row.name.trim() !== '')
-        .map((row) => ({ name: row.name.trim(), date: text(row.date) }));
+        .map((row) => ({ name: trimmedInput(row.name), date: text(row.date) }))
+        .filter((row) => row.name !== '');
 
     const medications = state.health.medications
-        .filter((row) => row.name.trim() !== '')
-        .map((row) => ({ name: row.name.trim(), usage: text(row.usage) }));
+        .map((row) => ({ name: trimmedInput(row.name), usage: text(row.usage) }))
+        .filter((row) => row.name !== '');
 
     const allergies = state.health.allergies
-        .map((allergy) => allergy.trim())
+        .map((allergy) => trimmedInput(allergy))
         .filter((allergy) => allergy !== '');
 
     const traits = state.traits
-        .map((trait) => trait.trim())
+        .map((trait) => trimmedInput(trait))
         .filter((trait) => trait !== '');
 
     const additionalInfo: Record<string, string> = {};
 
     for (const row of state.additionalInfo) {
-        const label = row.label.trim();
-        const value = row.value.trim();
+        const label = trimmedInput(row.label);
+        const value = trimmedInput(row.value);
 
         if (label !== '' && value !== '') {
             additionalInfo[label] = value;
@@ -323,14 +332,14 @@ export function toPetPayload(state: PetFormState): Record<string, unknown> {
     }
 
     const payload: Record<string, unknown> = {
-        name: state.name.trim(),
+        name: trimmedInput(state.name),
         category_id: state.category_id,
         breed_id: state.breed_id,
-        age: state.age.trim(),
+        age: trimmedInput(state.age),
         gender: state.gender,
-        color: state.color.trim(),
+        color: trimmedInput(state.color),
         weight: numeric(state.weight),
-        description: state.description.trim(),
+        description: trimmedInput(state.description),
         listing_type: state.listing_type,
         price: numeric(state.price),
         status: state.status,
@@ -338,10 +347,10 @@ export function toPetPayload(state: PetFormState): Record<string, unknown> {
         location: {
             address: text(state.location.address),
             detailedAddress: text(state.location.detailedAddress),
-            city: state.location.city.trim(),
-            state: state.location.state.trim(),
+            city: trimmedInput(state.location.city),
+            state: trimmedInput(state.location.state),
             postalCode: text(state.location.postalCode),
-            country: state.location.country.trim(),
+            country: trimmedInput(state.location.country),
             coordinates,
         },
 

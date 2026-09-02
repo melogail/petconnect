@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Requests\Pet\UpdatePetRequest;
+use App\Models\Comment;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Support\Arr;
@@ -111,6 +112,45 @@ test('every nested key the resource emits has a rule of the same name on the edi
     }
 });
 
+/**
+ * The two counters are different sums and a fixture where they agree hides the
+ * defect the second one exists to fix: `comments_count` is `withCount(['comments'])`
+ * over the whole morphMany — roots and replies together — while
+ * `root_comments_count` counts only `whereNull('parent_id')`. The thread ships
+ * roots, so it is the root total the client compares what it holds against;
+ * paging on `comments_count` asks for pages that are not there.
+ *
+ * Two roots with two replies each therefore has to read 2 and 6, not 6 and 6.
+ */
+test('counts roots separately from the whole thread', function () {
+    $pet = Pet::factory()->create();
+
+    Comment::factory()
+        ->count(2)
+        ->forPet($pet)
+        ->create()
+        ->each(fn (Comment $root) => Comment::factory()->count(2)->reply($root)->create());
+
+    $this->get(route('pets.show', $pet))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('pet.root_comments_count', 2)
+            ->where('pet.comments_count', 6)
+            ->etc());
+});
+
+/**
+ * The reconciliation that caught the camelCase/snake_case split which was
+ * silently nulling `vet_name`, the coordinates and `postal_code` on every edit:
+ * a key the resource emits is either something the edit request accepts back
+ * under the same name, or something deliberately declared read-only below.
+ *
+ * `$readShapes` is a declaration, not a suppression list. A key belongs on it
+ * only after confirming the edit form never round-trips it — for a counter such
+ * as `comments_count` or `root_comments_count`, that means no rule of that name
+ * on UpdatePetRequest and no mention in `resources/js/lib/petForm.ts`. If the
+ * form does send the key, the mismatch is on the request's side and this test
+ * failing is the point.
+ */
 test('every top level key the resource emits is either a rule on the edit request or a declared read shape', function () {
     $owner = User::factory()->create();
     $pet = petWithEveryField($owner);
@@ -124,7 +164,8 @@ test('every top level key the resource emits is either a rule on the edit reques
 
     $readShapes = [
         'id', 'views', 'category', 'breed', 'user', 'is_owner',
-        'featured_image', 'photos', 'likes_count', 'comments_count', 'is_liked',
+        'featured_image', 'photos', 'likes_count', 'comments_count',
+        'root_comments_count', 'is_liked',
         'comments', 'created_at', 'updated_at',
     ];
 

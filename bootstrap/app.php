@@ -26,12 +26,30 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'locale', 'sidebar_state']);
 
         /*
-         * Order matters here.
+         * Order matters here, and the order these are written in is not the
+         * order they run in.
          *
-         * `EnsureAccountIsActive` runs before HandleInertiaRequests, so a
-         * deactivated account is signed out before any props are built for it.
-         * Appended `web` middleware also run before route middleware, so it
-         * fires ahead of `auth` and `verified` and no controller is reached.
+         * Kernel::$middlewarePriority is applied to the whole gathered stack,
+         * and it names `Authenticate`, `ThrottleRequests`, `SubstituteBindings`
+         * and `EnsureEmailIsVerified` among others. SortedMiddleware pulls
+         * those into their canonical relative order and leaves everything else
+         * where it sits, so a route middleware from the priority list can end
+         * up *ahead* of an appended group entry. Measured on `pets.store`
+         * (`['auth', 'verified']`): EncryptCookies, AddQueuedCookiesToResponse,
+         * StartSession, ShareErrorsFromSession, PreventRequestForgery,
+         * **Authenticate**, ThrottleRequests, SubstituteBindings,
+         * **EnsureAccountIsActive**, SetLocale, HandleAppearance,
+         * HandleInertiaRequests, AddLinkHeadersForPreloadedAssets, InjectBoost,
+         * **EnsureEmailIsVerified**.
+         *
+         * So: `EnsureAccountIsActive` runs *after* `auth`, *before* `verified`,
+         * and before HandleInertiaRequests — which is what matters. A
+         * deactivated account is signed out before any props are built for it
+         * and before any controller runs, on a guarded route and on a public
+         * one alike. This comment used to claim it fired ahead of `auth`
+         * because appended group middleware precede route middleware; the
+         * outcome was right and the reason was wrong, and the reason is what
+         * somebody would reuse when adding the next entry here.
          *
          * `SetLocale` runs after it, because logging a deactivated user out
          * changes whose locale preference applies; and before

@@ -23,6 +23,23 @@ import type {
  * `price` is `required_if:listing_type,sale` and `present|nullable` otherwise,
  * so the field stays on the form for every listing type and only its label
  * changes.
+ *
+ * ## Why age, weight and price are text boxes
+ *
+ * They were `type="number"`, which broke publishing outright: Vue's `vModelText`
+ * casts unconditionally on a numeric input, so the three fields held a `number`
+ * and the payload builder's `.trim()` threw before the request left the page.
+ * `lib/petForm` now absorbs that at the boundary, so the crash cannot come back
+ * whatever a field's `type` is — but the type itself is still wrong for these
+ * three. All are decimals (`step` 0.1 and 0.01), and a numeric input hands a
+ * locale-comma decimal back as an empty string, silently dropping "2,5" for
+ * every Arabic and European reader of a bilingual app. It also changes the
+ * value on a stray scroll wheel, in a wizard whose steps are scrolled.
+ *
+ * `inputmode="decimal"` keeps the numeric keypad on mobile without any of that,
+ * and it is what the coordinate boxes on the location step already use. The
+ * ranges the `min`/`max` attributes advertised were never the enforcement —
+ * `numeric|min:0|max:99` in `PetValidationRules` is — so they move into hints.
  */
 const { form, options } = defineProps<{
     form: InertiaForm<PetFormState>;
@@ -109,15 +126,13 @@ function pickCategory(value: string): void {
             label="Age (years)"
             field-id="pet-age"
             :error="errors.age"
+            hint="A number between 0 and 99."
             required
         >
             <Input
                 id="pet-age"
                 v-model="form.age"
-                type="number"
-                min="0"
-                max="99"
-                step="0.1"
+                inputmode="decimal"
                 required
             />
         </FormField>
@@ -162,9 +177,7 @@ function pickCategory(value: string): void {
             <Input
                 id="pet-weight"
                 v-model="form.weight"
-                type="number"
-                min="0"
-                step="0.01"
+                inputmode="decimal"
             />
         </FormField>
 
@@ -196,9 +209,7 @@ function pickCategory(value: string): void {
             <Input
                 id="pet-price"
                 v-model="form.price"
-                type="number"
-                min="0"
-                step="0.01"
+                inputmode="decimal"
             />
         </FormField>
 

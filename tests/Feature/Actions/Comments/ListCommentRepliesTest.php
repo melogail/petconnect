@@ -18,10 +18,14 @@ use Illuminate\Support\Facades\Storage;
  * replies of its own — threads are two levels deep — and no target is resolved
  * here, the parent comment having already been bound by the route.
  *
- * The endpoint costs more than this, and REPLIES_ROUTE_QUERY_CEILING is the
+ * The endpoint costs more than this, and REPLIES_ROUTE_QUERY_COST is the
  * figure to read as "what the replies endpoint costs".
+ *
+ * Asserted as an equality, not a ceiling: under a ceiling a regression of one
+ * query passes silently until it happens to cross the bound, by which point the
+ * commit that spent it is long gone.
  */
-const REPLIES_ACTION_QUERY_CEILING = 4;
+const REPLIES_ACTION_QUERY_COST = 4;
 
 /**
  * What the replies endpoint costs: the Action's queries plus the two the
@@ -35,7 +39,7 @@ const REPLIES_ACTION_QUERY_CEILING = 4;
  * implicit so that turning the rule into something cheaper, or accidentally
  * into something per-comment, shows up as a number rather than as nothing.
  */
-const REPLIES_ROUTE_QUERY_CEILING = 6;
+const REPLIES_ROUTE_QUERY_COST = 6;
 
 /**
  * Give a user the avatar CommentAuthorResource reads with getFirstMediaUrl().
@@ -148,7 +152,7 @@ test('serialises a page of replies in a constant number of queries however many 
     $atTwelveReplies = countRepliesQueries($parent, $viewer);
 
     expect($atTwoReplies)->toBe($atTwelveReplies)
-        ->and($atTwelveReplies)->toBeLessThanOrEqual(REPLIES_ACTION_QUERY_CEILING);
+        ->and($atTwelveReplies)->toBe(REPLIES_ACTION_QUERY_COST);
 });
 
 test('serves a page of replies in a constant number of queries however many replies it holds', function () {
@@ -166,5 +170,5 @@ test('serves a page of replies in a constant number of queries however many repl
     $atTwelveReplies = countRepliesRouteQueries($parent, $viewer);
 
     expect($atTwoReplies)->toBe($atTwelveReplies)
-        ->and($atTwelveReplies)->toBeLessThanOrEqual(REPLIES_ROUTE_QUERY_CEILING);
+        ->and($atTwelveReplies)->toBe(REPLIES_ROUTE_QUERY_COST);
 });

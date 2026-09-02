@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\Admin;
+use App\Models\Report;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Testing\TestResponse;
 
 /**
  * The boundary between the marketplace and the back office.
@@ -95,4 +98,83 @@ test('refuses the viewNova gate to a member', function () {
 
 test('refuses the viewNova gate to a guest', function () {
     expect(Gate::forUser(null)->allows('viewNova'))->toBeFalse();
+});
+
+/**
+ * The pending count on the Reports item, serialised out of the real menu rather
+ * than read off `menu()`'s return value: a MenuItem::resource() only renders
+ * once Nova has authorized it against the acting admin, so calling the method
+ * directly returns items that serialise to nothing.
+ *
+ * @return array{value: string, typeClass: string}|null
+ */
+function moderationReportsBadge(TestResponse $response): ?array
+{
+    $menu = json_decode(json_encode($response->inertiaProps()['novaConfig']['mainMenu']), true);
+
+    $item = collect($menu)
+        ->firstWhere('name', 'Moderation')['items'];
+
+    return collect($item)->firstWhere('name', 'Reports')['badge'];
+}
+
+/**
+ * The moderation queue is the only part of this panel with a backlog, and the
+ * badge is how it announces itself without the dashboard being open. Withheld
+ * when the queue is empty — `withBadgeIf` — because a permanent "0" is noise
+ * that trains a moderator to stop reading the sidebar.
+ */
+test('badges the reports item with everything still awaiting a decision', function () {
+    Report::factory()->count(3)->pending()->create();
+    Report::factory()->resolved()->create();
+
+    $response = $this->actingAs(Admin::factory()->create(), 'admin')
+        ->get('/nova/dashboards/main')
+        ->assertOk();
+
+    expect(moderationReportsBadge($response)['value'])->toBe('3');
+});
+
+test('leaves the reports item unbadged when nothing is awaiting a decision', function () {
+    Report::factory()->resolved()->create();
+
+    $response = $this->actingAs(Admin::factory()->create(), 'admin')
+        ->get('/nova/dashboards/main')
+        ->assertOk();
+
+    expect(moderationReportsBadge($response))->toBeNull();
+});
+
+/**
+ * `withBadgeIf` evaluates the value callback and the condition callback
+ * separately, so a `Report::pending()->count()` written inside each of them
+ * would be queried twice per menu build rather than once. `menu()` takes the
+ * count in its own body and both closures capture it, and that is asserted as a
+ * number because it is invisible from the rendered badge — both spellings draw
+ * the same sidebar.
+ *
+ * Two, not one, and the difference is Nova's rather than ours: a Nova page load
+ * resolves the main menu **twice** — once through Nova's own
+ * `HandleInertiaRequests::share()` and once through `Nova::jsonVariables()` on
+ * the way to the root template — and each resolution calls this `menu()`. So the
+ * page costs one count per build, which is the decision under test; moving the
+ * count into the closures makes it four.
+ */
+test('counts the pending reports once per menu build, not once per badge callback', function () {
+    Report::factory()->count(3)->pending()->create();
+    $admin = Admin::factory()->create();
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    $this->actingAs($admin, 'admin')->get('/nova/dashboards/main')->assertOk();
+
+    $pendingCounts = collect(DB::getQueryLog())
+        ->filter(fn (array $query): bool => str_contains($query['query'], 'from "reports"')
+            && str_contains($query['query'], 'count(*)'))
+        ->count();
+
+    DB::disableQueryLog();
+
+    expect($pendingCounts)->toBe(2);
 });

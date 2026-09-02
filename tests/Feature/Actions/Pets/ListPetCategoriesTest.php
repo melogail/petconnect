@@ -11,8 +11,12 @@ use Illuminate\Support\Facades\Storage;
 /**
  * What the whole tree costs: one query for the categories, one for their icons
  * and one for their breeds, however many rows each holds.
+ *
+ * Asserted as an equality, not a ceiling: under a ceiling a regression of one
+ * query passes silently until it happens to cross the bound, by which point the
+ * commit that spent it is long gone.
  */
-const CATEGORY_TREE_QUERY_CEILING = 3;
+const CATEGORY_TREE_QUERY_COST = 3;
 
 /**
  * Add categories carrying both an icon and breeds, which is the whole of what
@@ -69,5 +73,57 @@ test('serialises the whole tree in a constant number of queries however many cat
     $atFive = countCategoryTreeQueries();
 
     expect($atTwo)->toBe($atFive)
-        ->and($atFive)->toBeLessThanOrEqual(CATEGORY_TREE_QUERY_CEILING);
+        ->and($atFive)->toBe(CATEGORY_TREE_QUERY_COST);
+});
+
+/**
+ * The payload the count above is blind to. `breeds` is behind `whenLoaded()`,
+ * so losing the eager load entirely drops the key and takes the query count
+ * **down** rather than up (.ai/rules/tests.md) — the count agrees with the
+ * regression, and only asserting the key catches it. `image` is the other one:
+ * it comes from `getFirstMediaUrl()`, which medialibrary turns into a
+ * `loadMissing()` that Model::preventLazyLoading() permits, so a dropped
+ * `media` eager load is a silent query per category rather than a failure.
+ *
+ * A category with no icon reports null rather than medialibrary's empty string,
+ * because the client renders a placeholder on a falsy value and `''` is not one
+ * a `?? fallback` catches.
+ *
+ * The payload is a bare list rather than a `data` envelope: AppServiceProvider
+ * calls `JsonResource::withoutWrapping()` application-wide so Inertia props read
+ * as `pet.photos` rather than `pet.photos.data`.
+ */
+test('serialises each category with its icon and its breeds nested under it', function () {
+    Storage::fake(config('media-library.disk_name'));
+    seedCategoryTree(2);
+    $bare = Category::factory()->has(Breed::factory()->count(2))->create(['name' => 'Zebras']);
+
+    $payload = PetCategoryOptionResource::collection(app(ListPetCategories::class)->handle())
+        ->response()
+        ->getData(true);
+
+    $withIcon = collect($payload)->firstWhere('id', Category::query()->firstOrFail()->getKey());
+
+    expect($withIcon['image'])->toContain('icon')
+        ->and($withIcon['breeds'])->toHaveCount(2)
+        ->and($withIcon['breeds'][0])->toHaveKeys(['id', 'category_id', 'name', 'name_ar', 'slug'])
+        ->and($withIcon['breeds'][0]['category_id'])->toBe($withIcon['id']);
+
+    expect(collect($payload)->firstWhere('id', $bare->getKey())['image'])->toBeNull();
+});
+
+/**
+ * Both the form and the filter sheet render the tree as a flat alphabetical
+ * list, so the order is the Action's to settle rather than each caller's.
+ */
+test('orders the categories and each category breeds by name', function () {
+    Category::factory()->create(['name' => 'Zebras']);
+    $birds = Category::factory()->create(['name' => 'Birds']);
+    Breed::factory()->for($birds)->create(['name' => 'Parrot']);
+    Breed::factory()->for($birds)->create(['name' => 'Canary']);
+
+    $tree = app(ListPetCategories::class)->handle();
+
+    expect($tree->pluck('name')->all())->toBe(['Birds', 'Zebras'])
+        ->and($tree->firstWhere('name', 'Birds')->breeds->pluck('name')->all())->toBe(['Canary', 'Parrot']);
 });

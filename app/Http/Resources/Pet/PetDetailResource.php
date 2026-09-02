@@ -17,6 +17,26 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * verified account could read all of that for any pet; gating it on the same
  * policy the edit route uses closes it from the payload side as well.
  *
+ * ## `is_owner` is `can('update')`, not `user_id` equality
+ *
+ * The two are the same for almost everybody and differ for exactly one viewer:
+ * the **unverified** owner of a listing. PetPolicy::update is
+ * `isVerified() && owns`, and this resource emitted `is_owner` as ownership
+ * alone, so that viewer was told `is_owner: true` — which is what every owner
+ * panel in `pets/Show.vue` gates on — while every key inside those panels had
+ * been omitted by the `when($isOwner, ...)` calls below. The panels rendered
+ * empty, and the edit control in `PetDetailHeader.vue` rendered pointing at a
+ * route `verified` would bounce.
+ *
+ * They now come from the same expression, and it is the narrower one. The one
+ * visible consequence: `pets/Show.vue` computes `canMessageOwner` as
+ * `isSignedIn && !pet.is_owner`, so an unverified owner is now offered a
+ * "message the owner" control on their own listing. That is a cosmetic oddity
+ * on a page nobody in that state stays on for long, and it fails in the safe
+ * direction — `conversations.store` is behind `verified` and would send them to
+ * the verification notice. If the client ever needs the two facts apart, the
+ * answer is a second key (`can_update`), not two spellings of one.
+ *
  * ## The edit form contract
  *
  * Every key the edit form posts back is emitted here under exactly the name the
@@ -110,7 +130,7 @@ class PetDetailResource extends JsonResource
             'category' => PetCategoryOptionResource::make($this->whenLoaded('category')),
             'breed' => PetBreedOptionResource::make($this->whenLoaded('breed')),
             'user' => PetOwnerResource::make($this->whenLoaded('user')),
-            'is_owner' => $request->user()?->getKey() === $this->user_id,
+            'is_owner' => $isOwner,
 
             'location' => [
                 'city' => $this->city,

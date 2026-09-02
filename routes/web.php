@@ -89,8 +89,15 @@ Route::inertia('support', 'Support')->name('support');
 |
 | Guest visibility is a recorded decision, not the absence of a check:
 | ProfileController::show calls $this->authorize('view', $user) against
-| UserPolicy, whose `view` takes a nullable user and returns true — and
-| which is also where a deactivated account's page is hidden.
+| UserPolicy, whose `view` takes a nullable user and returns true.
+|
+| A deactivated account's page is a **404**, not a 403, and it is decided
+| before the controller: User::resolveRouteBinding() refuses to bind an
+| inactive account. That moved out of the policy in the Phase 6 audit because
+| the policy was never asked by the reviews vertical, which resolves a user by
+| bare id through App\Enums\Reviewable::findVisibleOrFail() — so a deactivated
+| account's reviews stayed readable and writable while their profile 403'd.
+| UserPolicy::view still refuses them; it is no longer what a URL hits first.
 |
 | `{user}` is constrained to digits and binds by **id**. It is deliberately
 | not keyed on `username`: App\Enums\Reviewable and Reportable resolve
@@ -125,9 +132,10 @@ Route::get('profile/{user}', [ProfileController::class, 'show'])
 | feature of the legacy app; this is it, on the current arrangement.
 |
 | Verified account only (UserPolicy::like), because the like notifies the
-| person it is about. That policy also re-derives what UserPolicy::view
-| already decided about a deactivated account: a profile whose page is a 403
-| must not stay likeable at a guessable sequential id.
+| person it is about. A deactivated account is unreachable here for the same
+| reason its page is: User::resolveRouteBinding() will not bind one, so this
+| route 404s before the policy is asked. UserPolicy::like keeps its
+| `isActive()` clause as belt and braces.
 |
 | Throttled by `profile-likes`, sized identically to `pet-likes` and
 | `comment-likes` — it is the same gesture on a third model — and kept as its
@@ -221,6 +229,13 @@ Route::prefix('comments')->name('comments.')->group(function (): void {
 | unknown target type is a 404 at the router and no controller ever sees a
 | model class name that came off the wire.
 |
+| The reviewable itself is resolved through
+| App\Enums\Reviewable::findVisibleOrFail(), which asks the target model's own
+| resolveRouteBinding(). That is what makes a deactivated account's reviews a
+| 404 on both halves of this vertical rather than a public list nobody can
+| moderate — a gap the Phase 6 audit measured open (read 200, write 302) and
+| User::resolveRouteBinding() closed.
+|
 | That binding is the fix for the worst hole in the legacy application. The
 | legacy route was `POST reviews/store/{type}/{reviewable_id}` and the
 | controller's first statement was `$type::find($request->reviewable_id)` —
@@ -250,11 +265,28 @@ Route::get('reviews/{reviewable_type}/{reviewable_id}', [ReviewController::class
 | LikeObserver and sends the owner a database notification, so an unthrottled
 | tap loop is a notification flood.
 |
+| `pets.store` is throttled by `pet-listings`, and it is the one limiter in
+| this file whose purpose is neither an inbox nor a moderation queue but the
+| server itself. Publishing is the heaviest write in the application — up to
+| four images, each stored and put through two conversions — and it carried no
+| ceiling of any kind while `comments` capped a text row at 10 a minute:
+| measured, one account published 25 listings with real uploads in a single
+| burst, all 302. Two limits, because the two costs decay differently — 5 a
+| minute for the CPU spike, 30 an hour for the disk.
+|
+| `pets.update` accepts the same uploads and is deliberately *not* throttled
+| yet; it is bounded by ownership (PetPolicy) to listings that already exist,
+| so a loop rewrites a fixed set of rows rather than growing one. Say so here
+| if that stops being a good enough reason.
+|
 */
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('pets/create', [PetController::class, 'create'])->name('pets.create');
-    Route::post('pets', [PetController::class, 'store'])->name('pets.store');
+
+    Route::post('pets', [PetController::class, 'store'])
+        ->middleware('throttle:pet-listings')
+        ->name('pets.store');
 
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 

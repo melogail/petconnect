@@ -8,6 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * `pets_status_deleted_at_created_at_index` is the home feed's index, and
+     * it replaces the single-column `status` index rather than joining it.
+     * The feed issues `where status = ? and deleted_at is null order by
+     * created_at desc limit 12`; `status = 'available'` matches ~94% of rows,
+     * so a `status`-only index narrows nothing and the whole matching set gets
+     * sorted to return one page. The composite spans the two equality columns
+     * and the ordering column, so the same page is a range scan with no sort.
+     * `status` is the leading column of it, so anything that filtered on
+     * `status` alone is still covered — see .ai/rules/migrations.md.
      */
     public function up(): void
     {
@@ -60,7 +70,7 @@ return new class extends Migration
             $table->index('category_id');
             $table->index('breed_id');
             $table->index('listing_type');
-            $table->index('status');
+            $table->index(['status', 'deleted_at', 'created_at'], 'pets_status_deleted_at_created_at_index');
             $table->index('created_at');
             $table->index(['city', 'state'], 'pets_city_state_index');
             $table->index(['latitude', 'longitude'], 'pets_latitude_longitude_index');

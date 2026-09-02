@@ -1,13 +1,24 @@
 /**
- * A latitude or longitude as the backend hands it over.
+ * An uncast `decimal` column as the backend hands it over.
  *
- * `users.lat` / `users.lng` and `pets.latitude` / `pets.longitude` are uncast
- * `decimal` columns, so the PHP type is whichever the driver returns: a float
- * on SQLite, a string on MySQL. Both coordinate pairs are typed with this and
- * coerced exactly once, at the boundary — see `toCoordinateInput()` in
- * `@/lib/profile`.
+ * `users.lat` / `users.lng`, `pets.latitude` / `pets.longitude`, `pets.weight`
+ * and `pets.price` carry no cast, so the PHP type is whichever the driver
+ * returns: a float on SQLite, a string on MySQL. Typing one of these as `number`
+ * is a lie that only shows up in production — `price.toFixed(2)` type-checks
+ * and then throws on MySQL — so every one of them is typed with this and
+ * coerced at a boundary. `Intl.NumberFormat.format()` and a template literal
+ * both take the union as it stands; anything arithmetic goes through
+ * `@/lib/coordinates` or `Number()`.
  */
-export type Coordinate = number | string | null;
+export type DecimalColumn = number | string;
+
+/**
+ * A latitude or longitude as the backend hands it over, or null when unset.
+ *
+ * Coerced exactly once, at the boundary — see `toCoordinateInput()` in
+ * `@/lib/coordinates`.
+ */
+export type Coordinate = DecimalColumn | null;
 
 /**
  * A user as their own public page renders them —

@@ -1,3 +1,4 @@
+import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import type { Coordinate } from '@/types/profile';
 
 /**
@@ -15,9 +16,13 @@ export function toCoordinateInput(value: Coordinate): string {
 /**
  * Coerce an input's value back to what `numeric` validation expects, or null
  * when the field was left blank.
+ *
+ * Takes `InputValue`, not `string`: the two boxes are `inputmode="decimal"`
+ * today, but a `type="number"` here would hand this a `number` and nothing at
+ * the call site would say so.
  */
-export function fromCoordinateInput(value: string): number | null {
-    const trimmed = value.trim();
+export function fromCoordinateInput(value: InputValue): number | null {
+    const trimmed = trimmedInput(value);
 
     if (trimmed === '') {
         return null;

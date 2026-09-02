@@ -18,12 +18,16 @@ use Illuminate\Support\Facades\Storage;
  * comments, their authors and those authors' avatars, then the same three for
  * the previewed replies.
  *
- * The ceiling is measured rather than guessed, and the test beside it grows the
+ * The cost is measured rather than guessed, and the test beside it grows the
  * thread instead of trusting the number alone — an eager load that stops
  * covering what CommentResource walks turns into a query per rendered comment,
  * which only a growing fixture makes visible.
+ *
+ * Asserted as an equality, not a ceiling: under a ceiling a regression of one
+ * query passes silently until it happens to cross the bound, by which point the
+ * commit that spent it is long gone.
  */
-const THREAD_PAYLOAD_QUERY_CEILING = 8;
+const THREAD_PAYLOAD_QUERY_COST = 8;
 
 /**
  * Give a user the avatar CommentAuthorResource reads with getFirstMediaUrl().
@@ -187,5 +191,5 @@ test('serialises a page of the thread in a constant number of queries however ma
     $atThirtyComments = countThreadQueries($pet, $viewer);
 
     expect($atNineComments)->toBe($atThirtyComments)
-        ->and($atThirtyComments)->toBeLessThanOrEqual(THREAD_PAYLOAD_QUERY_CEILING);
+        ->and($atThirtyComments)->toBe(THREAD_PAYLOAD_QUERY_COST);
 });

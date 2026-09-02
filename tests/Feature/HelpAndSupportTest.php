@@ -41,7 +41,7 @@ test('a guest reads the page and gets no props beyond the shared ones', function
         ->assertInertia(fn (AssertableInertia $page) => $page->component($component, shouldExist: false));
 
     expect(array_keys($response->inertiaProps()))
-        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'sidebarOpen', 'locale']);
+        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'sidebarOpen', 'locale', 'translations']);
 })->with([
     'help' => ['help', 'Help'],
     'support' => ['support', 'Support'],

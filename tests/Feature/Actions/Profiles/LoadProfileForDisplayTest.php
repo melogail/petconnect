@@ -27,8 +27,12 @@ use Illuminate\Support\Facades\Storage;
  * go **down** while `whenLoaded()` silently omits the key. The keys are
  * asserted in tests/Feature/Http/Controllers/Web/ProfileControllerTest, which is
  * where the payload is serialised.
+ *
+ * Asserted as an equality, not a ceiling: under a ceiling a regression of one
+ * query passes silently until it happens to cross the bound, by which point the
+ * commit that spent it is long gone.
  */
-const PROFILE_ACTION_QUERY_CEILING = 12;
+const PROFILE_ACTION_QUERY_COST = 12;
 
 /**
  * Give a user the avatar ProfileResource and ReviewAuthorResource read with
@@ -116,7 +120,7 @@ test('assembles the page in a constant number of queries however many listings a
     $atSix = countProfileLoadQueries($profile, null);
 
     expect($atTwo)->toBe($atSix)
-        ->and($atSix)->toBeLessThanOrEqual(PROFILE_ACTION_QUERY_CEILING);
+        ->and($atSix)->toBe(PROFILE_ACTION_QUERY_COST);
 });
 
 /**

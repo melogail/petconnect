@@ -22,6 +22,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * last message, and its sender. All four are loaded here, so the page costs the
  * same number of queries whether it holds one conversation or fifteen.
  *
+ * Any query figure pinned for this Action — the suite pins 7 — is
+ * Action-scoped and measured under phpunit.xml's `SESSION_DRIVER=array`; a
+ * real request pays 2-3 more for the `sessions` and `cache` tables while
+ * `.env` keeps the `database` drivers. See .ai/rules/app.md.
+ *
  * `users.media` is the one that is easy to miss and expensive to miss. The peer
  * avatar is a `getFirstMediaUrl()` call, and the legacy inbox loaded
  * `['users', 'lastMessage.sender']` and then asked `$peer->getMedia('users')`

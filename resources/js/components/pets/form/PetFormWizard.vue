@@ -13,17 +13,11 @@ import {
     Smile,
     Stethoscope,
 } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import type { AsyncComponentLoader, Component } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import PetFormStepper from '@/components/pets/form/PetFormStepper.vue';
 import type { WizardStep } from '@/components/pets/form/PetFormStepper.vue';
-import BasicStep from '@/components/pets/form/steps/BasicStep.vue';
-import ExtrasStep from '@/components/pets/form/steps/ExtrasStep.vue';
-import HealthcareStep from '@/components/pets/form/steps/HealthcareStep.vue';
-import HealthStep from '@/components/pets/form/steps/HealthStep.vue';
-import LocationStep from '@/components/pets/form/steps/LocationStep.vue';
-import PersonalityStep from '@/components/pets/form/steps/PersonalityStep.vue';
-import PhotosStep from '@/components/pets/form/steps/PhotosStep.vue';
-import ReviewStep from '@/components/pets/form/steps/ReviewStep.vue';
+import PetFormStepSkeleton from '@/components/pets/form/PetFormStepSkeleton.vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,6 +54,42 @@ const { form, submitLabel } = defineProps<{
 }>();
 
 const emit = defineEmits<{ submit: [] }>();
+
+/**
+ * One step is on screen at a time, so all eight are fetched on demand.
+ *
+ * Statically imported, the eight steps built one 32.5 kB gzip chunk that every
+ * visit to create *and* edit paid for up front. `PhotosStep` alone is 23 kB of
+ * that — it carries `browser-image-compression` — and it is the third screen,
+ * not the first. Split, `/pets/create` starts on the wizard shell plus
+ * `BasicStep` and picks the rest up as the user walks the form.
+ *
+ * `delay: 0` shows the skeleton the moment a chunk starts loading rather than
+ * leaving the card blank for 200 ms; there is no flash on a step already
+ * fetched, because a resolved async component renders synchronously from then
+ * on. The loader is only ever entered once per step per page load.
+ *
+ * This is safe for the error jump below: sending `current` at a step whose
+ * chunk has not been fetched simply renders the skeleton until it arrives. No
+ * form state rides on it either — the form object lives on the page, and the
+ * steps have always been unmounted on every swap.
+ */
+function step<T extends Component>(loader: AsyncComponentLoader<T>): T {
+    return defineAsyncComponent<T>({
+        loader,
+        loadingComponent: PetFormStepSkeleton,
+        delay: 0,
+    });
+}
+
+const BasicStep = step(() => import('./steps/BasicStep.vue'));
+const LocationStep = step(() => import('./steps/LocationStep.vue'));
+const PhotosStep = step(() => import('./steps/PhotosStep.vue'));
+const HealthStep = step(() => import('./steps/HealthStep.vue'));
+const PersonalityStep = step(() => import('./steps/PersonalityStep.vue'));
+const ExtrasStep = step(() => import('./steps/ExtrasStep.vue'));
+const HealthcareStep = step(() => import('./steps/HealthcareStep.vue'));
+const ReviewStep = step(() => import('./steps/ReviewStep.vue'));
 
 const steps: WizardStep[] = [
     { id: 1, title: 'Basics', icon: PawPrint },

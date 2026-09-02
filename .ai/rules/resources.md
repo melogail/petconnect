@@ -75,3 +75,12 @@ The right answer has two halves:
 The resource then emits `false` when the relation it depends on is missing, rather than asking. Not `whenLoaded()`: that drops the key silently and a client reads `undefined` as allowed.
 
 Cost paid knowingly: `PaginateConversationMessages` does `loadMissing('users')`, which is one extra query on `conversations.messages.index` only (free on `conversations.show`, where LoadConversationParticipants already loaded it). Measured flat: inbox 7, thread 8, profile 10, unchanged before and after.
+
+## auth.user is AuthenticatedUserResource — never share a model into a prop
+`HandleInertiaRequests::share()` used to be `'user' => $request->user()`, which let the model's `toArray()` decide the payload: every column except User's four `#[Hidden]` ones, so `address`, `lat`, `lng`, `phone`, `media_directory_name`, `two_factor_confirmed_at` and `last_seen_at` were in the props of **every page**, public feed included.
+
+It is now `Http\Resources\User\AuthenticatedUserResource`, and the whole key list is `id, name, username, email, email_verified_at (ISO 8601 string|null), two_factor_enabled (bool)`. `resources/js/types/auth.ts` types against exactly that. Keep the null ternary in `share()`: `auth.user` is null for a guest and the resource reads properties off the model.
+
+`avatar` is deliberately absent, and always was — the model never emitted one either, so AppHeader/UserInfo have always fallen back to initials. Adding it means `getFirstMediaUrl()`, i.e. a lazy load on a model fetched by `find()` (where `Builder::hydrate()` leaves `preventLazyLoading` off), so it is a silent extra query on every authenticated request and every query-count assertion in the suite moves by one. It needs its own decision and a pass over those counts.
+
+General rule: a shared prop is the one payload with no page-specific reason to carry anything, so it carries the least it can. Never hand a model to `Inertia::share()`.

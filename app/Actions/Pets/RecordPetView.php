@@ -24,17 +24,22 @@ use Illuminate\Support\Facades\Cache;
  *    Cache::add() is atomic and returns false when the key is already there, so
  *    the first visit in the window counts and the rest do not.
  *
- * The visitor key is supplied by the caller rather than read from the session
- * here: an Action knows nothing about HTTP. A signed-in visitor is keyed by id,
- * a guest by session id, so the dedup survives a changing IP and does not lump
- * everyone behind one NAT together.
+ * The visitor key is supplied by the caller rather than read from the request
+ * here: an Action knows nothing about HTTP. Web\PetController::visitorKey()
+ * builds it — a signed-in visitor by id, a guest by a hash of their IP — and
+ * owns the reasoning for that choice.
  *
- * `views` is a vanity counter, not a metric — do not build anything on it. A
- * guest is keyed by session id, so a client that keeps no cookie jar gets a
- * fresh session per request and a `curl` loop still inflates the number. The
- * window stops the honest reload loop, which is all it is for. Deliberately no
- * IP or user-agent fingerprinting: it would cost real privacy, still be trivial
- * to defeat, and buy a number nothing depends on.
+ * It used to key a guest by session id, and that is the one thing this Action's
+ * docblock has to keep saying, because it read as a privacy win and was a hole:
+ * the session id comes from a client-controlled cookie, so a caller keeping no
+ * cookie jar drew a fresh key per request and the window never applied at all.
+ * A `curl` loop against this public, unthrottled GET incremented `views` once
+ * per request.
+ *
+ * `views` is still a vanity counter, not a metric — do not build anything on
+ * it. A caller with a pool of addresses can inflate it, and everyone behind one
+ * NAT now counts once. The window stops the honest reload loop and the key
+ * stops the lazy script; neither claims more than that.
  */
 class RecordPetView
 {

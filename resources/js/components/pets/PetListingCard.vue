@@ -22,12 +22,17 @@ const distance = computed(() =>
     pet.distance === undefined ? null : `${pet.distance} km`,
 );
 
+/**
+ * `pets.price` is an uncast `decimal` (`DecimalColumn`), so it is a float on
+ * SQLite and a string on MySQL. `Number()` is the coercion; passing the raw
+ * value happened to work but only because `format()` re-parses a string.
+ */
 const price = computed(() =>
     pet.price === null
         ? null
         : new Intl.NumberFormat(tag.value, {
               maximumFractionDigits: 2,
-          }).format(pet.price),
+          }).format(Number(pet.price)),
 );
 </script>
 

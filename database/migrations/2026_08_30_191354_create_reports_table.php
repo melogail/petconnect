@@ -8,6 +8,11 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * `status` is indexed for the moderation queue: Nova's `ReportStatusFilter`,
+     * `Report::pending()` and the `PendingReports` metric all filter on it, and
+     * `user_id` only reaches the queue through the unique index's leading
+     * column, which those queries do not touch.
      */
     public function up(): void
     {
@@ -22,6 +27,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
+            $table->index('status');
             $table->unique(['user_id', 'reportable_type', 'reportable_id']);
         });
     }

@@ -65,6 +65,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  * so it adds a column rather than a round trip: measured at 2, 10 and 25
  * reviews on one page, this Action is a flat 5 queries.
  *
+ * Every query figure above is Action-scoped and measured under phpunit.xml's
+ * `SESSION_DRIVER=array`; a real request pays 2-3 more for the `sessions` and
+ * `cache` tables while `.env` keeps the `database` drivers. See
+ * .ai/rules/app.md.
+ *
  * A null viewer is a guest, and `has_reported` is simply absent for them;
  * ReviewResource defaults it to false.
  */

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use JsonException;
+use PragmaRX\Google2FA\Google2FA;
 
 /**
  * @extends Factory<User>
@@ -115,12 +116,26 @@ class UserFactory extends Factory
 
     /**
      * Indicate that the model has two-factor authentication configured.
+     *
+     * The secret is a real base32 key rather than a placeholder. It used to be
+     * the literal `'secret'`, which is 6 characters and not valid base32, so any
+     * request that actually verified a code against it — a POST to
+     * `two-factor.login` — died inside Google2FA with
+     * `SecretKeyTooShortException` and surfaced as a 500 rather than as an
+     * invalid code. Nothing noticed while the challenge was only ever rendered.
+     * Same point as the `uniqueHandle()` note in .ai/rules/factories.md: a
+     * fixture the application's own code cannot accept is a latent bug.
+     *
+     * Pass `$secret` when the test needs to compute the current code from it;
+     * pass `$recoveryCodes` when it needs to spend one and see the rest survive.
+     *
+     * @param  list<string>|null  $recoveryCodes
      */
-    public function withTwoFactor(): static
+    public function withTwoFactor(?string $secret = null, ?array $recoveryCodes = null): static
     {
         return $this->state(fn (array $attributes): array => [
-            'two_factor_secret' => encrypt('secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
+            'two_factor_secret' => encrypt($secret ?? app(Google2FA::class)->generateSecretKey()),
+            'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes ?? ['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);
     }

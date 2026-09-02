@@ -71,7 +71,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * trip. A client should widen to `number | string | null` and coerce once.
  *
  * The avatar is read with getFirstMediaUrl(), so the caller must eager load
- * `media`.
+ * `media`. It asks for the `display` conversion, which is only a real answer
+ * because `User::registerMediaConversions()` generates that one inline — a
+ * queued conversion would never be generated here (no worker runs) and
+ * `getFirstMediaUrl()` would quietly hand back the raw upload instead.
  *
  * ## `created_at` is gone
  *

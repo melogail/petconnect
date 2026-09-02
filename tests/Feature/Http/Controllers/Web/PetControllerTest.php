@@ -114,19 +114,28 @@ describe('show', function () {
 
     /**
      * This page hosts the comment composer, which cannot draw a counter for a
-     * ceiling it has not been told. The prop is read through the same
-     * CommentValidationRules accessor the `max:` rule is built from, so moving
-     * the config moves both — which is what a non-default value checks and a
-     * hardcoded prop would fail.
+     * ceiling it has not been told, and the thread, which cannot work out which
+     * page to ask for next without the endpoint's page size. Both bounds are
+     * read through the CommentValidationRules accessors the `max:` rule and
+     * ListCommentThread's default `perPage` are built from, so moving either
+     * config moves both ends of it — which is what the non-default values here
+     * check and a hardcoded prop would fail.
+     *
+     * Both are asserted against a re-`config()`d value rather than the default,
+     * because a prop frozen at today's default agrees with the drift it exists
+     * to catch.
      */
-    test('ships the comment length ceiling the composer draws its counter from', function () {
-        config(['petconnect.comments.max_length' => 140]);
+    test('ships the comment bounds the composer and the thread are drawn from', function () {
+        config([
+            'petconnect.comments.max_length' => 140,
+            'petconnect.comments.thread_per_page' => 3,
+        ]);
         $pet = Pet::factory()->create();
 
         $this->get(route('pets.show', $pet))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('commentBounds', ['max_length' => 140]));
+                ->where('commentBounds', ['max_length' => 140, 'thread_per_page' => 3]));
 
         $this->actingAs(User::factory()->create())
             ->from(route('pets.show', $pet))

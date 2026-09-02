@@ -123,6 +123,72 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     }
 
     /**
+     * Refuse to bind a deactivated account, anywhere an id names one.
+     *
+     * ## This reverses an earlier decision, and here is why
+     *
+     * UserPolicy::view has refused a deactivated profile since Phase 2e, and
+     * that policy's docblock recorded a deliberate choice *not* to put the same
+     * check here — the reasoning being .ai/rules/app.md's line that "hidden by
+     * a global scope goes in resolveRouteBinding, hidden by state goes in a
+     * policy", plus a worry that a binding override would "silently change
+     * which users can be reviewed".
+     *
+     * That worry was the finding. Measured on one deactivated account:
+     *
+     *     GET  /profile/{id}        403     POST /profile/{id}/like   403
+     *     GET  /reviews/user/{id}   200     POST /reviews/user/{id}   302
+     *
+     * The reviews vertical does not route-model-bind a user; it resolves one
+     * through `App\Enums\Reviewable::findVisibleOrFail()`, which delegates to
+     * this method precisely so a model can record what "may this id be
+     * addressed right now" means. With no override the delegation fell through
+     * to Eloquent's default and answered "yes" — so a deactivated account's
+     * review list stayed public (author name, username and location with it)
+     * and, worse, anyone could still *write* a review about them and deliver
+     * the notification to an account the system had decided was not
+     * addressable.
+     *
+     * The rule in .ai/rules/app.md draws the line at whether the check is one a
+     * binding override can answer completely, and this one is: `is_active` is a
+     * column on the row the binding just fetched. It is not the participation
+     * question that made `Message` need a policy as well. So it belongs here,
+     * where `reviews.index`, `reviews.store`, a future `Reportable::User` and
+     * anything else that resolves a user by bare id inherit it by construction
+     * rather than each remembering.
+     *
+     * ## The consequence to know about: profile pages are now 404, not 403
+     *
+     * `profile.show` and `profile.like` bind `{user}` through this method, so a
+     * deactivated profile is a ModelNotFoundException before the controller
+     * runs and never reaches `$this->authorize('view', $user)`. That is the
+     * same answer `Comment::resolveRouteBinding()` gives for a comment on a
+     * hidden listing, and it is the stronger one — a 403 confirms the account
+     * exists and a 404 does not.
+     *
+     * UserPolicy::view keeps its `isActive()` check regardless. It is no longer
+     * the thing that produces the status code on those two routes, but it is
+     * still the answer to `Gate::allows('view', $deactivated)` asked directly,
+     * and any future page that reaches a User some other way (a relation, a
+     * collection) gets it.
+     *
+     * Nova is unaffected: it resolves resources with its own keyed queries and
+     * never calls `resolveRouteBinding()`, so an admin can still open and
+     * reactivate a deactivated account.
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        /** @var self|null $user */
+        $user = parent::resolveRouteBinding($value, $field);
+
+        if ($user === null) {
+            return null;
+        }
+
+        return $user->isActive() ? $user : null;
+    }
+
+    /**
      * In practice a single avatar; the collection is not marked singleFile so a
      * user can keep previous avatars if the product ever calls for it.
      */
@@ -134,6 +200,35 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
 
     /**
      * Avatars are only ever rendered small, so both derivatives are square.
+     *
+     * ## Both are nonQueued, and that is a decision, not an oversight
+     *
+     * `display` used to be queued (the package default,
+     * `media-library.queue_conversions_by_default`). `QUEUE_CONNECTION` is
+     * `database` and this application ships no worker — no `queue:work` in
+     * composer.json, no supervisor config, no Horizon — so the job was written
+     * to the `jobs` table and never run. Measured on a fresh upload:
+     * `generated_conversions` held `{"thumb":true}` and one job sat pending.
+     *
+     * Nothing looked broken, because `getFirstMediaUrl()` falls back to the
+     * original when the named conversion has not been generated. Profile pages
+     * were therefore serving the raw upload — 23 KB in the fixture, but
+     * `petconnect.profiles.max_avatar_kilobytes` allows 2 MB — where a ~40 KB
+     * 512px crop was intended, and `PetMediaResource` calls
+     * `Media::getUrl('display')`, which does NOT fall back and would resolve to
+     * a file that was never written.
+     *
+     * The three ways out were: run a worker, read `thumb` in the profile
+     * resources, or generate `display` inline. A worker is infrastructure this
+     * project does not have and cannot assume; `thumb` is 96px and the profile
+     * header renders larger than that. So it is inline. The upload request
+     * already pays for one nonQueued crop of the same source image, and an
+     * avatar is capped at 2 MB, so the second crop is a bounded cost on a rare
+     * request rather than a dependency on a process that does not exist.
+     *
+     * If a worker is ever deployed, this is the line to revisit — and `Pet`,
+     * `Category` and `Breed` still queue their `display` conversions, so they
+     * have the same silent fallback today.
      */
     public function registerMediaConversions(?Media $media = null): void
     {
@@ -142,7 +237,8 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
             ->nonQueued();
 
         $this->addMediaConversion('display')
-            ->fit(Fit::Crop, 512, 512);
+            ->fit(Fit::Crop, 512, 512)
+            ->nonQueued();
     }
 
     /**

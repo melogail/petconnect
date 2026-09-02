@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * Flat whether the account holds 5 notifications or 500, which is what the
  * second budget test asserts.
  */
-const NOTIFICATION_INBOX_QUERY_CEILING = 3;
+const NOTIFICATION_INBOX_QUERY_COST = 3;
 
 /**
  * Put a notification row in a user's inbox.
@@ -185,7 +185,7 @@ describe('index', function () {
             ->getJson(route('notifications.index'))->assertOk()));
 
         expect($atTwo)->toBe($atTwentyTwo)
-            ->and($atTwentyTwo)->toBe(NOTIFICATION_INBOX_QUERY_CEILING);
+            ->and($atTwentyTwo)->toBe(NOTIFICATION_INBOX_QUERY_COST);
     });
 });
 
