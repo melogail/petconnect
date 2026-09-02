@@ -63,8 +63,11 @@ use LogicException;
 class DeleteCommentThreadContext
 {
     /**
-     * Every comment id in the subtree, root first, once CollectCommentSubtree
-     * has run.
+     * Every comment id in the subtree, root included, once
+     * CollectCommentSubtree has run.
+     *
+     * The order is whatever the recursive CTE returns and is not significant:
+     * both readers use the ids as a `whereIn` set.
      *
      * @var list<int>|null
      */

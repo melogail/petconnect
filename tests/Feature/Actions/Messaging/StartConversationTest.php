@@ -8,6 +8,8 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Pipelines\Messages\StartDirectConversation\EnsureRecipientAccepts;
+use App\Pipelines\Messages\StartDirectConversation\StartDirectConversationContext;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Notification;
 
@@ -73,10 +75,69 @@ test('rejects opening a thread with yourself and writes nothing', function () {
     $this->assertDatabaseEmpty('conversations');
 });
 
-test('rejects a deactivated recipient and writes nothing', function () {
-    $recipient = User::factory()->inactive()->create();
+/**
+ * The existence oracle this flow used to be.
+ *
+ * A deactivated account's row is untouched by deactivation, so it survived
+ * every existence check and the flow ran on to EnsureRecipientAccepts and
+ * aborted there — a different exception, and a different HTTP status, from the
+ * one an id that was never issued produced. Telling the two apart is telling a
+ * stranger which ids exist. `StartConversation::resolveRecipient()` now asks
+ * `User::resolveRouteBinding()`, which refuses a deactivated account, so both
+ * cases abort on the same line with the same answer: "not addressable by id,
+ * anywhere" (.ai/rules/app.md, .ai/rules/models.md).
+ *
+ * The equality is the pin, not the exception class on its own: accepting a
+ * ModelNotFoundException for the deactivated case says nothing about whether
+ * the two cases are still distinguishable. `getMessage()` is deliberately left
+ * out of the comparison — it embeds the id, so it differs between the two for
+ * reasons that have nothing to do with the oracle.
+ */
+test('refuses a deactivated recipient exactly as it refuses an id that was never issued', function () {
+    $initiator = User::factory()->create();
+    $deactivated = User::factory()->inactive()->create();
 
-    expect(fn () => app(StartConversation::class)->handle(User::factory()->create(), $recipient->getKey()))
+    $refusals = [];
+
+    foreach ([$deactivated->getKey(), 9999] as $recipientId) {
+        try {
+            app(StartConversation::class)->handle($initiator, $recipientId);
+            $refusals[] = ['exception' => null, 'model' => null];
+        } catch (ModelNotFoundException $thrown) {
+            $refusals[] = ['exception' => $thrown::class, 'model' => $thrown->getModel()];
+        } catch (Throwable $thrown) {
+            $refusals[] = ['exception' => $thrown::class, 'model' => null];
+        }
+    }
+
+    [$forDeactivated, $forNeverIssued] = $refusals;
+
+    expect($forDeactivated)->toBe(['exception' => ModelNotFoundException::class, 'model' => User::class])
+        ->and($forNeverIssued)->toBe($forDeactivated);
+
+    $this->assertDatabaseEmpty('conversations');
+});
+
+/**
+ * Recipient consent, which the deactivated case above used to be the only
+ * fixture for.
+ *
+ * It cannot be reached through the Action any more: `acceptsMessagesFrom()` is
+ * `isActive()` today, and a recipient who fails that never gets past
+ * resolution. So the step is exercised where it lives. The recipient here is
+ * addressable — not deactivated — and simply refuses, which is the shape a
+ * block list or per-recipient message setting will take when it lands in
+ * `User::acceptsMessagesFrom()`; the step must keep aborting on it whatever
+ * decides the answer.
+ */
+test('rejects a recipient who does not accept messages from the initiator and writes nothing', function () {
+    $initiator = User::factory()->create();
+    $refusing = Mockery::mock(User::class)->makePartial();
+    $refusing->shouldReceive('acceptsMessagesFrom')->with($initiator)->andReturnFalse();
+
+    $context = new StartDirectConversationContext(initiator: $initiator, recipient: $refusing);
+
+    expect(fn () => (new EnsureRecipientAccepts)->handle($context, fn (): null => null))
         ->toThrow(ConversationNotPermitted::class);
 
     $this->assertDatabaseEmpty('conversations');

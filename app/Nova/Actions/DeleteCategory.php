@@ -3,6 +3,7 @@
 namespace App\Nova\Actions;
 
 use App\Models\Category;
+use App\Models\Pet;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Laravel\Nova\Actions\ActionResponse;
@@ -10,6 +11,7 @@ use Laravel\Nova\Actions\DestructiveAction;
 use Laravel\Nova\Fields\ActionFields;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Throwable;
 
 /**
  * Delete a category, but only once nothing still points at it.
@@ -41,6 +43,22 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  * `breeds.category_id` is `cascadeOnDelete`, so a category's breeds go with
  * it; that is stated in the confirmation text rather than blocked, because a
  * breed has no meaning without its category.
+ *
+ * ## The selection is one transaction, and a failure is a sentence
+ *
+ * The guard above is not the only way this can fail: a category can acquire a
+ * listing between the count and the delete, and `breeds.category_id` cascades
+ * rows the guard never counted. Without the catch, a throw on the third of five
+ * left the admin with a 500 and a stack trace instead of a sentence — the exact
+ * failure .ai/rules/nova-policies.md records against DeleteUserAccount, and the
+ * shape .ai/rules/nova-actions.md makes non-negotiable for every bulk action:
+ * DB::transaction around the whole selection, `catch (Throwable)` returning
+ * ActionResponse::danger() so the admin is told nothing happened rather than
+ * being left guessing which half did. Same shape as DeleteCommentThread,
+ * DeleteReview and DeleteUserAccount.
+ *
+ * Nothing here touches the filesystem, so unlike DeleteUserAccount the rollback
+ * really does undo everything the run did.
  *
  * ## `e()` on the category name is correct, and it was worth checking
  *
@@ -75,11 +93,19 @@ class DeleteCategory extends DestructiveAction
             return ActionResponse::danger($this->refusal($blocked));
         }
 
-        DB::transaction(function () use ($models): void {
-            $models->each(function (Category $category): void {
-                $category->delete();
+        try {
+            DB::transaction(function () use ($models): void {
+                $models->each(function (Category $category): void {
+                    $category->delete();
+                });
             });
-        });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return ActionResponse::danger(
+                'Nothing was deleted. One of the selected categories could not be removed, so the whole selection was rolled back. The failure has been logged.',
+            );
+        }
 
         return ActionResponse::message($models->count() === 1
             ? '1 category deleted, along with its breeds.'
@@ -93,14 +119,26 @@ class DeleteCategory extends DestructiveAction
      * `category_id`, so it still satisfies the RESTRICT constraint even though
      * the listing is gone from every application query.
      *
+     * One grouped aggregate for the whole selection, not `$category->pets()
+     * ->withTrashed()->count()` per row: Nova hands `handle()` up to the page
+     * size in models, and the per-row version issued that many `select count(*)`
+     * round trips before the action had decided anything. A category with no
+     * listings is simply absent from the result and reads as 0.
+     *
      * @param  Collection<int, Category>  $models
      * @return array<string, int>
      */
     protected function blockedBy(Collection $models): array
     {
+        $counts = Pet::withTrashed()
+            ->whereIn('category_id', $models->map(fn (Category $category): int => (int) $category->getKey())->all())
+            ->groupBy('category_id')
+            ->selectRaw('category_id, count(*) as aggregate')
+            ->pluck('aggregate', 'category_id');
+
         return $models
             ->mapWithKeys(fn (Category $category): array => [
-                $category->name => $category->pets()->withTrashed()->count(),
+                $category->name => (int) $counts->get($category->getKey(), 0),
             ])
             ->filter(fn (int $count): bool => $count > 0)
             ->all();

@@ -101,10 +101,11 @@ return [
     | these middleware but typically this provided default is preferred.
     |
     | ThrottleAuthRoutes is the second entry because `limiters` below has no
-    | slot for `register.store`, `password.email` or `password.confirm.store`,
-    | and this list is the only say the application has over the middleware of
-    | routes the package declares. It no-ops on every route name it does not
-    | recognise; read its docblock for why the alternatives do not work.
+    | slot for `register.store`, `password.email`, `password.confirm.store` or
+    | `password.update`, and this list is the only say the application has over
+    | the middleware of routes the package declares. It no-ops on every route
+    | name it does not recognise; read its docblock for why the alternatives do
+    | not work.
     |
     */
 

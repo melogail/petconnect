@@ -11,6 +11,7 @@ use App\Enums\HealthStatus;
 use App\Enums\ListingType;
 use App\Enums\PetGender;
 use App\Enums\PetStatus;
+use App\MediaLibrary\ConvertibleImageTypes;
 use Database\Factories\PetFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -152,10 +153,17 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
 
     /**
      * Photos live in one collection; the cover photo is flagged, not separated.
+     *
+     * `acceptsMimeTypes()` restates the validator's format list at the
+     * collection, on purpose: it is the last check before a file is written and
+     * the only one on a path that never went through a Form Request — a
+     * console command, a seeder, an import. Both lists are built from
+     * App\MediaLibrary\ConvertibleImageTypes, so they cannot disagree.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection(self::PHOTO_COLLECTION)
+            ->acceptsMimeTypes(ConvertibleImageTypes::MIME_TYPES)
             ->useDisk(config('media-library.disk_name'));
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Nova;
 
+use App\Concerns\TaxonomyImageRules;
 use App\Nova\Policies\BreedPolicy;
 use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
 use Illuminate\Http\Resources\MergeValue;
@@ -30,9 +31,16 @@ use Laravel\Nova\ResourceTool;
  * rule has to be scoped to the submitted category rather than to the table —
  * a plain `unique:breeds,slug` would refuse "labrador" under Cats because it
  * already exists under Dogs. See slugRule().
+ *
+ * The image field's rules come from App\Concerns\TaxonomyImageRules, shared
+ * with App\Nova\Category, rather than being restated here: they used to be a
+ * bare `['image', 'max:5120']`, which accepts formats GD cannot convert and so
+ * serves the raw upload where a crop was meant to be (.ai/rules/nova.md).
  */
 class Breed extends Resource
 {
+    use TaxonomyImageRules;
+
     /**
      * The model the resource corresponds to.
      *
@@ -100,7 +108,7 @@ class Breed extends Resource
             Images::make('Image', 'breeds')
                 ->conversionOnIndexView('thumb')
                 ->conversionOnDetailView('display')
-                ->singleMediaRules(['image', 'max:5120']),
+                ->singleMediaRules($this->taxonomyImageFileRules()),
 
             Text::make('Name')
                 ->sortable()

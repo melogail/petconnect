@@ -5,6 +5,7 @@ namespace App\Actions\Pets;
 use App\Concerns\PetPhotoRules;
 use App\Models\Pet;
 use App\Pipelines\Pets\Shared\AttachGalleryImages;
+use App\Pipelines\Pets\Shared\EnsurePhotosAreDecodable;
 use App\Pipelines\Pets\Shared\NormalizeAdditionalInfo;
 use App\Pipelines\Pets\Shared\NormalizeBasicAttributes;
 use App\Pipelines\Pets\Shared\NormalizeHealthData;
@@ -30,7 +31,11 @@ use Illuminate\Pipeline\Pipeline;
  * ask for gallery photos to be removed.
  *
  * The capacity check runs first, before anything is written or uploaded, so a
- * rejected edit leaves no partial state behind.
+ * rejected edit leaves no partial state behind. The decodability check runs
+ * straight after it, for the same reason and in that order: counting photos is
+ * cheaper than decoding one, so an edit that is over the cap is refused without
+ * paying for a decode, and an undecodable upload is still refused before
+ * ReplaceFeaturedImage has deleted the cover photo it was meant to replace.
  *
  * Among the photo steps, removal runs before attachment so the stored gallery
  * never transiently exceeds the cap the capacity check just approved.
@@ -79,6 +84,7 @@ class UpdatePet
             ->send($context)
             ->through([
                 EnsureGalleryCapacity::class,
+                EnsurePhotosAreDecodable::class,
                 ResolveCategoryAndBreed::class,
                 NormalizeBasicAttributes::class,
                 NormalizeLocation::class,

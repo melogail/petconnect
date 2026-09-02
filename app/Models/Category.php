@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\MediaLibrary\ConvertibleImageTypes;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,11 +34,18 @@ class Category extends Model implements HasMedia
 
     /**
      * A category shows a single illustrative image.
+     *
+     * `acceptsMimeTypes()` restates the format list App\Nova\Category validates
+     * with at the collection, as defence in depth for any path that never went
+     * through the Nova form — a console command, a seeder, an import. Both are
+     * built from App\MediaLibrary\ConvertibleImageTypes, so they cannot
+     * disagree.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('categories')
             ->singleFile()
+            ->acceptsMimeTypes(ConvertibleImageTypes::MIME_TYPES)
             ->useDisk(config('media-library.disk_name'));
     }
 

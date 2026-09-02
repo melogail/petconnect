@@ -47,7 +47,15 @@ use Illuminate\Notifications\DatabaseNotification;
  * the model and no `notifiable_type` value is written by hand — the alias trap
  * .ai/rules/app.md records.
  *
- * `latest()` orders by `created_at` only; `notifications.id` is a UUID, so the
+ * ## The ordering is the relation's, not this Action's
+ *
+ * `HasDatabaseNotifications::notifications()` already ends in `->latest()`, so
+ * the newest-first ordering arrives with the relation. This used to add a second
+ * `->latest()` on top of it, which emitted `order by created_at desc` twice in
+ * the same statement — identical column, identical direction, no effect beyond
+ * the noise. Removed; do not add it back thinking the relation is unordered.
+ *
+ * That ordering is by `created_at` only; `notifications.id` is a UUID, so the
  * `id DESC` tiebreak the integer-keyed lists use would order by a random string
  * rather than by insertion. Same-second rows are therefore unordered between
  * themselves, which is the honest position — there is no monotonic column to
@@ -66,7 +74,7 @@ class BuildNotificationInbox
         $perPage ??= (int) config('petconnect.notifications.inbox_per_page', 15);
 
         return [
-            'notifications' => $user->notifications()->latest()->paginate($perPage),
+            'notifications' => $user->notifications()->paginate($perPage),
             'unread_count' => $user->unreadNotifications()->count(),
         ];
     }

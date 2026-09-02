@@ -27,3 +27,12 @@ Nothing fails at generation time. It surfaces later and somewhere else: `npm run
 Regenerate with `php artisan wayfinder:generate --with-form --no-interaction`, or just run `npm run build` and let the vite plugin do it with the configured options. Then confirm with `npm run types:check`.
 
 `resources/js/{actions,routes,wayfinder}/**` is generated output: regenerate it, never hand-edit it, and never "fix" a `.form` error by changing the `.vue` call site.
+
+## The Wayfinder bundle-bloat finding is a false positive — closed by disproof, do not reopen
+Claim under test: the generated Wayfinder tree (~18.2 KB) is bundled whole into the entry chunk because it is a barrel of `Object.assign`-built objects, which defeats tree-shaking. **False. No change was made and `vite.config.ts` is byte-identical.**
+
+Control experiment: setting `moduleSideEffects: false` globally — the maximum tree-shaking Rollup can do — moved total assets by **~191 bytes**. There is no 18 KB of dead Wayfinder code to shake out.
+
+The real reason `like` appears in the entry chunk is that it is a **live cross-chunk export**, not dead code: `resources/js/components/PublicHeader.vue:17` imports `create` from `@/routes/pets`, which pulls `routes/pets/index.ts` into the entry chunk; `PetLikeButton.vue` then imports `like` from that same module in a page chunk. Rollup must keep the export reachable. Nothing to fix.
+
+Methodological point, which is the part worth keeping: the acceptance criterion was set **in advance** — `grep -c '/pets/{pet}/like' public/build/assets/app-*.js` must reach 0. It stayed at 1 before and after. That pre-committed number is what exposed the hypothesis as wrong; reporting it honestly instead of forcing it down is what closed the finding correctly. Set the number before the experiment, not after.

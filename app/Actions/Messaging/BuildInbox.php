@@ -70,6 +70,27 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * instead of an arbitrary one — `last_message_at` is null until the first
  * message lands, and App\Observers\MessageObserver is what fills it.
  *
+ * **No index can serve this sort, and adding one would not change that.** The
+ * filter and the sort live in different tables: `$user->conversations()` is a
+ * belongsToMany, so the predicate is `conversation_user.user_id = ?` while both
+ * sort columns are on `conversations`. MySQL drives from the pivot — a `ref`
+ * lookup on `conversation_user_user_id_index` — and joins each matching
+ * conversation by primary key, so the rows reach the sort in pivot order, not in
+ * any order a `conversations` index could have produced. `EXPLAIN` on the live
+ * schema says exactly that: `Using temporary; Using filesort` on the pivot row
+ * of the plan, with `conversations` an `eq_ref` on `PRIMARY`.
+ *
+ * An index on `conversations (last_message_at desc, updated_at desc)` would only
+ * be usable if the optimiser drove from `conversations` and probed the pivot per
+ * row — a plan that reads the whole conversations table in sort order to find
+ * the handful one user is in, which is worse for every real inbox and is not the
+ * plan MySQL picks anyway. So: do not "fix" this with an index. The sort is
+ * bounded by one user's conversation count, which is small, and the paginator's
+ * `LIMIT` keeps the filesort's working set to that.
+ *
+ * This paragraph is a note, not a `TODO`. Nothing here needs changing; it is
+ * here so the next reader does not spend an afternoon proving it again.
+ *
  * @see App\Actions\Messaging\PaginateConversationMessages for one thread's
  *      messages.
  */

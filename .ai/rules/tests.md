@@ -16,11 +16,11 @@ Consequence, measured: every `addMedia(UploadedFile::fake()->create(...))` in th
 
 and returns **before** `$temporaryDirectory->delete()`. There is no `try`/`finally`, so the same early return also leaks whenever a conversion throws. `Storage::fake()` does not help: the temp path is a raw `storage_path('media-library/temp')`, not a disk, so it is never redirected and the litter lands in the real project tree.
 
-**Scale, corrected 2026-08-31.** This used to record "the suite had accumulated 7,172 directories (29 MB)". Re-measured: **9 directories, 480 KB**. The mechanism and the `->image()` guidance below are unchanged and still right; the figure was a snapshot of a tree nobody had cleaned, not a live crisis, and it should not be read as one. What it grows by is a few directories per suite run, every leaked file exactly 0 bytes.
+**Scale, corrected 2026-09-02. The leak is fixed and the current figure is 0.** Two earlier snapshots are recorded here — "7,172 directories (29 MB)", then "9 directories, 480 KB" — and both were real at the time they were taken, of trees nobody had cleaned; neither was a wrong reading and neither was a live crisis. Measured after the fix landed, across ~380 tests including every media-touching suite: **0 directories, 0 files**. Count entries rather than measuring bytes — see the `du` note below.
 
-Seeding is not the cause — no seeder or factory attaches media, and `migrate:fresh --seed` leaves the count unchanged. It is the test suite, and only the test suite.
+Seeding is not the cause — no seeder or factory attaches media, and `migrate:fresh --seed` leaves the count unchanged. It was the test suite, and only the test suite.
 
-The upstream leak is spatie/laravel-medialibrary 11.23.5 `Conversions/FileManipulator::performConversions()` and needs a `finally` there. On our side, prefer `UploadedFile::fake()->image('avatar.jpg')` when a test adds media (php8.4-gd is installed, so it writes real bytes and the conversion path completes and cleans up). Where a test genuinely only needs a media row and not a conversion, note that it litters. Do not "fix" this with a blanket `rm` in a test hook that hides a throwing conversion.
+The upstream leak is spatie/laravel-medialibrary 11.23.5 `Conversions/FileManipulator::performConversions()` and needs a `finally` there. **We supply one**: `App\MediaLibrary\TemporaryDirectoryCleaningFileManipulator` overrides that method alone and is bound over `FileManipulator` in `AppServiceProvider::register()`, so both the 0-byte early return and a throwing conversion now clean up (.ai/rules/media-library.md). Nothing in a test needs to work around it any more. On our side, still prefer `UploadedFile::fake()->image('avatar.jpg')` when a test adds media (php8.4-gd is installed, so it writes real bytes and the conversion path completes and cleans up). Where a test genuinely only needs a media row and not a conversion, note that it litters. Do not "fix" this with a blanket `rm` in a test hook that hides a throwing conversion.
 
 ## A test protecting a `whenLoaded()` relation must assert the key is present in the payload
 `whenLoaded()` drops its key entirely when the relation was never loaded, so a *complete* miss of an eager load is the silent one:
@@ -37,3 +37,12 @@ Rule: any test that exists to protect an eager load behind `whenLoaded()` must s
 Note also that these pins are measured under this file's `SESSION_DRIVER=array` and `CACHE_STORE=array` (phpunit.xml). A real request on `.env`'s `database` drivers pays 2-3 more queries for `sessions` and `cache` — same feed request, 9 queries under the array driver, 12 for a guest and 11 authenticated under the database one. A pin here is not a whole-request cost. Note also that `preventLazyLoading` is off entirely on result sets of 0 or 1 row (see .ai/rules/app.md), so the fixture needs at least two rows of whatever is being iterated.
 
 `grep -rn 'whenLoaded(' app/Http/Resources` is the live list of what this covers; do not work from an enumeration in a rule file.
+
+## Measuring the media temp-directory leak: the GD hypothesis is falsified and `du` is dishonest
+Two dead ends worth not re-deriving, both about `storage/media-library/temp`.
+
+**"Maybe GD is missing, so no conversion ran" is false.** `Illuminate\Http\Testing\FileFactory::image()` throws `LogicException('GD extension is not installed.')` *before* it constructs the file. With GD absent, `->image()` could not have produced an `UploadedFile` at all, so no media row and no temporary directory could ever have been created by it. A missing extension cannot be the cause of the litter. Stop testing that hypothesis.
+
+**`du` measures the wrong thing here.** ext4 never gives directory blocks back, so `du -sh storage/media-library/temp` reported 444K on a directory that had already been emptied. Count entries instead: `find storage/media-library/temp -type f | wc -l`, or `find storage/media-library/temp -maxdepth 1 -mindepth 1 -type d | wc -l`.
+
+Measured after the `finally` fix landed (`App\MediaLibrary\TemporaryDirectoryCleaningFileManipulator`), across ~380 tests including every media-touching suite: **0 directories, 0 files**. The earlier "7,172 / 29 MB" and "9 / 480 KB" snapshots were each accurate when taken — they were uncleaned trees at two different moments, not wrong readings.

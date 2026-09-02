@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\MediaLibrary\MediaPathGenerator;
 use App\MediaLibrary\OwnerDirectoryResolver;
+use App\MediaLibrary\TemporaryDirectoryCleaningFileManipulator;
 use App\Models\Admin;
 use App\Models\Breed;
 use App\Models\Category;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Nova\Util;
+use Spatie\MediaLibrary\Conversions\FileManipulator;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class AppServiceProvider extends ServiceProvider
@@ -39,11 +41,23 @@ class AppServiceProvider extends ServiceProvider
      * MediaPathGenerator is scoped for the same reason it always was —
      * medialibrary calls app() on it once per generated path — and now takes
      * the resolver rather than owning the lookup.
+     *
+     * The FileManipulator override is deliberately NOT scoped, and the contrast
+     * with those two is the whole justification: they are scoped because they
+     * hold a memo that has to live exactly one request and no longer, and this
+     * one holds no state at all — it wraps a `finally` around the package's own
+     * method and keeps nothing between calls. Binding it `scoped` or `singleton`
+     * would advertise shared state that does not exist, and would hold one
+     * instance across every job a queue worker runs for no gain. A plain bind
+     * covers the inline path, PerformConversionsJob and
+     * `media-library:regenerate` alike, because the package resolves the
+     * manipulator from the container in all three.
      */
     public function register(): void
     {
         $this->app->scoped(OwnerDirectoryResolver::class);
         $this->app->scoped(MediaPathGenerator::class);
+        $this->app->bind(FileManipulator::class, TemporaryDirectoryCleaningFileManipulator::class);
     }
 
     /**
@@ -65,11 +79,14 @@ class AppServiceProvider extends ServiceProvider
      * rather than a wasted write. The legacy app throttled nothing at all,
      * anywhere.
      *
-     * The last five are a different shape and are documented separately below:
-     * three guard credential and mail flows that Fortify and Nova register
-     * without a limiter slot (see Http\Middleware\ThrottleAuthRoutes, which is
-     * what attaches them), and two guard the only writes in the application
-     * that consume disk and image-conversion CPU.
+     * Four other shapes are documented separately below: the writes that cost
+     * image-conversion CPU rather than a row (`pet-listings`,
+     * `pet-listing-edits`, `profile-updates`); the credential and mail flows
+     * that Fortify and Nova register without a limiter slot, which are attached
+     * by Http\Middleware\ThrottleAuthRoutes rather than on a route; the cheap
+     * ceilings that exist so that no mutating route in routes/web.php is left
+     * uncapped at all (`content-edits`, `inbox-actions`, `locale-switches`);
+     * and the one terminal write (`account-deletions`).
      *
      * - `pet-likes` guards POST pets/{pet}/like.
      * - `comment-likes` guards POST comments/{comment}/like. Same shape and
@@ -108,6 +125,110 @@ class AppServiceProvider extends ServiceProvider
      *   spammer needs thousands for the tactic to pay. Legacy had no throttle
      *   at all on conversation creation or on message sending.
      *
+     * ## The cheap ceilings
+     *
+     * These three are not here because anything measured hurt. They are here
+     * because "deliberately uncapped" is a claim that has to be re-argued every
+     * time a route joins the group, and nobody re-argues it — they read the
+     * comment and add the route.
+     *
+     * - `content-edits` is the one deliberately *shared* limiter in the
+     *   application. It guards the ten update/destroy/toggle routes that change
+     *   a row the caller already owns: `pets.destroy`, `pets.status.toggle`,
+     *   `comments.update`, `comments.destroy`, `reviews.update`,
+     *   `reviews.destroy`, `messages.update`, `messages.destroy`,
+     *   `messages.pin` and `notifications.read`. The severity is honestly low —
+     *   none of them notifies anybody, every one is bounded to rows the caller
+     *   owns (by a policy for nine of them, by the owning relation for
+     *   `notifications.read`: it has no policy on purpose, because
+     *   MarkNotificationAsRead reads through `$request->user()`'s own relation,
+     *   so somebody else's id is a 404 from firstOrFail() rather than a 403
+     *   from a check that could be forgotten), and a loop rewrites a fixed set
+     *   of rows rather than growing one. 30 a minute is above any human editing
+     *   session and is a ceiling on a script. Sharing one bucket is the point
+     *   rather than a shortcut: the eleventh route in this family is covered by
+     *   naming the limiter, with no sizing decision to get wrong, and the
+     *   routes it covers are things one person does one at a time so they do
+     *   not compete.
+     *
+     *   `notifications.read` is the odd member of the group and stays here
+     *   deliberately, so write down the reason rather than re-deriving it. It
+     *   is the only route in the family fired once *per row in a list* instead
+     *   of once per item page, so a user clearing a twenty-row bell one row at
+     *   a time spends two thirds of a bucket shared with comment, review,
+     *   message and pet edits — and its two siblings, `notifications.read-all`
+     *   and `notifications.destroy-all`, sit on `inbox-actions` at 60. Do not
+     *   defend the placement on a "who fires it" axis: that argument does not
+     *   distinguish it from `conversations.read`, which is on `inbox-actions`.
+     *   What makes 30 acceptable is that `read-all` exists — a user facing a
+     *   full bell has a one-request pressure valve for exactly the case that
+     *   would drain this bucket, so per-row clicking is a preference rather
+     *   than the only way through. If `read-all` ever leaves the UI, move this
+     *   route to `inbox-actions` with its siblings.
+     * - `inbox-actions` guards the three writes that housekeep an inbox: POST
+     *   conversations/{conversation}/read, POST notifications/read-all and
+     *   DELETE notifications. 60 a minute, the loosest ceiling in this file,
+     *   because these are fired by the client rather than by a deliberate act —
+     *   `conversations.read` runs on every thread render — and a 429 here is an
+     *   unread badge that will not clear. Its own bucket rather than
+     *   `content-edits` for the usual reason: opening twenty threads must not
+     *   spend the allowance for editing a comment. DELETE notifications sits
+     *   here rather than on a tighter ceiling of its own because it is
+     *   destructive and idempotent at the same time — an accidental client-side
+     *   loop empties the list on the first pass and deletes nothing after it,
+     *   so the ceiling exists to stop the loop, not to ration the user.
+     * - `locale-switches` guards POST locale, the only unauthenticated write in
+     *   the application that is not an auth flow. It reads as free and is not:
+     *   `SESSION_DRIVER=database`, so every caller arriving without a cookie
+     *   writes a `sessions` row, and the language picker is in the header of
+     *   every public page. 60 a minute is far above a human changing language
+     *   and low enough that a loop cannot fill the table.
+     *
+     * ## The terminal write
+     *
+     * - `account-deletions` guards DELETE settings/profile, the last mutating
+     *   route in the application that carried no ceiling of any kind. It is the
+     *   only limiter here on a write that can *succeed* exactly once: after it,
+     *   the account the key counts against no longer exists.
+     *
+     *   Its own family rather than a share of `content-edits`, even though it
+     *   is an authenticated destroy on a row the caller owns. `content-edits`
+     *   is sized for edits that rewrite a fixed set of rows, notify nobody and
+     *   are trivially repeatable; this one runs nine pipeline steps inside a
+     *   single transaction, deleting across `pets`, `comments`, `reviews`,
+     *   `likes`, `saves`, `reports`, `messages`, `conversation_user` and
+     *   `notifications` and removing the media files of every listing the
+     *   account owns — a filesystem half that no rollback undoes (see
+     *   Actions\Profiles\DeleteUserAccount). Sharing the bucket would also let
+     *   an afternoon of editing spend the allowance for leaving.
+     *
+     *   The ceiling is deliberately generous — 10 a minute, 20 an hour —
+     *   because the legitimate use is one request in the lifetime of an
+     *   account, so every number above 1 is already slack. What it bounds is a
+     *   client or script retrying a *failing* delete: a rejected
+     *   `current_password`, or a step that throws and rolls the whole
+     *   transaction back after some files are already off disk. Two limits
+     *   because the two costs decay differently — the minute bounds a burst of
+     *   transactions and rollbacks, the hour bounds a patient loop.
+     *
+     *   The second thing it bounds is the `current_password` rule in
+     *   DeleteProfileRequest, which is a `Hash::check` and therefore the same
+     *   yes/no password oracle `password-confirmations` exists for, with a
+     *   harsher payout on a hit. It is looser than that limiter's 5 a minute on
+     *   purpose: this route sits behind `auth`, `verified` and
+     *   UserPolicy::delete, so a guesser must already hold the victim's
+     *   session, and at that point confirm-password is the cheaper oracle to
+     *   attack. If that stops being true, tighten these numbers to match rather
+     *   than adding a second limiter beside them.
+     *
+     * ## Image-conversion writes
+     *
+     * The three writes whose cost is CPU and disk on a web worker rather than a
+     * row in a table, because `QUEUE_CONNECTION=database` has no worker deployed
+     * and every conversion therefore runs inside the request. A policy cannot
+     * bound any of this: owning the row a request rewrites says nothing about
+     * how often it may be rewritten.
+     *
      * - `pet-listings` guards POST pets. It is the heaviest write in the
      *   application — up to four images, each stored and put through two
      *   conversions — and it was the only one of the two heavy ones with no
@@ -117,6 +238,17 @@ class AppServiceProvider extends ServiceProvider
      *   costs decay differently: 5 a minute bounds the CPU spike, and 30 an
      *   hour bounds the disk, while still leaving a rescue posting a hundred
      *   listings a day room to do it.
+     * - `pet-listing-edits` guards PUT pets/{pet}, which costs exactly what
+     *   `pets.store` costs: the same four images, each stored and put through
+     *   the same two conversions, run **synchronously** because no queue worker
+     *   is deployed. Ownership does not bound that — it bounds how many rows a
+     *   caller can touch, not how much CPU and disk one owned row can be made
+     *   to burn, and a single pet absorbs an unbounded re-upload loop. Sized
+     *   one step above `pet-listings` at 10 a minute and 60 an hour because a
+     *   real owner corrects a listing far more often than they publish one. Its
+     *   own bucket rather than a share of `pet-listings`, so an afternoon of
+     *   editing cannot stop an owner publishing; the worst case is therefore
+     *   the sum of the two, which is still bounded.
      * - `profile-updates` guards PATCH settings/profile, for the same reason
      *   minus the durable half: an avatar upload runs two conversions and
      *   replaces the previous file, so a loop is CPU rather than storage. One
@@ -125,7 +257,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * ## Credential and mail flows
      *
-     * These three are not attached on a route, because this application does
+     * These four are not attached on a route, because this application does
      * not declare the routes they guard — Fortify and Nova do, and neither
      * offers a limiter slot for them. Http\Middleware\ThrottleAuthRoutes is
      * what attaches them and carries the full reasoning.
@@ -138,10 +270,11 @@ class AppServiceProvider extends ServiceProvider
      *   it is the same act — "prove you know this password" — and 20 an hour is
      *   what makes a patient guesser hopeless rather than merely slow. A user
      *   who has genuinely forgotten their password has `password.request`.
-     * - `registrations` guards POST register. Keyed on the caller's IP (the
-     *   route is `guest`, so there is never a user), which is the only handle
-     *   there is: every other field is attacker-chosen, including the address
-     *   the verification mail goes to. 5 a minute stops the script and 25 a day
+     * - `registrations` guards POST register. Keyed on the caller's IP through
+     *   passwordResetKey(), chosen rather than inherited: the route is `guest`,
+     *   and the IP is the only handle there is, because every field on the
+     *   request is attacker-chosen — including the address the verification
+     *   mail goes to. 5 a minute stops the script and 25 a day
      *   stops the patient one. That is deliberately per-IP even though a large
      *   NAT shares one: 25 sign-ups a day from a single address is already
      *   extraordinary, and the alternative — an unbounded mail relay pointed at
@@ -151,16 +284,99 @@ class AppServiceProvider extends ServiceProvider
      *   `config('auth.passwords.users.throttle')` already bounds resends per
      *   *email address*; this bounds the *caller*, which is the half that was
      *   missing — walking an address list was 40 sends from one IP with no
-     *   resistance. 3 a minute and 15 an hour: a real person mistypes their
-     *   address once or twice.
+     *   resistance. Keyed on the IP through passwordResetKey() for the same
+     *   reason `registrations` is, and with the same emphasis: the route is
+     *   `guest` and the submitted address is attacker-chosen, so the caller is
+     *   the only dimension worth counting. 3 a minute and 15 an hour: a real
+     *   person mistypes their address once or twice.
+     * - `password-resets` guards POST reset-password and Nova's POST
+     *   nova/password/reset — the *submit* half of the flow, which was open
+     *   while `password-reset-links` bounded the request half.
      *
-     * All of them are keyed by user id, falling back to the IP so a request that
-     * somehow arrives unauthenticated is still bounded — except
-     * `password-confirmations`, which combines the two (`user id|ip`) because
-     * the account under attack and the machine attacking it are different
-     * dimensions and both have to be bounded. Every limiter with two limits
-     * prefixes its keys, because Laravel evaluates limits in a shared bucket
-     * namespace and identical `by` values would collide.
+     *   Be exact about what a failing submission costs, because an inflated
+     *   figure gets a limiter deleted just as reliably as a stale one: the next
+     *   reviewer checks the claim against the framework, finds it false, and
+     *   concludes the whole thing was cargo-culted. An invalid POST is **one**
+     *   indexed `users` lookup (EloquentUserProvider on the submitted address),
+     *   **one** primary-key lookup on `password_reset_tokens` — `email` is that
+     *   table's primary key, one row per address, so
+     *   DatabaseTokenRepository::exists() does a single
+     *   `where('email', …)->first()` and never a scan — and **at most one**
+     *   bcrypt, because `exists()` short-circuits on a missing or expired row
+     *   and only then reaches `hasher->check()`.
+     *
+     *   There is no `Password::defaults()` run on a failing submission, and
+     *   therefore no `uncompromised()` and no outbound HTTP call. Fortify's
+     *   NewPasswordController::store() validates `token`, `email` and
+     *   `password` as `required` and nothing more; the defaults (which do add
+     *   `uncompromised()` in production — see configureDefaults()) run inside
+     *   ResetUserPassword::reset(), which PasswordBroker::reset() invokes only
+     *   *after* validateReset() has already accepted the token. Nova's
+     *   NewPasswordController subclasses Fortify's and calls parent::store(),
+     *   so it inherits all of this.
+     *
+     *   What justifies the ceiling is therefore not CPU per request. It is that
+     *   this is the submit half of a credential flow that hands out a password
+     *   on a hit, and that Nova's copy of it sets an **admin** password. The one
+     *   per-request cost worth knowing is wall clock rather than work:
+     *   PasswordBroker::reset() runs inside a Timebox at
+     *   `config('auth.timebox_duration')`, unset here so the framework's 200 ms
+     *   default, and a failed reset does not return early — so every rejected
+     *   submission holds a PHP worker for a fifth of a second, unauthenticated,
+     *   with no session and no cookie, from any address.
+     *
+     *   Token guessing is not the exposure and never was, but describe the
+     *   token correctly: DatabaseTokenRepository::createNewToken() returns
+     *   `hash_hmac('sha256', Str::random(40), $hashKey)` — a 64-character *hex*
+     *   string, not 64 characters of arbitrary alphabet — stored hashed again
+     *   in a row that expires after `expire` minutes (60 for both brokers).
+     *   The conclusion stands: guessing it is hopeless with or without this
+     *   limiter.
+     *
+     *   One limiter for both routes on purpose: it is one act, and a shared
+     *   bucket means attempts against the back office and the front office
+     *   count together. The counter-argument was weighed rather than missed —
+     *   admin resets are near-zero volume and pay out an admin credential, so a
+     *   dedicated, tighter bucket for `nova.password.reset` would cost nothing
+     *   in usability and would stop front-office traffic from ever being what
+     *   leaves the admin half of the shared bucket spent. It is not split today
+     *   only because two buckets is two numbers to keep in step for a route a
+     *   handful of people ever touch; split it if the `admins` guard grows.
+     *
+     *   5 a minute and 20 an hour, the same numbers as `password-confirmations`,
+     *   because it is the same act — "prove you may set this password" — and
+     *   because a person whose new password keeps failing the policy (which is
+     *   reached, since their token is valid) still has five tries a minute to
+     *   satisfy it.
+     *
+     * Most of them are keyed by user id, falling back to the IP so a request
+     * that somehow arrives unauthenticated is still bounded. Five are different
+     * on purpose. `password-confirmations` combines the two (`user id|ip`)
+     * because the account under attack and the machine attacking it are
+     * different dimensions and both have to be bounded. `registrations`,
+     * `password-reset-links` and `password-resets` key on the IP alone through
+     * passwordResetKey(), and `locale-switches` on `$request->ip()` directly,
+     * because every one of those callers is unauthenticated by construction and
+     * there is no account to count against.
+     *
+     * The first two of those three used to call rateLimitKey() and produced the
+     * same value from it, because `register.store`, `password.email` and
+     * `password.update` are all registered `guest:` by Fortify. That is exactly
+     * what .ai/rules/routes.md forbids relying on: the *fallback* was what made
+     * the key right, so nothing would have failed — not a test, not a static
+     * check — if one of those routes ever stopped being `guest`. Routing them
+     * through passwordResetKey() makes the IP a decision instead of a default.
+     * The value on the wire is unchanged for every caller a `guest` route can
+     * actually serve; the one difference is that an *authenticated* caller
+     * posting to one of them is now counted against their IP rather than their
+     * user id, since ThrottleAuthRoutes runs from the package middleware group
+     * ahead of the route's own `guest`, so the hit is recorded before
+     * RedirectIfAuthenticated turns them away. Neither key lets them past that
+     * redirect.
+     *
+     * Every limiter with two limits prefixes its keys, because Laravel
+     * evaluates limits in a shared bucket namespace and identical `by` values
+     * would collide.
      *
      * Throttling lives here rather than in the publish pipeline on purpose: a
      * rate limit's only meaningful outcome is a 429 with Retry-After, which is
@@ -194,9 +410,28 @@ class AppServiceProvider extends ServiceProvider
             Limit::perDay(30)->by('day:'.$this->rateLimitKey($request)),
         ]);
 
+        RateLimiter::for('content-edits', fn (Request $request): Limit => Limit::perMinute(30)
+            ->by($this->rateLimitKey($request)));
+
+        RateLimiter::for('inbox-actions', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by($this->rateLimitKey($request)));
+
+        RateLimiter::for('locale-switches', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by((string) $request->ip()));
+
+        RateLimiter::for('account-deletions', fn (Request $request): array => [
+            Limit::perMinute(10)->by('minute:'.$this->rateLimitKey($request)),
+            Limit::perHour(20)->by('hour:'.$this->rateLimitKey($request)),
+        ]);
+
         RateLimiter::for('pet-listings', fn (Request $request): array => [
             Limit::perMinute(5)->by('minute:'.$this->rateLimitKey($request)),
             Limit::perHour(30)->by('hour:'.$this->rateLimitKey($request)),
+        ]);
+
+        RateLimiter::for('pet-listing-edits', fn (Request $request): array => [
+            Limit::perMinute(10)->by('minute:'.$this->rateLimitKey($request)),
+            Limit::perHour(60)->by('hour:'.$this->rateLimitKey($request)),
         ]);
 
         RateLimiter::for('profile-updates', fn (Request $request): Limit => Limit::perMinute(10)
@@ -208,13 +443,18 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         RateLimiter::for('registrations', fn (Request $request): array => [
-            Limit::perMinute(5)->by('minute:'.$this->rateLimitKey($request)),
-            Limit::perDay(25)->by('day:'.$this->rateLimitKey($request)),
+            Limit::perMinute(5)->by('minute:'.$this->passwordResetKey($request)),
+            Limit::perDay(25)->by('day:'.$this->passwordResetKey($request)),
         ]);
 
         RateLimiter::for('password-reset-links', fn (Request $request): array => [
-            Limit::perMinute(3)->by('minute:'.$this->rateLimitKey($request)),
-            Limit::perHour(15)->by('hour:'.$this->rateLimitKey($request)),
+            Limit::perMinute(3)->by('minute:'.$this->passwordResetKey($request)),
+            Limit::perHour(15)->by('hour:'.$this->passwordResetKey($request)),
+        ]);
+
+        RateLimiter::for('password-resets', fn (Request $request): array => [
+            Limit::perMinute(5)->by('minute:'.$this->passwordResetKey($request)),
+            Limit::perHour(20)->by('hour:'.$this->passwordResetKey($request)),
         ]);
     }
 
@@ -253,6 +493,51 @@ class AppServiceProvider extends ServiceProvider
             ?? 'guest';
 
         return $identifier.'|'.$request->ip();
+    }
+
+    /**
+     * Who an unauthenticated auth-flow write is counted against: the machine
+     * that sent it, and nothing else.
+     *
+     * Named for the flow it was written for, but it is the key for all four of
+     * the `guest` routes ThrottleAuthRoutes covers — POST register
+     * (`registrations`), POST forgot-password (`password-reset-links`), and
+     * Fortify's POST reset-password plus Nova's POST nova/password/reset
+     * (`password-resets`). Fortify registers every one of them with
+     * `guest:config('fortify.guard')`, so there is no account to key on and
+     * rateLimitKey() would silently degrade to exactly this value. This method
+     * exists so the key shape is a decision rather than a fallback nobody
+     * notices when a route changes.
+     *
+     * The submitted email is deliberately **not** part of the key, even though
+     * it is the obvious second dimension and is what Fortify's own `login`
+     * limiter uses. Three reasons, in order of weight:
+     *
+     * 1. It is attacker chosen. Adding it hands a caller a fresh bucket for
+     *    every address they type, so the thing actually being spent — a 200 ms
+     *    Timebox on a PHP worker per rejected submission, and unmetered
+     *    attempts at an endpoint that pays out a password (an admin one on
+     *    Nova's copy) — would go back to being unbounded per IP, which is the
+     *    whole exposure this limiter exists for.
+     * 2. Keyed on the address alone, or ahead of the IP, it becomes a weapon:
+     *    a stranger could spend a victim's budget and lock them out of their
+     *    own account recovery, which is worse than the attack it prevents.
+     * 3. The per-account attack it would bound is not the realistic one. The
+     *    token is a 64-character hex string — `hash_hmac('sha256',
+     *    Str::random(40), $hashKey)` — stored hashed again in a row that
+     *    expires in an hour, so guessing it is hopeless with or without a
+     *    per-address ceiling, and a distributed guesser is not bounded by any
+     *    key this application can compute.
+     *
+     * The collateral is a shared NAT: everybody behind one address shares the
+     * ceiling — five reset submissions a minute, three link requests, five
+     * sign-ups. On endpoints a person reaches once, from a link in their own
+     * inbox or on the day they join, that is the right side to err on. A
+     * CAPTCHA or WAF is the answer if a legitimate shared address ever hits it.
+     */
+    protected function passwordResetKey(Request $request): string
+    {
+        return (string) $request->ip();
     }
 
     /**

@@ -241,17 +241,38 @@ describe('store', function () {
     test('rejects a recipient who does not exist and opens nothing', function () {
         $this->actingAs(User::factory()->create())
             ->post(route('conversations.store'), ['recipient_id' => 9999])
-            ->assertInvalid(['recipient_id' => 'The selected recipient id is invalid.']);
+            ->assertNotFound();
 
         $this->assertDatabaseEmpty('conversations');
     });
 
-    test('rejects a deactivated recipient and opens nothing', function () {
-        $recipient = User::factory()->inactive()->create();
+    /**
+     * The existence oracle, pinned at the boundary a caller can actually reach.
+     *
+     * `Rule::exists('users', 'id')` reads a column deactivation does not touch,
+     * so it passed a deactivated recipient through to the Action (404) and
+     * refused an id that was never issued in the validator (422). Two statuses
+     * is one bit per guess, and the ids are sequential: an unprivileged caller
+     * could enumerate which accounts exist. Resolution answers both cases now,
+     * identically, which is what `profile.show` already does — "not addressable
+     * by id, anywhere" (.ai/rules/app.md).
+     *
+     * Both branches belong in one test because neither status means anything on
+     * its own; it is their being the same that closes the oracle. Do not relax
+     * the 9999 branch back to `assertInvalid()` — that records the leak as the
+     * contract.
+     */
+    test('answers a deactivated recipient exactly as it answers an id that was never issued', function () {
+        $deactivated = User::factory()->inactive()->create();
+        $initiator = User::factory()->create();
 
-        $this->actingAs(User::factory()->create())
-            ->post(route('conversations.store'), ['recipient_id' => $recipient->getKey()])
-            ->assertInvalid(['recipient_id' => 'You cannot start a conversation with this person.']);
+        $this->actingAs($initiator)
+            ->post(route('conversations.store'), ['recipient_id' => $deactivated->getKey()])
+            ->assertNotFound();
+
+        $this->actingAs($initiator)
+            ->post(route('conversations.store'), ['recipient_id' => 9999])
+            ->assertNotFound();
 
         $this->assertDatabaseEmpty('conversations');
     });

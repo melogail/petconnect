@@ -57,3 +57,14 @@ Reordering steps only narrows the window, since every later step can still throw
 `DB::afterCommit()` works under `RefreshDatabase`/`LazilyRefreshDatabase`: `Illuminate\Foundation\Testing\DatabaseTransactionsManager` overrides `afterCommitCallbacksShouldBeExecuted()` to fire at level 1, so the test's wrapping transaction is skipped rather than swallowing the callback.
 
 The residual failure is the acceptable direction: an orphan file with no media row — unreferenced and unreachable, not visibly broken.
+
+## Walk a comment subtree with ListCommentSubtreeIds, never a frontier loop
+Extends the cascade section above. Three delete/purge flows walk the same tree and all three go through `Actions\Comments\ListCommentSubtreeIds`: `Comments\DeleteCommentThread\CollectCommentSubtree`, `Profiles\DeleteAccount\CollectAccountContent` and `Pets\Purge\CollectListingContent`. One recursive CTE, one binding per root, constructor-injected as a promoted readonly property on the step. Three callers is well past the bar this file sets for lifting work out of a step.
+
+Never write the level-by-level alternative: one `whereIn('parent_id', $frontier)` per level, accumulating an unbounded PHP array inside the delete's already-open transaction. Two of the three fed that array back as `whereNotIn('id', $collected)`, growing a bound parameter per comment already seen on every iteration. The third, in `Pets/Purge`, had **no guard at all** — on cyclic data it spun forever holding the transaction's locks. It survived two rounds of this fix because the rule was filed under an `app/Actions/Comments/**` glob that does not reach `app/Pipelines/`.
+
+The CTE's `union` is distinct, not `union all`: it de-duplicates a root set that already contains a descendant of another root, and it is what makes the recursion terminate rather than spin if the data were ever cyclic. The result set is identical to what the loops produced — roots plus every descendant, in no significant order; every consumer uses `whereIn`/`whereKey`, so order carries nothing.
+
+The polymorphic cleanup contract is unchanged and is why the collection happens at all: the subtree is read first, inside the Action's transaction, and likes and reports are then deleted explicitly by id. Verified on both drivers rather than assumed — MySQL 8.0.46 in dev (recursive CTEs since 8.0.1, `cte_max_recursion_depth` raises a loud error) and SQLite 3.45.1 in the suite (since 3.8.3).
+
+This supersedes the copy of this rule in `.ai/rules/comments.md`, which is filed where the correct implementation lives rather than where the mistake gets written; read this one.

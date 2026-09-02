@@ -2,6 +2,7 @@
 
 namespace App\Pipelines\Profiles\DeleteAccount;
 
+use App\Actions\Comments\ListCommentSubtreeIds;
 use App\Models\Comment;
 use App\Models\Pet;
 use App\Models\Review;
@@ -30,11 +31,14 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * comments go by `comments.user_id`; the comments on its listings go because
  * the listing goes and `commentable_id` is a morph column with nothing to
  * cascade — they have to be deleted here (DeleteContentComments) or they
- * survive pointing at a listing that no longer exists. Descendants are walked
- * level by level, one `whereIn('parent_id')` per level, the same way
- * DeleteCommentThread\CollectCommentSubtree does it: publishing caps threads at
- * two levels, but Nova and imports do not go through that cap, and a missed
- * level is a missed set of likes and reports.
+ * survive pointing at a listing that no longer exists. Descendants come from
+ * Actions\Comments\ListCommentSubtreeIds, one recursive CTE, the same way
+ * DeleteCommentThread\CollectCommentSubtree gets them: publishing caps threads
+ * at two levels, but Nova and imports do not go through that cap, and a missed
+ * level is a missed set of likes and reports. The roots are passed through
+ * `array_unique()` only to keep the CTE's binding list tight — the account's own
+ * reply to its own comment is both a root and a descendant, and the CTE's
+ * `union` is what actually de-duplicates the result.
  *
  * **Reviews** are the union of the ones the account wrote — which cascade off
  * `reviews.user_id`, taking their reports with them if nobody deletes those —
@@ -50,18 +54,20 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  */
 class CollectAccountContent
 {
+    public function __construct(private readonly ListCommentSubtreeIds $subtreeIds) {}
+
     public function handle(DeleteAccountContext $context, Closure $next): mixed
     {
         $userId = $context->user->getKey();
 
-        $petIds = Pet::withTrashed()
+        $petIds = array_values(Pet::withTrashed()
             ->where('user_id', $userId)
             ->pluck('id')
             ->map(fn (mixed $id): int => (int) $id)
-            ->all();
+            ->all());
 
         $context->setCollectedContent(
-            petIds: array_values($petIds),
+            petIds: $petIds,
             commentIds: $this->commentIds($userId, $petIds),
             reviewIds: $this->reviewIds($userId),
         );
@@ -87,21 +93,7 @@ class CollectAccountContent
             ->map(fn (mixed $id): int => (int) $id)
             ->all();
 
-        $collected = $roots;
-        $frontier = $roots;
-
-        while ($frontier !== []) {
-            $frontier = Comment::query()
-                ->whereIn('parent_id', $frontier)
-                ->whereNotIn('id', $collected)
-                ->pluck('id')
-                ->map(fn (mixed $id): int => (int) $id)
-                ->all();
-
-            $collected = [...$collected, ...$frontier];
-        }
-
-        return array_values(array_unique($collected));
+        return $this->subtreeIds->handle(array_values(array_unique($roots)));
     }
 
     /**

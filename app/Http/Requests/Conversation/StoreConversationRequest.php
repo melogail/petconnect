@@ -31,6 +31,21 @@ use Illuminate\Validation\Rule;
  * StartDirectConversation\EnsureDistinctParticipants for the callers that pass
  * no Form Request.
  *
+ * There is deliberately no `Rule::exists('users', 'id')`. It read a column
+ * deactivation does not touch, so it passed a deactivated recipient through to
+ * StartConversation — which refuses it in resolveRecipient() with a 404 — while
+ * answering an id that was never issued with a 422 from here. Two statuses is
+ * one bit per guess against sequential ids, i.e. an existence oracle over
+ * accounts. Resolution now answers both cases identically, the way profile.show
+ * already does: "not addressable by id, anywhere" (.ai/rules/app.md). It also
+ * removes a TOCTOU window, the recipient row having been read twice per
+ * request with nothing holding it still in between.
+ *
+ * Do not close it the other way either, by hanging `->where('is_active', true)`
+ * off the rule: a visibility decision does not belong in a Form Request, and
+ * stating it here as well as in User::resolveRouteBinding() puts one rule in
+ * two places that can drift.
+ *
  * Whether that recipient will *accept* a conversation is not asked here and
  * cannot be: it is a question about another user's settings, answered in
  * StartDirectConversation\EnsureRecipientAccepts against the model the flow has
@@ -57,7 +72,6 @@ class StoreConversationRequest extends FormRequest
             'recipient_id' => [
                 'required',
                 'integer',
-                Rule::exists('users', 'id'),
                 Rule::notIn(array_filter([$this->user()?->getKey()])),
             ],
             'initial_message' => ['nullable', 'string', 'max:'.$this->maxContentLength()],

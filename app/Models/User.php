@@ -6,6 +6,7 @@ use App\Concerns\HasLikes;
 use App\Concerns\HasReviews;
 use App\Contracts\Likeable;
 use App\Contracts\Reviewable;
+use App\MediaLibrary\ConvertibleImageTypes;
 use App\Notifications\VerifyEmailNotification;
 use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
@@ -191,10 +192,16 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     /**
      * In practice a single avatar; the collection is not marked singleFile so a
      * user can keep previous avatars if the product ever calls for it.
+     *
+     * `acceptsMimeTypes()` restates the validator's format list at the
+     * collection as defence in depth for any path that never went through a
+     * Form Request. Both are built from App\MediaLibrary\ConvertibleImageTypes,
+     * so they cannot disagree.
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('users')
+            ->acceptsMimeTypes(ConvertibleImageTypes::MIME_TYPES)
             ->useDisk(config('media-library.disk_name'));
     }
 

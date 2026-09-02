@@ -2,6 +2,7 @@
 
 namespace App\Pipelines\Pets\Purge;
 
+use App\Actions\Comments\ListCommentSubtreeIds;
 use App\Models\Comment;
 use App\Models\Pet;
 use Closure;
@@ -20,39 +21,33 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * `where('commentable_type', Pet::class)` would match zero rows and report
  * success. See .ai/rules/app.md.
  *
- * The descendants are walked level by level — one `whereIn('parent_id')` per
- * level, not one query per comment. Publishing caps depth at two, so this is
- * two or three queries in practice; it is written for arbitrary depth anyway
- * because Nova and imports write comments without passing that cap, and a
- * missed level is exactly the orphan class this flow exists to prevent. Same
- * shape as Comments\DeleteCommentThread\CollectCommentSubtree.
+ * The descendants come from Actions\Comments\ListCommentSubtreeIds — one
+ * recursive CTE, one binding per root — the same way
+ * Comments\DeleteCommentThread\CollectCommentSubtree and
+ * Profiles\DeleteAccount\CollectAccountContent get theirs. This step used to
+ * walk the levels itself with one `whereIn('parent_id')` per level and, unlike
+ * those two, with no guard of any kind: on cyclic data it spun forever inside
+ * the transaction the Action had already opened, holding its locks. The CTE's
+ * `union` is distinct, so it terminates whatever the data looks like.
+ *
+ * Publishing caps depth at two, but Nova and imports write comments without
+ * passing that cap, and a missed level is exactly the orphan class this flow
+ * exists to prevent — the CTE covers arbitrary depth for free.
  */
 class CollectListingContent
 {
+    public function __construct(private readonly ListCommentSubtreeIds $subtreeIds) {}
+
     public function handle(PurgePetContext $context, Closure $next): mixed
     {
-        /** @var list<int> $frontier */
-        $frontier = Comment::query()
+        $roots = Comment::query()
             ->where('commentable_type', Relation::getMorphAlias(Pet::class))
             ->where('commentable_id', $context->pet->getKey())
             ->pluck('id')
             ->map(fn (mixed $id): int => (int) $id)
             ->all();
 
-        $collected = $frontier;
-
-        while ($frontier !== []) {
-            /** @var list<int> $frontier */
-            $frontier = Comment::query()
-                ->whereIn('parent_id', $frontier)
-                ->pluck('id')
-                ->map(fn (mixed $id): int => (int) $id)
-                ->all();
-
-            $collected = [...$collected, ...$frontier];
-        }
-
-        $context->setCommentIds(array_values(array_unique($collected)));
+        $context->setCommentIds($this->subtreeIds->handle(array_values($roots)));
 
         return $next($context);
     }

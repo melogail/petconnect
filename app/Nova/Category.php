@@ -2,6 +2,7 @@
 
 namespace App\Nova;
 
+use App\Concerns\TaxonomyImageRules;
 use App\Nova\Actions\DeleteCategory;
 use App\Nova\Policies\CategoryPolicy;
 use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
@@ -37,9 +38,16 @@ use Laravel\Nova\ResourceTool;
  * therefore returns false, which removes the built-in delete button entirely,
  * and Actions\DeleteCategory does the work behind a check that produces a
  * sentence instead of a stack trace. See .ai/rules/migrations.md.
+ *
+ * The image field's rules come from App\Concerns\TaxonomyImageRules, shared
+ * with App\Nova\Breed, rather than being restated here: they used to be a bare
+ * `['image', 'max:5120']`, which accepts formats GD cannot convert and so
+ * serves the raw upload where a crop was meant to be (.ai/rules/nova.md).
  */
 class Category extends Resource
 {
+    use TaxonomyImageRules;
+
     /**
      * The model the resource corresponds to.
      *
@@ -101,7 +109,7 @@ class Category extends Resource
             Images::make('Image', 'categories')
                 ->conversionOnIndexView('thumb')
                 ->conversionOnDetailView('display')
-                ->singleMediaRules(['image', 'max:5120']),
+                ->singleMediaRules($this->taxonomyImageFileRules()),
 
             Text::make('Name')
                 ->sortable()

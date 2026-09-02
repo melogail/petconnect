@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\MediaLibrary\ConvertibleImageTypes;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
@@ -33,11 +34,18 @@ trait PetPhotoRules
     /**
      * The file-shape rules for one listing photo, cover or gallery.
      *
+     * The extension list comes from App\MediaLibrary\ConvertibleImageTypes
+     * rather than being spelled out here: it is the set the conversion driver
+     * can actually decode, and the same source now backs the avatar rules and
+     * the taxonomy image rules, so no media field can quietly accept a format
+     * that produces no derivative. See that class for what the bare `image`
+     * rule lets through.
+     *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
     protected function photoFileRules(): array
     {
-        return ['image', 'mimes:jpeg,jpg,png,gif,webp', 'max:'.$this->maxImageKilobytes()];
+        return ['image', ConvertibleImageTypes::mimesRule(), 'max:'.$this->maxImageKilobytes()];
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Pipelines\Pets\Create\AttachFeaturedImage;
 use App\Pipelines\Pets\Create\CreatePetContext;
 use App\Pipelines\Pets\Create\PersistPet;
 use App\Pipelines\Pets\Shared\AttachGalleryImages;
+use App\Pipelines\Pets\Shared\EnsurePhotosAreDecodable;
 use App\Pipelines\Pets\Shared\NormalizeAdditionalInfo;
 use App\Pipelines\Pets\Shared\NormalizeBasicAttributes;
 use App\Pipelines\Pets\Shared\NormalizeHealthData;
@@ -21,11 +22,15 @@ use Illuminate\Pipeline\Pipeline;
 /**
  * Publish a new listing.
  *
- * The work is a sequence — resolve the taxonomy, translate the form into
- * columns, write the row, then upload the photos — so it runs as a pipeline
- * over a typed context rather than as one long method. Persistence is
- * transactional and every upload step runs after that commit, because a
+ * The work is a sequence — check the photos, resolve the taxonomy, translate
+ * the form into columns, write the row, then upload the photos — so it runs as
+ * a pipeline over a typed context rather than as one long method. Persistence
+ * is transactional and every upload step runs after that commit, because a
  * rollback cannot un-write a file.
+ *
+ * The decodability check runs first, before anything is written: a file the
+ * conversion driver cannot read would otherwise fail inside addMedia(), after
+ * the listing and the media row are committed.
  */
 class CreatePet
 {
@@ -46,6 +51,7 @@ class CreatePet
         return $this->pipeline
             ->send($context)
             ->through([
+                EnsurePhotosAreDecodable::class,
                 ResolveCategoryAndBreed::class,
                 NormalizeBasicAttributes::class,
                 NormalizeLocation::class,

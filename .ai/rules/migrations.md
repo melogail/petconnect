@@ -29,3 +29,42 @@ Generalise it: when a query pins columns with equality and then orders, the inde
 Verified against the **test** schema — `sqlite_master` for `comments`, `reviews`, `reports`; the dev database is MySQL, see the correction at the top of this file — where `$table->id()` produces `integer primary key autoincrement`, and AUTOINCREMENT is exactly what stops SQLite reusing a deleted row's id. So the premise recorded in .ai/rules/pipelines.md — "a stranded polymorphic child eventually collides with a genuine row on a recycled id (SQLite hands out max(id)+1 without AUTOINCREMENT; InnoDB's counter does not survive a restart)" — does not hold on this schema. The MySQL half was only ever true before InnoDB 8.0, which persists the counter.
 
 What still stands, and is reason enough on its own: a morph column carries no FK, so deleting a parent strands its polymorphic children (likes, reports) silently, and those rows sit in a moderation queue resolving to null. Keep deleting them explicitly (Actions\Comments\DeleteComment, Actions\Reviews\DeleteReview). Keep converting the unique-index violation on `reports`/`reviews` to a ValidationException too — but justify it by the check-then-write race, not by id recycling. Re-check `sqlite_master` before repeating either claim.
+
+## pets_created_at_index was reviewed and deliberately kept
+Phase index review flagged `pets_created_at_index` (bare `created_at`) as possibly dead once `pets_status_deleted_at_created_at_index` and `pets_user_id_deleted_at_created_at_index` exist — every current ordered pets query pins an equality column first, so it is not a prefix of either and no query today reaches it as a leading column.
+
+It was **kept on purpose**. It is one unqualified `orderBy('created_at')` — an unfiltered "newest listings" endpoint, a sitemap, a Nova default sort — away from being the only index that serves the page, and a single-column index on an already-written timestamp is cheap. The confidence that it is dead was lower than for the indexes that were removed, and removing a cheap index on a maybe is the wrong trade.
+
+Do not re-discover it as dead weight. What would settle it: `EXPLAIN` (MySQL 8, the dev/prod driver) every pets query that has an `ORDER BY created_at` and confirm none reports `key: pets_created_at_index`, *and* confirm no unfiltered listing endpoint is planned. Only then drop it.
+
+## Two index questions left open on purpose, and the measurement that settles each
+Both were raised during the index review and **not acted on, because neither was measured**. Do not add either index on reasoning alone; take the measurement first, on MySQL 8 (`.env` dev driver), not on the SQLite test connection.
+
+1. **A composite for the filtered pet feed.** The feed can filter on `category_id`, `breed_id`, `listing_type` and price/location on top of `status` + `deleted_at`, and today each of those is its own single-column index, so a filtered feed gets one index and filters the rest. A composite might help — but its column order depends entirely on which filter combinations users actually send and how selective they are, and guessing that produces an index that serves no real query. **Settles it:** log the real `where` combinations that arrive at the feed endpoint over a representative period, take the top one or two, then `EXPLAIN` those exact queries at production-ish row counts and compare `rows`/`Extra` with and without the candidate index.
+
+2. **`users.created_at` for the metrics/Nova trend scans.** Nova value/trend metrics scan `users` by `created_at` range and the column is unindexed. Plausibly a full table scan, plausibly irrelevant — `users` is small, the metrics are cached, and admin pages are not a hot path. **Settles it:** `EXPLAIN` the metric's actual query at the real `users` row count and check for `type: ALL`; add the index only if it is a full scan *and* the metric is slow enough to notice.
+
+## $table->morphs() ships an index — write the columns out by hand when a composite supersedes it
+`morphs()` / `numericMorphs()` declares `(<name>_type, <name>_id)` as an index of its own. On `comments` and `notifications` that pair is now a **strict prefix** of the composites that serve the real queries (`comments_commentable_parent_created_at_index`; `notifications_notifiable_created_at_index` and `notifications_notifiable_read_at_index`), so it narrows nothing and only costs a write per insert — the same reasoning that removed `pets_status_index`.
+
+There is no `morphs()` variant that skips the index, so both migrations declare `$table->string('<name>_type'); $table->unsignedBigInteger('<name>_id');` instead. That is the exact expansion of `numericMorphs()` minus the `index()` call, and it is deliberate. Do not "tidy" it back to `$table->morphs(...)` — that silently reinstates the redundant index. If `Builder::$defaultMorphKeyType` is ever changed to uuid/ulid, these two hand-written pairs must be changed with it (nothing sets it today).
+
+`notifications` is the framework's own table with a UUID string primary key; it is edited in place like the rest of this unreleased schema.
+
+## --env=testing is NOT a safety flag here: it drops the real MySQL dev database
+Verified 2026-09-02: there is **no `.env.testing`** in this project (only `.env` and `.env.example` exist at root). `.env` is `DB_CONNECTION=mysql`, `DB_DATABASE=petconnect` — the real development database. Only `.env.example` and `phpunit.xml` are SQLite; see the "MySQL in development and SQLite under test" note above in this file.
+
+Consequence: `php artisan migrate:fresh --env=testing` loads plain `.env` with nothing but `APP_ENV` overridden, so it **drops every table in the live MySQL dev database**. It reads like a safety flag and is not one. An orchestrator issued exactly that command this phase; the agent checked what the override actually resolved to before running anything destructive, declined it, and migrated into a throwaway SQLite file using explicit shell env overrides instead.
+
+Safe pattern: any destructive command needs an explicit `DB_CONNECTION=`/`DB_DATABASE=` override (or a real `.env.testing` created first). Resolve what an env flag actually points at before running anything that writes.
+
+General lesson: verifying a destructive command's real effect and declining an instruction that would destroy data is correct behaviour even when the instruction comes from the orchestrator.
+
+## nova_notifications has the same index gap as notifications — deferred on purpose
+`nova_notifications` carries the same bare 2-column `morphs('notifiable')` index and the same query shape that motivated adding `(notifiable_type, notifiable_id, created_at)` and `(notifiable_type, notifiable_id, read_at)` to the framework's `notifications` table this phase. It was **not** fixed, deliberately.
+
+Query shapes (verified in `Laravel\Nova\Http\Requests\NotificationRequest`): the panel list is `where notifiable_type = ? and notifiable_id = ? order by created_at desc limit 100`; the badge is `where read_at is null and notifiable_type = ? and notifiable_id = ? count(*)`. Note the Nova model uses `SoftDeletes` (the framework `notifications` table does not), so `deleted_at is null` rides along on every one of those — a composite here would want `deleted_at` in it too.
+
+Why deferred: it is a **vendor** migration (`vendor/laravel/nova/database/migrations/2021_08_25_193039_create_nova_notifications_table.php`), not in `database/migrations/`, so it cannot be edited in place like the others. Fixing it means publishing the vendor migration or carrying a standalone `ALTER` migration — both add maintenance surface that has to survive Nova upgrades. And it backs the **admin** notification panel, not the member bell, so row growth and read volume are a fraction of `notifications`.
+
+Revisit when: admin notification volume becomes non-trivial, or the admin panel goes slow. Then `EXPLAIN` the two queries above on MySQL 8 at the real row count before adding anything.

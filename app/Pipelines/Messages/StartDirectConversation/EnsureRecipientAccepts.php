@@ -32,6 +32,27 @@ use Closure;
  * or per-recipient message settings land in that one method and take effect on
  * both paths without either being edited.
  *
+ * ## What this step decides, and what it no longer decides
+ *
+ * It decides **consent**: a recipient who exists and is addressable declining
+ * this initiator. It does not decide deactivation. Actions\Messaging\
+ * StartConversation resolves the recipient through User::resolveRouteBinding(),
+ * which refuses a deactivated account with a ModelNotFoundException — a 404,
+ * the same answer an id that was never issued gets — before the pipeline is
+ * even constructed. Deactivation is therefore answered earlier and louder than
+ * this step could answer it, and identically to non-existence, which is what
+ * stops the pair being an existence oracle ("not addressable by id, anywhere",
+ * .ai/rules/app.md).
+ *
+ * The consequence to know: `acceptsMessagesFrom()` is `return
+ * $this->isActive();` and nothing else today, so no reason it can refuse for
+ * survives resolution and this step cannot currently fire through the Action.
+ * It is defence in depth and the seam a block list or a per-recipient message
+ * setting lands on — it fires the moment that method gains a second clause —
+ * not dead code to delete. The identically named Send\EnsureRecipientAccepts on
+ * the message path is a different step and remains fully reachable, because a
+ * thread that already exists is not re-resolved by id.
+ *
  * It aborts with ConversationNotPermitted rather than the send flow's
  * RecipientNotAcceptingMessages because here the abort *is* attributable to a
  * submitted field: `recipient_id` is a control the client picked and can pick

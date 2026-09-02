@@ -18,6 +18,24 @@ return new class extends Migration
      * and the ordering column, so the same page is a range scan with no sort.
      * `status` is the leading column of it, so anything that filtered on
      * `status` alone is still covered — see .ai/rules/migrations.md.
+     *
+     * `pets_user_id_deleted_at_created_at_index` is the same shape for the
+     * profile listings query, `LoadProfileForDisplay::listings()`: `where
+     * user_id = ? and deleted_at is null order by created_at desc, id desc`.
+     * The bare `user_id` index it replaces stopped at the equality column and
+     * left the ordering to a sort of the whole set. `user_id` stays the
+     * **leading** column deliberately — InnoDB creates its own foreign key
+     * index only when no suitable one exists, and a leading `user_id` is what
+     * keeps it adopting this index instead of silently generating a second one
+     * under a name nobody chose. Do not reorder the columns to put `created_at`
+     * first.
+     *
+     * `pets_city_state_index` was **removed**: nothing could read it. The only
+     * location lookup in the application is Nova's `$search`, which compiles to
+     * `like '%term%'` — a leading wildcard, which no B-tree index can serve —
+     * so the index was maintained on every insert and used by no query. If
+     * location search is wanted later, it is a FULLTEXT index or Scout, not a
+     * B-tree on `(city, state)`.
      */
     public function up(): void
     {
@@ -66,13 +84,12 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('user_id');
+            $table->index(['user_id', 'deleted_at', 'created_at'], 'pets_user_id_deleted_at_created_at_index');
             $table->index('category_id');
             $table->index('breed_id');
             $table->index('listing_type');
             $table->index(['status', 'deleted_at', 'created_at'], 'pets_status_deleted_at_created_at_index');
             $table->index('created_at');
-            $table->index(['city', 'state'], 'pets_city_state_index');
             $table->index(['latitude', 'longitude'], 'pets_latitude_longitude_index');
         });
     }

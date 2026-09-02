@@ -170,9 +170,21 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | a `GET /locale/ar` link would switch the whole site to Arabic as the
 | pointer crossed the menu. Same reason `conversations.read` is a POST.
 |
+| Throttled by `locale-switches`, and it is the only route in this file whose
+| limiter is keyed on the IP rather than on the caller: being public is the
+| whole point of it, so there is usually no account to count against. It is
+| also the only unauthenticated write in the application that is not an auth
+| flow, and it is not as free as it looks — `SESSION_DRIVER=database` means a
+| caller arriving without a cookie writes a `sessions` row, and this endpoint
+| hangs off the header of every public page. 60 a minute is loose on purpose:
+| it is far above a human changing language and far below what it takes to
+| fill a table.
+|
 */
 
-Route::post('locale', [LocaleController::class, 'update'])->name('locale.update');
+Route::post('locale', [LocaleController::class, 'update'])
+    ->middleware('throttle:locale-switches')
+    ->name('locale.update');
 
 /*
 |--------------------------------------------------------------------------
@@ -274,10 +286,28 @@ Route::get('reviews/{reviewable_type}/{reviewable_id}', [ReviewController::class
 | burst, all 302. Two limits, because the two costs decay differently — 5 a
 | minute for the CPU spike, 30 an hour for the disk.
 |
-| `pets.update` accepts the same uploads and is deliberately *not* throttled
-| yet; it is bounded by ownership (PetPolicy) to listings that already exist,
-| so a loop rewrites a fixed set of rows rather than growing one. Say so here
-| if that stops being a good enough reason.
+| `pets.update` is throttled by `pet-listing-edits`, which is the same family
+| one step looser: 10 a minute and 60 an hour, because a real owner corrects a
+| listing far more often than they publish one while a single request costs
+| exactly what `pets.store` costs — the same four images, the same two
+| conversions each, run synchronously, because no queue worker is deployed.
+|
+| This comment used to argue the opposite: that the route needed no ceiling
+| because ownership (PetPolicy) bounds it to listings that already exist, so a
+| loop rewrites a fixed set of rows rather than growing one. That is wrong, and
+| it is worth saying why rather than deleting it, because it is a plausible
+| mistake to make twice. Ownership bounds how many *rows* a caller can touch;
+| it bounds nothing about how much CPU and disk one owned row can be made to
+| burn, and one pet re-uploaded in a loop is unbounded image conversion on a
+| web worker. `profile.update` already carried a ceiling on precisely that
+| argument for a *single* avatar (routes/settings.php); a route that accepts
+| four images cannot be the uncapped one.
+|
+| `pets.destroy` and `pets.status.toggle` carry `content-edits`, the shared
+| 30-a-minute ceiling described with the group in
+| AppServiceProvider::configureRateLimiters(). Neither is expensive and
+| neither notifies anybody — the ceiling is there so that the next route added
+| beside them inherits one.
 |
 */
 
@@ -292,10 +322,17 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     Route::whereNumber('pet')->group(function (): void {
         Route::get('pets/{pet}/edit', [PetController::class, 'edit'])->name('pets.edit');
-        Route::put('pets/{pet}', [PetController::class, 'update'])->name('pets.update');
-        Route::delete('pets/{pet}', [PetController::class, 'destroy'])->name('pets.destroy');
+
+        Route::put('pets/{pet}', [PetController::class, 'update'])
+            ->middleware('throttle:pet-listing-edits')
+            ->name('pets.update');
+
+        Route::delete('pets/{pet}', [PetController::class, 'destroy'])
+            ->middleware('throttle:content-edits')
+            ->name('pets.destroy');
 
         Route::patch('pets/{pet}/status', [PetController::class, 'toggleStatus'])
+            ->middleware('throttle:content-edits')
             ->name('pets.status.toggle');
 
         Route::post('pets/{pet}/like', [PetController::class, 'toggleLike'])
@@ -324,6 +361,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | the author a database notification, so an unthrottled loop is a
 | notification flood; the legacy routes were throttled by nothing.
 |
+| `comments.update` and `comments.destroy` carry `content-edits`, the shared
+| 30-a-minute ceiling the update/destroy/toggle family across this file uses.
+| Neither notifies anybody and both are bounded by CommentPolicy to the
+| caller's own comment, so the ceiling is cheap insurance rather than a
+| measured fix — but a route with no limiter is a precedent, and the next
+| write added to this group would inherit it.
+|
 | `comments.destroy`, not the legacy `comments.delete` — the verb now
 | matches the method, as it does everywhere else in this file.
 |
@@ -343,10 +387,12 @@ Route::middleware(['auth', 'verified'])
             ->middleware('throttle:comments')
             ->name('store');
 
-        Route::whereNumber('comment')->group(function (): void {
-            Route::put('{comment}', [CommentController::class, 'update'])->name('update');
-            Route::delete('{comment}', [CommentController::class, 'destroy'])->name('destroy');
-        });
+        Route::middleware('throttle:content-edits')
+            ->whereNumber('comment')
+            ->group(function (): void {
+                Route::put('{comment}', [CommentController::class, 'update'])->name('update');
+                Route::delete('{comment}', [CommentController::class, 'destroy'])->name('destroy');
+            });
     });
 
 /*
@@ -377,6 +423,12 @@ Route::middleware(['auth', 'verified'])
 | that notifies the person it is about, so an unthrottled loop is a
 | notification flood. The legacy review routes had no throttle of any kind.
 |
+| `reviews.update` and `reviews.destroy` carry `content-edits`, the same
+| shared 30-a-minute ceiling `comments.update` and `comments.destroy` do, and
+| for the same reason: editing your own review notifies nobody, but leaving
+| the pair uncapped makes "these do not need one" the rule that the next
+| route in the group inherits.
+|
 */
 
 Route::middleware(['auth', 'verified'])
@@ -388,10 +440,12 @@ Route::middleware(['auth', 'verified'])
             ->middleware('throttle:reviews')
             ->name('store');
 
-        Route::whereNumber('review')->group(function (): void {
-            Route::put('{review}', [ReviewController::class, 'update'])->name('update');
-            Route::delete('{review}', [ReviewController::class, 'destroy'])->name('destroy');
-        });
+        Route::middleware('throttle:content-edits')
+            ->whereNumber('review')
+            ->group(function (): void {
+                Route::put('{review}', [ReviewController::class, 'update'])->name('update');
+                Route::delete('{review}', [ReviewController::class, 'destroy'])->name('destroy');
+            });
     });
 
 /*
@@ -463,6 +517,16 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | ConversationPolicy::create that returned `true`. `messages` is looser,
 | because a conversation's other side already agreed to be there.
 |
+| The rest of the group is capped too, in two different families.
+| `messages.update`, `messages.destroy` and `messages.pin` take
+| `content-edits` — the shared 30-a-minute ceiling for editing rows you
+| already own, which is what all three are. `conversations.read` takes
+| `inbox-actions` at 60 a minute instead, because it is not a user gesture at
+| all: the thread page fires it once it has rendered, so the ceiling has to
+| clear a person opening threads quickly, and a 429 on it is an unread badge
+| that will not clear. Sharing `content-edits` with it would let a session
+| spent reading eat the allowance for editing a message.
+|
 */
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
@@ -477,6 +541,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             Route::get('{conversation}', [ConversationController::class, 'show'])->name('show');
 
             Route::post('{conversation}/read', [ConversationController::class, 'markAsRead'])
+                ->middleware('throttle:inbox-actions')
                 ->name('read');
 
             Route::get('{conversation}/messages', [MessageController::class, 'index'])
@@ -490,6 +555,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     Route::prefix('messages')
         ->name('messages.')
+        ->middleware('throttle:content-edits')
         ->whereNumber('message')
         ->group(function (): void {
             Route::put('{message}', [MessageController::class, 'update'])->name('update');
@@ -531,6 +597,19 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | model bound: binding the framework's DatabaseNotification would still not
 | scope it to the viewer, which is the only question that matters.
 |
+| All three writes are throttled, and the split between the two limiters is
+| about who fires them rather than what they cost. `read` marks one row read
+| when a person clicks that row, so it belongs with the rest of the
+| single-row update family on `content-edits` at 30 a minute — the tenth and
+| last route in that group. `read-all` and `destroy-all` are inbox-wide and
+| take `inbox-actions` at 60, the same ceiling `conversations.read` has.
+| `destroy-all` is the one that actually needs a number rather than a
+| principle: it deletes every notification the viewer has, so an accidental
+| client-side loop is destructive in a way a slow one is not. It is generous
+| rather than tight because the loop is also idempotent — the first pass
+| empties the list and every pass after it deletes nothing — so the ceiling
+| is there to end the loop, not to ration somebody clearing their bell twice.
+|
 */
 
 Route::middleware(['auth', 'verified'])
@@ -539,13 +618,18 @@ Route::middleware(['auth', 'verified'])
     ->group(function (): void {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
 
-        Route::post('read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::post('read-all', [NotificationController::class, 'markAllAsRead'])
+            ->middleware('throttle:inbox-actions')
+            ->name('read-all');
 
         Route::post('{notification}/read', [NotificationController::class, 'markAsRead'])
             ->whereUuid('notification')
+            ->middleware('throttle:content-edits')
             ->name('read');
 
-        Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
+        Route::delete('/', [NotificationController::class, 'destroyAll'])
+            ->middleware('throttle:inbox-actions')
+            ->name('destroy-all');
     });
 
 require __DIR__.'/settings.php';

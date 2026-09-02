@@ -5,6 +5,7 @@ namespace App\Actions\Profiles;
 use App\Models\User;
 use App\Pipelines\Profiles\UpdateProfile\ApplyLocalePreference;
 use App\Pipelines\Profiles\UpdateProfile\ClearPreviousProfileImage;
+use App\Pipelines\Profiles\UpdateProfile\EnsureProfileImageIsDecodable;
 use App\Pipelines\Profiles\UpdateProfile\PersistProfileAttributes;
 use App\Pipelines\Profiles\UpdateProfile\UpdateProfileContext;
 use App\Pipelines\Profiles\UpdateProfile\UploadProfileImage;
@@ -15,10 +16,10 @@ use Illuminate\Support\Facades\DB;
 /**
  * Apply a user's edits to their own profile.
  *
- * A sequence — upload the avatar, clear the one it replaced, write the
- * attributes, switch the language — so it runs as a pipeline over a typed
- * context. The legacy UpdateUserProfileAction did all of it in one method, and
- * got the order of two of them wrong.
+ * A sequence — check the avatar can be read, upload it, clear the one it
+ * replaced, write the attributes, switch the language — so it runs as a
+ * pipeline over a typed context. The legacy UpdateUserProfileAction did all of
+ * it in one method, and got the order of two of them wrong.
  *
  * ## Order is load bearing, and one pair of steps is the whole point
  *
@@ -27,6 +28,18 @@ use Illuminate\Support\Facades\DB;
  * collection first, so a failed upload left the account with no avatar and
  * nothing to restore. Read UpdateProfileContext for the verified legacy code
  * and the full reasoning.
+ *
+ * EnsureProfileImageIsDecodable comes before **both** of them, for the one
+ * upload failure the pair above does not cover cleanly. `image` and `mimes:`
+ * decide on the sniffed header, so a file with a real JPEG marker and padding
+ * behind it validates; the decode only fails when a conversion asks the driver
+ * for the pixels. `User`'s `thumb` and `display` are `nonQueued()`, so that
+ * throw lands inside `addMedia()` in UploadProfileImage — a 500, and the
+ * original already copied onto the disk by the time it happens. Verified, not
+ * assumed: `Filesystem::add()` calls `FileManipulator::createDerivedFiles()`
+ * synchronously, which is what tests/Feature/MediaLibrary's control case pins.
+ * Checking the file up front turns that into a 422 on `image` and leaves
+ * nothing written at all.
  *
  * ## It no longer changes the password, and that is deliberate
  *
@@ -71,6 +84,27 @@ use Illuminate\Support\Facades\DB;
  *   avatar survives intact. Reordering the steps would only have narrowed the
  *   window, since every step after the clear can still throw.
  *
+ * ## What actually protects the previous avatar, stated once
+ *
+ * Two mechanisms, and they cover different failures — do not read either as
+ * doing the other's job:
+ *
+ * - **Ordering** covers a bad *new* image. EnsureProfileImageIsDecodable and
+ *   UploadProfileImage both run before ClearPreviousProfileImage, so a throw
+ *   from either leaves `uploadedMedia()` null, the clear step's guard short
+ *   circuits, and no delete is ever registered. The old row and its file are
+ *   untouched — not restored, never acted on.
+ * - **`DB::afterCommit()`** covers a good new image and a failure *later in the
+ *   run* (PersistProfileAttributes, ApplyLocalePreference, a unique race). The
+ *   callback is discarded with the rollback, so the old file survives there
+ *   too.
+ *
+ * The gap ordering closes and afterCommit cannot is a conversion that throws
+ * *after* the commit — which is what `queued()` or `deferred()` on a User
+ * conversion would produce. By then the clear has already fired and the old
+ * avatar is gone for good. The decode check runs before anything is written, so
+ * that gap stays shut whatever a future conversion's queue setting is.
+ *
  * ## Authorization is not here
  *
  * .ai/rules/controllers.md puts it in the controller, and
@@ -100,6 +134,7 @@ class UpdateProfile
         return DB::transaction(fn (): User => $this->pipeline
             ->send($context)
             ->through([
+                EnsureProfileImageIsDecodable::class,
                 UploadProfileImage::class,
                 ClearPreviousProfileImage::class,
                 PersistProfileAttributes::class,

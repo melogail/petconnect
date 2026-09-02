@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\MediaLibrary\ConvertibleImageTypes;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
@@ -304,13 +305,19 @@ trait ProfileValidationRules
      * admin drops. Keeping the type, extension and size ceiling here means the
      * admin path and the member path cannot disagree about what an avatar is.
      *
+     * The extension list itself comes from
+     * App\MediaLibrary\ConvertibleImageTypes, which is the set the conversion
+     * driver can decode and is shared with the listing photo and taxonomy image
+     * rules — a bare `image` rule is wider than GD and admits formats no
+     * conversion can produce a derivative for.
+     *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
     protected function avatarFileRules(): array
     {
         return [
             'image',
-            'mimes:jpg,jpeg,png,gif,webp',
+            ConvertibleImageTypes::mimesRule(),
             'max:'.$this->maxAvatarKilobytes(),
         ];
     }

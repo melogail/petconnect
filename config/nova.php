@@ -109,24 +109,42 @@ return [
     |
     */
 
+    /*
+     * ThrottleAuthRoutes is here for two routes Nova registers without a
+     * limiter of any kind: `nova.password.confirm` (POST
+     * nova/user-security/confirm-password), which unthrottled is a yes/no
+     * password oracle for an admin account, and `nova.password.reset` (POST
+     * nova/password/reset), which sets an admin password on a hit and, on a
+     * miss, buys an unauthenticated caller a 200 ms Timebox on a PHP worker for
+     * one POST. (The miss is cheap in queries — one indexed `admins` lookup,
+     * one primary-key read of `admin_password_reset_tokens` and at most one
+     * bcrypt — and it never reaches `Password::defaults()`; the reason to
+     * throttle it is the credential it pays out, not the arithmetic. Full
+     * reasoning in App\Http\Middleware\ThrottleAuthRoutes.) Nova reads
+     * `fortify.limiters` for its login, passkey, two-factor and verification
+     * routes and has no slot for either of these.
+     *
+     * It sits in *this* list rather than in `api_middleware`, where it used to,
+     * because of how NovaCoreServiceProvider builds its groups: `nova` is this
+     * array, `nova:api` is `api_middleware` (whose first entry is `nova`), and
+     * `nova:auth` is this array plus RedirectIfAuthenticated. The password reset
+     * routes are registered with `nova:auth`, which `api_middleware` never
+     * reaches — listed there, the middleware ran on every `nova-api/*` call and
+     * on none of the routes it is now needed for. From here it reaches all
+     * three groups once.
+     *
+     * It no-ops on every route name that is not in its map, so the rest of Nova
+     * pays one array lookup for it.
+     */
     'middleware' => [
         'web',
+        ThrottleAuthRoutes::class,
         HandleInertiaRequests::class,
         'nova:serving',
     ],
 
-    /*
-     * ThrottleAuthRoutes is here for one route: Nova registers
-     * `nova.password.confirm` (POST nova/user-security/confirm-password) with
-     * this list and nothing else, and Nova reads `fortify.limiters` for its
-     * login, passkey, two-factor and verification routes but has no slot for
-     * this one. Unthrottled it is a password oracle for an admin account. The
-     * middleware no-ops on every other route in this group — every Nova page
-     * and every `nova-api/*` call pays one array lookup for it.
-     */
     'api_middleware' => [
         'nova',
-        ThrottleAuthRoutes::class,
         Authenticate::class,
         // \Laravel\Nova\Http\Middleware\AuthenticateSession::class,
         // \Laravel\Nova\Http\Middleware\EnsureEmailIsVerified::class,

@@ -11,9 +11,9 @@ use App\Pipelines\Comments\DeleteCommentThread\DeleteCommentRoot;
  * A thread three levels deep, every comment in it carrying a like and a report.
  *
  * Publishing caps a thread at two levels, but nothing stops Nova, a seeder or
- * an import from writing deeper, and the delete flow walks the subtree
- * level-by-level for exactly that reason — so the fixture goes one level past
- * the cap.
+ * an import from writing deeper, and the delete flow collects the subtree with
+ * a recursive CTE that follows parent_id to whatever depth exists — so the
+ * fixture goes one level past the cap.
  *
  * `likes` and `reports` reach a comment through a morph column, which carries
  * no foreign key, so the database cascade on `comments.parent_id` cannot take
