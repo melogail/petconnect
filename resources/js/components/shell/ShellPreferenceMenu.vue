@@ -21,9 +21,15 @@ import { useTranslations } from '@/composables/useTranslations';
  * The accessible name is `nav.preferences` — "Preferences" at lang/en.json:28,
  * "التفضيلات" at lang/ar.json:28, both read there. Deliberately not the
  * account-settings string ("Settings" at lang/en.json:404): that one names the
- * account page linked from `UserMenuContent.vue:50`, which `ShellUserMenu`
- * renders beside these very preference items, so reusing it gave two
- * destinations one name.
+ * account page linked from `UserMenuContent.vue:47-52` — the menu item whose
+ * `:href="edit()"` is on :48 and whose label is on :50, read there.
+ *
+ * That collision is across views, not within one screen. `PublicHeader.vue:122`
+ * renders `ShellUserMenu` inside the authenticated `v-if`; :126 renders this
+ * component in the guest `v-else`, so the two are mutually exclusive and a guest
+ * never sees the Settings link. The reader being protected is the one who meets
+ * "Settings" as a preferences trigger in one session and as an account link in
+ * the next.
  *
  * Direction is not passed here. `app.ts` mounts a single `<ConfigProvider :dir>`
  * above the whole app, which every Reka primitive inherits through
@@ -42,7 +48,7 @@ const { t } = useTranslations();
                 class="rounded-full sm:hidden"
                 :aria-label="t('nav.preferences')"
             >
-                <SlidersHorizontal class="size-5" />
+                <SlidersHorizontal class="size-5" aria-hidden="true" />
             </Button>
         </DropdownMenuTrigger>
 
