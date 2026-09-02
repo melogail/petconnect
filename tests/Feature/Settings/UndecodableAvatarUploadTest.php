@@ -65,11 +65,23 @@ function avatarSavePayload(User $user): array
  * its bytes have to be exactly where they were — a 422 that has already deleted
  * the old avatar is still data loss, with a friendlier status code.
  *
- * `Pipelines\Profiles\UpdateProfile\ClearPreviousProfileImage` defers its
- * delete to `DB::afterCommit()` for this, and both of User's avatar conversions
- * are `nonQueued()`, so the decode failure lands inside the Action's
- * transaction rather than after it. This asserts the outcome, not either
- * mechanism.
+ * Two distinct mechanisms protect it, covering different failures — do not read
+ * either as doing the other's job, and note that only the first is in play here:
+ *
+ * - **Ordering** covers a bad *new* image, which is this test.
+ *   `EnsureProfileImageIsDecodable` and `UploadProfileImage` both run before
+ *   `Pipelines\Profiles\UpdateProfile\ClearPreviousProfileImage`, so the decode
+ *   failure never reaches the clear step: `uploadedMedia()` is still null, the
+ *   step's guard short circuits, and no delete is ever registered. The previous
+ *   row and its bytes are untouched by construction rather than restored by a
+ *   rollback, and `DB::afterCommit()` plays no part — there is no callback.
+ * - **`DB::afterCommit()`** covers a *good* new image and a failure later in the
+ *   run (PersistProfileAttributes, ApplyLocalePreference, a unique race on
+ *   `username` or `email`). The clear step defers its delete there, so the
+ *   callback is discarded with the transaction and the old file survives that
+ *   case too.
+ *
+ * This asserts the outcome, not either mechanism.
  */
 test('keeps the existing avatar and its file when the replacement cannot be decoded', function () {
     Storage::fake(config('media-library.disk_name'));
@@ -92,9 +104,12 @@ test('keeps the existing avatar and its file when the replacement cannot be deco
  * being the read name on ProfileFormResource (.ai/rules/profile.md).
  *
  * A 500 here is the defect: it tells the user nothing they can act on, and it
- * is what the decode failure produces while nothing in this flow verifies the
- * upload up front the way `Pipelines\Pets\Shared\EnsurePhotosAreDecodable` does
- * for a listing.
+ * is what the decode failure produced while nothing in this flow verified the
+ * upload up front. `Pipelines\Profiles\UpdateProfile\EnsureProfileImageIsDecodable`
+ * is the step that closed it, running the same
+ * `MediaLibrary\ImageDecodeVerifier` the listing flow's
+ * `Pipelines\Pets\Shared\EnsurePhotosAreDecodable` uses, ahead of
+ * `UploadProfileImage`.
  */
 test('refuses an undecodable avatar with a 422 on the image field', function () {
     Storage::fake(config('media-library.disk_name'));
@@ -110,12 +125,25 @@ test('refuses an undecodable avatar with a 422 on the image field', function () 
  * surviving says nothing about what the failed run left behind. A committed
  * media row whose conversion was never written is a broken image with no file —
  * `Media::getUrl('display')` does not fall back to the original.
+ *
+ * Both halves are asserted because only one of them is new. The **row** was
+ * always discarded by the Action's transaction, so `assertDatabaseEmpty` pins
+ * behaviour that predates the decode check. The **file** is the half no
+ * rollback can reclaim, and it is the leak the check actually cures: verified
+ * in vendor source, `FileAdder::processMediaItem()` writes the row, then
+ * `Filesystem::add()` runs `copyToMediaLibrary()` and only afterwards
+ * `createDerivedFiles()` — so the original's bytes were already on the disk by
+ * the time the conversion threw. The empty-disk assertion is therefore the one
+ * that fails against a flow which uploads first and discovers the bad decode
+ * afterwards. The fixture attaches no avatar of its own, so "no files at all"
+ * is exact rather than a before/after difference.
  */
-test('leaves no media row behind for an avatar that failed to convert', function () {
+test('leaves no media row and no file behind for an avatar that failed to convert', function () {
     Storage::fake(config('media-library.disk_name'));
     $user = User::factory()->create();
 
     $this->actingAs($user)->patch(route('profile.update'), avatarSavePayload($user));
 
     $this->assertDatabaseEmpty('media');
+    expect(Storage::disk(config('media-library.disk_name'))->allFiles())->toBeEmpty();
 });

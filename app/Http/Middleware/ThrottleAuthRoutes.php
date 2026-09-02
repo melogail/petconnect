@@ -69,6 +69,22 @@ use Symfony\Component\HttpFoundation\Response;
  * in routes/web.php, and a limiter defined here is defined the same way as
  * every other one in AppServiceProvider::configureRateLimiters().
  *
+ * ## It runs ahead of the route's own `guest` — documented, not fixed
+ *
+ * Because this middleware is attached to the *group* the packages apply, it runs
+ * before `RedirectIfAuthenticated`. So an already-authenticated caller POSTing
+ * to `register`, `forgot-password` or `reset-password` has their hit recorded
+ * against `AppServiceProvider::unauthenticatedCallerKey()` — their IP — rather
+ * than the user id `rateLimitKey()` would have produced.
+ *
+ * That asymmetry is real and it is **deliberately left alone**. It has no
+ * consequence: whichever bucket the hit lands in, the caller gets the same 302
+ * from `RedirectIfAuthenticated` and never reaches a controller. Do not "fix" it
+ * by reordering the middleware, by moving the throttle onto the route, or by
+ * asking the guard inside the key helper — each of those changes which bucket
+ * *real* traffic is counted in, to tidy a case that cannot succeed. It is
+ * written down here only so the next person to notice it stops at noticing.
+ *
  * ## The map keys on route names, so an unnamed route cannot be entered in it
  *
  * `$route->getName()` is null for a route registered without `->name(...)`, and
@@ -109,29 +125,31 @@ use Symfony\Component\HttpFoundation\Response;
  *   the half that pays out a credential open, from any address, as often as the
  *   caller likes.
  *
- *   Do not overstate the per-request cost, because the next reviewer will check
- *   it and delete the limiter when the claim does not hold. A rejected
- *   submission is one indexed `users` lookup, one primary-key lookup on
- *   `password_reset_tokens` (`email` is that table's primary key, so
- *   `DatabaseTokenRepository::exists()` reads one row, not every unexpired one)
- *   and at most one bcrypt, since `exists()` short-circuits before
- *   `hasher->check()` on a missing or expired row. It is **not** a
- *   `Password::defaults()` run and therefore not an `uncompromised()` network
- *   call: Fortify's `NewPasswordController::store()` validates only `token`,
- *   `email` and `password` as `required`, and the defaults run inside
- *   `ResetUserPassword::reset()`, which `PasswordBroker::reset()` invokes only
- *   after the token has already validated. Nova's controller subclasses
- *   Fortify's and inherits that.
+ *   What is worth throttling here is **worker time**. `PasswordBroker::reset()`
+ *   wraps its whole body in `$this->timebox->call(…, $this->timeboxDuration)`;
+ *   PasswordBrokerManager reads that from
+ *   `config('auth.timebox_duration', 200000)`, which this application does not
+ *   set, so the framework's 200,000 µs default applies. `Timebox::call()` sleeps
+ *   out the remainder of the window unless `returnEarly()` ran, and
+ *   `returnEarly()` sits after the reset callback — on the success path only.
+ *   Every **rejected** POST therefore holds a PHP worker for a fifth of a
+ *   second, for an unauthenticated caller with no session and no cookie. The
+ *   exposure is the worker pool, not CPU per request.
  *
- *   What is worth throttling is not that arithmetic. It is that this is the
- *   submit half of a credential flow — a hit sets a password, and Nova's copy
- *   sets an **admin** one — and that `PasswordBroker::reset()` runs inside a
- *   200 ms Timebox that a failure does not return early from, so each rejected
- *   POST holds a PHP worker for a fifth of a second for an unauthenticated
- *   caller with no session and no cookie. Token brute force was never the
- *   realistic attack: `createNewToken()` is `hash_hmac('sha256',
- *   Str::random(40), $hashKey)`, a 64-character *hex* string stored hashed
- *   again in a row that expires in an hour.
+ *   Be exact that the per-request *work* is small, or the limiter reads as
+ *   cargo cult and the next reviewer deletes it: a rejected submission is one
+ *   indexed `users` lookup, one primary-key read of `password_reset_tokens`
+ *   (`email` is that table's primary key, so `DatabaseTokenRepository::exists()`
+ *   reads a single row) and at most one bcrypt, because that method's
+ *   `$record && ! expired && check` chain short-circuits before hashing on a
+ *   missing or expired row. The timebox is what carries the argument; the other
+ *   half is the payout — a hit sets a password, and Nova's copy sets an
+ *   **admin** one, its controller subclassing Fortify's and calling
+ *   `parent::store()`.
+ *
+ *   Token brute force was never the realistic attack: `createNewToken()` is
+ *   `hash_hmac('sha256', Str::random(40), $hashKey)`, a 64-character *hex*
+ *   string stored hashed again in a row that expires in an hour.
  *
  * Nova's `nova.password.email` is deliberately absent: `admins` are created by
  * another admin, the address list is tiny and known, and no admin's inbox is a

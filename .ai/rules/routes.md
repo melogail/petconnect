@@ -24,4 +24,9 @@ Do not defend the placement on a "who fires it / a person clicks that row" axis 
 
 Also: `content-edits` is bounded to rows the caller owns by a **policy for nine of its ten routes**; `notifications.read` is bounded by the owning relation instead (no policy — someone else's id is a 404 from `firstOrFail()`, not a 403). Do not write "every one is bounded by a policy".
 
-The comment block above the notifications group in routes/web.php still carries the old "who fires it" wording and needs this correction folded in.
+## The notifications.read correction is folded into routes/web.php now
+Closes the trailing note on "notifications.read stays on content-edits; read-all is the reason" above — the comment block over the notifications group in routes/web.php no longer carries the old "who fires it" wording. Read that section as fully applied, not as outstanding work.
+
+The block now states: `read` stays on `content-edits` (30/min) because `read-all` on `inbox-actions` is the pressure valve that makes per-row marking a preference rather than the only path; the revisit trigger is that if `read-all` ever leaves the UI, `read` moves to `inbox-actions` with its siblings; and the "a person clicks that row" argument is named as rejected, because it does not distinguish `read` from `conversations.read`.
+
+General point worth keeping: when a rationale is corrected, rewrite the copy in the code, do not append beside it. A stale justification sitting next to a corrected one is how the correction gets reverted — this is the second instance this phase, after the `ConversationNotPermitted` contract.

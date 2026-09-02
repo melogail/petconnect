@@ -271,7 +271,7 @@ class AppServiceProvider extends ServiceProvider
      *   what makes a patient guesser hopeless rather than merely slow. A user
      *   who has genuinely forgotten their password has `password.request`.
      * - `registrations` guards POST register. Keyed on the caller's IP through
-     *   passwordResetKey(), chosen rather than inherited: the route is `guest`,
+     *   unauthenticatedCallerKey(), chosen rather than inherited: the route is `guest`,
      *   and the IP is the only handle there is, because every field on the
      *   request is attacker-chosen — including the address the verification
      *   mail goes to. 5 a minute stops the script and 25 a day
@@ -284,7 +284,7 @@ class AppServiceProvider extends ServiceProvider
      *   `config('auth.passwords.users.throttle')` already bounds resends per
      *   *email address*; this bounds the *caller*, which is the half that was
      *   missing — walking an address list was 40 sends from one IP with no
-     *   resistance. Keyed on the IP through passwordResetKey() for the same
+     *   resistance. Keyed on the IP through unauthenticatedCallerKey() for the same
      *   reason `registrations` is, and with the same emphasis: the route is
      *   `guest` and the submitted address is attacker-chosen, so the caller is
      *   the only dimension worth counting. 3 a minute and 15 an hour: a real
@@ -293,37 +293,32 @@ class AppServiceProvider extends ServiceProvider
      *   nova/password/reset — the *submit* half of the flow, which was open
      *   while `password-reset-links` bounded the request half.
      *
-     *   Be exact about what a failing submission costs, because an inflated
-     *   figure gets a limiter deleted just as reliably as a stale one: the next
-     *   reviewer checks the claim against the framework, finds it false, and
-     *   concludes the whole thing was cargo-culted. An invalid POST is **one**
-     *   indexed `users` lookup (EloquentUserProvider on the submitted address),
-     *   **one** primary-key lookup on `password_reset_tokens` — `email` is that
-     *   table's primary key, one row per address, so
-     *   DatabaseTokenRepository::exists() does a single
-     *   `where('email', …)->first()` and never a scan — and **at most one**
-     *   bcrypt, because `exists()` short-circuits on a missing or expired row
-     *   and only then reaches `hasher->check()`.
+     *   What justifies the ceiling is **worker time, not CPU**. This is the one
+     *   number to keep: `PasswordBroker::reset()` wraps its whole body in
+     *   `$this->timebox->call(..., $this->timeboxDuration)`, and
+     *   PasswordBrokerManager reads that duration from
+     *   `config('auth.timebox_duration', 200000)` — a key this application does
+     *   not set, so the framework's 200,000 µs default stands. `Timebox::call()`
+     *   sleeps out the remainder of that window unless `returnEarly()` was
+     *   called, and `returnEarly()` sits *after* the reset callback, on the
+     *   success path only. So every **rejected** submission pins a PHP worker
+     *   for a fifth of a second, unauthenticated, with no session and no cookie,
+     *   from any address. Thirty concurrent callers are thirty workers held; the
+     *   exposure is the worker pool, not the CPU.
      *
-     *   There is no `Password::defaults()` run on a failing submission, and
-     *   therefore no `uncompromised()` and no outbound HTTP call. Fortify's
-     *   NewPasswordController::store() validates `token`, `email` and
-     *   `password` as `required` and nothing more; the defaults (which do add
-     *   `uncompromised()` in production — see configureDefaults()) run inside
-     *   ResetUserPassword::reset(), which PasswordBroker::reset() invokes only
-     *   *after* validateReset() has already accepted the token. Nova's
-     *   NewPasswordController subclasses Fortify's and calls parent::store(),
-     *   so it inherits all of this.
-     *
-     *   What justifies the ceiling is therefore not CPU per request. It is that
-     *   this is the submit half of a credential flow that hands out a password
-     *   on a hit, and that Nova's copy of it sets an **admin** password. The one
-     *   per-request cost worth knowing is wall clock rather than work:
-     *   PasswordBroker::reset() runs inside a Timebox at
-     *   `config('auth.timebox_duration')`, unset here so the framework's 200 ms
-     *   default, and a failed reset does not return early — so every rejected
-     *   submission holds a PHP worker for a fifth of a second, unauthenticated,
-     *   with no session and no cookie, from any address.
+     *   In queries a rejected POST is cheap, and saying so is part of the
+     *   argument rather than a concession: one indexed `users` lookup
+     *   (EloquentUserProvider on the submitted address), one primary-key read of
+     *   `password_reset_tokens` (`email` is that table's primary key, so
+     *   DatabaseTokenRepository::exists() reads a single row), and at most one
+     *   bcrypt, since that method's `$record && ! expired && check` chain
+     *   short-circuits before hashing on a missing or expired row. A limiter
+     *   argued on per-request work would not survive review against those
+     *   numbers; argued on the timebox, it does. The second half of the
+     *   justification is the payout — this is the submit half of a credential
+     *   flow that sets a password on a hit, an **admin** password on Nova's
+     *   copy. Nova's NewPasswordController subclasses Fortify's and calls
+     *   parent::store(), so both routes behave identically here.
      *
      *   Token guessing is not the exposure and never was, but describe the
      *   token correctly: DatabaseTokenRepository::createNewToken() returns
@@ -355,9 +350,9 @@ class AppServiceProvider extends ServiceProvider
      * because the account under attack and the machine attacking it are
      * different dimensions and both have to be bounded. `registrations`,
      * `password-reset-links` and `password-resets` key on the IP alone through
-     * passwordResetKey(), and `locale-switches` on `$request->ip()` directly,
-     * because every one of those callers is unauthenticated by construction and
-     * there is no account to count against.
+     * unauthenticatedCallerKey(), and `locale-switches` on `$request->ip()`
+     * directly, because every one of those callers is unauthenticated by
+     * construction and there is no account to count against.
      *
      * The first two of those three used to call rateLimitKey() and produced the
      * same value from it, because `register.store`, `password.email` and
@@ -365,14 +360,20 @@ class AppServiceProvider extends ServiceProvider
      * what .ai/rules/routes.md forbids relying on: the *fallback* was what made
      * the key right, so nothing would have failed — not a test, not a static
      * check — if one of those routes ever stopped being `guest`. Routing them
-     * through passwordResetKey() makes the IP a decision instead of a default.
-     * The value on the wire is unchanged for every caller a `guest` route can
-     * actually serve; the one difference is that an *authenticated* caller
-     * posting to one of them is now counted against their IP rather than their
-     * user id, since ThrottleAuthRoutes runs from the package middleware group
-     * ahead of the route's own `guest`, so the hit is recorded before
-     * RedirectIfAuthenticated turns them away. Neither key lets them past that
-     * redirect.
+     * through unauthenticatedCallerKey() makes the IP a decision instead of a
+     * default. The value on the wire is unchanged for every caller a `guest`
+     * route can actually serve.
+     *
+     * One asymmetry falls out of that, and it is **documented rather than
+     * fixed, deliberately**: an *authenticated* caller POSTing to one of these
+     * guest routes is counted against their IP rather than their user id,
+     * because ThrottleAuthRoutes runs from the package middleware group ahead of
+     * the route's own `guest`, so the hit is recorded before
+     * RedirectIfAuthenticated turns them away. It has no consequence — neither
+     * key lets them past the 302, and the request never reaches a controller
+     * either way — so there is nothing to fix. Do not "correct" it by moving the
+     * middleware or by asking the guard here: both change observable behaviour
+     * (which bucket real traffic lands in) to tidy a case that cannot succeed.
      *
      * Every limiter with two limits prefixes its keys, because Laravel
      * evaluates limits in a shared bucket namespace and identical `by` values
@@ -443,18 +444,18 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         RateLimiter::for('registrations', fn (Request $request): array => [
-            Limit::perMinute(5)->by('minute:'.$this->passwordResetKey($request)),
-            Limit::perDay(25)->by('day:'.$this->passwordResetKey($request)),
+            Limit::perMinute(5)->by('minute:'.$this->unauthenticatedCallerKey($request)),
+            Limit::perDay(25)->by('day:'.$this->unauthenticatedCallerKey($request)),
         ]);
 
         RateLimiter::for('password-reset-links', fn (Request $request): array => [
-            Limit::perMinute(3)->by('minute:'.$this->passwordResetKey($request)),
-            Limit::perHour(15)->by('hour:'.$this->passwordResetKey($request)),
+            Limit::perMinute(3)->by('minute:'.$this->unauthenticatedCallerKey($request)),
+            Limit::perHour(15)->by('hour:'.$this->unauthenticatedCallerKey($request)),
         ]);
 
         RateLimiter::for('password-resets', fn (Request $request): array => [
-            Limit::perMinute(5)->by('minute:'.$this->passwordResetKey($request)),
-            Limit::perHour(20)->by('hour:'.$this->passwordResetKey($request)),
+            Limit::perMinute(5)->by('minute:'.$this->unauthenticatedCallerKey($request)),
+            Limit::perHour(20)->by('hour:'.$this->unauthenticatedCallerKey($request)),
         ]);
     }
 
@@ -499,26 +500,33 @@ class AppServiceProvider extends ServiceProvider
      * Who an unauthenticated auth-flow write is counted against: the machine
      * that sent it, and nothing else.
      *
-     * Named for the flow it was written for, but it is the key for all four of
-     * the `guest` routes ThrottleAuthRoutes covers — POST register
-     * (`registrations`), POST forgot-password (`password-reset-links`), and
-     * Fortify's POST reset-password plus Nova's POST nova/password/reset
-     * (`password-resets`). Fortify registers every one of them with
-     * `guest:config('fortify.guard')`, so there is no account to key on and
-     * rateLimitKey() would silently degrade to exactly this value. This method
-     * exists so the key shape is a decision rather than a fallback nobody
-     * notices when a route changes.
+     * This is the key for all four of the `guest` routes ThrottleAuthRoutes
+     * covers, across three limiters — POST register (`registrations`), POST
+     * forgot-password (`password-reset-links`), and Fortify's POST
+     * reset-password plus Nova's POST nova/password/reset (`password-resets`).
+     * It is named for the caller it counts rather than for any one of those
+     * flows on purpose. It previously carried the name of the password-reset
+     * flow while already serving registration, and a name that asserts
+     * something false about its own callers is believed by the next reader. Do
+     * not rename it after whichever flow you arrived from; if a fifth guest
+     * route needs a bucket, it belongs here too, under this name.
      *
-     * The submitted email is deliberately **not** part of the key, even though
-     * it is the obvious second dimension and is what Fortify's own `login`
-     * limiter uses. Three reasons, in order of weight:
+     * Fortify registers every one of them with `guest:config('fortify.guard')`,
+     * so there is no account to key on and rateLimitKey() would silently
+     * degrade to exactly this value. This method exists so the key shape is a
+     * decision rather than a fallback nobody notices when a route changes.
+     *
+     * The submitted email or username is deliberately **not** part of the key,
+     * even though it is the obvious second dimension and is what Fortify's own
+     * `login` limiter uses. Three reasons, in order of weight:
      *
      * 1. It is attacker chosen. Adding it hands a caller a fresh bucket for
      *    every address they type, so the thing actually being spent — a 200 ms
-     *    Timebox on a PHP worker per rejected submission, and unmetered
+     *    Timebox on a PHP worker per rejected reset submission, an
+     *    unauthenticated mail send per sign-up or link request, and unmetered
      *    attempts at an endpoint that pays out a password (an admin one on
      *    Nova's copy) — would go back to being unbounded per IP, which is the
-     *    whole exposure this limiter exists for.
+     *    whole exposure these limiters exist for.
      * 2. Keyed on the address alone, or ahead of the IP, it becomes a weapon:
      *    a stranger could spend a victim's budget and lock them out of their
      *    own account recovery, which is worse than the attack it prevents.
@@ -535,7 +543,7 @@ class AppServiceProvider extends ServiceProvider
      * inbox or on the day they join, that is the right side to err on. A
      * CAPTCHA or WAF is the answer if a legitimate shared address ever hits it.
      */
-    protected function passwordResetKey(Request $request): string
+    protected function unauthenticatedCallerKey(Request $request): string
     {
         return (string) $request->ip();
     }

@@ -597,18 +597,37 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | model bound: binding the framework's DatabaseNotification would still not
 | scope it to the viewer, which is the only question that matters.
 |
-| All three writes are throttled, and the split between the two limiters is
-| about who fires them rather than what they cost. `read` marks one row read
-| when a person clicks that row, so it belongs with the rest of the
-| single-row update family on `content-edits` at 30 a minute — the tenth and
-| last route in that group. `read-all` and `destroy-all` are inbox-wide and
-| take `inbox-actions` at 60, the same ceiling `conversations.read` has.
-| `destroy-all` is the one that actually needs a number rather than a
-| principle: it deletes every notification the viewer has, so an accidental
-| client-side loop is destructive in a way a slow one is not. It is generous
-| rather than tight because the loop is also idempotent — the first pass
-| empties the list and every pass after it deletes nothing — so the ceiling
-| is there to end the loop, not to ration somebody clearing their bell twice.
+| All three writes are throttled. `read` stays on `content-edits` at 30 a
+| minute; `read-all` and `destroy-all` take `inbox-actions` at 60, the same
+| ceiling `conversations.read` has.
+|
+| `read` is the odd member of the `content-edits` family — the only route in
+| it fired once *per row in a list* rather than once per item page — and
+| clearing a 20-row bell one row at a time spends two thirds of a bucket it
+| shares with comment, review, message and pet edits. What settles it there
+| anyway is that **`read-all` is the pressure valve**: a user facing a full
+| bell has a one-request way through, so per-row clicking is a preference
+| rather than the only path, and 30 a minute is a ceiling nobody is forced
+| into. Revisit trigger, and it is the only one: **if `read-all` ever leaves
+| the UI, move `read` to `inbox-actions`** with its siblings, because the
+| valve is then gone and per-row marking becomes the only way to clear a bell.
+|
+| Do not re-argue this on a "who fires it / a person clicks that row" axis.
+| That was the original justification and it was rejected: it does not
+| distinguish `read` from `conversations.read`, which a person also clicks and
+| which sits on `inbox-actions`.
+|
+| `destroy-all` is the one that needs a number rather than a principle: it
+| deletes every notification the viewer has, so an accidental client-side loop
+| is destructive in a way a slow one is not. It is generous rather than tight
+| because the loop is also idempotent — the first pass empties the list and
+| every pass after it deletes nothing — so the ceiling is there to end the
+| loop, not to ration somebody clearing their bell twice.
+|
+| One more thing not to write here: `content-edits` is bounded to rows the
+| caller owns by a policy for nine of its ten routes, but not for this one.
+| `read` is bounded by the owning relation instead — someone else's id is a
+| 404 out of `firstOrFail()`, not a 403.
 |
 */
 

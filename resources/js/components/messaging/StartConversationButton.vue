@@ -23,8 +23,22 @@ import { store as storeConversation } from '@/routes/conversations';
  *
  * `conversations.store` reuses the existing private thread when there is one,
  * then redirects to `conversations.show`, so this is "message them" rather than
- * "create a conversation". Both refusals — messaging yourself, and a recipient
- * who is not accepting messages — come back on `recipient_id`.
+ * "create a conversation".
+ *
+ * Only one refusal comes back on `recipient_id`: messaging yourself, which
+ * StoreConversationRequest's `Rule::notIn` answers with a 422 and its own
+ * message. A recipient who does not exist and one who has been deactivated
+ * both answer 404 from route resolution instead — identically, on purpose, so
+ * the client cannot be handed a message saying which — and there is therefore
+ * no field error to render for either. Over an Inertia POST that 404 surfaces
+ * as the client-side error modal rather than a rendered page; pre-existing and
+ * application-wide, see .ai/rules/messaging.md.
+ *
+ * The `recipient_id` InputError stays for the self-message 422 (and for a
+ * `required`/`integer` failure on the hidden input). Both call sites hide this
+ * button from the subject themselves, but that guard is a client-side
+ * derivation off props a cached or prefetched page can serve stale, so the
+ * server rule is the one that decides and its message needs somewhere to land.
  */
 const { recipientId, recipientName } = defineProps<{
     recipientId: number;

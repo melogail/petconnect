@@ -72,7 +72,10 @@ class StoreConversationRequest extends FormRequest
             'recipient_id' => [
                 'required',
                 'integer',
-                Rule::notIn(array_filter([$this->user()?->getKey()])),
+                Rule::notIn(array_filter(
+                    [$this->user()?->getKey()],
+                    fn (?int $id): bool => $id !== null,
+                )),
             ],
             'initial_message' => ['nullable', 'string', 'max:'.$this->maxContentLength()],
         ];

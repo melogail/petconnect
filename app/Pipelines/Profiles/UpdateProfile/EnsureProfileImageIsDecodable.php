@@ -17,15 +17,23 @@ use Closure;
  * escapes the pipeline as a 500 with the original already copied onto the disk.
  *
  * **It runs first, ahead of UploadProfileImage.** That ordering is the guarantee
- * this step exists to give: nothing is added, so nothing is recorded as
- * "previous", so ClearPreviousProfileImage's guard
- * (`uploadedMedia() === null`) is false and it registers no delete at all. The
- * account's existing avatar is untouched by construction rather than by the
- * transaction unwinding around it. Ordering rather than a guard because a 422
- * that has already deleted the old avatar is still data loss, and because a
- * conversion moved to `queued()` or `deferred()` would fire *after* the commit
- * that already ran the clear — a window `DB::afterCommit()` cannot close and
- * this step does.
+ * this step exists to give, and the mechanism is the abort, not a guard: the
+ * throw leaves the pipeline here, so UploadProfileImage never adds anything and
+ * ClearPreviousProfileImage is never entered at all. No guard is evaluated and
+ * no delete is registered. The account's existing avatar is untouched by
+ * construction rather than by the transaction unwinding around it.
+ *
+ * (ClearPreviousProfileImage's `uploadedMedia() === null` guard is for a
+ * different case — a save that carries no new image, where the run reaches that
+ * step and it must decline. It plays no part on this path, because this path
+ * does not reach it.)
+ *
+ * Ordering rather than a guard because a 422 that has already deleted the old
+ * avatar is still data loss, and because a conversion moved to `queued()` or
+ * `deferred()` would be dispatched *after* the commit that already ran the
+ * clear — a window `DB::afterCommit()` cannot close and this step does. That is
+ * a hazard for a future configuration rather than today's behaviour; see
+ * Actions\Profiles\UpdateProfile for the two conditions it needs.
  *
  * The passable is UpdateProfileContext and not a shared abstract: per
  * .ai/rules/pipelines.md a step in a flow directory hints that flow's context.
@@ -44,9 +52,7 @@ class EnsureProfileImageIsDecodable
 
     public function handle(UpdateProfileContext $context, Closure $next): mixed
     {
-        $image = $context->image;
-
-        if ($image !== null && ! $this->verifier->canDecode($image)) {
+        if ($context->hasImage() && ! $this->verifier->canDecode($context->image)) {
             throw ProfileImageNotDecodable::forAvatar();
         }
 

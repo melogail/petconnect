@@ -8,12 +8,24 @@ use App\Models\Pet;
 use App\Models\User;
 
 /**
- * The four named rate limiters this application's own routes attach and nothing
- * else covered: `content-edits`, `inbox-actions`, `locale-switches` and
- * `pet-listing-edits`. They are declared in
- * AppServiceProvider::configureRateLimiters() and attached with `throttle:` in
- * routes/web.php, which is why the tests live under Providers rather than
- * beside one controller — no single controller owns any of them.
+ * Four of the named rate limiters this application's own routes attach:
+ * `content-edits`, `inbox-actions`, `locale-switches` and `pet-listing-edits`.
+ * They are declared in AppServiceProvider::configureRateLimiters() and attached
+ * with `throttle:` in routes/web.php, which is why the tests live under
+ * Providers rather than beside one controller — no single controller owns any
+ * of them.
+ *
+ * Four, not all of them — read this file as a partial inventory. Three more
+ * limiters this application attaches have no 429 assertion anywhere in the
+ * suite, and naming them is worth more than a sentence that implies they are
+ * covered: `account-deletions` (DELETE settings/profile) is under separate
+ * review and belongs to whoever closes that; `profile-updates`
+ * (routes/settings.php) and `pet-listings` (POST pets, routes/web.php) are
+ * simply out of this file's scope so far. The auth-flow limiters —
+ * `password-confirmations`, `registrations`, `password-reset-links`,
+ * `password-resets` — are covered, but in
+ * tests/Feature/Http/Middleware/ThrottleAuthRoutesTest.php, because the routes
+ * they guard are declared by Fortify and Nova rather than by this application.
  *
  * Every one is exercised through the *routes*, because two halves can regress
  * independently and only the pair is the contract: the limiter can lose its
@@ -154,6 +166,12 @@ describe('inbox-actions', function () {
      *
      * `destroy-all` is idempotent on an empty inbox, which is exactly the
      * runaway client loop the ceiling exists to end.
+     *
+     * The second reader at the end is the key half, the same shape the
+     * `content-edits` test uses: `inbox-actions` is keyed by
+     * AppServiceProvider::rateLimitKey(), and a limiter keyed on a constant
+     * would satisfy every assertion above it while one busy client locked every
+     * other account out of its own bell.
      */
     test('returns 429 on the sixty first inbox action in a minute, spent across two different routes', function () {
         $reader = User::factory()->create();
@@ -175,6 +193,11 @@ describe('inbox-actions', function () {
         $this->actingAs($reader)
             ->post(route('notifications.read-all'))
             ->assertTooManyRequests();
+
+        $this->actingAs(User::factory()->create())
+            ->from(route('notifications.index'))
+            ->post(route('notifications.read-all'))
+            ->assertRedirect(route('notifications.index'));
     });
 });
 
@@ -192,18 +215,33 @@ describe('locale-switches', function () {
      * unbounded to anybody willing to register. And the switch from a second
      * address succeeds: a limiter keyed on a constant would refuse it and lock
      * every visitor out of the language picker sixty switches at a time.
+     *
+     * `back()` is what this route answers with, so a redirect to `home` is also
+     * what a *failed* validation produces — sixty rejected switches would spend
+     * the bucket and satisfy every ceiling assertion here without the route
+     * having worked once. So the switches are pinned on their observable
+     * instead: the session locale ApplyUserLocale writes, and the `locale`
+     * column on the signed-in user, which stays `en` because their switch was
+     * the one refused.
      */
     test('returns 429 on the sixty first language switch in a minute from one address, signed in or not', function () {
         for ($switch = 1; $switch <= 60; $switch++) {
             $this->from(route('home'))
                 ->post(route('locale.update'), ['locale' => 'ar'])
-                ->assertRedirect(route('home'));
+                ->assertRedirect(route('home'))
+                ->assertSessionHasNoErrors();
         }
 
-        $this->actingAs(User::factory()->create(['locale' => 'en']))
+        expect(session(config('petconnect.locales.cookie')))->toBe('ar');
+
+        $user = User::factory()->create(['locale' => 'en']);
+
+        $this->actingAs($user)
             ->from(route('home'))
             ->post(route('locale.update'), ['locale' => 'ar'])
             ->assertTooManyRequests();
+
+        expect($user->fresh()->locale)->toBe('en');
 
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9']);
 
@@ -225,6 +263,12 @@ describe('pet-listing-edits', function () {
      * on rateLimitKey() with the prefixes Laravel needs to keep two limits in
      * one namespace apart, and 60 an hour is a ceiling on a ceiling; what
      * regresses invisibly is the `throttle:` string leaving the route.
+     *
+     * The second owner at the end is the key, not the ceiling: keyed on a
+     * constant, this limiter would satisfy every assertion above it while one
+     * owner editing their own listing froze the listing form for everybody
+     * else. Their pet is their own, so PetPolicy is not what refuses or allows
+     * it.
      */
     test('returns 429 on the eleventh listing edit in a minute', function () {
         $owner = User::factory()->create();
@@ -242,5 +286,14 @@ describe('pet-listing-edits', function () {
             ->assertTooManyRequests();
 
         expect($pet->fresh()->name)->toBe('Edit 10');
+
+        $otherOwner = User::factory()->create();
+        $otherPet = Pet::factory()->for($otherOwner)->for($category)->create(['name' => 'Untouched']);
+
+        $this->actingAs($otherOwner)
+            ->put(route('pets.update', $otherPet), listingEditPayload($category, 'Their edit'))
+            ->assertRedirect(route('pets.show', $otherPet));
+
+        expect($otherPet->fresh()->name)->toBe('Their edit');
     });
 });

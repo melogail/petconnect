@@ -5,6 +5,8 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
+use Inertia\Middleware;
 use Inertia\Testing\AssertableInertia;
 
 /**
@@ -21,6 +23,154 @@ function threadWithPeer(User $participant): array
         Conversation::factory()->direct()->withParticipants($participant, $peer)->create(),
         $peer,
     ];
+}
+
+/**
+ * Open a thread with a recipient the caller is not allowed to address, and
+ * record **everything** that caller can observe about the refusal.
+ *
+ * The point is a comparison, so the record has to be wider than the status: two
+ * refusals that agree on 404 and disagree on their body, their redirect, their
+ * headers, their cookies or what they left in the session are still one bit of
+ * information about which ids exist. What is captured is therefore the whole
+ * response — status, every header, the rendered body — plus the session the
+ * request left behind, which is where a validation error or a flash message
+ * would land on a redirect rather than in the body.
+ *
+ * `session_id_changed` is here because the session cookie's value has to be
+ * normalised away (see `withoutPerResponseNoise()`) and a branch that
+ * invalidated or regenerated the session would otherwise hide inside that
+ * normalisation. The id itself is not comparable — the two calls share one
+ * session, so a regeneration in the first would carry into the second and read
+ * as agreement — but "did this request change it" is.
+ *
+ * Each call takes a fresh initiator on purpose. `conversations` is throttled per
+ * user (AppServiceProvider::configureRateLimiters), so reusing one caller would
+ * make `x-ratelimit-remaining` count down between the two requests and force a
+ * normalisation of a header that has nothing to do with the oracle. A separate
+ * initiator leaves both requests first in their own bucket and the header
+ * asserted at its real value.
+ *
+ * @param  bool  $asInertiaVisit  Send the headers the real client sends. Inertia
+ *                                takes its own path through the response, and a
+ *                                404 on it is not the 404 a document request
+ *                                gets — .ai/rules/messaging.md.
+ * @return array{response: TestResponse, observed: array{status: int, headers: array<string, list<string|null>>, content: string, session: array<string, mixed>, session_id_changed: bool}}
+ */
+function refusalToOpenThreadWith(int $recipientId, bool $asInertiaVisit = false): array
+{
+    $sessionIdBefore = session()->getId();
+
+    $caller = test()->actingAs(User::factory()->create());
+
+    if ($asInertiaVisit) {
+        $caller = $caller->withHeaders([
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) app(Middleware::class)->version(request()),
+        ]);
+    }
+
+    $response = $caller->post(route('conversations.store'), ['recipient_id' => $recipientId]);
+
+    return [
+        'response' => $response,
+        'observed' => [
+            'status' => $response->getStatusCode(),
+            'headers' => withoutPerResponseNoise($response->headers->all()),
+            'content' => (string) $response->getContent(),
+            'session' => session()->all(),
+            'session_id_changed' => session()->getId() !== $sessionIdBefore,
+        ],
+    ];
+}
+
+/**
+ * Blank the three header values that cannot repeat between two responses, and
+ * nothing else.
+ *
+ * - `date` is stamped from the wall clock by Symfony's Response constructor —
+ *   `time()`, not Carbon, so freezing time does not reach it — and two requests
+ *   in one test can straddle a second boundary.
+ * - a `set-cookie` value is an AES payload with a random IV, so it differs even
+ *   when the plaintext does not. Under `SESSION_DRIVER=array` that plaintext is
+ *   an opaque session id and the CSRF token, and both are recorded elsewhere:
+ *   the token is `_token` in the captured session, and a changed session id is
+ *   `session_id_changed`. Only the value between `name=` and the first `;` is
+ *   replaced, so the cookie's name and every attribute — `Max-Age`, `path`,
+ *   `secure`, `httponly`, `samesite` — are still compared, as is the set of
+ *   cookies itself.
+ * - `expires` inside those cookies is an absolute timestamp derived from the
+ *   same wall clock as `date`.
+ *
+ * Both header names survive the normalisation, so a branch that dropped a
+ * header the other kept still fails the comparison.
+ *
+ * @param  array<string, list<string|null>>  $headers
+ * @return array<string, list<string|null>>
+ */
+function withoutPerResponseNoise(array $headers): array
+{
+    if (isset($headers['date'])) {
+        $headers['date'] = array_fill(0, count($headers['date']), '<stamped-at>');
+    }
+
+    if (isset($headers['set-cookie'])) {
+        $headers['set-cookie'] = array_map(
+            fn (string $cookie): string => (string) preg_replace(
+                ['/^([^=]+)=[^;]*/', '/expires=[^;]+/'],
+                ['$1=<opaque>', 'expires=<stamped-at>'],
+                $cookie
+            ),
+            $headers['set-cookie']
+        );
+    }
+
+    return $headers;
+}
+
+/**
+ * Replace every recipient id in a captured refusal with one placeholder.
+ *
+ * This is the only substitution the comparison is allowed to make, and it is
+ * what makes the comparison mean "indistinguishable" rather than "identical":
+ * the caller already knows which id they sent, so a response that echoes it
+ * back tells them nothing, while a response that says anything *else* different
+ * tells them the account exists.
+ *
+ * The same list is applied to both records, which is what keeps it safe. The
+ * placeholder holds characters no id can contain, so on every other string the
+ * substitution is injective — two different values cannot be flattened into
+ * one — and the only distinction it can erase is between the two ids
+ * themselves, which is precisely the one being deliberately ignored. Longest
+ * first so a short id cannot eat its way through a longer one.
+ *
+ * Integers are masked as well as strings, and not for symmetry: a refusal that
+ * redirects back flashes the rejected input into the session, where the id is
+ * an `int` and not a substring of anything. Leaving those alone would fail the
+ * comparison on the one value it is meant to ignore.
+ *
+ * @param  array<string, mixed>  $observed
+ * @param  list<int>  $recipientIds
+ * @return array<string, mixed>
+ */
+function withRecipientIdsMasked(array $observed, array $recipientIds): array
+{
+    $ids = array_map(strval(...), $recipientIds);
+    usort($ids, fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+
+    array_walk_recursive($observed, function (mixed &$value) use ($ids, $recipientIds): void {
+        if (is_string($value)) {
+            $value = str_replace($ids, '<recipient-id>', $value);
+
+            return;
+        }
+
+        if (is_int($value) && in_array($value, $recipientIds, strict: true)) {
+            $value = '<recipient-id>';
+        }
+    });
+
+    return $observed;
 }
 
 describe('index', function () {
@@ -238,6 +388,13 @@ describe('store', function () {
         $this->assertDatabaseEmpty('conversations');
     });
 
+    /**
+     * Kept although the oracle test below subsumes it. That one compares two
+     * whole responses and fails with an array diff; this one names the contract
+     * for an id that was never issued in a single line, and is the only place
+     * that asserts nothing is opened for it *on its own* rather than after a
+     * pair of requests. It is a sentence, and it costs one request.
+     */
     test('rejects a recipient who does not exist and opens nothing', function () {
         $this->actingAs(User::factory()->create())
             ->post(route('conversations.store'), ['recipient_id' => 9999])
@@ -261,18 +418,63 @@ describe('store', function () {
      * its own; it is their being the same that closes the oracle. Do not relax
      * the 9999 branch back to `assertInvalid()` — that records the leak as the
      * contract.
+     *
+     * **A shared status code is not the pin.** It used to be, and it would have
+     * gone on passing if the two answers had started to differ in their body,
+     * their redirect target, their session error bag, their flash data or their
+     * Inertia props — every one of which is a bit the caller can read just as
+     * well as a status line. What is compared is therefore the entire response
+     * and the session it left behind, with only the recipient id substituted:
+     * the caller already knows which id they sent, and nothing else may vary.
+     * See `refusalToOpenThreadWith()` for what is captured, and
+     * `withoutPerResponseNoise()` for the three values that cannot repeat
+     * between two responses and why blanking them hides nothing.
      */
     test('answers a deactivated recipient exactly as it answers an id that was never issued', function () {
         $deactivated = User::factory()->inactive()->create();
-        $initiator = User::factory()->create();
+        $neverIssuedId = 9999;
 
-        $this->actingAs($initiator)
-            ->post(route('conversations.store'), ['recipient_id' => $deactivated->getKey()])
-            ->assertNotFound();
+        $forDeactivated = refusalToOpenThreadWith($deactivated->getKey());
+        $forNeverIssued = refusalToOpenThreadWith($neverIssuedId);
 
-        $this->actingAs($initiator)
-            ->post(route('conversations.store'), ['recipient_id' => 9999])
-            ->assertNotFound();
+        $forDeactivated['response']->assertNotFound();
+        $forNeverIssued['response']->assertNotFound();
+
+        $recipientIds = [$deactivated->getKey(), $neverIssuedId];
+
+        expect(withRecipientIdsMasked($forNeverIssued['observed'], $recipientIds))
+            ->toBe(withRecipientIdsMasked($forDeactivated['observed'], $recipientIds));
+
+        $this->assertDatabaseEmpty('conversations');
+    });
+
+    /**
+     * The same pin on the request shape the application actually receives.
+     *
+     * Every other assertion on this endpoint is a document request, and the
+     * "Message" button is not one: the client sends `X-Inertia`, which is a
+     * different path through the response — the middleware varies on that
+     * header, and an Inertia visit that ends in a 404 surfaces client-side as an
+     * error overlay rather than as a rendered page (.ai/rules/messaging.md).
+     * Leaving it uncovered leaves the oracle unpinned on the only shape a
+     * browser will ever produce; a future error-page mapping for that overlay
+     * would be free to describe the two refusals differently, and nothing would
+     * notice.
+     */
+    test('answers both the same way on the Inertia visit the client actually makes', function () {
+        $deactivated = User::factory()->inactive()->create();
+        $neverIssuedId = 9999;
+
+        $forDeactivated = refusalToOpenThreadWith($deactivated->getKey(), asInertiaVisit: true);
+        $forNeverIssued = refusalToOpenThreadWith($neverIssuedId, asInertiaVisit: true);
+
+        $forDeactivated['response']->assertNotFound();
+        $forNeverIssued['response']->assertNotFound();
+
+        $recipientIds = [$deactivated->getKey(), $neverIssuedId];
+
+        expect(withRecipientIdsMasked($forNeverIssued['observed'], $recipientIds))
+            ->toBe(withRecipientIdsMasked($forDeactivated['observed'], $recipientIds));
 
         $this->assertDatabaseEmpty('conversations');
     });

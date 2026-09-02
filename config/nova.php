@@ -115,12 +115,14 @@ return [
      * nova/user-security/confirm-password), which unthrottled is a yes/no
      * password oracle for an admin account, and `nova.password.reset` (POST
      * nova/password/reset), which sets an admin password on a hit and, on a
-     * miss, buys an unauthenticated caller a 200 ms Timebox on a PHP worker for
-     * one POST. (The miss is cheap in queries — one indexed `admins` lookup,
-     * one primary-key read of `admin_password_reset_tokens` and at most one
-     * bcrypt — and it never reaches `Password::defaults()`; the reason to
-     * throttle it is the credential it pays out, not the arithmetic. Full
-     * reasoning in App\Http\Middleware\ThrottleAuthRoutes.) Nova reads
+     * miss, pins a PHP worker for 200 ms per POST — `PasswordBroker::reset()`
+     * runs inside a Timebox at `config('auth.timebox_duration')`, unset here so
+     * the framework's 200,000 µs default, and only the success path calls
+     * `returnEarly()`. (The miss is cheap in queries — one indexed `admins`
+     * lookup, one primary-key read of `admin_password_reset_tokens` and at most
+     * one bcrypt — so the reasons to throttle it are the held worker and the
+     * credential it pays out, not per-request work. Full reasoning in
+     * App\Http\Middleware\ThrottleAuthRoutes.) Nova reads
      * `fortify.limiters` for its login, passkey, two-factor and verification
      * routes and has no slot for either of these.
      *

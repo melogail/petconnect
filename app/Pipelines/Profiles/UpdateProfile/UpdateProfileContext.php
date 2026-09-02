@@ -44,9 +44,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  *
  * ## What is conditional, and how a step knows
  *
- * Three of the four steps only apply sometimes, and each decides for itself
- * from a question it asks this context — `hasImage()`, `uploadedMedia()`,
- * `locale()`. No step reads config and no step knows which step runs next, per
+ * Four of the five steps only apply sometimes, and each decides for itself from
+ * a question it asks this context — `hasImage()` for both
+ * EnsureProfileImageIsDecodable and UploadProfileImage, `uploadedMedia()` (with
+ * `previousMediaIds()`) for ClearPreviousProfileImage, `locale()` for
+ * ApplyLocalePreference. Only PersistProfileAttributes runs unconditionally. No
+ * step reads config and no step knows which step runs next, per
  * .ai/rules/pipelines.md; the Action resolves every tunable before the run and
  * passes it in.
  *

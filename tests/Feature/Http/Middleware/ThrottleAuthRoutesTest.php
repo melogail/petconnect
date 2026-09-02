@@ -83,11 +83,24 @@ function guessAdminPassword(TestCase $test, Admin $admin): TestResponse
  * Submit a new password against Fortify's `reset-password` with a token that
  * was never issued.
  *
- * A miss is the shape that matters: the broker runs a Hash::check against every
- * unexpired `password_reset_tokens` row before it can say no, and it answers
- * with an invalid `email` field either way (Fortify's
- * FailedPasswordResetResponse turns the broker status into a validation error),
- * so a 429 here is unambiguously the limiter and not the token check.
+ * A miss is the shape that matters, and the load-bearing property is the
+ * response: the broker answers with an invalid `email` field either way
+ * (Fortify's FailedPasswordResetResponse turns the broker status into a
+ * validation error), so a 429 here is unambiguously the limiter and not the
+ * token check.
+ *
+ * What a rejected submission costs is worker time, not per-request CPU. Every
+ * address below is `holder{n}@example.com`, which belongs to no user, so the
+ * broker answers INVALID_USER out of its user lookup and never reaches the
+ * token repository at all — **zero bcrypt on this path**. It still holds a PHP
+ * worker for 200 ms, because the broker wraps its whole body in a Timebox whose
+ * duration comes from `config('auth.timebox_duration')` — unset in
+ * `config/auth.php`, so the framework default stands — and the early return out
+ * of that window sits on the success path only. Unauthenticated, no session, no
+ * cookie, any address: the exposure the ceiling is sized against is the worker
+ * pool. Keep the justification on that number — .ai/rules/providers.md records
+ * why an inflated per-request cost is what gets a limiter deleted by the next
+ * reviewer who checks it.
  *
  * The address is a parameter because it is the one thing the key must ignore.
  */
@@ -180,15 +193,23 @@ describe('password confirmations', function () {
     });
 
     /**
-     * The whole reason `config/nova.php` names this middleware. Nova's
-     * confirm-password pays out an *admin* password, and a confirmation unlocks
-     * the back office's own recovery codes and passkey registration.
+     * What this pins is that the middleware reaches a Nova route at all, and
+     * that the confirmation key resolves an identifier on the `admin` guard —
+     * a guard `$request->user()` on the default one knows nothing about, and
+     * this limiter runs ahead of Nova's own Authenticate. Worth having because
+     * Nova's confirm-password pays out an *admin* password: a confirmation
+     * unlocks the back office's own recovery codes and passkey registration.
+     *
+     * It is **not** the test that pins which of `config/nova.php`'s two arrays
+     * the middleware is listed in — it passed for as long as the entry sat in
+     * `api_middleware`, while `nova.password.reset` was unthrottled. That
+     * question belongs to `returns 429 on nova password reset once fortify has
+     * spent the shared minute` below, and to nothing else in this file.
      *
      * Only the minute ceiling is asserted here. The hour ceiling belongs to the
      * `password-confirmations` limiter, which the Fortify test above already
-     * pins; what is different about Nova is whether the middleware is attached
-     * at all and whether the key resolves on a guard `$request->user()` knows
-     * nothing about, and both of those are settled by this one.
+     * pins; the two things that are different about Nova are the attachment and
+     * the guard, and this one settles both.
      */
     test('returns 429 on the sixth nova password confirmation in a minute', function () {
         $admin = Admin::factory()->create(['password' => Hash::make('correct-horse')]);
@@ -283,20 +304,35 @@ describe('password reset links', function () {
  * The other end of the reset flow: spending a token rather than asking for one.
  *
  * `password-resets` is 5 a minute and 20 an hour keyed on the caller's IP
- * **alone** (AppServiceProvider::passwordResetKey()), and it covers both
- * `password.update` (Fortify, POST `reset-password`) and `nova.password.reset`
+ * **alone**, through the shared unauthenticated-caller key in AppServiceProvider
+ * that every guest auth route in this map uses — never rateLimitKey(). It covers
+ * both `password.update` (Fortify, POST `reset-password`) and `nova.password.reset`
  * (Nova, POST `nova/password/reset`) out of one bucket. Nothing else in the
  * application shares a bucket across two packages, so the tests below pin the
  * sharing on purpose rather than working around it.
  */
 describe('password resets', function () {
     /**
+     * Two wrong keys are refused here, and the ceiling on its own refuses
+     * neither.
+     *
      * Every attempt names a different address, which is what makes this a test
      * of the *key* and not just of a ceiling. `ip|email` — the shape Fortify's
      * own `login` limiter uses, and the obvious thing for somebody to
      * "improve" this into — would hand out a fresh bucket per typed address and
-     * return six invalid-email responses and no 429, leaving the Hash::check
-     * per unexpired token row unbounded per caller.
+     * return six invalid-email responses and no 429, putting the held worker
+     * back to unbounded per caller.
+     *
+     * The signed-in caller at the end refuses the other one: rateLimitKey().
+     * It produces the IP for a guest, so every guest assertion above it passes
+     * unchanged if the limiter is reverted to it, and the separate
+     * unauthenticated-caller key stops being load bearing. An authenticated
+     * caller is where the two diverge — rateLimitKey() would key on the user id,
+     * find an empty bucket and let the request through to `guest`'s redirect;
+     * the IP key still refuses it. ThrottleAuthRoutes runs from Fortify's
+     * middleware *group*, ahead of the route's own `guest`, so the hit lands
+     * before RedirectIfAuthenticated and 429 beats 302 (.ai/rules/middleware.md
+     * records that ordering as deliberate).
      */
     test('returns 429 on the sixth password reset in a minute, whatever address each one names', function () {
         for ($attempt = 1; $attempt <= 5; $attempt++) {
@@ -304,6 +340,10 @@ describe('password resets', function () {
         }
 
         submitPasswordReset($this, 'holder6@example.com')->assertTooManyRequests();
+
+        $this->actingAs(User::factory()->create());
+
+        submitPasswordReset($this, 'holder7@example.com')->assertTooManyRequests();
     });
 
     /**
@@ -311,6 +351,12 @@ describe('password resets', function () {
      * is the number in AppServiceProvider and this is what holds it there. The
      * minute bucket is stepped over rather than waited out, which is what a
      * script does.
+     *
+     * `X-RateLimit-Limit` is asserted because a bare `assertTooManyRequests()`
+     * cannot say *which* ceiling fired. ThrottleRequests checks the limits in
+     * declared order and the exception carries the exceeded limit's
+     * `maxAttempts`, so 20 is the hour tier and 5 would be the minute one.
+     * Without it, deleting the hour tier outright leaves this test green.
      */
     test('returns 429 on the twenty first password reset in an hour', function () {
         $this->freezeTime();
@@ -324,7 +370,9 @@ describe('password resets', function () {
             $this->travel(1)->minutes();
         }
 
-        submitPasswordReset($this, 'holder'.(++$attempt).'@example.com')->assertTooManyRequests();
+        submitPasswordReset($this, 'holder'.(++$attempt).'@example.com')
+            ->assertTooManyRequests()
+            ->assertHeader('X-RateLimit-Limit', 20);
     });
 
     /**
