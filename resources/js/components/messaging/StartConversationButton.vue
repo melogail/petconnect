@@ -39,10 +39,42 @@ import { store as storeConversation } from '@/routes/conversations';
  * button from the subject themselves, but that guard is a client-side
  * derivation off props a cached or prefetched page can serve stale, so the
  * server rule is the one that decides and its message needs somewhere to land.
+ *
+ * `triggerLabel` exists because the trigger's accessible name has to be able to
+ * differ from its visible one where the control repeats. On a listing page
+ * there is one of these and "Message" is unambiguous; in a feed grid every card
+ * renders one, and a screen reader's button list is then N identical entries
+ * with nothing distinguishing them. Optional, and omitting it leaves the name
+ * as the visible text, so neither existing call site (`profile/ProfileHeader`,
+ * `pets/PetOwnerCard`, both passing recipient id and name only) changes.
+ *
+ * It is a **prop and not a fall-through attribute**, which is the whole reason
+ * it exists rather than being left to the call site. This component's root is
+ * `Dialog`, i.e. reka-ui's `DialogRoot`, which sets `inheritAttrs: false` and
+ * whose render function is a bare `renderSlot` with no root element to receive
+ * anything (read in `node_modules/reka-ui/dist/Dialog/DialogRoot.js`, reka-ui
+ * 2.9.8). An `aria-label` written on `<StartConversationButton>` is therefore
+ * dropped in silence — no warning, no error, and a button that is still
+ * nameless. The technique does work on `PetLikeButton`, whose root is `Button`
+ * → `Primitive`, so reasoning by analogy between the two produces exactly this
+ * defect. Verified the prop lands by SSR-rendering this component through
+ * `vue/server-renderer` and reading the emitted trigger, rather than by
+ * reasoning about forwarding. At `recipientId: 7, recipientName: 'Ruthe'` the
+ * emitted `<button data-slot="dialog-trigger">` is 1150 bytes and carries no
+ * `aria-label`, byte-for-byte equal to the same render of this file at 87e21ff
+ * — so the two call sites that omit the prop are unchanged. Adding
+ * `triggerLabel: 'Message Ruthe about Ruthe'` takes it to 1189 bytes, the whole
+ * 39-byte difference being ` aria-label="Message Ruthe about Ruthe"` on that
+ * same element; nothing else moves.
  */
-const { recipientId, recipientName } = defineProps<{
+const { recipientId, recipientName, triggerLabel } = defineProps<{
     recipientId: number;
     recipientName: string;
+    /**
+     * Accessible name for the trigger. Defaults to its visible text,
+     * "Message". Pass one where the control repeats on a page.
+     */
+    triggerLabel?: string;
 }>();
 
 const open = ref(false);
@@ -51,7 +83,7 @@ const open = ref(false);
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <Button>
+            <Button :aria-label="triggerLabel">
                 <MessageCircle class="size-4" />
                 Message
             </Button>

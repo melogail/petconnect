@@ -87,6 +87,32 @@ const owner = computed(() =>
 const likeLabel = computed(
     () => `Like ${pet.name}, ${countLabel(pet.likes_count, 'like')}`,
 );
+
+/**
+ * `StartConversationButton` reads "Message" on every card, so a screen
+ * reader's button list is one entry per listing with nothing to tell them
+ * apart. Both the owner and the listing are named, because either alone is
+ * ambiguous on a feed: one owner can have several listings, and two owners can
+ * have listings with the same pet name.
+ *
+ * Passed as a prop and not as a fall-through `aria-label`. That component's
+ * root is reka-ui's `DialogRoot`, which renders no element and drops attributes
+ * silently — the technique that works on `PetLikeButton` above produces a
+ * still-nameless button here. See its docblock, which records the measurement.
+ *
+ * The change is confined to that one attribute, established by SSR-rendering
+ * this component through `vue/server-renderer` against the same render of the
+ * file at `HEAD` (pet `Luna`, owner `Ruthe`, `likes_count` 10,
+ * `comments_count` 4). Signed-in non-owner: 6128 → 6166 bytes, and the whole
+ * 38-byte insertion is ` aria-label="Message Ruthe about Luna"` on the
+ * `aria-haspopup="dialog"` trigger. Guest (4954 bytes) and owner (4985 bytes)
+ * are byte-identical, which is the point: `messageLabel` is `undefined`
+ * wherever the button is absent, so Vue emits no attribute at all rather than
+ * an empty one.
+ */
+const messageLabel = computed(() =>
+    owner.value ? `Message ${owner.value.name} about ${pet.name}` : undefined,
+);
 </script>
 
 <template>
@@ -114,6 +140,7 @@ const likeLabel = computed(
                 v-if="owner"
                 :recipient-id="owner.id"
                 :recipient-name="owner.name"
+                :trigger-label="messageLabel"
             />
 
             <Button as-child variant="outline">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { MessageCircle, Plus } from '@lucide/vue';
+import { MessageCircle } from '@lucide/vue';
 import { computed } from 'vue';
 import NotificationBell from '@/components/notifications/NotificationBell.vue';
 import AppearanceToggle from '@/components/shell/AppearanceToggle.vue';
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/composables/useTranslations';
 import { login, register } from '@/routes';
 import { index as conversationsIndex } from '@/routes/conversations';
-import { create as createPet } from '@/routes/pets';
 
 /**
  * The bar above every page a guest can reach.
@@ -35,12 +34,23 @@ import { create as createPet } from '@/routes/pets';
  * so this keeps the plain link to `conversations.index`. Replace the button,
  * not the layout around it, when the endpoint lands.
  *
- * ## Why the publish button is still here
+ * ## The publish button was removed in phase 3
  *
- * The legacy navbar had no such button, but in this application the header is
- * the only chrome that links `pets.create` at all: `AppSidebar` does not, and
- * the only other reference in the whole tree is one card on the `Help` page.
- * Dropping it to match the legacy layout would strip the primary action.
+ * There used to be a `pets.create` button here, added in phase 1 on the
+ * grounds that this header was the only chrome linking that route at all. The
+ * user ruled in phase 3 for exact legacy parity instead: the legacy navbar had
+ * no publish button, and the violet→fuchsia CTA lives **only** on Home
+ * (`components/pets/CreatePetButton.vue`).
+ *
+ * The consequence is real and was accepted knowingly. Pet creation is now
+ * linked from no persistent chrome anywhere in the application — not this
+ * header, and `AppSidebar` never linked it either. Grepping `@/routes/pets`
+ * for `create` across `resources/js` leaves exactly three entry points: the
+ * Home CTA in `components/pets/CreatePetButton.vue` and two links on
+ * `pages/Help.vue` (a card and an inline one). The fourth hit,
+ * `pages/pets/Create.vue`, is that page's own breadcrumb pointing at itself.
+ * If this is ever revisited it is a product decision about where the action
+ * belongs, not a bug in this file. Do not re-add the button here to "fix" it.
  *
  * ## What happens to the cluster below `sm`
  *
@@ -52,19 +62,41 @@ import { create as createPet } from '@/routes/pets';
  * secondary controls collapse into a menu below `sm`: `ShellUserMenu` for a
  * signed-in reader, `ShellPreferenceMenu` for a guest.
  *
+ * Both sets of figures above describe **superseded layouts** — the first the
+ * un-collapsed row, the second the shrink-only attempt — and the two auth ones
+ * are stale by a further control now that the publish button is gone. What the
+ * shipped header measures was re-measured after the removal, same instrument,
+ * same 320px viewport, same 288px content box, `scrollWidth` of the control
+ * cluster (the header row's last child):
+ *
+ * - guest/en **168px**, guest/ar **222px** (unchanged by the removal — the
+ *   button was inside `v-if="user"`)
+ * - auth/en **150px**, auth/ar **150px**; identical because none of the three
+ *   controls left visible below `sm` carries any text
+ *
+ * All four are inside the ~240px the brand leaves, and
+ * `document.documentElement.scrollWidth` is **320px** in every one of the four
+ * — no second scroll axis, which is the WCAG 1.4.10 criterion this section
+ * exists for. The auth cluster has five children, two of them `max-sm:hidden`;
+ * before the removal it had six.
+ *
  * `Log in` and `Sign up` never move behind that menu — they are the page's
  * primary actions — they only drop to `h-8`/`text-xs`, which is what buys the
  * Arabic guest variant its headroom (`تسجيل الدخول` is 60% wider than
- * `Log in`). The publish button carries an `aria-label` because its own label
- * is `hidden` at exactly these widths.
+ * `Log in`).
  *
  * ## The signed-in variant also overflowed between `sm` and `lg`
  *
- * Separate defect, found by sweeping widths rather than checking 320px alone:
- * the publish label used to appear at `sm`, which took the header to 704px
- * inside a 640px viewport and 842px inside 768px once the search field joined
- * it. The label now waits for `lg`, and the search wrapper carries `min-w-0`
- * so the input's intrinsic width cannot push the row wider than the flex line.
+ * Historical, and now moot. A separate defect found by sweeping widths rather
+ * than checking 320px alone: the publish label used to appear at `sm`, which
+ * took the header to 704px inside a 640px viewport and 842px inside 768px once
+ * the search field joined it. That was first fixed by holding the label back
+ * to `lg`; the button is gone entirely as of phase 3, so nothing in the
+ * signed-in cluster is width-gated any more.
+ *
+ * The other half of that fix is still live and still needed: the search
+ * wrapper carries `min-w-0`, without which the input's intrinsic width pushes
+ * the row wider than the flex line at every width the field is visible.
  */
 const page = usePage();
 
@@ -106,18 +138,6 @@ const user = computed(() => page.props.auth.user ?? null);
                     </Button>
 
                     <NotificationBell />
-
-                    <Button as-child class="rounded-lg">
-                        <Link
-                            :href="createPet()"
-                            :aria-label="t('home.create_post')"
-                        >
-                            <Plus class="size-4" />
-                            <span class="hidden lg:inline">
-                                {{ t('home.create_post') }}
-                            </span>
-                        </Link>
-                    </Button>
 
                     <ShellUserMenu :user="user" />
                 </template>
