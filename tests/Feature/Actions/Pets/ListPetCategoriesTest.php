@@ -113,6 +113,53 @@ test('serialises each category with its icon and its breeds nested under it', fu
 });
 
 /**
+ * `resources/js/lib/taxonomy.ts` reads `name_${locale}` off a category or a
+ * breed and falls back to `name`, which is what finally put Arabic category and
+ * breed labels in the filter sheet and the pet form. It is a lookup by key on
+ * the payload, so the contract it needs from this side is that **both** keys
+ * ride on every row of both resources.
+ *
+ * The untranslated pair is the half that is easy to lose. `name_ar` is nullable
+ * and every factory row leaves it null, so an "improvement" that dropped the
+ * key when it had no value — `whenNotNull()`, or the `whenLoaded()` habit —
+ * would keep every assertion about a *translated* row green. The client's
+ * fallback is written against `null`, and a missing key reads as `undefined`
+ * there; today those behave alike, which is exactly why nothing would fail
+ * until somebody tightened the check.
+ *
+ * Asserted on the values, not just the keys: `name` and `name_ar` are adjacent
+ * string columns and swapping them is a live typo that key presence cannot see.
+ */
+test('serialises the Arabic name of every category and breed beside the English one', function () {
+    $translated = Category::factory()->create(['name' => 'Cats', 'name_ar' => 'قطط']);
+    Breed::factory()->for($translated)->create(['name' => 'Persian', 'name_ar' => 'شيرازي']);
+
+    $untranslated = Category::factory()->create(['name' => 'Zebras', 'name_ar' => null]);
+    Breed::factory()->for($untranslated)->create(['name' => 'Grevy', 'name_ar' => null]);
+
+    $payload = collect(
+        PetCategoryOptionResource::collection(app(ListPetCategories::class)->handle())
+            ->response()
+            ->getData(true)
+    );
+
+    expect($payload->firstWhere('id', $translated->getKey()))
+        ->toMatchArray(['name' => 'Cats', 'name_ar' => 'قطط'])
+        ->and($payload->firstWhere('id', $translated->getKey())['breeds'][0])
+        ->toMatchArray(['name' => 'Persian', 'name_ar' => 'شيرازي']);
+
+    expect($payload->firstWhere('id', $untranslated->getKey()))
+        ->toHaveKey('name_ar')
+        ->and($payload->firstWhere('id', $untranslated->getKey())['name_ar'])
+        ->toBeNull();
+
+    expect($payload->firstWhere('id', $untranslated->getKey())['breeds'][0])
+        ->toHaveKey('name_ar')
+        ->and($payload->firstWhere('id', $untranslated->getKey())['breeds'][0]['name_ar'])
+        ->toBeNull();
+});
+
+/**
  * Both the form and the filter sheet render the tree as a flat alphabetical
  * list, so the order is the Action's to settle rather than each caller's.
  */
