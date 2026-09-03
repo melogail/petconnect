@@ -1,34 +1,40 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
+import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { store } from '@/routes/password/confirm';
+import { useTranslations } from '@/composables/useTranslations';
 import { confirm as confirmStore, confirmOptions } from '@/routes/passkey';
-import PasskeyVerify from '@/components/PasskeyVerify.vue';
+import { store } from '@/routes/password/confirm';
 
-defineOptions({
-    layout: {
-        title: 'Confirm password',
-        description:
-            'This is a secure area of the application. Please confirm your password before continuing.',
-    },
+/**
+ * Layout heading and sub-heading, snapshotted once in `setup`. See
+ * `Login.vue` for why `setLayoutProps` rather than `defineOptions`, and for
+ * why a locale switch would not re-run this (it is a `preserveState` visit)
+ * on the day the auth shell gains a language control.
+ */
+const { t } = useTranslations();
+
+setLayoutProps({
+    title: t('auth.confirm_your_password'),
+    description: t('auth.confirm_password_description'),
 });
 </script>
 
 <template>
-    <Head title="Confirm password" />
+    <Head :title="t('auth.confirm_password')" />
 
     <PasskeyVerify
         :routes="{
             options: confirmOptions(),
             submit: confirmStore(),
         }"
-        label="Confirm with passkey"
-        loading-label="Confirming..."
-        separator="Or confirm with password"
+        :label="t('auth.confirm_with_passkey')"
+        :loading-label="t('auth.confirming')"
+        :separator="t('auth.or_confirm_with_password')"
     />
 
     <Form
@@ -38,7 +44,7 @@ defineOptions({
     >
         <div class="space-y-6">
             <div class="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{{ t('auth.password') }}</Label>
                 <PasswordInput
                     id="password"
                     name="password"
@@ -58,7 +64,7 @@ defineOptions({
                     data-test="confirm-password-button"
                 >
                     <Spinner v-if="processing" />
-                    Confirm password
+                    {{ t('auth.confirm_password_button') }}
                 </Button>
             </div>
         </div>

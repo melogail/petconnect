@@ -22,8 +22,12 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
  */
 function resolvePageShell(name: string) {
     switch (true) {
-        // The bare splash page owns its whole viewport.
+        // The bare splash page owns its whole viewport, and so does the
+        // verification notice: it paints its own background wash and carries
+        // its own brand lockup, so the `auth/*` card shell below would give it
+        // a second heading and a second logo above its own.
         case name === 'Welcome':
+        case name === 'auth/VerifyEmail':
             return [];
         // Public pages: the app sidebar assumes a signed-in user, and all
         // five of these are reachable by guests, so they get the public
