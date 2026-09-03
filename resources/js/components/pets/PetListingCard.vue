@@ -10,6 +10,7 @@ import PetCardHeader from '@/components/pets/card/PetCardHeader.vue';
 import PetCardMedia from '@/components/pets/card/PetCardMedia.vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocale } from '@/composables/useLocale';
+import { taxonomyName } from '@/lib/taxonomy';
 import type { PetCard } from '@/types';
 
 /**
@@ -62,7 +63,7 @@ import type { PetCard } from '@/types';
  */
 const { pet } = defineProps<{ pet: PetCard }>();
 
-const { tag } = useLocale();
+const { locale, tag } = useLocale();
 
 const page = usePage();
 
@@ -91,8 +92,20 @@ const price = computed(() =>
           }).format(Number(pet.price)),
 );
 
-/** Breed names the listing best; category is the fallback, then a generic. */
-const kind = computed(() => pet.breed?.name ?? pet.category?.name ?? 'Pet');
+/**
+ * Breed names the listing best; category is the fallback, then a generic.
+ *
+ * Both go through `taxonomyName`, never `.name` — the resources ship `name` and
+ * `name_ar` on every taxonomy row precisely so the client can pick one per
+ * locale, and reading `.name` here is what showed Arabic readers English breed
+ * names. `locale.current` is the *language*, a different field from
+ * `locale.direction`.
+ */
+const kind = computed(() => {
+    const taxon = pet.breed ?? pet.category;
+
+    return taxon ? taxonomyName(taxon, locale.value.current) : 'Pet';
+});
 </script>
 
 <template>

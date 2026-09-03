@@ -5,7 +5,9 @@ import FormField from '@/components/pets/form/FormField.vue';
 import SelectInput from '@/components/pets/form/SelectInput.vue';
 import type { SelectInputOption } from '@/components/pets/form/SelectInput.vue';
 import { Input } from '@/components/ui/input';
+import { useLocale } from '@/composables/useLocale';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
+import { taxonomyName } from '@/lib/taxonomy';
 import type {
     PetFormOptions,
     PetGender,
@@ -48,10 +50,17 @@ const { form, options } = defineProps<{
 
 const errors = computed(() => petFormErrors(form.errors));
 
+const { locale } = useLocale();
+
+/**
+ * Both selects label their options with `taxonomyName`, never the raw `name`:
+ * the option resources ship `name` and `name_ar` on every row and the reader's
+ * language decides. The submitted value is the id either way.
+ */
 const categoryOptions = computed<SelectInputOption[]>(() =>
     options.categories.map((category) => ({
         value: String(category.id),
-        label: category.name,
+        label: taxonomyName(category, locale.value.current),
     })),
 );
 
@@ -59,7 +68,10 @@ const breedOptions = computed<SelectInputOption[]>(() =>
     (
         options.categories.find((category) => category.id === form.category_id)
             ?.breeds ?? []
-    ).map((breed) => ({ value: String(breed.id), label: breed.name })),
+    ).map((breed) => ({
+        value: String(breed.id),
+        label: taxonomyName(breed, locale.value.current),
+    })),
 );
 
 const isSale = computed(() => form.listing_type === 'sale');

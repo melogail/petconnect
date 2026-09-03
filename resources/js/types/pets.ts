@@ -18,6 +18,19 @@ export type SelectOption<TValue extends string = string> = {
     label: string;
 };
 
+/**
+ * One breed, as the pet form and the filter sheet list it.
+ *
+ * `name` is the English source and `name_ar` its Arabic translation, `null`
+ * where nobody has filled one in. **Never render either directly** — go through
+ * `taxonomyName(breed, locale.current)` in `@/lib/taxonomy`, which picks the
+ * column for the reader's language and falls back to `name`. Both names ship on
+ * every row precisely so the client can choose without a second round trip; for
+ * a while nothing read `name_ar` and every Arabic reader saw English breeds.
+ *
+ * `slug` is unique per category rather than globally, which is why `id` is what
+ * the form submits and what the feed's `breed_ids` carries.
+ */
 export type PetBreedOption = {
     id: number;
     category_id: number;
@@ -26,6 +39,15 @@ export type PetBreedOption = {
     slug: string;
 };
 
+/**
+ * One category, with its breeds nested when the backend eager loaded them.
+ *
+ * Same naming contract as `PetBreedOption`: render through
+ * `taxonomyName(category, locale.current)`, never `category.name`.
+ *
+ * `slug` is the stable half — the name is editable and localised — so anything
+ * keyed on a category (`@/components/pets/filter/categoryIcon`) keys on `slug`.
+ */
 export type PetCategoryOption = {
     id: number;
     name: string;
