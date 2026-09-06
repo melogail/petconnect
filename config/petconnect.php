@@ -109,6 +109,21 @@ return [
     | first page of a thread is the end of the conversation, which is the part a
     | reader wants, and older pages are fetched backwards from there.
     |
+    | `preview_per_page` is the much smaller slice behind the header's messages
+    | menu (`conversations.previews`), which is a peek rather than a list: it
+    | shows the newest handful and links to the inbox for the rest. It is its
+    | own key rather than a reuse of `inbox_per_page` because the two answer
+    | different questions — how many rows fit in a dropdown, and how many rows
+    | are worth one request on a page devoted to them — and tuning either one to
+    | suit the other would be tuning the wrong screen.
+    |
+    | `preview_snippet_length` is how much of the last message that menu is
+    | given, truncated on the server by ConversationPreviewResource. It is a
+    | display bound rather than a validation one, which is why it is not derived
+    | from `max_length`: that endpoint is fetched once per document load by
+    | every signed-in visitor, and shipping five 5,000-character messages to
+    | draw five one-line rows is ~25 KB nobody reads.
+    |
     | `edit_window_minutes` is how long after sending a message may still be
     | rewritten, enforced by MessagePolicy::update. The legacy app had no window
     | at all, so a message could be rewritten indefinitely — including long
@@ -120,6 +135,8 @@ return [
     'messaging' => [
         'max_length' => (int) env('MESSAGES_MAX_LENGTH', 5000),
         'inbox_per_page' => (int) env('MESSAGES_INBOX_PER_PAGE', 15),
+        'preview_per_page' => (int) env('MESSAGES_PREVIEW_PER_PAGE', 5),
+        'preview_snippet_length' => (int) env('MESSAGES_PREVIEW_SNIPPET_LENGTH', 120),
         'thread_per_page' => (int) env('MESSAGES_THREAD_PER_PAGE', 30),
         'edit_window_minutes' => (int) env('MESSAGES_EDIT_WINDOW_MINUTES', 15),
     ],

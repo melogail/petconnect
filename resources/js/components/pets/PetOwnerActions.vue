@@ -12,6 +12,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { useTranslations } from '@/composables/useTranslations';
 import { destroy as destroyPet, edit as editPet } from '@/routes/pets';
 import { toggle as toggleStatus } from '@/routes/pets/status';
 import type { PetStatus } from '@/types';
@@ -29,6 +30,8 @@ const { petId, status } = defineProps<{
     status: PetStatus;
 }>();
 
+const { t } = useTranslations();
+
 const confirming = ref(false);
 </script>
 
@@ -36,19 +39,23 @@ const confirming = ref(false);
     <div class="flex flex-wrap gap-2">
         <Button as-child variant="outline">
             <Link :href="editPet(petId)">
-                <Pencil class="size-4" />
-                Edit
+                <Pencil class="size-4" aria-hidden="true" />
+                {{ t('common.edit') }}
             </Link>
         </Button>
 
         <Button as-child variant="outline">
             <Link :href="toggleStatus(petId)" as="button" preserve-scroll>
-                <EyeOff v-if="status === 'available'" class="size-4" />
-                <Eye v-else class="size-4" />
+                <EyeOff
+                    v-if="status === 'available'"
+                    class="size-4"
+                    aria-hidden="true"
+                />
+                <Eye v-else class="size-4" aria-hidden="true" />
                 {{
                     status === 'available'
-                        ? 'Mark unavailable'
-                        : 'Mark available'
+                        ? t('pets.mark_as_unavailable')
+                        : t('pets.mark_as_available')
                 }}
             </Link>
         </Button>
@@ -56,28 +63,28 @@ const confirming = ref(false);
         <Dialog v-model:open="confirming">
             <DialogTrigger as-child>
                 <Button variant="outline" class="text-destructive">
-                    <Trash2 class="size-4" />
-                    Remove
+                    <Trash2 class="size-4" aria-hidden="true" />
+                    {{ t('common.remove') }}
                 </Button>
             </DialogTrigger>
 
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Remove this listing?</DialogTitle>
+                    <DialogTitle>
+                        {{ t('pets.remove_listing_question') }}
+                    </DialogTitle>
                     <DialogDescription>
-                        It stops appearing in the feed and in search. The
-                        listing, its photos and its comment thread are kept so
-                        moderators can still review them.
+                        {{ t('pets.remove_listing_desc') }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <DialogFooter>
                     <Button variant="outline" @click="confirming = false">
-                        Cancel
+                        {{ t('pets.cancel') }}
                     </Button>
                     <Button as-child variant="destructive">
                         <Link :href="destroyPet(petId)" as="button">
-                            Remove listing
+                            {{ t('pets.remove_listing') }}
                         </Link>
                     </Button>
                 </DialogFooter>

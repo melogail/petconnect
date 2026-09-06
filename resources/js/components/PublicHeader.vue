@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { MessageCircle } from '@lucide/vue';
 import { computed } from 'vue';
+import MessagesDropdown from '@/components/messaging/MessagesDropdown.vue';
 import NotificationBell from '@/components/notifications/NotificationBell.vue';
 import AppearanceToggle from '@/components/shell/AppearanceToggle.vue';
 import BrandMark from '@/components/shell/BrandMark.vue';
@@ -12,7 +12,6 @@ import ShellUserMenu from '@/components/shell/ShellUserMenu.vue';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/composables/useTranslations';
 import { login, register } from '@/routes';
-import { index as conversationsIndex } from '@/routes/conversations';
 
 /**
  * The bar above every page a guest can reach.
@@ -22,17 +21,38 @@ import { index as conversationsIndex } from '@/routes/conversations';
  * everything below is guarded on the shared prop rather than assumed
  * (.ai/rules/types.md: `auth.user` is typed non-nullable and is null here).
  *
- * The notification bell sits inside that same `v-if="user"` and not outside
- * it: every `notifications.*` route is behind `auth` + `verified`, so a bell
- * shown to a guest would fetch its badge straight into a redirect to login.
+ * The bell and the messages menu sit inside that same `v-if="user"` for a
+ * **layout** reason, not a safety one: it groups the signed-in cluster — bell,
+ * messages, account menu — opposite the guest branch that puts
+ * `ShellPreferenceMenu` and the two auth buttons in their place.
  *
- * ## The messages slot
+ * Neither control leans on that guard for the guest case. `NotificationBell`
+ * and `MessagesDropdown` each compute `canRead` as
+ * `auth.user?.email_verified_at != null` — false for a null viewer, so it
+ * covers guests as well as unverified accounts — and each gates its render
+ * *and* its `onMounted` fetch on it (`NotificationBell.vue:125` and `:133-137`,
+ * `MessagesDropdown.vue:131` and `:139-143`). Mounted outside this `v-if`,
+ * both would render nothing and request nothing. Moving them is therefore a
+ * layout question only; it cannot produce a badge fetch that redirects to
+ * login.
  *
- * The legacy shell had an unread-count dropdown between the bell and the
- * account menu. It needs a summary endpoint that does not exist yet — there is
- * no `messaging` shared prop and notifications are deliberately not shared —
- * so this keeps the plain link to `conversations.index`. Replace the button,
- * not the layout around it, when the endpoint lands.
+ * ## The messages menu
+ *
+ * The endpoint that section used to be waiting for has landed.
+ * `conversations.previews` answers plain JSON, `useMessagingPreviews` fetches
+ * it once per document load, and `MessagesDropdown` is the legacy
+ * unread-count dropdown rebuilt on it. It replaced a plain `MessageCircle`
+ * link to `conversations.index` — the button, not the layout around it, exactly
+ * as that note asked.
+ *
+ * It sits **after** the bell and before the account menu, which is legacy's
+ * order (`components/web/NavBar.vue`: `NotificationsSheet`, `MessagesDropdown`,
+ * `UserDropdown`). The old link sat before the bell; nothing but the sweep
+ * moved it.
+ *
+ * There is no `messaging` shared prop and there is not going to be one:
+ * `ConversationController::previews` records why the legacy app's per-render
+ * summary was not ported.
  *
  * ## The publish button was removed in phase 3
  *
@@ -71,14 +91,34 @@ import { index as conversationsIndex } from '@/routes/conversations';
  *
  * - guest/en **168px**, guest/ar **222px** (unchanged by the removal — the
  *   button was inside `v-if="user"`)
- * - auth/en **150px**, auth/ar **150px**; identical because none of the three
+ * - auth/en **158px**, auth/ar **158px**; identical because none of the three
  *   controls left visible below `sm` carries any text
+ *
+ * The two auth figures were **150px** until phase 5 and are re-measured here.
+ * Two things moved them, both parity fixes: the plain `MessageCircle` link
+ * became `MessagesDropdown`, and both it and `NotificationBell` went from a
+ * 36px `size="icon"` control to legacy's 40px one. Two controls, +4px each,
+ * +8px on the cluster. Re-measured 2026-09-03 on this working tree, same
+ * instrument as before — headless Chrome over `php artisan serve`, 320px
+ * viewport via `Emulation.setDeviceMetricsOverride`, `scrollWidth` of the
+ * header row's last child — signed in as the seeded demo account, once per
+ * locale.
  *
  * All four are inside the ~240px the brand leaves, and
  * `document.documentElement.scrollWidth` is **320px** in every one of the four
  * — no second scroll axis, which is the WCAG 1.4.10 criterion this section
  * exists for. The auth cluster has five children, two of them `max-sm:hidden`;
- * before the removal it had six.
+ * before the phase-3 removal it had six.
+ *
+ * Two guards ran beside every one of those numbers, because a fixture that is
+ * not what you think reports plausible figures rather than failing. That the
+ * stylesheet is live: `getComputedStyle(document.body).margin` is `0px`
+ * (Tailwind preflight) — a cold Vite dev server compiles Tailwind on the first
+ * request, so the first document can paint before its sheet exists and the
+ * measurement has to be taken on a second load. That the browser is the one
+ * launched: a stale headless Chrome left over from an earlier run answers on
+ * the debugging port and serves **its** cookie jar, which is how a "guest" pass
+ * once measured a signed-in header.
  *
  * `Log in` and `Sign up` never move behind that menu — they are the page's
  * primary actions — they only drop to `h-8`/`text-xs`, which is what buys the
@@ -123,21 +163,9 @@ const user = computed(() => page.props.auth.user ?? null);
                 <AppearanceToggle class="max-sm:hidden" />
 
                 <template v-if="user">
-                    <Button
-                        as-child
-                        variant="ghost"
-                        size="icon"
-                        class="rounded-full"
-                    >
-                        <Link
-                            :href="conversationsIndex()"
-                            :aria-label="t('nav.messages')"
-                        >
-                            <MessageCircle class="size-5" />
-                        </Link>
-                    </Button>
-
                     <NotificationBell />
+
+                    <MessagesDropdown />
 
                     <ShellUserMenu :user="user" />
                 </template>

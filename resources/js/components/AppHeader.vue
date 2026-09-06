@@ -238,7 +238,44 @@ const rightNavItems: NavItem[] = [
                         </div>
                     </div>
 
-                    <DropdownMenu>
+                    <!--
+                        Guarded, not merely documented: `auth.user` is typed
+                        non-nullable and is null for a guest
+                        (.ai/rules/types.md), and everything below dereferences
+                        it — `auth.user.avatar` and `auth.user.name` on the
+                        trigger, and `UserMenuContent`, which renders
+                        `UserInfo` (whose setup reads `props.user.avatar`) and
+                        `showProfile(user.id)`.
+
+                        **A null user threw here before this phase too.**
+                        `UserInfo.vue:19-21` already dereferenced
+                        `props.user.avatar` in a computed at HEAD, and
+                        `UserMenuContent` already rendered it, so the previous
+                        behaviour was a render-time throw, not "a cosmetically
+                        empty menu" — an earlier note in this file said
+                        otherwise and was wrong. This phase added a second
+                        dereference to an already-unsafe path; it did not make
+                        a safe path unsafe.
+
+                        `vue-tsc` cannot see any of it, because the prop is
+                        typed `User` and the shared prop is typed `User` — the
+                        type gate stays green either way, which is why the
+                        guard is a `v-if` and not a type change.
+                        `UserMenuContent`'s prop deliberately stays `User`.
+
+                        This file is still orphaned — its only importer is
+                        `layouts/app/AppHeaderLayout.vue`, which nothing
+                        imports (`grep -rn 'AppHeaderLayout' resources/js`
+                        returns prose mentions only). The guard is here so that
+                        wiring the layout up is a routing decision rather than
+                        a guest-visible crash. The other two mount sites of
+                        `UserMenuContent` reach it with a user that exists:
+                        `PublicHeader` renders `ShellUserMenu` inside its
+                        `v-if="user"`, and `NavUser` is mounted by `AppSidebar`
+                        inside `AppSidebarLayout`, which only serves pages
+                        behind `auth`.
+                    -->
+                    <DropdownMenu v-if="auth.user">
                         <DropdownMenuTrigger :as-child="true">
                             <Button
                                 variant="ghost"

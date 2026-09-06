@@ -26,6 +26,20 @@ function threadWithPeer(User $participant): array
 }
 
 /**
+ * Open threads for the given reader, each with a peer of its own and each
+ * holding one message from that peer the reader has never opened — so the
+ * unread total is the number of threads and is larger than the menu returns.
+ */
+function seedMenuThreadsFor(User $reader, int $threads): void
+{
+    for ($thread = 0; $thread < $threads; $thread++) {
+        [$conversation, $peer] = threadWithPeer($reader);
+
+        Message::factory()->for($conversation)->from($peer)->create();
+    }
+}
+
+/**
  * Open a thread with a recipient the caller is not allowed to address, and
  * record **everything** that caller can observe about the refusal.
  *
@@ -203,6 +217,39 @@ describe('index', function () {
     });
 
     /**
+     * The inbox row's shape, pinned as a whole rather than key by key.
+     *
+     * ConversationResource now narrows `$request->user()` through a `viewer()`
+     * helper, which is a refactor of how the viewer is reached and not of what
+     * is emitted — so the thing worth asserting is that the emitted keys did
+     * not move. This is the page `messaging/Index.vue` reads; a key that
+     * disappears here is `undefined` in the browser rather than an error in the
+     * suite.
+     */
+    test('serialises each inbox row with the keys the page reads', function () {
+        $reader = User::factory()->create();
+        [$conversation, $peer] = threadWithPeer($reader);
+        Message::factory()->for($conversation)->from($peer)->create();
+
+        $response = $this->actingAs($reader)->get(route('conversations.index'))->assertOk();
+
+        $row = $response->viewData('page')['props']['conversations']['data'][0];
+
+        expect(array_keys($row))->toBe([
+            'id',
+            'type',
+            'last_message_at',
+            'participants',
+            'peer',
+            'last_message',
+            'unread',
+            'can_send',
+            'created_at',
+            'updated_at',
+        ]);
+    });
+
+    /**
      * `peer` and `unread` are guarded on relationLoaded() and fall back to a
      * neutral value, so an inbox that stopped eager loading `users` would ship a
      * null peer and a permanently-read badge rather than throwing. The query
@@ -229,6 +276,97 @@ describe('index', function () {
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('conversations.data.0.unread', false));
+    });
+});
+
+describe('previews', function () {
+    test('redirects a guest to the login page', function () {
+        $this->get(route('conversations.previews'))->assertRedirect(route('login'));
+    });
+
+    test('redirects an unverified user to the verification notice', function () {
+        $this->actingAs(User::factory()->unverified()->create())
+            ->get(route('conversations.previews'))
+            ->assertRedirect(route('verification.notice'));
+    });
+
+    test('returns the acting user own threads and none of anybody else', function () {
+        $reader = User::factory()->create();
+        [$mine, $peer] = threadWithPeer($reader);
+        Message::factory()->for($mine)->from($peer)->create();
+        [$stranger, $strangerPeer] = threadWithPeer(User::factory()->create());
+        Message::factory()->for($stranger)->from($strangerPeer)->create();
+
+        $this->actingAs($reader)
+            ->getJson(route('conversations.previews'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $mine->getKey())
+            ->assertJsonPath('data.0.peer.id', $peer->getKey())
+            ->assertJsonPath('meta.unread_count', 1);
+    });
+
+    /**
+     * The badge is the viewer's whole inbox, not the handful of rows the menu
+     * draws: a badge that says 5 when there are forty is worse than no badge,
+     * which is why CountUnreadConversations is its own aggregate rather than a
+     * filter over the list beside it.
+     */
+    test('counts the whole inbox in the badge rather than the rows it returns', function () {
+        config(['petconnect.messaging.preview_per_page' => 5]);
+        $reader = User::factory()->create();
+        seedMenuThreadsFor($reader, threads: 7);
+
+        $response = $this->actingAs($reader)
+            ->getJson(route('conversations.previews'))
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.unread_count', 7);
+
+        expect($response->json('meta.unread_count'))->toBeGreaterThan(count($response->json('data')));
+    });
+
+    test('marks a row unread until the acting user cursor passes its last message', function () {
+        $reader = User::factory()->create();
+        [$conversation, $peer] = threadWithPeer($reader);
+        Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
+
+        $this->actingAs($reader)
+            ->getJson(route('conversations.previews'))
+            ->assertOk()
+            ->assertJsonPath('data.0.last_message_snippet', 'Is she still available?')
+            ->assertJsonPath('data.0.last_message_sender_id', $peer->getKey())
+            ->assertJsonPath('data.0.unread', true)
+            ->assertJsonPath('meta.unread_count', 1);
+
+        $conversation->markAsReadFor($reader);
+
+        $this->actingAs($reader)
+            ->getJson(route('conversations.previews'))
+            ->assertOk()
+            ->assertJsonPath('data.0.unread', false)
+            ->assertJsonPath('meta.unread_count', 0);
+    });
+
+    /**
+     * A dropdown does not page. The paginator this endpoint used to return
+     * published `links` and `meta.links` pointing at a `?page=2` nobody would
+     * fetch, which is an invitation to build a "load more" against an endpoint
+     * whose whole contract is "the newest five" — so the absence of those keys
+     * is the contract, and `?page=2` answering with the same rows is what makes
+     * it true rather than merely undocumented.
+     */
+    test('publishes no pagination and ignores a page parameter', function () {
+        config(['petconnect.messaging.preview_per_page' => 5]);
+        $reader = User::factory()->create();
+        seedMenuThreadsFor($reader, threads: 7);
+
+        $firstPage = $this->actingAs($reader)->getJson(route('conversations.previews'))->assertOk();
+        $secondPage = $this->actingAs($reader)->getJson(route('conversations.previews', ['page' => 2]))->assertOk();
+
+        expect(array_keys($firstPage->json()))->toBe(['data', 'meta'])
+            ->and(array_keys($firstPage->json('meta')))->toBe(['unread_count'])
+            ->and($secondPage->json('data'))->toBe($firstPage->json('data'));
     });
 });
 

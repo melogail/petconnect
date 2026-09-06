@@ -82,7 +82,7 @@ class ConversationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $viewer = $request->user();
+        $viewer = $this->viewer($request);
         $hasParticipants = $this->relationLoaded('users');
 
         return [
@@ -99,7 +99,7 @@ class ConversationResource extends JsonResource
 
             'last_message' => $this->whenLoaded(
                 'lastMessage',
-                fn (): ?MessageResource => MessageResource::make($this->lastMessage),
+                fn (): MessageResource => MessageResource::make($this->lastMessage),
                 null,
             ),
             'unread' => $this->when(
@@ -115,6 +115,23 @@ class ConversationResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
+    }
+
+    /**
+     * The signed-in member reading this row, or null.
+     *
+     * `$request->user()` can resolve on either guard — `App\Models\Admin` signs
+     * in on `admins` — and `otherParticipant()`, `isUnreadFor()` and
+     * MessagePolicy::create are all typed against `App\Models\User`. An admin is
+     * not a participant in anybody's conversation, so narrowing to null here is
+     * the honest answer as well as the typed one; without it the union reaches a
+     * `User` parameter and the failure mode is a TypeError while rendering.
+     */
+    protected function viewer(Request $request): ?User
+    {
+        $viewer = $request->user();
+
+        return $viewer instanceof User ? $viewer : null;
     }
 
     /**

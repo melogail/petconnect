@@ -501,6 +501,38 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | and returns JSON, the same split `comments.index` has: the page ships the
 | newest page of messages and this is how the rest arrives without a visit.
 |
+| `conversations.previews` is JSON for the same reason one level up: it
+| feeds the header's messages menu, which is a panel on whatever page the
+| user is already on, so it fetches five rows and the unread badge in one
+| request rather than making them leave. The legacy app built that list into
+| a shared Inertia prop on **every** page render — the arrangement
+| `notifications.index` was deliberately not given, so that a page nobody
+| opens the menu on costs no messaging query at all.
+|
+| It is the one list endpoint here that is **not paginated**, and `?page=` is
+| meaningless on it: a dropdown does not page, and the `links` a paginator
+| published pointed at a page nobody would fetch. It answers
+| `{data, meta.unread_count}` out of ConversationPreviewResource, which is a
+| narrower payload than `conversations.index` emits for the same rows —
+| bytes, not permissions, are the axis, and the reasoning is in the resource.
+|
+| It is declared before the `{conversation}` group even though that group is
+| whereNumber-constrained: the ordering is what keeps `conversations/previews`
+| off `conversations.show` independently of that constraint surviving a
+| future edit, the same belt-and-braces `notifications/read-all` has.
+|
+| It carries no throttle, and that is the decision rather than an omission.
+| It is a GET that writes nothing, so the routing rule it would fall under
+| ("every mutating route carries a named limiter") does not reach it, and no
+| read route in this application is limited — `conversations.index`,
+| `conversations.show` and `messages.index` are all open. Fetch frequency is
+| not the axis: this is fired once per document load, which is the same rate
+| the page around it is already being rendered and queried at, and its cost
+| is five rows plus one aggregate — five queries, measured. A 429 here is a
+| stale unread badge on a page that otherwise loaded fine, which is a worse
+| outcome than the request. Throttling reads at all is an application-wide
+| policy question, not something to settle one route at a time.
+|
 | `messages.update`, `messages.destroy` and `messages.pin` address a message
 | by id and never name its conversation, so the conversation's visibility
 | cannot come from the URL. It comes from Message::resolveRouteBinding(),
@@ -532,6 +564,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::prefix('conversations')->name('conversations.')->group(function (): void {
         Route::get('/', [ConversationController::class, 'index'])->name('index');
+
+        Route::get('previews', [ConversationController::class, 'previews'])->name('previews');
 
         Route::post('/', [ConversationController::class, 'store'])
             ->middleware('throttle:conversations')

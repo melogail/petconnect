@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue';
 import ConversationHeader from '@/components/messaging/ConversationHeader.vue';
 import MessageComposer from '@/components/messaging/MessageComposer.vue';
 import MessageThread from '@/components/messaging/MessageThread.vue';
+import { useMessagingPreviews } from '@/composables/useMessagingPreviews';
 import { index as conversationsIndex, read } from '@/routes/conversations';
 import { index as messagesIndex } from '@/routes/conversations/messages';
 import type { Conversation, Message, MessageBounds, Paginated } from '@/types';
@@ -90,12 +91,51 @@ async function loadOlder(): Promise<void> {
     }
 }
 
+/**
+ * Opening a thread marks it read, and the header badge has to be told.
+ *
+ * The server write below is the authority and is unchanged. What it cannot
+ * reach is `useMessagingPreviews`' **module-level** state — the previews array
+ * and `unreadCount` live outside any component so both headers share one copy,
+ * and no page prop feeds them. The messages dropdown already called this on the
+ * row it navigated from; every other way in did not, so the badge went on
+ * counting a conversation the reader was looking at.
+ *
+ * `markConversationRead` is a local mutation and issues no request — it
+ * decrements the count and flips that preview's `unread` flag, and returns
+ * early when the id is not in the cached list or is already read. So this adds
+ * no network cost to the visit.
+ *
+ * ## What this fixes, and what it does not — measured, 2026-09-03
+ *
+ * Opening conversation 3 (unread) **from the inbox**, i.e. a client-side
+ * Inertia visit off `/conversations`: the header trigger goes from
+ * `Messages (1 unread)` to `Messages`, and the only requests on the visit are
+ * `GET /conversations/3`, `POST /conversations/3/read` and this page's own
+ * `only: ['conversation']` reload. No `GET /conversations/previews` at all —
+ * the module cache short-circuits it, which is exactly why the badge could go
+ * stale and stay stale.
+ *
+ * Opening the same thread by **pasting the URL**, i.e. a cold document load,
+ * this call does nothing: the module state starts empty and the header's own
+ * `GET /conversations/previews` is still in flight when `onMounted` runs, so
+ * `find()` misses and the early return fires. Measured on `/conversations/1`:
+ * the request order was `GET /conversations/1`, `GET /conversations/previews`,
+ * `POST /conversations/1/read`, and the badge stayed at `2 unread` because the
+ * previews response was computed before the read was written. That is a race
+ * inside `useMessagingPreviews` — the mark has to be replayed once the fetch
+ * lands — and closing it belongs in that composable, not here.
+ */
+const { markConversationRead } = useMessagingPreviews();
+
 onMounted(() => {
     router.post(
         read.url(conversation.id),
         {},
         { preserveScroll: true, preserveState: true, only: ['conversation'] },
     );
+
+    markConversationRead(conversation.id);
 });
 </script>
 

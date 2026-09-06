@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\Likes\ToggleLike;
 use App\Actions\Profiles\LoadProfileForDisplay;
+use App\Concerns\CommentValidationRules;
 use App\Concerns\ReviewValidationRules;
 use App\Enums\ReportCategory;
 use App\Enums\ReportReason;
@@ -73,9 +74,20 @@ use Inertia\Response;
  * without changing it for the widget. HomeController does the same thing
  * through its Form Request's accessors for `filterBounds`; this page has no
  * Form Request to hang them on, so the Concern is used directly.
+ *
+ * `commentBounds` is here for the same reason and by the same route, through
+ * App\Concerns\CommentValidationRules. The listings this page renders are the
+ * same cards the feed renders, and a card opens the same comments dialog; a
+ * composer that has not been told the ceiling ships no `maxlength` and no
+ * counter, accepts more than the `max:` rule allows, and strands the text on
+ * the 422. Only `pets.show` used to supply it, so the dialog behaved one way
+ * from a listing page and another way from here. Same key and same snake_case
+ * shape on all three pages, so the dialog reads one contract and never asks
+ * which page mounted it. Both accessors are `config()` reads — no query.
  */
 class ProfileController extends Controller
 {
+    use CommentValidationRules;
     use ReviewValidationRules;
 
     /**
@@ -93,12 +105,14 @@ class ProfileController extends Controller
      * same relation with the same ordering, for a client that would rather fetch
      * than visit.
      *
-     * **`resources/js/pages/profile/Show.vue` does not exist yet.** The route,
-     * the payload and its tests are real; the page component is Phase 4's,
-     * alongside `settings/Profile.vue` (which was never rewritten for
-     * ProfileFormResource) and the `messaging/Index.vue` / `messaging/Show.vue`
-     * pair outstanding since Phase 2d. Visiting this route renders nothing
-     * until it lands — the five props below are the contract it is built to.
+     * **`resources/js/pages/profile/Show.vue` exists now**, so the props below
+     * are a live contract rather than one written ahead of its consumer — the
+     * note here that the component was still Phase 4's outstanding work is
+     * stale. It reads `profile`, `listings`, `reviews`, `reportCategories`,
+     * `reportReasons` and `reviewBounds` through ProfileHeader /
+     * ProfileListings / ProfileReviews, and `commentBounds` off page props from
+     * the card's comments dialog. Renaming any of them now breaks a page as
+     * well as a test; see .ai/rules/resources.md.
      */
     public function show(
         Request $request,
@@ -116,6 +130,7 @@ class ProfileController extends Controller
             'reportCategories' => ReportCategory::options(),
             'reportReasons' => ReportReason::options(),
             'reviewBounds' => $this->reviewBounds(),
+            'commentBounds' => $this->commentBounds(),
         ]);
     }
 

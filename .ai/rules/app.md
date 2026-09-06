@@ -5,6 +5,12 @@ paths:
 
 # App
 
+> **Widening a signature can lose a capability the same way deleting code does** — here the shape
+> is a parameter gaining a default or a `?` type, so every existing caller still compiles and the
+> loss only shows at a caller that never supplied the value. The review check, its
+> operationalisation and the measured instance live in `.ai/rules/general.md`, "Review what a
+> change REMOVED — and what it merely made optional". This is a pointer, not a copy.
+
 ## Controllers stay thin: Actions and Pipelines hold the logic
 Controllers only validate (Form Request), delegate, and return a response — no business logic, no queries, no conditionals beyond guard clauses.
 
@@ -104,3 +110,32 @@ The four-point list above ("No session / no usable sign-in / no public profile /
 Read point 3 as: **not addressable by id, anywhere.** `User::resolveRouteBinding()` refuses a deactivated account, so `profile.show` and `profile.like` are a **404** (not the 403 this file records) and every `findVisibleOrFail()` caller inherits it. `UserPolicy::view` still refuses the profile and still answers `Gate::allows()` directly; it is no longer the only enforcement point or the one a URL hits first. Full reasoning in .ai/rules/models.md.
 
 Unchanged: existing listings, comments and the reviews the account *wrote about other people* stay published. Only the endpoint that addresses the account itself stopped answering.
+
+## whereHas on a one-of-many relation scans the whole child table
+`latestOfMany()` / `oldestOfMany()` / `ofMany()` relations are cheap to *eager load* and expensive to *filter by*. An existence check on one compiles to `exists (... inner join (subquery) ...)` where the subquery groups the entire child table by the foreign key, uncorrelated — nothing from the outer query narrows it, so no index and no statistic changes what it reads.
+
+Measured on dev MySQL 8.0.46 (15 conversations, 277 rows in `messages`), `Conversation::lastMessage()` = `hasOne(Message::class)->latestOfMany('created_at')`, for one user with 5 conversations. `whereHas('lastMessage', ...)`:
+
+```
+PRIMARY  conversations      type=ALL     key=NULL                                       rows=15
+PRIMARY  conversation_user  type=eq_ref  key=conversation_user_conversation_id_user_id_unique  rows=1
+PRIMARY  <derived3>         type=ref     key=<auto_key1>                                rows=2
+PRIMARY  messages           type=eq_ref  key=PRIMARY                                    rows=1
+DERIVED  <derived4>         type=ALL     key=NULL                                       rows=27
+DERIVED  messages           type=ref     key=messages_conversation_id_created_at_index  rows=1
+DERIVED  messages           type=index   key=messages_conversation_id_created_at_index  rows=277   <- every row in the table
+```
+
+The same predicate written as a correlated subquery on the `$column` side of `where()` (`where(Message::query()->select('sender_id')->whereColumn(...)->orderByDesc(...)->limit(1), '!=', $id)`):
+
+```
+PRIMARY            conversations      type=ALL     key=NULL                                       rows=15  Using where
+PRIMARY            conversation_user  type=eq_ref  key=conversation_user_conversation_id_user_id_unique  rows=1
+DEPENDENT SUBQUERY messages           type=ref     key=messages_conversation_id_created_at_index  rows=18  Using where; Using filesort
+```
+
+Same answer, one index lookup per candidate row instead of a full-table materialisation. `Actions\Messaging\CountUnreadConversations` is the worked example and carries the full reasoning.
+
+Two caveats, both measured: reading through `Model::query()` inside the subquery keeps the child's global scopes (SoftDeletes) — a raw string does not, and that clause is load-bearing. And do not read the *outer* half of either plan as a property: at 15 rows MySQL drives from a full scan of `conversations` in both, the opposite of the plan `BuildInbox` records for the sibling query, and the optimiser will likely flip as the table grows.
+
+This is filed under `app/**` on purpose. The mistake is written wherever queries are composed — `app/Actions/**`, `app/Pipelines/**` and model scopes in `app/Models/**` — not where the fixed Action happens to live (see "A rule's glob must cover where the mistake gets made").

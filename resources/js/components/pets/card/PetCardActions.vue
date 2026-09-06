@@ -4,12 +4,17 @@ import { ArrowRight } from '@lucide/vue';
 import { computed } from 'vue';
 import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
 import { countLabel } from '@/components/pets/card/labels';
-import PetCardCommentLink from '@/components/pets/card/PetCardCommentLink.vue';
+import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vue';
 import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
 import { Button } from '@/components/ui/button';
 import { show as showPet } from '@/routes/pets';
-import type { PetCard } from '@/types';
+import type {
+    PetCard,
+    ReportCategory,
+    ReportReason,
+    SelectOption,
+} from '@/types';
 
 /**
  * The card's action row.
@@ -28,7 +33,9 @@ import type { PetCard } from '@/types';
  *
  * - **Like** — `PetLikeButton` swaps `pets.like` for `login()` when `canLike`
  *   is false. That is the component's own contract; it is reused, not rebuilt.
- * - **Comment** — `pets.show` is public, so it is unchanged for a guest.
+ * - **Comment** — reading a thread is public, so the dialog opens for a guest
+ *   with a sign-in line where the composer would be and no write control in
+ *   any row. `comments.index` is a `GET` outside the `auth` group.
  * - **Message** — absent. `StartConversationButton` is rendered only for a
  *   signed-in viewer who is not the owner.
  * - **Share** — external destinations and the clipboard only; no account.
@@ -70,6 +77,23 @@ const { pet, canInteract } = defineProps<{
     pet: PetCard;
     /** A signed-in viewer. Every write on this row needs a verified account. */
     canInteract: boolean;
+    /**
+     * `commentBounds.max_length`, `reportCategories` and `reportReasons`, from
+     * whichever page mounted the card. Both pages that render a card — `Home`
+     * and `profile.show` — ship all three today, as `pets.show` does for its
+     * inline thread; established 2026-09-06 by reading the three
+     * `Inertia::render()` payloads, not by rendering them.
+     *
+     * They stay optional as a fallback rather than as a description of a
+     * current page: a prop that fails to arrive turns off exactly one control
+     * and nothing else, silently and with no type error. See
+     * `PetCardCommentButton`, which documents which control each one turns off,
+     * and `PetListingCard`, which reads them off `page.props` and carries why
+     * the casts there hide a missing key from `vue-tsc`.
+     */
+    commentMaxLength?: number | null;
+    reportCategories?: SelectOption<ReportCategory>[];
+    reportReasons?: SelectOption<ReportReason>[];
 }>();
 
 /** The owner, only when there is somebody signed in who is not them. */
@@ -126,10 +150,15 @@ const messageLabel = computed(() =>
                 :aria-label="likeLabel"
             />
 
-            <PetCardCommentLink
+            <PetCardCommentButton
                 :pet-id="pet.id"
                 :name="pet.name"
                 :comments-count="pet.comments_count"
+                :comments="pet.comments"
+                :can-interact="canInteract"
+                :max-length="commentMaxLength"
+                :report-categories="reportCategories"
+                :report-reasons="reportReasons"
             />
 
             <PetCardShareMenu :pet-id="pet.id" :name="pet.name" />

@@ -5,6 +5,14 @@ paths:
 
 # Tests
 
+> **"Not observable by this fleet" is a claim to test, not to record as a gap.** The absence of a
+> browser test runner from `package.json` is evidence about the tooling, not about whether a
+> rendered behaviour can be checked; an unattempted check and an impossible one look identical in
+> a report that says neither was tried. The chain that hardened that inference into a standing
+> prohibition, and the no-dependency method that disproved it, are in `.ai/rules/general.md`,
+> "Amplification toward inaction: absence of a tool is evidence about the tool, not about the
+> task". This is a pointer, not a copy.
+
 ## UploadedFile::fake()->create() is a 0-byte file and leaks a medialibrary temp directory per media add
 `UploadedFile::fake()->create('avatar.jpg', 10)` does **not** produce a 10 KB file. `FileFactory::create()` returns `new File($name, tmpfile())` and only fakes the reported size (`$file->sizeToReport = $kilobytes * 1024`). The bytes on disk are zero. Only `->image()` and `->createWithContent()` write real content.
 

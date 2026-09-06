@@ -17,10 +17,16 @@ import type { User } from '@/types';
  * The signed-in trigger in the header: avatar with a brand ring, first name
  * from `sm` up, and a chevron that turns when the menu opens.
  *
- * There is no presence dot. The legacy navbar had none either, and nothing in
- * this application tracks presence — `ProfileResource` dropped `last_seen_at`
- * because nothing writes the column. A dot here would paint a state that does
- * not exist. Add one when presence does.
+ * There is no presence dot, and legacy had one:
+ * `components/web/UserDropdown.vue:88-91` hangs a `bg-emerald-500` "online
+ * status indicator" off the corner of this avatar, unconditionally. It is
+ * deliberately not ported, because nothing in this application tracks presence:
+ * `ProfileResource` dropped `last_seen_at` on the finding that **no code path
+ * ever writes the column** — only the factory and the seeder do — and
+ * `AuthenticatedUserResource` never carried it either
+ * (.ai/rules/resources.md). An always-green dot is decoration wearing the
+ * clothes of a status, which is one of the twelve defects .ai/rules/general.md
+ * names. Add it when presence exists.
  *
  * Only the trigger is ours. The menu body is `UserMenuContent`, which already
  * owns the profile header, the settings and help items and the logout POST —

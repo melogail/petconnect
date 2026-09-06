@@ -11,7 +11,13 @@ import PetCardMedia from '@/components/pets/card/PetCardMedia.vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocale } from '@/composables/useLocale';
 import { taxonomyName } from '@/lib/taxonomy';
-import type { PetCard } from '@/types';
+import type {
+    CommentBounds,
+    PetCard,
+    ReportCategory,
+    ReportReason,
+    SelectOption,
+} from '@/types';
 
 /**
  * One listing, as a grid tile.
@@ -69,6 +75,58 @@ const page = usePage();
 
 /** A signed-in viewer. Every write the action row offers needs one. */
 const canInteract = computed(() => Boolean(page.props.auth.user));
+
+/**
+ * The three props the card's comments dialog needs, read off the page rather
+ * than taken as props — for the same reason `canInteract` is: both consumers
+ * (`PetFeed.vue` via `Home.vue`, `profile/ProfileListings.vue`) pass nothing
+ * but `pet`, and neither should have to learn what a comment row needs in order
+ * to render a tile.
+ *
+ * They are *page* props, not shared ones, so which page mounted the card is
+ * what decides whether they arrive, and `sharedPageProps`' index signature
+ * types them `unknown` — hence the casts, which are the narrowest thing that
+ * will do and are confined to this component.
+ *
+ * **Both pages that mount this card ship all three today**, as `pets.show`
+ * does for its inline thread (and it renders no card). Established 2026-09-06
+ * by reading the `Inertia::render()` payloads of `HomeController::index`,
+ * `ProfileController::show` and `PetController::show`, each of which sends
+ * `reportCategories`, `reportReasons` and `commentBounds`; not by rendering
+ * any of them.
+ *
+ * The optionality below is therefore a *fallback*, not a description of any
+ * current page: each prop that fails to arrive turns off exactly one control —
+ * no character counter without the bound, no report entry in a comment's menu
+ * without both vocabularies — rather than breaking the dialog. Nothing errors
+ * and `vue-tsc` stays clean either way, which is the whole hazard: the three
+ * `as ... | undefined` casts here are a widening on server-supplied props, so
+ * they silence the one tool that would otherwise catch a controller that
+ * stopped sending a key (`.ai/rules/general.md`, "Review what a change REMOVED
+ * — and what it merely made optional").
+ *
+ * Read those three controller keys as live consumers of this component, not as
+ * spare payload. `Home` carrying the two report vocabularies repairs a parity
+ * regression against legacy and `reportCategories` goes past what legacy ever
+ * sent, so parity is the floor here and never a licence to delete: removing one
+ * key turns its control off on that page silently.
+ */
+const commentMaxLength = computed(
+    () =>
+        (page.props.commentBounds as CommentBounds | undefined)?.max_length ??
+        null,
+);
+
+const reportCategories = computed(
+    () =>
+        page.props.reportCategories as
+            | SelectOption<ReportCategory>[]
+            | undefined,
+);
+
+const reportReasons = computed(
+    () => page.props.reportReasons as SelectOption<ReportReason>[] | undefined,
+);
 
 const place = computed(() =>
     [pet.city, pet.state, pet.country].filter(Boolean).join(', '),
@@ -140,7 +198,13 @@ const kind = computed(() => {
 
             <PetCardDescription :description="pet.description" />
 
-            <PetCardActions :pet="pet" :can-interact="canInteract" />
+            <PetCardActions
+                :pet="pet"
+                :can-interact="canInteract"
+                :comment-max-length="commentMaxLength"
+                :report-categories="reportCategories"
+                :report-reasons="reportReasons"
+            />
 
             <PetCardCommentTeaser
                 :pet-id="pet.id"

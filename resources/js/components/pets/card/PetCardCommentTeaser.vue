@@ -28,8 +28,9 @@ import type { CommentPreview } from '@/types';
  * `commentsCount` is the true total and counts replies too, so it is almost
  * always larger than `comments.length`; the "view all" link is gated on that
  * difference rather than rendered unconditionally, because when the teaser
- * already shows everything there is, the comment control in the action row is
- * the same link to the same page.
+ * already shows everything there is, the link only repeats what is on screen —
+ * and the comment control in the action row (`PetCardCommentButton`, a dialog
+ * trigger rather than a link since the port) reaches the same thread anyway.
  */
 const { comments, commentsCount, name } = defineProps<{
     petId: number;

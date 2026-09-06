@@ -15,7 +15,15 @@ import { show as showPet } from '@/routes/pets';
  * the ring is a 3px-spread `box-shadow` and the `<h3>` left exactly 0px of
  * horizontal slack on either side of the `<a>`. The computed style will not
  * show you this: it reads the same 3px `oklab(... / 0.5)` shadow either way.
- * Only the painted pixels do. Screenshotted at a 320px viewport with the link
+ * Only the painted pixels do. That identity is narrow, and here is the scope
+ * it holds within, so it is not carried past it: what differs between the two
+ * arrangements is the **ancestor's** clip box, not any property of the `<a>`
+ * itself, so this element has nothing for computed style to differ *on*. Where
+ * the differing property does belong to the element, computed style sees it
+ * perfectly well — `pr-6` against `pe-6` under `dir="rtl"` yields a different
+ * `padding-right` / `padding-left`, and reaching for painted pixels there would
+ * be reading this observation outside the clause that bounds it.
+ * Screenshotted at a 320px viewport with the link
  * focused and the ring animation settled, sampling 2px outside each vertical
  * edge of the link box: rgb(255,255,255) — bare card — with `truncate` on the
  * `<h3>`, rgb(132,132,132) — ring — with it on the `<a>`, in both `ltr` and
