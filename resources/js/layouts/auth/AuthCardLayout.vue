@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import {
     Card,
@@ -8,7 +9,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { home } from '@/routes';
-import { Link } from '@inertiajs/vue3';
 
 defineProps<{
     title?: string;
@@ -34,7 +34,7 @@ defineProps<{
 
             <div class="flex flex-col gap-6">
                 <Card class="rounded-xl">
-                    <CardHeader class="px-10 pb-0 pt-8 text-center">
+                    <CardHeader class="px-10 pt-8 pb-0 text-center">
                         <CardTitle class="text-xl">{{ title }}</CardTitle>
                         <CardDescription>
                             {{ description }}

@@ -1,0 +1,200 @@
+[
+    {
+        "city": "Cairo",
+        "state": "Cairo",
+        "country": "Egypt",
+        "postal_code": "11511",
+        "latitude": 30.0444,
+        "longitude": 31.2357,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Giza",
+        "state": "Giza",
+        "country": "Egypt",
+        "postal_code": "12511",
+        "latitude": 30.0131,
+        "longitude": 31.2089,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Alexandria",
+        "state": "Alexandria",
+        "country": "Egypt",
+        "postal_code": "21500",
+        "latitude": 31.2001,
+        "longitude": 29.9187,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Mansoura",
+        "state": "Dakahlia",
+        "country": "Egypt",
+        "postal_code": "35511",
+        "latitude": 31.0409,
+        "longitude": 31.3785,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Tanta",
+        "state": "Gharbia",
+        "country": "Egypt",
+        "postal_code": "31511",
+        "latitude": 30.7865,
+        "longitude": 31.0004,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Port Said",
+        "state": "Port Said",
+        "country": "Egypt",
+        "postal_code": "42511",
+        "latitude": 31.2653,
+        "longitude": 32.3019,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Suez",
+        "state": "Suez",
+        "country": "Egypt",
+        "postal_code": "43511",
+        "latitude": 29.9668,
+        "longitude": 32.5498,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Ismailia",
+        "state": "Ismailia",
+        "country": "Egypt",
+        "postal_code": "41511",
+        "latitude": 30.5965,
+        "longitude": 32.2715,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Zagazig",
+        "state": "Sharqia",
+        "country": "Egypt",
+        "postal_code": "44511",
+        "latitude": 30.5877,
+        "longitude": 31.502,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Damietta",
+        "state": "Damietta",
+        "country": "Egypt",
+        "postal_code": "34511",
+        "latitude": 31.4165,
+        "longitude": 31.8133,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Asyut",
+        "state": "Asyut",
+        "country": "Egypt",
+        "postal_code": "71511",
+        "latitude": 27.1809,
+        "longitude": 31.1837,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Minya",
+        "state": "Minya",
+        "country": "Egypt",
+        "postal_code": "61511",
+        "latitude": 28.1099,
+        "longitude": 30.7503,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Luxor",
+        "state": "Luxor",
+        "country": "Egypt",
+        "postal_code": "85951",
+        "latitude": 25.6872,
+        "longitude": 32.6396,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Aswan",
+        "state": "Aswan",
+        "country": "Egypt",
+        "postal_code": "81511",
+        "latitude": 24.0889,
+        "longitude": 32.8998,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Hurghada",
+        "state": "Red Sea",
+        "country": "Egypt",
+        "postal_code": "84511",
+        "latitude": 27.2579,
+        "longitude": 33.8116,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Sharm El Sheikh",
+        "state": "South Sinai",
+        "country": "Egypt",
+        "postal_code": "46619",
+        "latitude": 27.9158,
+        "longitude": 34.33,
+        "timezone": "Africa/Cairo"
+    },
+    {
+        "city": "Dubai",
+        "state": "Dubai",
+        "country": "United Arab Emirates",
+        "postal_code": "00000",
+        "latitude": 25.2048,
+        "longitude": 55.2708,
+        "timezone": "Asia/Dubai"
+    },
+    {
+        "city": "Abu Dhabi",
+        "state": "Abu Dhabi",
+        "country": "United Arab Emirates",
+        "postal_code": "00000",
+        "latitude": 24.4539,
+        "longitude": 54.3773,
+        "timezone": "Asia/Dubai"
+    },
+    {
+        "city": "Riyadh",
+        "state": "Riyadh",
+        "country": "Saudi Arabia",
+        "postal_code": "11564",
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "timezone": "Asia/Riyadh"
+    },
+    {
+        "city": "Jeddah",
+        "state": "Makkah",
+        "country": "Saudi Arabia",
+        "postal_code": "23218",
+        "latitude": 21.4858,
+        "longitude": 39.1925,
+        "timezone": "Asia/Riyadh"
+    },
+    {
+        "city": "Amman",
+        "state": "Amman",
+        "country": "Jordan",
+        "postal_code": "11118",
+        "latitude": 31.9454,
+        "longitude": 35.9284,
+        "timezone": "Asia/Amman"
+    },
+    {
+        "city": "Kuwait City",
+        "state": "Al Asimah",
+        "country": "Kuwait",
+        "postal_code": "13001",
+        "latitude": 29.3759,
+        "longitude": 47.9774,
+        "timezone": "Asia/Kuwait"
+    }
+]

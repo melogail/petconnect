@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Admin;
+use App\Models\User;
+
 return [
 
     /*
@@ -40,6 +43,7 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
         'admin' => [
             'driver' => 'session',
             'provider' => 'admins',
@@ -66,11 +70,12 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
+
         'admins' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\Admin::class),
+            'model' => env('AUTH_ADMIN_MODEL', Admin::class),
         ],
 
         // 'users' => [
@@ -108,7 +113,7 @@ return [
 
         'admins' => [
             'provider' => 'admins',
-            'table' => env('ADMIN_PASSWORD_RESET_TOKEN_TABLE', 'admin_password_reset_tokens'),
+            'table' => env('AUTH_ADMIN_PASSWORD_RESET_TOKEN_TABLE', 'admin_password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,
         ],
@@ -119,12 +124,24 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
-    | Here you may define the amount of seconds before a password confirmation
+    | Here you may define the number of seconds before a password confirmation
     | window expires and users are asked to re-enter their password via the
-    | confirmation screen. By default, the timeout lasts for three hours.
+    | confirmation screen.
+    |
+    | One hour, not the framework default of three. What a confirmation buys
+    | here is wider than what the default assumes: it unlocks `settings/
+    | security`, GET `user/two-factor-recovery-codes`, `two-factor.disable`,
+    | `passkey.store` and `passkey.destroy` — and a passkey registered inside
+    | the window survives a later password change, so the window is the whole
+    | distance between a borrowed session and a permanent one. An hour is long
+    | enough that nobody re-types a password while working through the security
+    | page, and short enough that a session left open on a shared machine goes
+    | cold. The other half of the same fix is the `password-confirmations`
+    | limiter in AppServiceProvider, which bounds how fast the window can be
+    | opened by guessing.
     |
     */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 3600),
 
 ];

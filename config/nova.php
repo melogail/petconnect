@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Middleware\ThrottleAuthRoutes;
+use Illuminate\Http\Middleware\CheckResponseForModifications;
+use Laravel\Nova\Actions\ActionResource;
+use Laravel\Nova\Http\Middleware\Authenticate;
+use Laravel\Nova\Http\Middleware\Authorize;
+use Laravel\Nova\Http\Middleware\HandleInertiaRequests;
+
 return [
 
     /*
@@ -39,7 +46,7 @@ return [
     |
     */
 
-    'domain' => env('NOVA_DOMAIN_NAME', null),
+    'domain' => env('NOVA_DOMAIN', env('NOVA_DOMAIN_NAME')),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +59,7 @@ return [
     |
     */
 
-    'path' => '/nova',
+    'path' => env('NOVA_PATH', '/nova'),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,9 +70,16 @@ return [
     | be used to protect your Nova routes. This option should match one
     | of the authentication guards defined in the "auth" config file.
     |
+    | The default is "admin" rather than null on purpose. Nova resolves its
+    | guard with `config('nova.guard') ?? config('auth.defaults.guard')`
+    | (Laravel\Nova\Util::userGuard), so leaving this null would silently put
+    | the back office on the "web" guard and let any registered App\Models\User
+    | sign in to /nova. The back office authenticates App\Models\Admin on the
+    | "admin" guard, which is backed by the "admins" provider in config/auth.php.
+    |
     */
 
-    'guard' => env('NOVA_GUARD', null),
+    'guard' => env('NOVA_GUARD', 'admin'),
 
     /*
     |--------------------------------------------------------------------------
@@ -76,9 +90,13 @@ return [
     | used when passwords are reset. This option should mirror one of
     | the password reset options defined in the "auth" config file.
     |
+    | Defaulted to the "admins" broker, which resets passwords against the
+    | admin_password_reset_tokens table. A null value falls back to the
+    | application's default broker, which resets App\Models\User passwords.
+    |
     */
 
-    'passwords' => env('NOVA_PASSWORDS', null),
+    'passwords' => env('NOVA_PASSWORDS', 'admins'),
 
     /*
     |--------------------------------------------------------------------------
@@ -91,23 +109,53 @@ return [
     |
     */
 
+    /*
+     * ThrottleAuthRoutes is here for two routes Nova registers without a
+     * limiter of any kind: `nova.password.confirm` (POST
+     * nova/user-security/confirm-password), which unthrottled is a yes/no
+     * password oracle for an admin account, and `nova.password.reset` (POST
+     * nova/password/reset), which sets an admin password on a hit and, on a
+     * miss, pins a PHP worker for 200 ms per POST — `PasswordBroker::reset()`
+     * runs inside a Timebox at `config('auth.timebox_duration')`, unset here so
+     * the framework's 200,000 µs default, and only the success path calls
+     * `returnEarly()`. (The miss is cheap in queries — one indexed `admins`
+     * lookup, one primary-key read of `admin_password_reset_tokens` and at most
+     * one bcrypt — so the reasons to throttle it are the held worker and the
+     * credential it pays out, not per-request work. Full reasoning in
+     * App\Http\Middleware\ThrottleAuthRoutes.) Nova reads
+     * `fortify.limiters` for its login, passkey, two-factor and verification
+     * routes and has no slot for either of these.
+     *
+     * It sits in *this* list rather than in `api_middleware`, where it used to,
+     * because of how NovaCoreServiceProvider builds its groups: `nova` is this
+     * array, `nova:api` is `api_middleware` (whose first entry is `nova`), and
+     * `nova:auth` is this array plus RedirectIfAuthenticated. The password reset
+     * routes are registered with `nova:auth`, which `api_middleware` never
+     * reaches — listed there, the middleware ran on every `nova-api/*` call and
+     * on none of the routes it is now needed for. From here it reaches all
+     * three groups once.
+     *
+     * It no-ops on every route name that is not in its map, so the rest of Nova
+     * pays one array lookup for it.
+     */
     'middleware' => [
         'web',
-        \Laravel\Nova\Http\Middleware\HandleInertiaRequests::class,
+        ThrottleAuthRoutes::class,
+        HandleInertiaRequests::class,
         'nova:serving',
     ],
 
     'api_middleware' => [
         'nova',
-        \Laravel\Nova\Http\Middleware\Authenticate::class,
+        Authenticate::class,
         // \Laravel\Nova\Http\Middleware\AuthenticateSession::class,
         // \Laravel\Nova\Http\Middleware\EnsureEmailIsVerified::class,
-        \Laravel\Nova\Http\Middleware\Authorize::class,
+        Authorize::class,
     ],
 
     'asset_middleware' => [
         'nova:api',
-        \Illuminate\Http\Middleware\CheckResponseForModifications::class,
+        CheckResponseForModifications::class,
     ],
 
     /*
@@ -183,7 +231,7 @@ return [
     */
 
     'actions' => [
-        'resource' => \Laravel\Nova\Actions\ActionResource::class,
+        'resource' => ActionResource::class,
     ],
 
     /*

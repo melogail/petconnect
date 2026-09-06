@@ -1,18 +1,13 @@
 <script setup lang="ts">
-import { cn } from '@/lib/utils'
-import { Label, type LabelProps } from 'reka-ui'
-import { computed, type HTMLAttributes } from 'vue'
+import type { LabelProps } from "reka-ui"
+import type { HTMLAttributes } from "vue"
+import { reactiveOmit } from "@vueuse/core"
+import { Label } from "reka-ui"
+import { cn } from "@/lib/utils"
 
-const props = withDefaults(
-  defineProps<LabelProps & { class?: HTMLAttributes['class']; isRequired?: boolean }>(),
-  { isRequired: false }
-)
+const props = defineProps<LabelProps & { class?: HTMLAttributes["class"] }>()
 
-const delegatedProps = computed(() => {
-  const { class: _, isRequired: __, ...delegated } = props
-
-  return delegated
-})
+const delegatedProps = reactiveOmit(props, "class")
 </script>
 
 <template>
@@ -27,6 +22,5 @@ const delegatedProps = computed(() => {
     "
   >
     <slot />
-    <span v-if="props.isRequired" class="ml-1 text-red-500" aria-hidden>*</span>
   </Label>
 </template>

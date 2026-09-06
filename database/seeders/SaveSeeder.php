@@ -3,45 +3,48 @@
 namespace Database\Seeders;
 
 use App\Models\Pet;
-use App\Models\Save;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class SaveSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * How many listings a user bookmarks.
+     */
+    public const MIN_PER_USER = 3;
+
+    public const MAX_PER_USER = 10;
+
+    /**
+     * Bookmark listings for every user who has none.
+     *
+     * `saves` is unique on (user_id, saveable_id, saveable_type); the pets one
+     * user bookmarks are a random subset of *distinct* listings, and
+     * HasSaves::addSave() is a firstOrCreate, so no duplicate can be inserted.
      */
     public function run(): void
     {
-        $pets = Pet::all();
-        $users = User::all();
+        DB::transaction(function (): void {
+            /** @var Collection<int, Pet> $pets */
+            $pets = Pet::query()->select(['id'])->get();
 
-        if ($pets->isEmpty() || $users->isEmpty()) {
-            $this->command->warn('Please run PetSeeder and UserSeeder first!');
-
-            return;
-        }
-
-        // Each user saves 3-10 random pets
-        foreach ($users as $user) {
-            $saveCount = rand(3, 10);
-            $savedPets = $pets->random(min($saveCount, $pets->count()));
-
-            foreach ($savedPets as $pet) {
-                try {
-                    Save::create([
-                        'user_id' => $user->id,
-                        'saveable_type' => Pet::class,
-                        'saveable_id' => $pet->id,
-                    ]);
-                } catch (\Exception $e) {
-                    // Skip if duplicate (unique constraint)
-                    continue;
-                }
+            if ($pets->isEmpty()) {
+                throw new RuntimeException('No listings to bookmark; run PetSeeder first.');
             }
-        }
 
-        $this->command->info('Created '.Save::count().' saves successfully!');
+            User::query()
+                ->doesntHave('saves')
+                ->lazyById()
+                ->each(function (User $user) use ($pets): void {
+                    $count = fake()->numberBetween(self::MIN_PER_USER, self::MAX_PER_USER);
+
+                    foreach ($pets->shuffle()->take($count) as $pet) {
+                        $pet->addSave($user);
+                    }
+                });
+        });
     }
 }

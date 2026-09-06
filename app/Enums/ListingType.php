@@ -2,11 +2,15 @@
 
 namespace App\Enums;
 
-enum ListingType: int
+use App\Concerns\HasOptions;
+
+enum ListingType: string
 {
-    case Adoption = 1;
-    case Sale = 2;
-    case Mating = 3;
+    use HasOptions;
+
+    case Adoption = 'adoption';
+    case Sale = 'sale';
+    case Mating = 'mating';
 
     public function label(): string
     {
@@ -15,22 +19,5 @@ enum ListingType: int
             self::Sale => 'Sale',
             self::Mating => 'Mating',
         };
-    }
-
-    public function style(): string
-    {
-        return match ($this) {
-            self::Adoption => 'bg-gray-200',
-            self::Sale => 'bg-green-200',
-            self::Mating => 'bg-red-200',
-        };
-    }
-
-    public static function options(): array
-    {
-        return array_map(
-            fn($case) => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

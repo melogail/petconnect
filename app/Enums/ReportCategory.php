@@ -2,32 +2,28 @@
 
 namespace App\Enums;
 
+use App\Concerns\HasOptions;
+
 enum ReportCategory: string
 {
-    case abuse = 'Abuse';
-    case bug = 'Bug';
-    case copyright = 'Copyright';
-    case technical = 'Technical';
-    case feedback = 'Feedback';
-    case other = 'Other';
+    use HasOptions;
+
+    case Abuse = 'abuse';
+    case Bug = 'bug';
+    case Copyright = 'copyright';
+    case Technical = 'technical';
+    case Feedback = 'feedback';
+    case Other = 'other';
 
     public function label(): string
     {
         return match ($this) {
-            self::abuse => 'Abuse',
-            self::bug => 'Bug',
-            self::copyright => 'Copyright',
-            self::technical => 'Technical',
-            self::feedback => 'Feedback',
-            self::other => 'Other',
+            self::Abuse => 'Abuse',
+            self::Bug => 'Bug',
+            self::Copyright => 'Copyright',
+            self::Technical => 'Technical',
+            self::Feedback => 'Feedback',
+            self::Other => 'Other',
         };
-    }
-
-    public static function options(): array
-    {
-        return array_map(
-            fn ($case) => ['value' => $case->value, 'label' => $case->label()],
-            self::cases()
-        );
     }
 }

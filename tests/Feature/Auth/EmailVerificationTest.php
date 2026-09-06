@@ -4,7 +4,12 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
-use Inertia\Testing\AssertableInertia as Assert;
+use Inertia\Testing\AssertableInertia;
+use Laravel\Fortify\Features;
+
+beforeEach(function () {
+    $this->skipUnlessFortifyHas(Features::emailVerification());
+});
 
 test('email verification screen can be rendered', function () {
     $user = User::factory()->unverified()->create();
@@ -12,24 +17,6 @@ test('email verification screen can be rendered', function () {
     $response = $this->actingAs($user)->get(route('verification.notice'));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
-        ->component('auth/VerifyEmail')
-        ->where('status', null)
-    );
-});
-
-test('email verification screen shows resent status', function () {
-    $user = User::factory()->unverified()->create();
-
-    $response = $this->actingAs($user)
-        ->withSession(['status' => 'verification-link-sent'])
-        ->get(route('verification.notice'));
-
-    $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
-        ->component('auth/VerifyEmail')
-        ->where('status', 'verification-link-sent')
-    );
 });
 
 test('email can be verified', function () {
@@ -40,12 +27,13 @@ test('email can be verified', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1($user->email)]
+        ['id' => $user->id, 'hash' => sha1($user->email)],
     );
 
     $response = $this->actingAs($user)->get($verificationUrl);
 
     Event::assertDispatched(Verified::class);
+
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     $response->assertRedirect(route('home', absolute: false).'?verified=1');
 });
@@ -58,7 +46,7 @@ test('email is not verified with invalid hash', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1('wrong-email')]
+        ['id' => $user->id, 'hash' => sha1('wrong-email')],
     );
 
     $this->actingAs($user)->get($verificationUrl);
@@ -75,7 +63,7 @@ test('email is not verified with invalid user id', function () {
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => 123, 'hash' => sha1($user->email)]
+        ['id' => 123, 'hash' => sha1($user->email)],
     );
 
     $this->actingAs($user)->get($verificationUrl);
@@ -84,7 +72,7 @@ test('email is not verified with invalid user id', function () {
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
-test('verified user is redirected to home from verification prompt', function () {
+test('verified user is redirected to the feed from verification prompt', function () {
     $user = User::factory()->create();
 
     Event::fake();
@@ -103,7 +91,7 @@ test('already verified user visiting verification link is redirected without fir
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1($user->email)]
+        ['id' => $user->id, 'hash' => sha1($user->email)],
     );
 
     $this->actingAs($user)->get($verificationUrl)
@@ -111,4 +99,29 @@ test('already verified user visiting verification link is redirected without fir
 
     Event::assertNotDispatched(Verified::class);
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+/**
+ * `resources/js/pages/auth/VerifyEmail.vue` draws its "a new link has been
+ * sent" banner on `status === 'verification-link-sent'`, and Fortify flashes
+ * that key on a `back()` — so the banner is only reachable for somebody who was
+ * already on the notice page. Nothing else in the suite exercises the resend
+ * from there, and a redirect changed to anywhere but back would leave the
+ * branch permanently unreached with no other symptom: the mail still goes out,
+ * and the visitor is told nothing.
+ */
+test('tells the visitor a new link has been sent when they resend from the notice', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)
+        ->from(route('verification.notice'))
+        ->post(route('verification.send'))
+        ->assertRedirect(route('verification.notice'));
+
+    $this->actingAs($user)
+        ->get(route('verification.notice'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('auth/VerifyEmail')
+            ->where('status', 'verification-link-sent'));
 });

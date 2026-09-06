@@ -12,5 +12,40 @@
         "name_ar": "قطط",
         "description": "Independent and affectionate feline companions",
         "description_ar": "رفاق قطط مستقلون وعاطفيون"
+    },
+    {
+        "slug": "birds",
+        "name": "Birds",
+        "name_ar": "طيور",
+        "description": "Colourful, talkative companions that fill a home with song",
+        "description_ar": "رفاق ملونون وثرثارون يملأون المنزل بالتغريد"
+    },
+    {
+        "slug": "rabbits",
+        "name": "Rabbits",
+        "name_ar": "أرانب",
+        "description": "Quiet, gentle companions that thrive on routine and company",
+        "description_ar": "رفاق هادئون ولطفاء يزدهرون بالروتين والصحبة"
+    },
+    {
+        "slug": "small-pets",
+        "name": "Small Pets",
+        "name_ar": "حيوانات أليفة صغيرة",
+        "description": "Hamsters, guinea pigs, ferrets and other pocket-sized friends",
+        "description_ar": "هامستر وخنازير غينيا وفريت وأصدقاء صغار آخرون"
+    },
+    {
+        "slug": "fish",
+        "name": "Fish",
+        "name_ar": "أسماك",
+        "description": "Calm, colourful aquatic life for home and garden aquariums",
+        "description_ar": "كائنات مائية هادئة وملونة لأحواض المنزل والحديقة"
+    },
+    {
+        "slug": "reptiles",
+        "name": "Reptiles",
+        "name_ar": "زواحف",
+        "description": "Exotic cold-blooded pets for keepers who enjoy a specialist setup",
+        "description_ar": "حيوانات أليفة غريبة لمن يستمتع بالتجهيزات المتخصصة"
     }
 ]

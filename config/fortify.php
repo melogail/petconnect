@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ThrottleAuthRoutes;
 use Laravel\Fortify\Features;
 
 return [
@@ -71,9 +72,14 @@ return [
     | authentication or password reset when the operations are successful
     | and the user is authenticated. You are free to change this value.
     |
+    | The feed, not `/dashboard`: the starter kit's dashboard page and route
+    | were removed (2026-09-06) with the sidebar shell it lived in, and the
+    | legacy app had nothing there either — signing in put you on the feed.
+    | tests/Feature/DashboardTest.php pins this to `route('home')`.
+    |
     */
 
-    'home' => '/dashboard',
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -99,9 +105,16 @@ return [
     | that it registers with the application. If necessary, you may change
     | these middleware but typically this provided default is preferred.
     |
+    | ThrottleAuthRoutes is the second entry because `limiters` below has no
+    | slot for `register.store`, `password.email`, `password.confirm.store` or
+    | `password.update`, and this list is the only say the application has over
+    | the middleware of routes the package declares. It no-ops on every route
+    | name it does not recognise; read its docblock for why the alternatives do
+    | not work.
+    |
     */
 
-    'middleware' => ['web'],
+    'middleware' => ['web', ThrottleAuthRoutes::class],
 
     /*
     |--------------------------------------------------------------------------
@@ -117,6 +130,7 @@ return [
     'limiters' => [
         'login' => 'login',
         'two-factor' => 'two-factor',
+        'passkeys' => 'passkeys',
     ],
 
     /*
@@ -134,6 +148,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Passkeys
+    |--------------------------------------------------------------------------
+    |
+    | These settings configure Fortify's passkey (WebAuthn) support.
+    |
+    */
+
+    'passkeys' => [
+        'relying_party_id' => parse_url(config('app.url'), PHP_URL_HOST),
+        'allowed_origins' => [config('app.url')],
+        'user_handle_secret' => env('PASSKEYS_USER_HANDLE_SECRET', config('app.key')),
+        'timeout' => 60000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Features
     |--------------------------------------------------------------------------
     |
@@ -144,15 +174,16 @@ return [
     */
 
     'features' => [
-        // Features::registration(),
-        // Features::resetPasswords(),
-        // Features::emailVerification(),
-        // Features::updateProfileInformation(),
-        // Features::updatePasswords(),
+        Features::registration(),
+        Features::resetPasswords(),
+        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,
             // 'window' => 0
+        ]),
+        Features::passkeys([
+            'confirmPassword' => true,
         ]),
     ],
 

@@ -1,0 +1,16 @@
+<?php
+
+namespace {{ namespace }};
+
+use Closure;
+
+class {{ class }}
+{
+    /**
+     * Handle the pipeline passable.
+     */
+    public function handle(mixed $passable, Closure $next): mixed
+    {
+        return $next($passable);
+    }
+}

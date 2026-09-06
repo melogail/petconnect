@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\ConversationType;
+use Database\Factories\ConversationFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,56 +13,99 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
- * Read/unread for each participant is tracked via conversation_user.last_read_at (read cursor).
+ * A message thread between users.
+ *
+ * Read/unread for each participant is tracked via conversation_user.last_read_at
+ * (a read cursor), not per message; the pivot is App\Models\ConversationUser,
+ * which casts that column to a Carbon. `last_message_at` is maintained by
+ * App\Observers\MessageObserver.
+ *
+ * @property int $id
+ * @property ConversationType $type
+ * @property Carbon|null $last_message_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  */
+#[Fillable(['type', 'last_message_at'])]
 class Conversation extends Model
 {
-    /** @use HasFactory<\Database\Factories\ConversationFactory> */
+    /** @use HasFactory<ConversationFactory> */
     use HasFactory, SoftDeletes;
 
-    public const TYPE_DIRECT = 'direct';
-
-    protected $guarded = [];
-
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
+            'type' => ConversationType::class,
             'last_message_at' => 'datetime',
         ];
     }
 
+    /**
+     * @return BelongsToMany<User, $this, ConversationUser>
+     */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'conversation_user', 'conversation_id', 'user_id')
+            ->using(ConversationUser::class)
             ->withPivot('last_read_at')
             ->withTimestamps();
     }
 
+    /**
+     * @return HasMany<Message, $this>
+     */
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
     }
 
+    /**
+     * @return HasOne<Message, $this>
+     */
     public function lastMessage(): HasOne
     {
         return $this->hasOne(Message::class)->latestOfMany('created_at');
     }
 
-    public function scopeDirect(Builder $query): Builder
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    #[Scope]
+    protected function direct(Builder $query): Builder
     {
-        return $query->where('type', self::TYPE_DIRECT);
+        return $query->where('type', ConversationType::Direct);
     }
 
-    public function scopeForParticipant(Builder $query, User|int $user): Builder
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    #[Scope]
+    protected function forParticipant(Builder $query, User|int $user): Builder
     {
-        $userId = $user instanceof User ? $user->id : $user;
+        $userId = $user instanceof User ? $user->getKey() : $user;
 
-        return $query->whereHas('users', fn (Builder $builder) => $builder->whereKey($userId));
+        return $query->whereHas('users', fn (Builder $builder): Builder => $builder->whereKey($userId));
     }
 
-    public function scopeBetweenParticipants(Builder $query, User|int $firstUser, User|int $secondUser): Builder
+    /**
+     * The one direct conversation shared by exactly these two participants.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    #[Scope]
+    protected function betweenParticipants(Builder $query, User|int $firstUser, User|int $secondUser): Builder
     {
         return $query
             ->direct()
@@ -67,9 +114,60 @@ class Conversation extends Model
             ->has('users', '=', 2);
     }
 
+    /**
+     * Whether the given user is in this thread.
+     *
+     * Answers from the loaded `users` collection when there is one, and only
+     * falls back to an `exists()` when there is not. That is not a
+     * micro-optimisation: it is what makes MessagePolicy::create and
+     * MessagePolicy::pin query-free on a page that has already eager loaded the
+     * participants, which is what lets
+     * Http\Resources\Conversation\ConversationResource emit `can_send` per
+     * inbox row and Http\Resources\Message\MessageResource emit `can_pin` per
+     * message without a query apiece (.ai/rules/policies.md).
+     *
+     * The two branches answer the same question. `users` is a plain
+     * belongsToMany with no constraint on it, so a loaded collection is the
+     * whole membership rather than a slice of it — there is no filtered
+     * variant of the relation anywhere in the application, and if one is ever
+     * added it must not be loaded under the `users` name.
+     */
     public function hasParticipant(User $user): bool
     {
-        return $this->users()->whereKey($user->id)->exists();
+        if ($this->relationLoaded('users')) {
+            return $this->users->contains(
+                fn (User $participant): bool => (int) $participant->getKey() === (int) $user->getKey()
+            );
+        }
+
+        return $this->users()->whereKey($user->getKey())->exists();
+    }
+
+    /**
+     * Whether everybody else in this thread will accept a message from the
+     * given sender.
+     *
+     * The recipient-side consent question, asked about a thread rather than
+     * about one account so that both write paths can ask it the same way:
+     * MessagePolicy::create asks it once per request (this is the query it is
+     * allowed to make), and Pipelines\Messages\Send\EnsureRecipientAccepts asks
+     * it again as the domain invariant, for free, off the `users` collection
+     * Send\EnsureParticipant has already loaded. The rule itself is
+     * User::acceptsMessagesFrom(); this only decides who to ask.
+     *
+     * `every` is right while ConversationType has only a Direct case, where
+     * "everybody else" is one person. When a group case lands, refusing the
+     * whole send because one member is deactivated is the wrong answer — the
+     * question becomes per-recipient, filtered in Send\NotifyRecipient and in
+     * whatever delivers, not a veto here.
+     */
+    public function acceptsMessagesFrom(User $sender): bool
+    {
+        $this->loadMissing('users');
+
+        return $this->users
+            ->reject(fn (User $participant): bool => $participant->is($sender))
+            ->every(fn (User $participant): bool => $participant->acceptsMessagesFrom($sender));
     }
 
     public function markAsReadFor(User $user): void
@@ -78,16 +176,21 @@ class Conversation extends Model
             return;
         }
 
-        $this->users()->updateExistingPivot($user->id, [
+        $this->users()->updateExistingPivot($user->getKey(), [
             'last_read_at' => now(),
         ]);
     }
 
+    /**
+     * The other side of a direct conversation.
+     */
     public function otherParticipant(User $user): ?User
     {
         $this->loadMissing('users');
 
-        return $this->users->first(fn (User $u) => (int) $u->id !== (int) $user->id);
+        return $this->users->first(
+            fn (User $participant): bool => (int) $participant->getKey() !== (int) $user->getKey()
+        );
     }
 
     public function isUnreadFor(User $user): bool
@@ -95,21 +198,24 @@ class Conversation extends Model
         $this->loadMissing(['users', 'lastMessage']);
 
         $lastMessage = $this->lastMessage;
-        if (! $lastMessage) {
+
+        if ($lastMessage === null) {
             return false;
         }
 
-        if ((int) $lastMessage->sender_id === (int) $user->id) {
+        if ((int) $lastMessage->sender_id === (int) $user->getKey()) {
             return false;
         }
 
-        $member = $this->users->firstWhere('id', $user->id);
-        $lastRead = $member?->pivot?->last_read_at;
+        $participant = $this->users->firstWhere('id', $user->getKey());
 
-        if ($lastRead === null) {
+        /** @var Carbon|null $lastReadAt */
+        $lastReadAt = $participant?->pivot?->last_read_at;
+
+        if ($lastReadAt === null) {
             return true;
         }
 
-        return $lastMessage->created_at->isAfter($lastRead);
+        return $lastMessage->created_at->isAfter($lastReadAt);
     }
 }

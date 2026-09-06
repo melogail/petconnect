@@ -5,48 +5,62 @@ namespace Database\Seeders;
 use App\Models\Comment;
 use App\Models\Pet;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class CommentSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * How many top level comments each listing gets.
+     */
+    public const MIN_PER_PET = 2;
+
+    public const MAX_PER_PET = 5;
+
+    /**
+     * Percentage of top level comments that draw a reply.
+     */
+    protected const REPLY_CHANCE = 40;
+
+    /**
+     * Comment on every listing that has no comments yet.
+     *
+     * Filtering on `doesntHave('comments')` and walking the result with
+     * lazyById() keeps the seeder idempotent: a listing seeded on the first
+     * run is no longer a candidate on the second.
      */
     public function run(): void
     {
-        $pets = Pet::all();
-        $users = User::all();
+        DB::transaction(function (): void {
+            /** @var Collection<int, User> $authors */
+            $authors = User::query()->select(['id'])->get();
 
-        if ($pets->isEmpty() || $users->isEmpty()) {
-            $this->command->warn('Please run PetSeeder and UserSeeder first!');
-
-            return;
-        }
-
-        // Create 2-5 comments for each pet
-        foreach ($pets as $pet) {
-            $commentCount = rand(2, 5);
-
-            for ($i = 0; $i < $commentCount; $i++) {
-                $comment = Comment::factory()->create([
-                    'user_id' => $users->random()->id,
-                    'commentable_type' => Pet::class,
-                    'commentable_id' => $pet->id,
-                    'parent_id' => null,
-                ]);
-
-                // 40% chance to have a reply
-                if (rand(1, 100) <= 40) {
-                    Comment::factory()->create([
-                        'user_id' => $users->random()->id,
-                        'commentable_type' => Pet::class,
-                        'commentable_id' => $pet->id,
-                        'parent_id' => $comment->id,
-                    ]);
-                }
+            if ($authors->isEmpty()) {
+                throw new RuntimeException('No users to write comments; run UserSeeder first.');
             }
-        }
 
-        $this->command->info('Created '.Comment::count().' comments successfully!');
+            Pet::query()
+                ->doesntHave('comments')
+                ->lazyById()
+                ->each(function (Pet $pet) use ($authors): void {
+                    $count = fake()->numberBetween(self::MIN_PER_PET, self::MAX_PER_PET);
+
+                    for ($created = 0; $created < $count; $created++) {
+                        $comment = Comment::factory()
+                            ->for($authors->random())
+                            ->for($pet, 'commentable')
+                            ->create();
+
+                        if (fake()->boolean(self::REPLY_CHANCE)) {
+                            Comment::factory()
+                                ->for($authors->random())
+                                ->reply($comment)
+                                ->create();
+                        }
+                    }
+                });
+        });
     }
 }

@@ -1,94 +1,73 @@
 <script setup lang="ts">
+import { Form } from '@inertiajs/vue3';
+import { Send } from '@lucide/vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { useForm } from '@inertiajs/vue3';
-import { SendHorizonal } from 'lucide-vue-next';
-import { ref } from 'vue';
-import { route } from 'ziggy-js';
+import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
+import { store as storeMessage } from '@/routes/conversations/messages';
 
-const props = defineProps<{
+/**
+ * Write a message.
+ *
+ * `preserveState` keeps the thread's own state — the older pages it has already
+ * pulled in — across the redirect the store action answers with; without it the
+ * page component is rebuilt and the reader is thrown back to the newest page.
+ *
+ * `messages.store` answers **403** when the recipient is not accepting
+ * messages. `ConversationResource::can_send` is `MessagePolicy::create` for
+ * this thread, answered per row and free of a query, so the refusal is visible
+ * before anything is typed instead of landing after it. The policy still has
+ * the last word — the flag is accurate at render time, not afterwards.
+ *
+ * `maxLength` comes from the page's `messageBounds` prop, which is built from
+ * the same accessor the `max:` rule is, so the counter cannot drift from the
+ * validator.
+ */
+const { conversationId, maxLength, canSend } = defineProps<{
     conversationId: number;
+    maxLength: number;
+    canSend: boolean;
 }>();
-
-const textareaRef = ref<HTMLTextAreaElement | null>(null);
-
-const form = useForm({
-    content: '',
-});
-
-const autoResize = () => {
-    const el = textareaRef.value;
-
-    if (!el) {
-        return;
-    }
-
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-};
-
-const submitMessage = () => {
-    if (!form.content.trim() || !props.conversationId) {
-        return;
-    }
-
-    form.post(
-        route('conversations.messages.store', {
-            conversation: props.conversationId,
-        }),
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                form.reset('content');
-
-                if (textareaRef.value) {
-                    textareaRef.value.style.height = 'auto';
-                }
-            },
-        },
-    );
-};
-
-const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        submitMessage();
-    }
-};
 </script>
 
 <template>
-    <div class="border-border bg-card/80 border-t px-4 py-3">
-        <form class="flex items-end gap-2" @submit.prevent="submitMessage">
-            <label class="sr-only" for="message-input">Message</label>
+    <p
+        v-if="!canSend"
+        class="text-muted-foreground border-border border-t p-4 text-sm"
+    >
+        You cannot send messages in this conversation.
+    </p>
 
-            <div class="relative flex-1">
-                <textarea
-                    id="message-input"
-                    ref="textareaRef"
-                    v-model="form.content"
-                    rows="1"
-                    placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
-                    class="border-border bg-background text-foreground placeholder:text-muted-foreground block w-full resize-none rounded-2xl border px-4 py-2.5 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                    @input="autoResize"
-                    @keydown="handleKeydown"
-                />
-                <p
-                    v-if="form.errors.content"
-                    class="text-destructive mt-1.5 px-1 text-xs"
-                >
-                    {{ form.errors.content }}
-                </p>
-            </div>
+    <Form
+        v-else
+        v-bind="storeMessage.form(conversationId)"
+        reset-on-success
+        :options="{ preserveScroll: true, preserveState: true }"
+        class="border-border flex items-end gap-2 border-t p-3"
+        v-slot="{ errors, processing }"
+    >
+        <div class="flex-1 space-y-1">
+            <Textarea
+                name="content"
+                rows="1"
+                required
+                :maxlength="maxLength"
+                placeholder="Write a message…"
+                aria-label="Message"
+                class="max-h-40 min-h-10 resize-none"
+            />
+            <InputError :message="errors.content" />
+        </div>
 
-            <Button
-                type="submit"
-                size="icon"
-                class="mb-0.5 h-10 w-10 shrink-0 rounded-full bg-violet-600 text-white shadow-md transition-all hover:bg-violet-700 hover:shadow-violet-200 disabled:opacity-40 dark:hover:shadow-violet-900/40"
-                :disabled="form.processing || !form.content.trim()"
-            >
-                <SendHorizonal class="h-4 w-4" />
-                <span class="sr-only">Send</span>
-            </Button>
-        </form>
-    </div>
+        <Button
+            type="submit"
+            size="icon"
+            :disabled="processing"
+            aria-label="Send"
+        >
+            <Spinner v-if="processing" />
+            <Send v-else class="size-4" />
+        </Button>
+    </Form>
 </template>

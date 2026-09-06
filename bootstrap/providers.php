@@ -1,7 +1,11 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\FortifyServiceProvider;
+use App\Providers\NovaServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    App\Providers\NovaServiceProvider::class,
+    AppServiceProvider::class,
+    FortifyServiceProvider::class,
+    NovaServiceProvider::class,
 ];

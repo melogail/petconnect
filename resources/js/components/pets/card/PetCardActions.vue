@@ -1,0 +1,182 @@
+<script setup lang="ts">
+import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
+import { countLabel } from '@/components/pets/card/labels';
+import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vue';
+import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
+import PetLikeButton from '@/components/pets/PetLikeButton.vue';
+import { useTranslations } from '@/composables/useTranslations';
+import { show as showPet } from '@/routes/pets';
+import type {
+    PetCard,
+    ReportCategory,
+    ReportReason,
+    SelectOption,
+} from '@/types';
+
+/**
+ * The card's action rows, laid out as legacy's (`components/web/PetCard.vue`,
+ * the two "Action Buttons" blocks) on the user's instruction (2026-09-06):
+ * like, comment and share spread across one line as quiet round pills, then a
+ * round gradient message button beside a full-width gradient "View Details".
+ *
+ * It exists as its own component because none of these could have lived inside
+ * the anchor that used to wrap the whole card: a button nested in an anchor is
+ * invalid HTML and breaks keyboard and screen-reader behaviour while looking
+ * fine with a mouse. Every control here is a sibling of the card's three links,
+ * never a descendant of one.
+ *
+ * ## Guests
+ *
+ * Every write route behind this row is `auth` + `verified` and rate-limited, so
+ * a control that fires for a guest earns a 403, not a sign-in prompt. Each one
+ * therefore either routes to `login` or is absent:
+ *
+ * - **Like** — `PetLikeButton` swaps `pets.like` for `login()` when `canLike`
+ *   is false. That is the component's own contract; it is reused, not rebuilt.
+ * - **Comment** — reading a thread is public, so the dialog opens for a guest
+ *   with a sign-in line where the composer would be and no write control in
+ *   any row. `comments.index` is a `GET` outside the `auth` group.
+ * - **Message** — absent. `StartConversationButton` is rendered only for a
+ *   signed-in viewer who is not the owner.
+ * - **Share** — external destinations and the clipboard only; no account.
+ * - **View details** — `pets.show` again, public.
+ *
+ * `canInteract` is derived once in `PetListingCard` off `auth.user`, the way
+ * `pages/pets/Show.vue` does it, because both of this card's consumers
+ * (`PetFeed` and `profile/ProfileListings`) pass nothing but `pet`.
+ *
+ * Hiding the message button from the owner is a client-side derivation off
+ * `is_owner`, a prop a cached or prefetched page can serve stale, so it is the
+ * server's `Rule::notIn` on `recipient_id` that actually decides — see that
+ * component's own note. Both existing call sites guard the same way; this is
+ * matching the convention, not relying on it.
+ *
+ * ## Naming
+ *
+ * Every `aria-label` built here **extends** the visible text rather than
+ * replacing it — the visible characters stay a substring of the accessible
+ * name ("10" inside "Like Ruthe, 10 likes", the translated "View Details"
+ * inside "View Details: Ruthe") — because speech input matches the words a
+ * user reads off the screen, and a label that drops them breaks it silently,
+ * with nothing visibly wrong. The message trigger is the exception that proves
+ * it: with `appearance="icon"` it has no visible text at all, so its
+ * `aria-label` is the whole name (see `StartConversationButton`).
+ *
+ * ## Two rows, not one
+ *
+ * The engagement controls and the two navigational ones are separate flex rows
+ * rather than one wrapping row, so the grouping is deliberate instead of a
+ * function of how long the owner's name happens to be. Tab order follows the
+ * same grouping. The previous note here that all five controls measured 36px
+ * described the outline-button layout this replaced; the first row is now
+ * three ghost pills and the second row is two 48px (`h-12`) controls, as
+ * legacy's were. Not re-measured.
+ */
+const { pet, canInteract } = defineProps<{
+    pet: PetCard;
+    /** A signed-in viewer. Every write on this row needs a verified account. */
+    canInteract: boolean;
+    /**
+     * `commentBounds.max_length`, `reportCategories` and `reportReasons`, from
+     * whichever page mounted the card. Both pages that render a card — `Home`
+     * and `profile.show` — ship all three today, as `pets.show` does for its
+     * inline thread; established 2026-09-06 by reading the three
+     * `Inertia::render()` payloads, not by rendering them.
+     *
+     * They stay optional as a fallback rather than as a description of a
+     * current page: a prop that fails to arrive turns off exactly one control
+     * and nothing else, silently and with no type error. See
+     * `PetCardCommentButton`, which documents which control each one turns off,
+     * and `PetListingCard`, which reads them off `page.props` and carries why
+     * the casts there hide a missing key from `vue-tsc`.
+     */
+    commentMaxLength?: number | null;
+    reportCategories?: SelectOption<ReportCategory>[];
+    reportReasons?: SelectOption<ReportReason>[];
+}>();
+
+const { t } = useTranslations();
+
+/** The owner, only when there is somebody signed in who is not them. */
+const owner = computed(() =>
+    canInteract && !pet.is_owner ? (pet.user ?? null) : null,
+);
+
+/**
+ * `PetLikeButton`'s visible label is the bare count, which announces as an
+ * unqualified "12" beside the comment control's "4". The name is supplied from
+ * here as a fall-through attribute rather than by editing that component, which
+ * the listing page shares; `aria-pressed` on it already carries the toggle
+ * state, so the label stays the same in both.
+ */
+const likeLabel = computed(
+    () => `Like ${pet.name}, ${countLabel(pet.likes_count, 'like')}`,
+);
+
+/**
+ * The message trigger is icon-only on the card, so this is its whole
+ * accessible name, not an extension of a visible one. Both the owner and the
+ * listing are named, because either alone is ambiguous on a feed: one owner
+ * can have several listings, and two owners can have listings with the same
+ * pet name.
+ *
+ * Passed as a prop and not as a fall-through `aria-label`. That component's
+ * root is reka-ui's `DialogRoot`, which renders no element and drops attributes
+ * silently — the technique that works on `PetLikeButton` above produces a
+ * still-nameless button here. See its docblock, which records the measurement.
+ */
+const messageLabel = computed(() =>
+    owner.value ? `Message ${owner.value.name} about ${pet.name}` : undefined,
+);
+
+const viewDetailsLabel = computed(
+    () => `${t('pets.view_details')}: ${pet.name}`,
+);
+</script>
+
+<template>
+    <div class="space-y-4">
+        <div class="text-muted-foreground flex items-center justify-between">
+            <PetLikeButton
+                :pet-id="pet.id"
+                :likes-count="pet.likes_count"
+                :is-liked="pet.is_liked"
+                :can-like="canInteract"
+                :aria-label="likeLabel"
+            />
+
+            <PetCardCommentButton
+                :pet-id="pet.id"
+                :name="pet.name"
+                :comments-count="pet.comments_count"
+                :comments="pet.comments"
+                :can-interact="canInteract"
+                :max-length="commentMaxLength"
+                :report-categories="reportCategories"
+                :report-reasons="reportReasons"
+            />
+
+            <PetCardShareMenu :pet-id="pet.id" :name="pet.name" />
+        </div>
+
+        <div class="flex items-center gap-2">
+            <StartConversationButton
+                v-if="owner"
+                :recipient-id="owner.id"
+                :recipient-name="owner.name"
+                :trigger-label="messageLabel"
+                appearance="icon"
+            />
+
+            <Link
+                :href="showPet(pet.id)"
+                :aria-label="viewDetailsLabel"
+                class="flex h-12 flex-1 items-center justify-center rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:from-violet-600 hover:to-fuchsia-600 focus-visible:ring-[3px] focus-visible:ring-violet-500/50 focus-visible:outline-none"
+            >
+                {{ t('pets.view_details') }}
+            </Link>
+        </div>
+    </div>
+</template>

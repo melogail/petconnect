@@ -6,19 +6,18 @@ use App\Models\Like;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Route;
 
+/**
+ * Database notification telling a user that one of their models was liked.
+ */
 class ModelLikedNotification extends Notification
 {
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(
         public Like $like,
     ) {}
 
     /**
-     * Get the notification's delivery channels.
-     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -27,15 +26,34 @@ class ModelLikedNotification extends Notification
     }
 
     /**
-     * Get the array representation of the notification.
+     * The payload carries the translation key and its replacements, never a
+     * rendered string: the notification row outlives the reader's locale, so
+     * freezing translated text here would show permanently stale-language
+     * history to anyone who switches locale. The client renders
+     * `message_key` with `message_replace`.
      *
-     * @return array<string, mixed>
+     * `liker_name` is null only if the liker is gone (likes cascade on user
+     * delete, so that is defensive); the client supplies its own localized
+     * "someone" for that case rather than the server persisting a key.
+     *
+     * @return array{
+     *     like_id: int,
+     *     liker_id: int,
+     *     liker_name: string|null,
+     *     likeable_type: string,
+     *     likeable_id: int,
+     *     likeable_name: string|null,
+     *     message_key: string,
+     *     message_replace: array{name: string, pet: string},
+     *     url: string|null,
+     *     type: string
+     * }
      */
     public function toArray(object $notifiable): array
     {
         $this->like->loadMissing(['user', 'likeable']);
 
-        $likerName = $this->like->user?->name ?? __('notifications.someone');
+        $likerName = $this->like->user?->name;
         $likeable = $this->like->likeable;
 
         $messageKey = match (true) {
@@ -45,15 +63,9 @@ class ModelLikedNotification extends Notification
         };
 
         $messageReplace = [
-            'name' => $likerName,
+            'name' => (string) $likerName,
             'pet' => $likeable instanceof Pet ? $likeable->name : '',
         ];
-
-        $url = match (true) {
-            $likeable instanceof Pet => route('pets.show', $likeable),
-            $likeable instanceof User => route('profile.show', $likeable),
-            default => null,
-        };
 
         return [
             'like_id' => $this->like->id,
@@ -64,9 +76,27 @@ class ModelLikedNotification extends Notification
             'likeable_name' => $likeable instanceof Pet ? $likeable->name : null,
             'message_key' => $messageKey,
             'message_replace' => $messageReplace,
-            'message' => __($messageKey, $messageReplace),
-            'url' => $url,
+            'url' => $this->likeableUrl(),
             'type' => 'like',
         ];
+    }
+
+    /**
+     * Deep link to the liked model, or null while the route does not yet exist.
+     */
+    protected function likeableUrl(): ?string
+    {
+        $likeable = $this->like->likeable;
+
+        return match (true) {
+            $likeable instanceof Pet => $this->routeIfDefined('pets.show', $likeable),
+            $likeable instanceof User => $this->routeIfDefined('profile.show', $likeable),
+            default => null,
+        };
+    }
+
+    protected function routeIfDefined(string $name, mixed $parameters): ?string
+    {
+        return Route::has($name) ? route($name, $parameters) : null;
     }
 }

@@ -1,127 +1,92 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import MainLayout from '@/layouts/MainLayout.vue';
-import ProfileHeader from '@/components/web/profile/ProfileHeader.vue';
-import ProfilePetsTable from '@/components/web/profile/ProfilePetsTable.vue';
-import ProfileReviewsTab from '@/components/web/profile/ProfileReviewsTab.vue';
-import {
-    User,
-    Mail,
-    Phone,
-    MapPin,
-    Calendar,
-    Edit2,
-    Trash2,
-    Eye,
-    MessageSquare,
-    FileText,
-    Star,
-    MessageCircle,
-    Info,
-    Plus,
-    Settings,
-    Bell,
-    EyeOff,
-    MoreVertical,
-    BadgeCheck,
-    ThumbsUp,
-    ThumbsDown,
-    ChevronLeft,
-    ChevronRight,
-} from 'lucide-vue-next';
-import { ref, computed } from 'vue';
-import { route } from 'ziggy-js';
-import { useTranslations } from '@/composables/useTranslations';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from '@/components/ui/carousel';
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import ProfileHeader from '@/components/profile/ProfileHeader.vue';
+import ProfileListings from '@/components/profile/ProfileListings.vue';
+import ProfileReviews from '@/components/profile/ProfileReviews.vue';
+import type {
+    Paginated,
+    PetCard,
+    ProfileSummary,
+    ReportCategory,
+    ReportReason,
+    Review,
+    ReviewBounds,
+    SelectOption,
+} from '@/types';
 
-const { t } = useTranslations();
+/**
+ * A member's public page. Reachable by guests — `PetPolicy`-style public
+ * visibility is a recorded decision in `UserPolicy::view`, not an oversight —
+ * so nothing here may assume `auth.user`.
+ *
+ * The two paginators carry their own page names (`listings`, `reviews`) and are
+ * turned independently; see `Pagination`'s `only` prop.
+ *
+ * The report option lists are props rather than an endpoint, and are handed
+ * down to the review cards that host the report dialog.
+ *
+ * `has_reviewed` is what closes the review form: a second review by the same
+ * author is refused by a unique index and by
+ * `SubmitReview\EnsureNotAlreadyReviewed`, and until the flag existed the page
+ * offered the form to everybody and explained afterwards.
+ */
+const { profile } = defineProps<{
+    profile: ProfileSummary;
+    listings: Paginated<PetCard>;
+    reviews: Paginated<Review>;
+    reportCategories: SelectOption<ReportCategory>[];
+    reportReasons: SelectOption<ReportReason>[];
+    /**
+     * `petconnect.reviews.min_rate` / `max_rate` / `max_comment_length`, built
+     * from the same accessors the validator's rules are. The star widget used
+     * to hardcode five; nothing on this page may again.
+     */
+    reviewBounds: ReviewBounds;
+}>();
 
-const props = defineProps({
-    user: Object,
-    reportReasons: {
-        type: Array,
-        default: () => [],
-    },
-});
+const page = usePage();
 
-// Tabs state
-const activeTab = ref('Pets');
-const tabs = computed(() => [
-    {
-        name: 'Pets',
-        label: t('profile.pets'),
-        icon: 'FileText',
-        count: props.user?.data?.pets?.length ?? 0,
-    },
-    {
-        name: 'Reviews',
-        label: t('profile.reviews'),
-        icon: 'Star',
-        count: props.user?.data?.reviews?.length ?? 0,
-    },
-]);
+const isGuest = computed(() => !page.props.auth.user);
+const canInteract = computed(() => !isGuest.value && !profile.is_self);
+const canReview = computed(() => canInteract.value && !profile.has_reviewed);
 </script>
 
 <template>
-    <Head :title="t('profile.title')" />
-    <MainLayout class="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <!-- Enhanced Profile Header -->
-            <ProfileHeader :user="user" />
+    <div class="mx-auto w-full max-w-5xl space-y-8 p-4 sm:p-6 lg:p-8">
+        <Head :title="profile.name" />
 
-            <!-- Tabs Navigation -->
-            <div class="mt-8">
-                <div class="border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex gap-8" aria-label="Tabs">
-                        <button
-                            v-for="tab in tabs"
-                            :key="tab.name"
-                            @click="activeTab = tab.name"
-                            :class="[
-                                activeTab === tab.name
-                                    ? 'border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
-                                'flex items-center whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium',
-                            ]"
-                        >
-                            <component :is="tab.icon" class="me-2 h-5 w-5" />
-                            {{ tab.label }}
-                            <span
-                                v-if="tab.count !== undefined"
-                                class="ms-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium dark:bg-gray-700"
-                            >
-                                {{ tab.count }}
-                            </span>
-                        </button>
-                    </nav>
-                </div>
-            </div>
+        <ProfileHeader
+            :profile="profile"
+            :can-interact="canInteract"
+            :bounds="reviewBounds"
+        />
 
-            <!-- Tab Content -->
-            <div class="mt-6">
-                <!-- Pets Tab -->
-                <div v-show="activeTab === 'Pets'" class="space-y-6">
-                    <ProfilePetsTable
-                        :pets="user.data.pets"
-                        :userCanCreate="user.data.can.create"
-                    />
-                </div>
+        <section class="space-y-4">
+            <h2 class="text-lg font-semibold">
+                Listings
+                <span class="text-muted-foreground font-normal">
+                    ({{ listings.meta.total }})
+                </span>
+            </h2>
+            <ProfileListings :listings="listings" :name="profile.name" />
+        </section>
 
-                <!-- Reviews Tab -->
-                <div v-show="activeTab === 'Reviews'">
-                    <ProfileReviewsTab
-                        :reviews="user.data.reviews || []"
-                        :report-reasons="reportReasons"
-                        :profile-owner-id="user.data.id"
-                    />
-                </div>
-            </div>
-        </div>
-    </MainLayout>
+        <section class="space-y-4">
+            <h2 class="text-lg font-semibold">
+                Reviews
+                <span class="text-muted-foreground font-normal">
+                    ({{ reviews.meta.total }})
+                </span>
+            </h2>
+            <ProfileReviews
+                :reviews="reviews"
+                :subject-id="profile.id"
+                :can-review="canReview"
+                :bounds="reviewBounds"
+                :report-categories="reportCategories"
+                :report-reasons="reportReasons"
+            />
+        </section>
+    </div>
 </template>

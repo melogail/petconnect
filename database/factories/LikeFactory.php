@@ -3,15 +3,27 @@
 namespace Database\Factories;
 
 use App\Models\Comment;
+use App\Models\Like;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Like>
+ * Likes are unique per (user, likeable); build them from distinct pairs, or go
+ * through Pet::like()/toggleLike(), which use firstOrCreate.
+ *
+ * @extends Factory<Like>
  */
 class LikeFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var class-string<Like>
+     */
+    protected $model = Like::class;
+
     /**
      * Define the model's default state.
      *
@@ -19,45 +31,43 @@ class LikeFactory extends Factory
      */
     public function definition(): array
     {
-        $likeableType = fake()->randomElement([Pet::class, Comment::class]);
-
         return [
             'user_id' => User::factory(),
-            'likeable_type' => $likeableType,
-            'likeable_id' => $likeableType::factory(),
+            'likeable_type' => Relation::getMorphAlias(Pet::class),
+            'likeable_id' => Pet::factory(),
         ];
     }
 
     /**
-     * Indicate that the like is for a pet.
+     * Like a pet, creating one when none is given.
      */
-    public function forPet($petId = null): static
+    public function forPet(?Pet $pet = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'likeable_type' => Pet::class,
-            'likeable_id' => $petId ?? Pet::factory(),
+        return $this->state(fn (array $attributes): array => [
+            'likeable_type' => Relation::getMorphAlias(Pet::class),
+            'likeable_id' => $pet?->getKey() ?? Pet::factory(),
         ]);
     }
 
     /**
-     * Indicate that the like is for a comment.
+     * Like a comment, creating one when none is given.
      */
-    public function forComment($commentId = null): static
+    public function forComment(?Comment $comment = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'likeable_type' => Comment::class,
-            'likeable_id' => $commentId ?? Comment::factory(),
+        return $this->state(fn (array $attributes): array => [
+            'likeable_type' => Relation::getMorphAlias(Comment::class),
+            'likeable_id' => $comment?->getKey() ?? Comment::factory(),
         ]);
     }
 
     /**
-     * Indicate that the like is for a user profile.
+     * Like a user profile, creating one when none is given.
      */
-    public function forUser($userId = null): static
+    public function forUser(?User $user = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'likeable_type' => User::class,
-            'likeable_id' => $userId ?? User::factory(),
+        return $this->state(fn (array $attributes): array => [
+            'likeable_type' => Relation::getMorphAlias(User::class),
+            'likeable_id' => $user?->getKey() ?? User::factory(),
         ]);
     }
 }
