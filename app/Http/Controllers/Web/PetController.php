@@ -183,8 +183,14 @@ class PetController extends Controller
 
     /**
      * Retire a listing.
+     *
+     * Lands on the owner's profile rather than the feed. That page lists the
+     * owner's listings as a table with this very action on every row, so a
+     * removal made there comes back to the table; and a removal made from the
+     * listing's own page cannot go `back()`, because that page is a 404 once
+     * the listing is retired. The acting user is the owner (`PetPolicy::delete`).
      */
-    public function destroy(Pet $pet, DeletePet $deletePet): RedirectResponse
+    public function destroy(Request $request, Pet $pet, DeletePet $deletePet): RedirectResponse
     {
         $this->authorize('delete', $pet);
 
@@ -192,7 +198,7 @@ class PetController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Listing removed.')]);
 
-        return to_route('home');
+        return to_route('profile.show', $request->user());
     }
 
     /**

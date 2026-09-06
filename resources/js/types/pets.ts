@@ -124,6 +124,8 @@ export type PetCard = {
     comments?: CommentPreview[];
     /** Only present when the feed query ran with a distance calculation. */
     distance?: number;
+    /** Page views, as `Actions\Pets\RecordPetView` counts them. */
+    views: number;
     created_at: string;
 };
 

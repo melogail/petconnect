@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import CreatePetButton from '@/components/pets/CreatePetButton.vue';
 import ProfileHeader from '@/components/profile/ProfileHeader.vue';
 import ProfileListings from '@/components/profile/ProfileListings.vue';
+import ProfileListingsTable from '@/components/profile/ProfileListingsTable.vue';
 import ProfileReviews from '@/components/profile/ProfileReviews.vue';
 import type {
     Paginated,
@@ -30,6 +32,19 @@ import type {
  * author is refused by a unique index and by
  * `SubmitReview\EnsureNotAlreadyReviewed`, and until the flag existed the page
  * offered the form to everybody and explained afterwards.
+ *
+ * ## The owner gets a table, everybody else gets the grid
+ *
+ * `profile.is_self` decides (user's instruction, 2026-09-06): the owner sees
+ * `ProfileListingsTable` — thumbnail, name, type, price, status, date, counts,
+ * and edit / mark unavailable / remove controls on every row — with the
+ * publish button in the section heading, and a visitor sees
+ * `ProfileListings`, the card grid, nine to a page. `is_self` is a server
+ * prop, so a prefetched or cached page could in principle show the wrong
+ * shape; it cannot make a control *work* for the wrong person, because every
+ * action on a row is authorized against `PetPolicy` on the server. Same
+ * reasoning `pets/card/PetCardActions` records for hiding the message button
+ * off `is_owner`.
  */
 const { profile } = defineProps<{
     profile: ProfileSummary;
@@ -63,13 +78,19 @@ const canReview = computed(() => canInteract.value && !profile.has_reviewed);
         />
 
         <section class="space-y-4">
-            <h2 class="text-lg font-semibold">
-                Listings
-                <span class="text-muted-foreground font-normal">
-                    ({{ listings.meta.total }})
-                </span>
-            </h2>
-            <ProfileListings :listings="listings" :name="profile.name" />
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold">
+                    Listings
+                    <span class="text-muted-foreground font-normal">
+                        ({{ listings.meta.total }})
+                    </span>
+                </h2>
+
+                <CreatePetButton v-if="profile.is_self" />
+            </div>
+
+            <ProfileListingsTable v-if="profile.is_self" :listings="listings" />
+            <ProfileListings v-else :listings="listings" :name="profile.name" />
         </section>
 
         <section class="space-y-4">

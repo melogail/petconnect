@@ -2,28 +2,20 @@
 import { Link } from '@inertiajs/vue3';
 import { Eye, EyeOff, Pencil, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
+import PetRemoveListingDialog from '@/components/pets/PetRemoveListingDialog.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { useTranslations } from '@/composables/useTranslations';
-import { destroy as destroyPet, edit as editPet } from '@/routes/pets';
+import { edit as editPet } from '@/routes/pets';
 import { toggle as toggleStatus } from '@/routes/pets/status';
 import type { PetStatus } from '@/types';
 
 /**
  * What the owner of a listing can do to it from its own page.
  *
- * `pets.destroy` **retires** the listing — `Actions\Pets\DeletePet` soft
- * deletes it and keeps the row, its photos and its thread for moderation — so
- * the wording is "remove", not "delete forever". Purging one is a Nova action
- * and has no route on this guard at all.
+ * The confirmation behind "Remove" is `PetRemoveListingDialog`, shared with
+ * the owner's listings table on the profile page (`profile/ProfileListingRow`
+ * renders the same three controls as icons); what retiring means — a soft
+ * delete kept for moderation, never a purge — is recorded there.
  */
 const { petId, status } = defineProps<{
     petId: number;
@@ -60,35 +52,15 @@ const confirming = ref(false);
             </Link>
         </Button>
 
-        <Dialog v-model:open="confirming">
-            <DialogTrigger as-child>
-                <Button variant="outline" class="text-destructive">
-                    <Trash2 class="size-4" aria-hidden="true" />
-                    {{ t('common.remove') }}
-                </Button>
-            </DialogTrigger>
+        <Button
+            variant="outline"
+            class="text-destructive"
+            @click="confirming = true"
+        >
+            <Trash2 class="size-4" aria-hidden="true" />
+            {{ t('common.remove') }}
+        </Button>
 
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>
-                        {{ t('pets.remove_listing_question') }}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {{ t('pets.remove_listing_desc') }}
-                    </DialogDescription>
-                </DialogHeader>
-
-                <DialogFooter>
-                    <Button variant="outline" @click="confirming = false">
-                        {{ t('pets.cancel') }}
-                    </Button>
-                    <Button as-child variant="destructive">
-                        <Link :href="destroyPet(petId)" as="button">
-                            {{ t('pets.remove_listing') }}
-                        </Link>
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <PetRemoveListingDialog v-model:open="confirming" :pet-id="petId" />
     </div>
 </template>

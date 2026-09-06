@@ -521,13 +521,18 @@ describe('destroy', function () {
         $this->assertNotSoftDeleted($pet);
     });
 
-    test('soft deletes the listing for the owner', function () {
+    /**
+     * The owner's profile, not the feed: that page carries the listings table
+     * this action is also fired from, and the listing's own page is a 404 once
+     * it is retired, so there is nowhere else sensible to land.
+     */
+    test('soft deletes the listing for the owner and lands on their profile', function () {
         $owner = User::factory()->create();
         $pet = Pet::factory()->for($owner)->create();
 
         $this->actingAs($owner)
             ->delete(route('pets.destroy', $pet))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('profile.show', $owner));
 
         $this->assertSoftDeleted($pet);
     });

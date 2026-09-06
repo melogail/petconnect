@@ -235,9 +235,11 @@ return [
     | has. The legacy rule was a bare `nullable|string` with no ceiling at all.
     |
     | `listings_per_page` and `reviews_per_page` bound the two collections the
-    | public profile page ships. Reviews default to the same page size the
-    | reviews endpoint uses, so the first slice on the page and the first page
-    | fetched from `reviews.index` line up.
+    | public profile page ships. Listings are nine a page by decision
+    | (2026-09-06): three rows of the three-column grid a visitor sees, and the
+    | owner's table pages at the same size. Reviews default to the same page
+    | size the reviews endpoint uses, so the first slice on the page and the
+    | first page fetched from `reviews.index` line up.
     |
     | `media_directory_attempts` is how many times the registration flow will
     | redraw a colliding `media_directory_name` before giving up. The legacy
@@ -252,7 +254,7 @@ return [
     'profiles' => [
         'max_avatar_kilobytes' => (int) env('PROFILES_MAX_AVATAR_KILOBYTES', 2048),
         'bio_max_length' => (int) env('PROFILES_BIO_MAX_LENGTH', 1000),
-        'listings_per_page' => (int) env('PROFILES_LISTINGS_PER_PAGE', 12),
+        'listings_per_page' => (int) env('PROFILES_LISTINGS_PER_PAGE', 9),
         'reviews_per_page' => (int) env('PROFILES_REVIEWS_PER_PAGE', 10),
         'media_directory_attempts' => (int) env('PROFILES_MEDIA_DIRECTORY_ATTEMPTS', 3),
     ],

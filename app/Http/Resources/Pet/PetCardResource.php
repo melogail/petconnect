@@ -23,6 +23,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * "N comments" and a teaser without the feed carrying a 500-comment thread.
  * EagerLoadFeedRelations sets the bound.
  *
+ * `views` is a plain column on the row, read by the owner's listings table on
+ * the profile page. It rides the feed payload too, because one card shape for
+ * both pages is what keeps them on one resource; it costs no query.
+ *
  * This is a read shape, not the pet form's contract: its keys are the snake_case
  * column names. PetDetailResource is the one that mirrors what the edit form
  * posts back.
@@ -62,6 +66,7 @@ class PetCardResource extends JsonResource
 
             'likes_count' => (int) ($this->likes_count ?? 0),
             'comments_count' => (int) ($this->comments_count ?? 0),
+            'views' => (int) $this->views,
             'is_liked' => (bool) ($this->is_liked ?? false),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
 

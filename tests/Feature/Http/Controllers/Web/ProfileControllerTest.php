@@ -263,6 +263,63 @@ describe('the payload', function () {
                 ->where('listings.meta.current_page', 2)
                 ->where('reviews.meta.current_page', 1));
     });
+
+    /**
+     * Nine a page by decision (2026-09-06): three rows of the visitor's
+     * three-column grid. Asserted against the default rather than a
+     * re-`config()`d value because the number itself is the requirement.
+     */
+    test('pages the listings nine at a time', function () {
+        Storage::fake(config('media-library.disk_name'));
+        $profile = User::factory()->create();
+        Pet::factory()->count(10)->for($profile)->create();
+
+        $this->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('listings.data', 9)
+                ->where('listings.meta.per_page', 9)
+                ->where('listings.meta.last_page', 2));
+    });
+
+    /**
+     * `is_self` is what `pages/profile/Show.vue` branches on: the owner sees
+     * their listings as a table with edit, remove and availability controls;
+     * everybody else sees the card grid. The guest arm is pinned at the top of
+     * this file; this is the other one.
+     */
+    test('tells the owner the profile is their own', function () {
+        $profile = User::factory()->create();
+
+        $this->actingAs($profile)
+            ->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('profile.is_self', true));
+    });
+
+    /**
+     * The owner's table has a "mark as available" control on an unavailable
+     * row, which is only reachable if that row is still on the page.
+     */
+    test('keeps an unavailable listing on the page so its owner can reactivate it', function () {
+        Storage::fake(config('media-library.disk_name'));
+        $profile = User::factory()->create();
+        $pet = Pet::factory()->for($profile)->unavailable()->create();
+
+        $this->actingAs($profile)
+            ->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('listings.data.0.id', $pet->getKey())
+                ->where('listings.data.0.status', 'unavailable'));
+    });
+
+    test("carries the view count the owner's table renders", function () {
+        Storage::fake(config('media-library.disk_name'));
+        $profile = User::factory()->create();
+        Pet::factory()->for($profile)->create(['views' => 7]);
+
+        $this->actingAs($profile)
+            ->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('listings.data.0.views', 7));
+    });
 });
 
 /**

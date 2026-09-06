@@ -9,14 +9,17 @@ import { create as createPet } from '@/routes/pets';
 /**
  * "Create Post" — the feed's own publish control, ported from the legacy Home.
  *
- * ## It is now the only publish control in the application
+ * ## It is the only publish control in the application's chrome
  *
  * `PublicHeader` used to render a second one. It was removed in phase 3 on the
  * user's ruling for exact legacy parity — the legacy navbar had no publish
- * button and the violet→fuchsia CTA belongs on Home alone — so this is the
- * only link to `pets.create` in any chrome; the only others anywhere are two
- * on `pages/Help.vue`. That consequence was accepted knowingly; see the
- * docblock on `components/PublicHeader.vue`.
+ * button and the violet→fuchsia CTA belongs on Home alone — so no chrome links
+ * `pets.create`; that consequence was accepted knowingly, see the docblock on
+ * `components/PublicHeader.vue`. It is mounted on two pages: `Home`, and since
+ * 2026-09-06 the owner's own `profile/Show`, in the heading above the listings
+ * table, where legacy's `ProfilePetsTable` had its "Create New Pet Post"
+ * link. The only other links to `pets.create` anywhere are two on
+ * `pages/Help.vue`.
  *
  * ## The gate is verification, not merely a session
  *
