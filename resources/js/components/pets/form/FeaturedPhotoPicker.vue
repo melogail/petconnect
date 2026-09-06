@@ -133,7 +133,7 @@ function clear(): void {
                 v-if="compressing"
                 class="text-muted-foreground flex items-center gap-1.5 text-xs"
             >
-                <Spinner class="size-3" />
+                <Spinner status class="size-3" />
                 Compressing…
             </span>
             <span v-else-if="file" class="text-muted-foreground text-xs">

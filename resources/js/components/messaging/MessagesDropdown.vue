@@ -4,6 +4,7 @@ import { MessageSquareMore } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import MessagePreviewRow from '@/components/messaging/MessagePreviewRow.vue';
 import MessagePreviewSkeleton from '@/components/messaging/MessagePreviewSkeleton.vue';
+import { nameContaining, unreadBadgeLabel } from '@/components/shell/labels';
 import UnreadBadge from '@/components/shell/UnreadBadge.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,8 +29,9 @@ import { index as conversationsIndex } from '@/routes/conversations';
  * chain in `viewer?.email_verified_at != null` is what makes a **guest** fail
  * it too, so do not "simplify" it away on the grounds that a caller checks
  * `user`. It gates the whole `Popover` and the mount fetch alike, so the
- * `v-if="user"` in `PublicHeader` and `AppSidebarHeader` is layout grouping,
- * not what prevents the fetch. `NotificationBell` carries the identical gate.
+ * `v-if="user"` in `PublicHeader` (the only header since the sidebar shell was
+ * removed) is layout grouping, not what prevents the fetch. `NotificationBell`
+ * carries the identical gate.
  *
  * The predicate is decided here because the request is this component's own.
  * An unverified account used to mount the menu, fire the two doomed XHRs the
@@ -165,10 +167,42 @@ function handleNavigate(conversationId: number): void {
  * carried an `sr-only` span repeating the label inside the button; an
  * `aria-label` overrides the element's contents, so that span could never be
  * announced and is not reproduced.
+ *
+ * `aria-hidden` keeps the badge out of the **name computation**; it does not
+ * take the glyphs off the screen, and WCAG 2.5.3 is about what is on the
+ * screen. Above nine `UnreadBadge` renders "9+" while this sentence states the
+ * exact number, so the two disagree and the name stopped containing the
+ * control's visible text — the same defect, from the same badge, as
+ * `NotificationBell`, which is why the check is one shared function and not two
+ * hand-written strings. `nameContaining` prefixes the badge's own text only
+ * when the sentence does not already carry it, so at three unread this is still
+ * the plain "Messages (3 unread)".
+ *
+ * Measured out of Chrome's accessibility tree (`Accessibility.getFullAXTree`
+ * over CDP) against an isolated build on a throwaway database, 2026-09-06. The
+ * count is the seeded reader's and moved from 17 to 16 mid-session — visiting a
+ * thread marks it read — so the two arms below are the **matched pair** taken at
+ * 16, not the first reading:
+ *
+ * | locale | visible | counterfactual arm            | fixed arm                          |
+ * | ------ | ------- | ----------------------------- | ---------------------------------- |
+ * | `en`   | `9+`    | `Messages (16 unread)`        | `9+, Messages (16 unread)`         |
+ * | `ar`   | `9+`    | `الرسائل (16 غير مقروءة)`      | `9+, الرسائل (16 غير مقروءة)`       |
+ *
+ * The counterfactual arm is a rebuild of the same tree with `nameContaining`
+ * reduced to `(visible, name) => name`; it reproduces the pre-fix name exactly,
+ * which is what makes the fixed arm evidence rather than a screenshot.
+ *
+ * The popover's own header chip still shows the exact `messaging.unread`
+ * sentence, so nothing loses the real number — only the trigger's name gains
+ * the capped one.
  */
 const triggerLabel = computed(() =>
     hasUnread.value
-        ? `${t('nav.messages')} (${t('messaging.unread', { count: unreadCount.value })})`
+        ? nameContaining(
+              unreadBadgeLabel(unreadCount.value),
+              `${t('nav.messages')} (${t('messaging.unread', { count: unreadCount.value })})`,
+          )
         : t('nav.messages'),
 );
 </script>

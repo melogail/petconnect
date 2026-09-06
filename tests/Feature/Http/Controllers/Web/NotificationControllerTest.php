@@ -196,9 +196,9 @@ describe('read', function () {
         $notification = inboxRow($reader);
 
         $this->actingAs($reader)
-            ->from(route('dashboard'))
+            ->from(route('home'))
             ->post(route('notifications.read', $notification->getKey()))
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('notifications', [
             'id' => $notification->getKey(),

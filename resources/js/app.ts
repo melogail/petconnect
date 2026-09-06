@@ -2,7 +2,6 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { ConfigProvider } from 'reka-ui';
 import { createApp, h } from 'vue';
 import { initializeTheme } from '@/composables/useAppearance';
-import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import RootLayout from '@/layouts/RootLayout.vue';
@@ -19,31 +18,33 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
  * The chrome a page sits in, below `RootLayout`.
  *
  * An empty array is a page that owns its whole viewport and wants no shell.
+ *
+ * There is one shell, `PublicLayout` — the legacy navbar-and-footer
+ * `MainLayout`, which legacy wrapped every page in. The starter kit's
+ * sidebar shell (`AppLayout` → `AppSidebarLayout`, with `AppSidebar`,
+ * `AppSidebarHeader`, `Breadcrumbs` and the `ui/sidebar` primitives) was
+ * removed on the user's instruction (2026-09-06): messaging, the listing
+ * form and settings rendered inside it while everything a guest could reach
+ * rendered inside the public one, so a signed-in reader crossed between two
+ * unrelated chromes on every visit. The `Dashboard` page and its route went
+ * with it — it was the kit's placeholder grid and the only page with nothing
+ * behind it. Settings keep their own inner shell, `SettingsLayout`, now styled
+ * after the legacy profile edit screen.
  */
 function resolvePageShell(name: string) {
     switch (true) {
-        // The bare splash page owns its whole viewport, and so does the
-        // verification notice: it paints its own background wash and carries
-        // its own brand lockup, so the `auth/*` card shell below would give it
-        // a second heading and a second logo above its own.
-        case name === 'Welcome':
+        // The verification notice owns its whole viewport: it paints its own
+        // background wash and carries its own brand lockup, so the `auth/*`
+        // card shell below would give it a second heading and a second logo
+        // above its own.
         case name === 'auth/VerifyEmail':
             return [];
-        // Public pages: the app sidebar assumes a signed-in user, and all
-        // five of these are reachable by guests, so they get the public
-        // shell instead.
-        case name === 'Home':
-        case name === 'pets/Show':
-        case name === 'profile/Show':
-        case name === 'Help':
-        case name === 'Support':
-            return [PublicLayout];
         case name.startsWith('auth/'):
             return [AuthLayout];
         case name.startsWith('settings/'):
-            return [AppLayout, SettingsLayout];
+            return [PublicLayout, SettingsLayout];
         default:
-            return [AppLayout];
+            return [PublicLayout];
     }
 }
 

@@ -57,7 +57,11 @@ const mapsUrl = computed(() =>
 
 <template>
     <section class="mb-6">
-        <PetSectionHeading :title="t('pets.location')" :icon="MapPin" />
+        <PetSectionHeading
+            :title="t('pets.location')"
+            :icon="MapPin"
+            level="h2"
+        />
 
         <div
             class="border-border/50 bg-muted/10 space-y-1 rounded-xl border p-4"

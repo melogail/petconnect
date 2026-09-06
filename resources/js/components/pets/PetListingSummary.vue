@@ -31,6 +31,21 @@ const typeClass: Record<PetListingType, string> = {
     mating: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
 };
 
+/**
+ * Neither of these inherits `typeClass`'s exhaustiveness, and they sit close
+ * enough to it to be read as if they did.
+ *
+ * `typeLabel` builds its key from the value, so a new `PetListingType` type-
+ * checks fine and renders the raw string `listing_types.<whatever>` — `t()`
+ * returns a missing key unchanged, by design. A new listing type does trip the
+ * map above, which is what would bring a reader here.
+ *
+ * `statusLabel`'s ternary sends any status that is not `available` to
+ * "Unavailable", and nothing in this file is exhaustive over `PetStatus` — the
+ * only tripwire for that union is `statusClass` in `PetDetailHeader`, a
+ * different file that happens to render the same strip's status. Say it rather
+ * than leave it implied: a third status is caught there or not at all.
+ */
 const typeLabel = computed(() => t(`listing_types.${pet.listing_type}`));
 
 const statusLabel = computed(() =>

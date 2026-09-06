@@ -48,15 +48,15 @@ Route::get('pets/{pet}', [PetController::class, 'show'])
 | carry no handler, and the only address on the page is a `mailto:` in the
 | markup. There is nothing for a controller to do, so there is no
 | controller — `Route::inertia()` is the whole of it, the same as
-| `settings/appearance` and `dashboard`.
+| `settings/appearance`.
 |
 | Public, and deliberately so: "how does this work" and "how do I reach a
 | human" are the two questions somebody without an account is most likely to
 | have. The legacy routes were public too.
 |
 | Components are `Help.vue` / `Support.vue` at the top level of
-| resources/js/pages, beside `Dashboard.vue` and `Home.vue`, rather than the
-| legacy `Help/Index` — this app does not use a directory per single page.
+| resources/js/pages, beside `Home.vue`, rather than the legacy `Help/Index`
+| — this app does not use a directory per single page.
 |
 | No props. If a real support address or an office-hours line is ever wanted
 | it does **not** go in a third argument here: `Route::inertia()` stores its
@@ -317,8 +317,6 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('pets', [PetController::class, 'store'])
         ->middleware('throttle:pet-listings')
         ->name('pets.store');
-
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
     Route::whereNumber('pet')->group(function (): void {
         Route::get('pets/{pet}/edit', [PetController::class, 'edit'])->name('pets.edit');

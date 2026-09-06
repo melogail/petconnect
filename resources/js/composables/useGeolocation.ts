@@ -8,11 +8,14 @@ import { computed, onUnmounted, ref, type ComputedRef } from 'vue';
  * not: they describe a device that was willing but could not answer, so the
  * next mount is allowed to ask again.
  *
- * Allowed **by this module**, which is not the same as retried. The only
+ * Allowed **by this module**, which is not the same as retried. The on-mount
  * caller, `pages/Home.vue`, is stricter: its one-shot `LOCATION_VISIT_KEY`
- * stops a tab asking twice whatever the status was, so in practice a `timeout`
- * is not re-attempted either. If that retry is ever wanted, the visit key is
- * where to relax it — not here.
+ * stops a tab asking twice whatever the status was, so the automatic cycle
+ * never re-attempts a `timeout` either. The other caller,
+ * `components/pets/NearbySearchButton`, is a deliberate gesture and asks with
+ * `fresh: true`, which is the only way past a memoised `denied` inside its
+ * hour. If an *automatic* retry is ever wanted, the visit key is where to
+ * relax it — not here.
  */
 export type GeolocationStatus =
     | 'idle'
@@ -28,11 +31,24 @@ export type UserCoordinates = {
     longitude: number;
 };
 
+export type RequestLocationOptions = {
+    /**
+     * Ask even if a refusal is memoised. For a deliberate gesture only: the
+     * memo exists so an *automatic* request does not nag, and a visitor who
+     * has just pressed a button is asking to be prompted. A cached position is
+     * still reused, and a browser without the API is still `unsupported` —
+     * that is not a refusal and there is nothing to retry.
+     */
+    fresh?: boolean;
+};
+
 export type UseGeolocationReturn = {
     /** Where the request got to. `pending` is "the browser prompt is up". */
     status: ComputedRef<GeolocationStatus>;
     /** Resolve the viewer's position, or `null` if it cannot be had. */
-    requestLocation: () => Promise<UserCoordinates | null>;
+    requestLocation: (
+        options?: RequestLocationOptions,
+    ) => Promise<UserCoordinates | null>;
 };
 
 type StoredLocation = UserCoordinates & { obtainedAt: number };
@@ -286,10 +302,12 @@ function mapGeolocationError(
 /**
  * The viewer's position, asked for at most once per short-lived session cache.
  *
- * Ported from the legacy app's composable of the same name. `pages/Home.vue` is
- * the only caller: the feed sorts by distance when the query string carries a
- * coordinate pair, and this is what produces that pair without a button for the
- * visitor to press.
+ * Ported from the legacy app's composable of the same name. Two callers: the
+ * feed sorts by distance when the query string carries a coordinate pair, and
+ * `pages/Home.vue` produces that pair on mount without a button for the
+ * visitor to press, while `components/pets/NearbySearchButton` produces it on
+ * demand — with `fresh: true` — for the visitor the automatic request could
+ * not serve.
  *
  * ## Two caches, two different jobs
  *
@@ -343,7 +361,9 @@ export function useGeolocation(): UseGeolocationReturn {
         cancelled = true;
     });
 
-    function requestLocation(): Promise<UserCoordinates | null> {
+    function requestLocation(
+        options: RequestLocationOptions = {},
+    ): Promise<UserCoordinates | null> {
         if (cancelled) {
             return Promise.resolve(null);
         }
@@ -354,12 +374,20 @@ export function useGeolocation(): UseGeolocationReturn {
             return Promise.resolve(coordinates.value);
         }
 
-        const blocked = readStoredPermission();
+        const blocked = options.fresh ? null : readStoredPermission();
 
         if (blocked) {
             status.value = blocked;
 
             return Promise.resolve(null);
+        }
+
+        if (options.fresh) {
+            // Cleared before asking rather than after: a second `denied` is
+            // rewritten by the error callback below, and a grant clears it
+            // through `storeCoordinates` anyway, so nothing is lost either way
+            // — and a caller that unmounts mid-prompt leaves no stale memo.
+            safeRemove(PERMISSION_KEY);
         }
 
         if (typeof navigator === 'undefined' || !navigator.geolocation) {

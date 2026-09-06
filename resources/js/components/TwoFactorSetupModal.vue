@@ -164,7 +164,7 @@ watch(
                                     v-if="!qrCodeSvg"
                                     class="bg-background absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center"
                                 >
-                                    <Spinner class="size-6" />
+                                    <Spinner status class="size-6" />
                                 </div>
                                 <div
                                     v-else
@@ -211,7 +211,7 @@ watch(
                                     v-if="!manualSetupKey"
                                     class="bg-muted flex h-full w-full items-center justify-center p-3"
                                 >
-                                    <Spinner />
+                                    <Spinner status />
                                 </div>
                                 <template v-else>
                                     <input

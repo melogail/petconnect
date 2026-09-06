@@ -162,7 +162,7 @@ const isEmpty = computed(() => pets.data.length === 0);
                     v-if="loading || locating"
                     class="mt-8 flex justify-center py-4"
                 >
-                    <Spinner class="text-primary size-8" />
+                    <Spinner status class="text-primary size-8" />
                 </div>
 
                 <div

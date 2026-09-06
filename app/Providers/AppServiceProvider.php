@@ -19,6 +19,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\LazyLoadingViolationException;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
@@ -65,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Artisan dev command
+        DevCommands::except('server', 'queue', 'logs');
+        // DevCommands::artisan('horizon');
+
         $this->configureDefaults();
         $this->configureMorphMap();
         $this->configureMediaOwnership();

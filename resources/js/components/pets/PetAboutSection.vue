@@ -19,6 +19,18 @@ import type { PetDetail } from '@/types';
  * The traits are violet outline pills, not `Badge`s: legacy's own treatment,
  * and `Badge`'s `secondary` variant is the grey one the taxonomy badges in the
  * header use, so reusing it here would make a trait look like a breed.
+ *
+ * The greeting is this section's own `h2`; the traits heading below it takes
+ * `PetSectionHeading`'s `h3` default because it genuinely is nested inside that
+ * `h2`. It is one of only two `PetSectionHeading`s on the page still on the
+ * default — the other is "Healthcare Details" — and the four that pass
+ * `level="h2"` are named in that component's docblock.
+ *
+ * That traits heading reads `wizard.personality_traits` — a key from the pet
+ * form's namespace, read here on a public page. The reuse was argued against
+ * before it shipped, and renaming the namespace would render the raw key to
+ * visitors; the decision and what it costs are recorded once, in
+ * `PetHealthSection`'s docblock. Pointer, not a copy.
  */
 const { pet } = defineProps<{ pet: PetDetail }>();
 

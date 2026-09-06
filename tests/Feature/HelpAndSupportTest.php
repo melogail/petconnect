@@ -4,8 +4,7 @@ use Inertia\Testing\AssertableInertia;
 
 /**
  * The only two pages in the application with no controller behind them:
- * `Route::inertia()` and nothing else, the same as `dashboard` and
- * `appearance.edit`.
+ * `Route::inertia()` and nothing else, the same as `appearance.edit`.
  *
  * Two things are worth asserting and neither is visible from a status code.
  *
@@ -24,8 +23,8 @@ use Inertia\Testing\AssertableInertia;
  *
  * Note for whoever runs `route:list --except-vendor` and cannot find these:
  * `Route::inertia()` registers `\Inertia\Controller` as the action, so the
- * filter drops them. `dashboard` and `appearance.edit` are hidden identically.
- * That is the filter, not a missing route.
+ * filter drops them. `appearance.edit` is hidden identically. That is the
+ * filter, not a missing route.
  *
  * @todo Drop `withoutVite()` and `shouldExist: false` once
  *   `resources/js/pages/Help.vue` and `resources/js/pages/Support.vue` are in
@@ -41,7 +40,7 @@ test('a guest reads the page and gets no props beyond the shared ones', function
         ->assertInertia(fn (AssertableInertia $page) => $page->component($component, shouldExist: false));
 
     expect(array_keys($response->inertiaProps()))
-        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'sidebarOpen', 'locale', 'translations']);
+        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'locale', 'translations']);
 })->with([
     'help' => ['help', 'Help'],
     'support' => ['support', 'Support'],

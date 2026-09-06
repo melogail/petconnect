@@ -9,12 +9,12 @@ import type { ConversationPreview, ConversationPreviewList } from '@/types';
 |--------------------------------------------------------------------------
 |
 | Module scope, not component scope, for the same reason `useNotificationInbox`
-| gives at length: the messages menu lives in a layout header and there are two
-| of them — `AppSidebarHeader` for the member shell and `PublicHeader` for the
-| shell a guest can also reach — so moving between the two remounts the
-| component. Holding the rows and the badge out here means a remount neither
-| throws the list away nor re-queries for it, and the badge costs **one request
-| per full document load** rather than one per Inertia visit.
+| gives at length: the messages menu lives in a layout header, and a remount of
+| that header — a full document load, now that `PublicHeader` is the only
+| header (the member shell's `AppSidebarHeader` was removed 2026-09-06) — must
+| neither throw the list away nor re-query for it. Holding the rows and the
+| badge out here is what makes the badge cost **one request per full document
+| load** rather than one per Inertia visit.
 |
 | That is the whole point of the arrangement, and it is what makes fetching this
 | from the client cheaper than the legacy app's `messaging` shared prop.
@@ -154,9 +154,9 @@ function currentViewerId(): number | null {
  * can never succeed, so the retry must not be how they meet this. It is not:
  * `MessagesDropdown` gates its render and its mount fetch on `canRead`,
  * `auth.user?.email_verified_at != null`, false for a null viewer, so that one
- * predicate covers both readers. The `v-if="user"` in `PublicHeader` and
- * `AppSidebarHeader` is layout grouping, not a second level of the guard. This
- * branch is the backstop for a session that expires under an open document.
+ * predicate covers both readers. The `v-if="user"` in `PublicHeader` is layout
+ * grouping, not a second level of the guard. This branch is the backstop for a
+ * session that expires under an open document.
  */
 export function useMessagingPreviews(): UseMessagingPreviewsReturn {
     const inbox = useHttp<Record<string, never>, ConversationPreviewList>();

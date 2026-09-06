@@ -41,12 +41,53 @@ import { store as storeConversation } from '@/routes/conversations';
  * server rule is the one that decides and its message needs somewhere to land.
  *
  * `triggerLabel` exists because the trigger's accessible name has to be able to
- * differ from its visible one where the control repeats. On a listing page
- * there is one of these and "Message" is unambiguous; in a feed grid every card
- * renders one, and a screen reader's button list is then N identical entries
- * with nothing distinguishing them. Optional, and omitting it leaves the name
- * as the visible text, so neither existing call site (`profile/ProfileHeader`,
- * `pets/PetOwnerCard`, both passing recipient id and name only) changes.
+ * **extend** its visible one where the control repeats. On a page with one of
+ * these "Message" is unambiguous; in a feed grid every card renders one, and a
+ * screen reader's button list is then N identical entries with nothing
+ * distinguishing them. Optional, and omitting it leaves the name as the visible
+ * text, which is why `profile/ProfileHeader` — the one call site that passes
+ * recipient id and name only — is unaffected by anything here.
+ *
+ * ## Extend, never replace: the constraint on what may be passed
+ *
+ * **Every value passed here must contain the trigger's visible text as a
+ * substring.** Speech input matches the words a user reads off the screen, so
+ * a name that drops them stops the control being addressable by voice at all
+ * (WCAG 2.5.3, Label in Name) — silently, with nothing visibly wrong and no
+ * gate that goes red. "Able to differ" is the licence that produced the defect
+ * and it is not what this prop is for: `Message Ruthe about Luna` extends the
+ * visible "Message"; `Contact Owner` replaced it, and did so on the one page
+ * that renders two of these.
+ *
+ * Both current names satisfy it in English — `pets/PetOwnerCard` passes
+ * `messaging.send_message` → "Send Message" and `pets/PetDetailHeader` builds
+ * the feed's `Message {owner} about {pet}` — and they stay distinct from each
+ * other, which is the separate property that page needs.
+ *
+ * ## The Arabic half is open, and it is this component's to close, not a
+ * caller's
+ *
+ * Containment holds **in English only**, and treat that as a latent failure
+ * rather than a closed finding. The visible text below is a hardcoded English
+ * "Message" while a caller may pass a translated name: under `ar`,
+ * `messaging.send_message` is "إرسال الرسالة", which contains no "Message", so
+ * the owner card's trigger fails 2.5.3 for an Arabic reader today. Only
+ * `PetDetailHeader`'s label passes in every locale, and only because it is
+ * itself untranslated English.
+ *
+ * Measured, not argued: on `/pets/10` under `ar` (`dir="rtl"`), in an isolated
+ * build served from a throwaway database on 2026-09-06, the two triggers on
+ * that page render the identical visible string "Message" while computing to
+ * `Message Catharine Zulauf about Mose` (contains it) and `إرسال الرسالة`
+ * (does not).
+ *
+ * No caller can fix this. The fix is to translate **this trigger's visible
+ * text** (and the dialog title, description, field label and submit button
+ * with it — this component is untranslated throughout, as `pages/Home.vue`
+ * records), then check containment per locale, which is an explicit deliverable
+ * of the scheduled i18n pass in `.ai/rules/lang.md`. Do not close it from a
+ * call site by inventing an English-shaped key: that hides the gap without
+ * removing it.
  *
  * It is a **prop and not a fall-through attribute**, which is the whole reason
  * it exists rather than being left to the call site. This component's root is
@@ -62,19 +103,45 @@ import { store as storeConversation } from '@/routes/conversations';
  * reasoning about forwarding. At `recipientId: 7, recipientName: 'Ruthe'` the
  * emitted `<button data-slot="dialog-trigger">` is 1150 bytes and carries no
  * `aria-label`, byte-for-byte equal to the same render of this file at 87e21ff
- * — so the two call sites that omit the prop are unchanged. Adding
+ * — so `profile/ProfileHeader`, the one call site that still omits the prop, is
+ * unchanged. (It read "the two call sites that omit the prop" when the
+ * measurement was taken; `pets/PetOwnerCard` and then `pets/PetDetailHeader`
+ * have since started passing one. The bytes are the measurement and stand as
+ * taken; only the count of omitting callers moved.) Adding
  * `triggerLabel: 'Message Ruthe about Ruthe'` takes it to 1189 bytes, the whole
  * 39-byte difference being ` aria-label="Message Ruthe about Ruthe"` on that
  * same element; nothing else moves.
+ *
+ * ## The icon appearance
+ *
+ * `appearance="icon"` renders the trigger as legacy's feed-card control
+ * (`components/web/PetCard.vue`, the "Quick Message Dialog Trigger" block):
+ * a 48px round brand-gradient button holding only the icon, added on the
+ * user's instruction (2026-09-06). It has **no visible text**, so the
+ * containment constraint above has nothing to contain and the `aria-label` is
+ * the whole accessible name — which is why this branch supplies a default
+ * (`Message {recipientName}`) rather than leaving the button nameless when a
+ * caller omits `triggerLabel`. The same string goes on `title`, so a sighted
+ * mouse user gets the tooltip legacy showed. The Arabic gap above is about the
+ * visible "Message" of the default appearance; the icon appearance does not
+ * add to it, and does not close it either.
  */
-const { recipientId, recipientName, triggerLabel } = defineProps<{
+const {
+    recipientId,
+    recipientName,
+    triggerLabel,
+    appearance = 'default',
+} = defineProps<{
     recipientId: number;
     recipientName: string;
     /**
      * Accessible name for the trigger. Defaults to its visible text,
-     * "Message". Pass one where the control repeats on a page.
+     * "Message". Pass one where the control repeats on a page — and pass one
+     * that **contains** "Message", per the containment constraint above.
      */
     triggerLabel?: string;
+    /** `icon` is the round gradient button the feed card renders. */
+    appearance?: 'default' | 'icon';
 }>();
 
 const open = ref(false);
@@ -83,7 +150,16 @@ const open = ref(false);
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <Button :aria-label="triggerLabel">
+            <button
+                v-if="appearance === 'icon'"
+                type="button"
+                :aria-label="triggerLabel ?? `Message ${recipientName}`"
+                :title="triggerLabel ?? `Message ${recipientName}`"
+                class="flex size-12 shrink-0 items-center justify-center rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 text-white transition hover:from-violet-600 hover:to-fuchsia-600 focus-visible:ring-[3px] focus-visible:ring-violet-500/50 focus-visible:outline-none"
+            >
+                <MessageCircle class="size-5" aria-hidden="true" />
+            </button>
+            <Button v-else :aria-label="triggerLabel">
                 <MessageCircle class="size-4" />
                 Message
             </Button>

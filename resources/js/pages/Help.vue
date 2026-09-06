@@ -14,9 +14,10 @@ import { create as createPet } from '@/routes/pets';
  * The help centre. `Route::inertia('help', 'Help')`, so **no props at all**
  * beyond the shared ones, and nothing to guard.
  *
- * Public, and therefore mapped to `PublicLayout` in `app.ts`: `AppLayout`
- * renders a sidebar that reads `auth.user`, which is null for the guest this
- * page exists for.
+ * Public, and rendered in `PublicLayout` like every other page since the
+ * starter kit's sidebar shell (`AppLayout`, which read `auth.user`) was
+ * removed on 2026-09-06 — `auth.user` is null for the guest this page exists
+ * for, so nothing here may assume it.
  *
  * ## The copy
  *

@@ -47,11 +47,27 @@ import type { PetOwner } from '@/types';
  * that component's docblock: its root is reka-ui's `DialogRoot`, so a
  * fall-through `aria-label` is dropped in silence).
  *
- * Legacy differentiated the pair and it is ported as it stands:
+ * Legacy differentiated the pair in its *visible* text:
  * `components/pet/show/PetHeader.vue:182` reads "Contact Owner",
- * `components/pet/show/PetOwnerCard.vue:149` reads "Message". The header keeps
- * `pets.contact_owner`; this one takes `messaging.send_message`, an existing
- * key present in both `lang/en.json` and `lang/ar.json` — no key was added.
+ * `components/pet/show/PetOwnerCard.vue:149` reads "Message". Here both
+ * triggers read "Message" — that string is hardcoded inside
+ * `StartConversationButton` — so the differentiation lands on the accessible
+ * name instead, and the two must still be distinct from each other.
+ *
+ * This one takes `messaging.send_message` → "Send Message", an existing key
+ * present in both `lang/en.json` and `lang/ar.json` — no key was added. The
+ * header no longer takes `pets.contact_owner`: an accessible name has to
+ * **contain** its trigger's visible text (WCAG 2.5.3), "Contact Owner" does not
+ * contain "Message", and it now builds the feed's `Message {owner} about {pet}`
+ * instead. "Send Message" does contain it, so this trigger satisfies the
+ * criterion **in English**.
+ *
+ * In Arabic it does not, and that is written down rather than fixed:
+ * `messaging.send_message` is "إرسال الرسالة" against a visible "Message". No
+ * change here can close it — the trigger's visible text has to be translated,
+ * which is `StartConversationButton`'s to do (see its docblock, and the
+ * per-locale check `.ai/rules/lang.md` puts on the scheduled i18n pass). Do not
+ * swap this key for an English-shaped one to make the containment check pass.
  *
  * ## The avatar keeps this app's treatment, not legacy's
  *

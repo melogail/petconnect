@@ -16,10 +16,13 @@ import { login, register } from '@/routes';
 /**
  * The bar above every page a guest can reach.
  *
- * `AppHeader` is the signed-in variant and assumes `auth.user`; the five pages
- * `app.ts` maps to `PublicLayout` are all reachable without an account, so
- * everything below is guarded on the shared prop rather than assumed
- * (.ai/rules/types.md: `auth.user` is typed non-nullable and is null here).
+ * It is the **only** header now: `app.ts` maps every non-auth page to
+ * `PublicLayout` since the starter kit's sidebar shell was removed
+ * (2026-09-06), so this bar renders for members on messaging, the listing
+ * form and settings as well as for guests on the feed. Five of those pages are
+ * reachable without an account, so everything below is guarded on the shared
+ * prop rather than assumed (.ai/rules/types.md: `auth.user` is typed
+ * non-nullable and is null here).
  *
  * The bell and the messages menu sit inside that same `v-if="user"` for a
  * **layout** reason, not a safety one: it groups the signed-in cluster — bell,
@@ -64,13 +67,14 @@ import { login, register } from '@/routes';
  *
  * The consequence is real and was accepted knowingly. Pet creation is now
  * linked from no persistent chrome anywhere in the application — not this
- * header, and `AppSidebar` never linked it either. Grepping `@/routes/pets`
- * for `create` across `resources/js` leaves exactly three entry points: the
- * Home CTA in `components/pets/CreatePetButton.vue` and two links on
- * `pages/Help.vue` (a card and an inline one). The fourth hit,
- * `pages/pets/Create.vue`, is that page's own breadcrumb pointing at itself.
- * If this is ever revisited it is a product decision about where the action
- * belongs, not a bug in this file. Do not re-add the button here to "fix" it.
+ * header, and the since-removed `AppSidebar` never linked it either. Grepping
+ * `@/routes/pets` for `create` across `resources/js` leaves exactly three
+ * entry points: the Home CTA in `components/pets/CreatePetButton.vue` and two
+ * links on `pages/Help.vue` (a card and an inline one). (`pages/pets/
+ * Create.vue` used to be a fourth hit, a breadcrumb pointing at itself; the
+ * breadcrumbs went with the sidebar shell.) If this is ever revisited it is a
+ * product decision about where the action belongs, not a bug in this file.
+ * Do not re-add the button here to "fix" it.
  *
  * ## What happens to the cluster below `sm`
  *

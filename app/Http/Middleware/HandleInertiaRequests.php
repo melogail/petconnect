@@ -219,7 +219,6 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user === null ? null : AuthenticatedUserResource::make($user),
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'locale' => $this->localeProps(),
         ];
     }

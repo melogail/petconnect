@@ -8,7 +8,6 @@ import ProfileAvatarPanel from '@/components/settings/ProfileAvatarPanel.vue';
 import ProfileLanguagePanel from '@/components/settings/ProfileLanguagePanel.vue';
 import ProfileLocationPanel from '@/components/settings/ProfileLocationPanel.vue';
 import { Separator } from '@/components/ui/separator';
-import { edit } from '@/routes/profile';
 import type { ProfileFormData, SelectOption } from '@/types';
 
 /**
@@ -38,12 +37,6 @@ defineProps<{
     status: string | null;
 }>();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [{ title: 'Profile settings', href: edit() }],
-    },
-});
-
 /**
  * The IANA list the browser already knows, so the time-zone field can offer
  * completions without the backend shipping 400 strings on every page load.
@@ -61,8 +54,7 @@ const timezones = computed<string[]>(() => {
     <div class="flex flex-col space-y-12">
         <Head title="Profile settings" />
 
-        <h1 class="sr-only">Profile settings</h1>
-
+        <!-- The document's h1 is the settings banner in `layouts/settings/Layout.vue`. -->
         <Heading
             variant="small"
             title="Profile"

@@ -72,9 +72,14 @@ return [
     | authentication or password reset when the operations are successful
     | and the user is authenticated. You are free to change this value.
     |
+    | The feed, not `/dashboard`: the starter kit's dashboard page and route
+    | were removed (2026-09-06) with the sidebar shell it lived in, and the
+    | legacy app had nothing there either — signing in put you on the feed.
+    | tests/Feature/DashboardTest.php pins this to `route('home')`.
+    |
     */
 
-    'home' => '/dashboard',
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------

@@ -33,9 +33,14 @@ import type { User } from '@/types';
  *   was reachable only from the header icon, and `profile.show` from nothing in
  *   the chrome at all, so a reader had no route to their own public profile
  *   without finding their name on a listing.
- * - **Settings** is an addition to legacy, kept. Legacy had no settings page to
- *   link; this application does, and this menu plus `AppSidebar` are the only
- *   two things that link `profile.edit`.
+ * - **Profile settings** is an addition to legacy, kept. Legacy had no
+ *   settings page to link; this application does, and this menu is the **only**
+ *   chrome that links `profile.edit` — the starter kit's sidebar, which used to
+ *   be the second, is gone (see `app.ts`). Its label is `nav.profile_settings`
+ *   rather than the bare `profile.settings` ("Settings"), because the user
+ *   asked for the account's settings to be reachable as *profile* settings
+ *   from this menu (2026-09-06), and the page behind it is styled after
+ *   legacy's profile edit screen.
  * - Legacy's help block held two entries: `nav.help_and_support` pointing at
  *   `/help`, and `nav.help_center` pointing at a dead `href="#"`. One route,
  *   one entry — and it keeps the label legacy put on the live route,
@@ -109,7 +114,7 @@ const { user } = defineProps<Props>();
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="me-2 h-4 w-4" />
-                {{ t('profile.settings') }}
+                {{ t('nav.profile_settings') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">

@@ -25,13 +25,25 @@ import type { PetDetail } from '@/types';
  * under whatever labels the owner actually used, in `PetExtras` further down
  * the same card.
  *
- * The heading is `PetSectionHeading`, the same component the five in-card
- * blocks use, rather than a second copy of its classes. Two differences from
- * those five are passed in rather than hardcoded: this section is not nested
- * inside the facts card's `h2`, so it is an `h2` itself, and legacy gives it
- * `mb-4` where the in-card blocks get `mb-3` (`PetStats.vue:102` against
- * `PetAbout.vue:28` in petconnect-old). See `PetSectionHeading` for why that
- * 4px is passed through instead of being averaged away.
+ * The heading is `PetSectionHeading`, the same component the other in-card
+ * blocks use, rather than a second copy of its classes. Two things are passed
+ * in rather than hardcoded:
+ *
+ * - `level="h2"`, because this is a top-level section of the page. It used to
+ *   be justified here as "not nested inside the facts card's `h2`" — there is
+ *   no such `h2`, `PetFactsCard` renders no heading at all, and the blocks
+ *   that took the `h3` default on the strength of that sentence are `h2` too
+ *   now. The value passed here did not change; the reason did.
+ * - `class="mb-4"`, because legacy gives this grid `mb-4` where the in-card
+ *   blocks get `mb-3` (`PetStats.vue:102` against `PetAbout.vue:28` in
+ *   petconnect-old). See `PetSectionHeading` for why that 4px is passed
+ *   through instead of being averaged away.
+ *
+ * The neutering tile's label is `wizard.spayed_neutered` — a key from the pet
+ * form's namespace, read here on a public page. That reuse was argued against
+ * before it shipped, and renaming the namespace would render the raw key to
+ * visitors; the decision and what it costs are recorded once, in
+ * `PetHealthSection`'s docblock. Pointer, not a copy.
  */
 const { pet } = defineProps<{ pet: PetDetail }>();
 

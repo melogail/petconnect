@@ -38,6 +38,36 @@ import type { User } from '@/types';
  * (Reka UI), which is why there is no click-outside listener: the legacy
  * component wired `document.addEventListener('click', …)` by hand and lost
  * focus management, escape handling and portalling with it.
+ *
+ * ## The avatar initials are not a Label-in-Name failure, and here is the line
+ *
+ * This is written down because the two badged triggers beside it in the header
+ * *were* fixed for exactly the property this one appears to fail, and an
+ * unexplained difference between siblings is worse than either verdict on its
+ * own — the next reader adjudicates, and adjudicates toward whichever file they
+ * happen to be editing.
+ *
+ * Measured out of Chrome's accessibility tree over CDP against an isolated
+ * build, 2026-09-06: visible text `TU Test`, computed name
+ * `User menu for Test User` (`قائمة المستخدم لـ Test User` under `ar`). The
+ * name contains "Test"; it does not contain "TU". A containment check run over
+ * the whole tree flags it on every page.
+ *
+ * It is still a pass, and the distinguisher is checkable rather than a matter
+ * of taste: **the initials are the fallback rendering of an image, not text
+ * that labels the control.** `UserAvatar` renders `AvatarImage` with
+ * `alt="{name}"` when the reader has uploaded a photo and `AvatarFallback` with
+ * initials when they have not, so whether these two glyphs exist at all is a
+ * function of an upload. A property that appears and disappears with an image
+ * upload is a property of an image. `UnreadBadge`'s "9+", by contrast, is
+ * always text and is never an image, which is why that one had to be brought
+ * into the name — see `shell/labels`.
+ *
+ * The first name *is* label text and is contained, because it is a prefix of
+ * `user.name`, which `nav.user_menu_for` interpolates verbatim in every locale.
+ * That is what keeps this control addressable by voice. If the trigger ever
+ * renders a string that is **not** a substring of `user.name`, the exemption
+ * above stops covering it and the name has to be rebuilt with `nameContaining`.
  */
 const { user } = defineProps<{
     user: User;

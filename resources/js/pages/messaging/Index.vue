@@ -3,14 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ConversationList from '@/components/messaging/ConversationList.vue';
 import Heading from '@/components/Heading.vue';
-import { index as conversationsIndex } from '@/routes/conversations';
 import type { Conversation, Paginated } from '@/types';
-
-defineOptions({
-    layout: {
-        breadcrumbs: [{ title: 'Messages', href: conversationsIndex() }],
-    },
-});
 
 const { conversations } = defineProps<{
     conversations: Paginated<Conversation>;
@@ -29,7 +22,7 @@ const description = computed(() =>
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
+    <div class="mx-auto w-full max-w-3xl space-y-6 px-4 py-8 sm:px-6">
         <Head title="Messages" />
 
         <Heading title="Messages" :description="description" />

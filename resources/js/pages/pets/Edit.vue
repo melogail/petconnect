@@ -79,7 +79,7 @@ function submit(): void {
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
+    <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <Head :title="`Edit ${pet.name}`" />
 
         <!-- `Heading` renders an h2, so the page still owes the document an h1. -->

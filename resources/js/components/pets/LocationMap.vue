@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
             v-if="loading"
             class="bg-muted text-muted-foreground absolute inset-0 flex items-center justify-center gap-2 text-sm"
         >
-            <Spinner class="size-4" />
+            <Spinner status class="size-4" />
             Loading the map…
         </div>
     </div>

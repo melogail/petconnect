@@ -7,7 +7,6 @@ use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -19,11 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         /*
          * `locale` joins the plaintext cookies for the same reason `appearance`
-         * and `sidebar_state` are there: the client reads it to decide the
-         * document's `lang` and `dir` before the first Inertia payload arrives,
-         * and it holds no secret — the whole value is `en` or `ar`.
+         * is there: the client reads it to decide the document's `lang` and
+         * `dir` before the first Inertia payload arrives, and it holds no
+         * secret — the whole value is `en` or `ar`. `sidebar_state` used to be
+         * the third entry; it was the starter kit's sidebar cookie, and the
+         * sidebar shell was removed on 2026-09-06 (resources/js/app.ts).
          */
-        $middleware->encryptCookies(except: ['appearance', 'locale', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'locale']);
 
         /*
          * Order matters here, and the order these are written in is not the
@@ -39,8 +40,9 @@ return Application::configure(basePath: dirname(__DIR__))
          * StartSession, ShareErrorsFromSession, PreventRequestForgery,
          * **Authenticate**, ThrottleRequests, SubstituteBindings,
          * **EnsureAccountIsActive**, SetLocale, HandleAppearance,
-         * HandleInertiaRequests, AddLinkHeadersForPreloadedAssets, InjectBoost,
-         * **EnsureEmailIsVerified**.
+         * HandleInertiaRequests, InjectBoost, **EnsureEmailIsVerified**.
+         * (AddLinkHeadersForPreloadedAssets sat between HandleInertiaRequests
+         * and InjectBoost when that was measured; see below for why it is gone.)
          *
          * So: `EnsureAccountIsActive` runs *after* `auth`, *before* `verified`,
          * and before HandleInertiaRequests — which is what matters. A
@@ -55,13 +57,29 @@ return Application::configure(basePath: dirname(__DIR__))
          * changes whose locale preference applies; and before
          * HandleInertiaRequests, so the shared props and every `__()` in the
          * response are already in the resolved language.
+         *
+         * `AddLinkHeadersForPreloadedAssets` is deliberately NOT appended, and
+         * this is the fix for a 502 on every Valet/nginx machine, not a
+         * preference. The starter kit appends it so the `<link rel=preload>`
+         * tags Vite renders are mirrored into one `Link:` response header. On
+         * this application that header is **4,310 bytes on `/`** and 2,679 on
+         * `/help` (measured 2026-09-06 with `curl -D` against `artisan serve`,
+         * fonts and every preloaded chunk listed), and with the two ~450-byte
+         * session and XSRF cookies beside it the response headers overflow
+         * nginx's default 4 KB `fastcgi_buffer_size`. nginx then answers
+         * "502 Bad Gateway" and logs `upstream sent too big header while
+         * reading response header from upstream` — measured as 9 of 10
+         * requests to `/` through Valet, with the same error in
+         * `~/.valet/Log/nginx-error.log` back to 2026-09-03. Nothing is lost by
+         * dropping it: the preload tags stay in the HTML, only the duplicate
+         * header goes. Raising `fastcgi_buffer_size` per machine would fix the
+         * symptom on that machine and leave the next one broken.
          */
         $middleware->web(append: [
             EnsureAccountIsActive::class,
             SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

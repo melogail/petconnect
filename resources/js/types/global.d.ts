@@ -35,7 +35,6 @@ declare module '@inertiajs/core' {
              * straight off `page.props`.
              */
             translations?: TranslationCatalogue;
-            sidebarOpen: boolean;
             [key: string]: unknown;
         };
     }

@@ -2,6 +2,7 @@
 import { Clock, Eye, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
+import { countLabel } from '@/components/pets/card/labels';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
 import PetOwnerActions from '@/components/pets/PetOwnerActions.vue';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +59,98 @@ import type { PetDetail } from '@/types';
  * The owner branch is now `PetOwnerActions` alone: edit/delete are additive,
  * they do not replace the like. `StartConversationButton` stays owner-gated
  * through `canMessage`, which is where "you cannot message yourself" lives.
+ *
+ * That agreement with the feed is about **who sees the control, and nothing
+ * else**. It did not extend to what the control announces: `PetCardActions`
+ * named its like button and this header did not, so one button read
+ * `Like Luna Belle, 10 likes` on a card and a bare `10` here. Both surfaces
+ * name it now — see below — and the scope clause stays because the two
+ * components are separate call sites that can drift apart again.
+ *
+ * ## Both action controls are named from here, and by two different techniques
+ *
+ * `PetLikeButton`'s visible label is the bare count, so unnamed it announces
+ * as an unqualified number. The name is built with the feed's own `countLabel`
+ * helper over the same two values (`Like ${name}, ${n} likes`), imported from
+ * `card/labels` rather than re-written, so the two surfaces cannot phrase or
+ * pluralise it differently. It is passed as a **fall-through `aria-label`**,
+ * which reaches the rendered element because that component's root is `Button`
+ * → `Primitive`; its docblock records the SSR render that established it.
+ *
+ * That name is English while everything visible here goes through `t()`, and
+ * it is deliberate rather than an oversight: `card/labels` is English-only
+ * pending the scheduled i18n pass (its own docblock says not to add
+ * `useTranslations` ahead of that pass), and containment still holds in every
+ * locale because the visible text is a digit string — "10" is inside
+ * "Like Luna Belle, 10 likes" whatever the locale renders around it.
+ *
+ * `StartConversationButton` takes its name as a **prop**: its root is reka-ui's
+ * `DialogRoot`, which drops fall-through attributes in silence, so the
+ * technique above produces a still-nameless button there. See its docblock.
+ *
+ * The string it gets is the feed's `Message {owner} about {pet}`, because an
+ * accessible name has to **contain** its trigger's visible text (WCAG 2.5.3 —
+ * speech input matches the words a user reads off the screen) and that visible
+ * text is a hardcoded English "Message". This header previously passed
+ * `pets.contact_owner` → "Contact Owner", which does not contain "Message" and
+ * therefore broke the criterion in every locale. It still differs from the
+ * `messaging.send_message` → "Send Message" that `PetOwnerCard` passes for the
+ * same recipient, which is the distinctness this page needed in the first
+ * place: two buttons, two names.
+ *
+ * Containment is **not** closed for that sibling, and this is not the vertical
+ * that can close it: a translated name against an untranslated visible
+ * "Message" fails 2.5.3 in Arabic, and the fix is to translate the trigger's
+ * visible text, which belongs to `StartConversationButton`'s owner. Recorded
+ * in full in its docblock; do not paper over it with another key here.
+ *
+ * ## `pets.contact_owner` is now a deliberate orphan — do not delete it, do not
+ * restore it
+ *
+ * Dropping it here left it with **no client consumer anywhere**. Verified
+ * 2026-09-06 by searching the whole tree rather than this subtree:
+ * `grep -rn contact_owner` outside `node_modules`, `vendor` and `public`
+ * returns five hits and not one of them is a `t()` call — `lang/en.json:161`,
+ * `lang/ar.json:161`, a line of `.ai/rules/lang.md`, and prose in this file and
+ * in `pets/PetOwnerCard.vue` explaining why the key stopped being used. Both
+ * catalogue entries are still there.
+ *
+ * This paragraph is the record, and it is here because this is where a
+ * `grep contact_owner` lands. An unreferenced key otherwise reads as an
+ * oversight to whoever next audits the catalogues, and the two obvious repairs
+ * are both wrong:
+ *
+ * - **Restoring a consumer** would mean putting "Contact Owner" back on a
+ *   trigger whose visible text is "Message". That is the 2.5.3 failure this
+ *   phase removed, not a repair of it.
+ * - **Deleting the key** discards a translated pair — `en` "Contact Owner",
+ *   `ar` "التواصل مع المالك" — that becomes usable the moment
+ *   `StartConversationButton`'s visible text is translated, which is the
+ *   scheduled i18n pass's job and the same pass that owns `lang/*.json`. If
+ *   that pass gives the two triggers distinct **visible** strings, this is the
+ *   natural name for the header's, and legacy used exactly that word there
+ *   (`components/pet/show/PetHeader.vue:182`).
+ *
+ * So it stays, orphaned on purpose, until the i18n pass decides. `lang/*.json`
+ * was not touched from this side.
+ *
+ * ## Measured, both arms
+ *
+ * Names read out of Chrome's accessibility tree (`Accessibility.getFullAXTree`
+ * over CDP), against a build of this tree served from an isolated copy on a
+ * throwaway sqlite database, on `/pets/10` — "Mose", 12 likes, owner
+ * "Catharine Zulauf" — 2026-09-06. Signed-in non-owner: the like control
+ * computes to `Like Mose, 12 likes` with `pressed: false` intact, the header
+ * trigger to `Message Catharine Zulauf about Mose`, the owner card's to
+ * `Send Message`. Guest: the like control is the `<a href="/login">` branch and
+ * carries the same name, so the fall-through label survives the branch swap.
+ *
+ * The counterfactual is what makes those readings evidence: the same probe
+ * against the same tree with only these two attributes reverted computes
+ * `12` for the like control and `Contact Owner` for the header trigger. Under
+ * `ar` (`dir="rtl"`), containment measured per trigger:
+ * `Message Catharine Zulauf about Mose` contains the visible "Message" and
+ * `إرسال الرسالة` does not — the Arabic gap above, observed rather than argued.
  */
 const { pet, canLike, canMessage } = defineProps<{
     pet: PetDetail;
@@ -77,8 +170,44 @@ const statusClass: Record<PetDetail['status'], string> = {
         'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
 };
 
+/**
+ * A ternary, sitting beside a map written over the whole union — and the two
+ * are **not** the same kind of thing, so do not read the one above as licence
+ * for the shape of this one.
+ *
+ * `statusClass` is exhaustive: a third `PetStatus` fails to type-check, which
+ * is exactly the tripwire its docblock claims. This ternary has no such
+ * protection — a third status would silently read "Unavailable" — and it is
+ * kept only because it cannot be reached without `statusClass` above failing to
+ * compile first, which is what brings a reader here. Add a status and you fix
+ * both, in that order.
+ */
 const statusLabel = computed(() =>
     pet.status === 'available' ? t('pets.available') : t('pets.unavailable'),
+);
+
+/**
+ * `PetLikeButton` renders the bare count, so it announces as an unqualified
+ * number unless it is named from outside. Same helper and same expression as
+ * `PetCardActions`, so the detail page and a feed card announce one listing's
+ * like control identically; `aria-pressed` on the control carries the toggle
+ * state, so the name does not change with it.
+ */
+const likeLabel = computed(
+    () => `Like ${pet.name}, ${countLabel(pet.likes_count, 'like')}`,
+);
+
+/**
+ * Names the owner **and** the listing, the way a feed card does. The sibling
+ * trigger in `PetOwnerCard` names neither — it stays on "Send Message" — which
+ * is what keeps the two apart in a button list.
+ *
+ * `undefined` where the button is absent, so Vue emits no attribute rather than
+ * an empty one; `pet.user` is null-checked here as well as in the template
+ * because the payload allows a listing with no owner resource.
+ */
+const messageLabel = computed(() =>
+    pet.user ? `Message ${pet.user.name} about ${pet.name}` : undefined,
 );
 
 const breed = computed(() =>
@@ -207,12 +336,13 @@ const views = computed(() =>
                         :likes-count="pet.likes_count"
                         :is-liked="pet.is_liked"
                         :can-like="canLike"
+                        :aria-label="likeLabel"
                     />
                     <StartConversationButton
                         v-if="canMessage && pet.user"
                         :recipient-id="pet.user.id"
                         :recipient-name="pet.user.name"
-                        :trigger-label="t('pets.contact_owner')"
+                        :trigger-label="messageLabel"
                     />
                 </div>
             </div>

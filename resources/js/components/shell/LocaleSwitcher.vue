@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { nameContaining } from '@/components/shell/labels';
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
 import { update as updateLocale } from '@/routes/locale';
@@ -36,12 +37,39 @@ const shortLabelKeys: Record<string, string> = {
     ar: 'nav.arabic',
 };
 
+/**
+ * `label` is the pill's accessible name and `short` is what it puts on screen,
+ * so the pair has to satisfy WCAG 2.5.3 — and it did not, in the locale where
+ * it is easiest to miss.
+ *
+ * The glyph is translated independently of the language it names, so whether
+ * the name contains it is a **per-locale** property with four combinations, not
+ * one. Read out of Chrome's accessibility tree over CDP against an isolated
+ * build, 2026-09-06:
+ *
+ * | reading locale | pill | visible | name (before) | contained |
+ * | -------------- | ---- | ------- | ------------- | --------- |
+ * | `en`           | `en` | `EN`    | `English`     | yes, case-insensitively |
+ * | `en`           | `ar` | `AR`    | `العربية`      | **no** |
+ * | `ar`           | `en` | `EN`    | `English`     | yes |
+ * | `ar`           | `ar` | `ع`     | `العربية`      | yes — `ع` is the third codepoint of it |
+ *
+ * So exactly one cell failed, and it is the one an English-reading auditor sees
+ * on the first screen: the Arabic pill reads "AR" and announced "العربية". A
+ * check written once, in either locale, passes three times out of four and
+ * reports the control as fine.
+ *
+ * `nameContaining` prefixes the glyph only when the name does not already carry
+ * it, so the three passing cells are byte-identical to before and the `en`/`ar`
+ * asymmetry disappears without a new catalogue key.
+ */
 const options = computed(() =>
-    locale.value.supported.map((code) => ({
-        code,
-        short: t(shortLabelKeys[code] ?? `locales.${code}`),
-        label: t(`locales.${code}`),
-    })),
+    locale.value.supported.map((code) => {
+        const short = t(shortLabelKeys[code] ?? `locales.${code}`);
+        const label = t(`locales.${code}`);
+
+        return { code, short, label, name: nameContaining(short, label) };
+    }),
 );
 
 function select(code: string): void {
@@ -65,7 +93,7 @@ function select(code: string): void {
             type="button"
             :lang="option.code"
             :title="option.label"
-            :aria-label="option.label"
+            :aria-label="option.name"
             :aria-pressed="option.code === locale.current"
             class="rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
             :class="

@@ -11,6 +11,7 @@ import {
 import { computed, ref } from 'vue';
 import CommentDeleteDialog from '@/components/comments/CommentDeleteDialog.vue';
 import CommentEditDialog from '@/components/comments/CommentEditDialog.vue';
+import { countLabel } from '@/components/pets/card/labels';
 import ReportDialog from '@/components/reports/ReportDialog.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -184,6 +185,53 @@ const canReport = computed(
 );
 
 const hasMenu = computed(() => comment.is_author || canReport.value);
+
+/**
+ * The like control's visible label is the bare count, so unnamed it announces
+ * as an unqualified number — and a thread renders one per comment, so a screen
+ * reader's button list was N entries reading "0", "6", "1", "3", "5" with
+ * nothing to say what any of them counts or acts on.
+ *
+ * Measured out of Chrome's accessibility tree (`Accessibility.getFullAXTree`
+ * over CDP) against a build of this tree served from an isolated copy on a
+ * throwaway sqlite database, 2026-09-06, on `/pets/27` — "Ezekiel", nine
+ * comments. Before: nine buttons computing to `0 0 0 6 1 3 5 0 0`, each with
+ * `pressed: false` intact. After, at the same nine:
+ * `Like Mr. Esteban Halvorson's comment, 6 likes`,
+ * `Like Evie Reichel's comment, 1 like` — the singular is `countLabel`'s, and
+ * it is the case a template ternary gets wrong — and so on, `pressed`
+ * unchanged. The pet's own like control one section up already read
+ * `Like Ezekiel, 3 likes`, which is the corrected pattern this copies rather
+ * than re-invents, and it reads the same in both arms.
+ *
+ * The same control was measured inside the **feed's** comments dialog, which
+ * mounts this component from a card rather than from a thread:
+ * `Like Providenci Stroman's comment, 6 likes` with `pressed: true`.
+ *
+ * The counterfactual is what makes those readings evidence rather than a
+ * screenshot: the same probe against the same tree with this one attribute
+ * removed recomputes the bare `0 0 0 6 1 3 5 0 0`, on both surfaces, while
+ * `Like Ezekiel, 3 likes` and `Next »` are unchanged — so the instrument
+ * discriminates rather than reporting green at whatever it is pointed at.
+ *
+ * `countLabel` is imported from `pets/card/labels` rather than re-written, for
+ * the reason that file gives: the plural is decided once so two surfaces cannot
+ * phrase "1 comments" differently. It also means this name is **English while
+ * everything visible in this component goes through `t()`** — the same
+ * deliberate trade `PetDetailHeader` documents, not an oversight. The scheduled
+ * i18n pass (.ai/rules/lang.md) owns `lang/*.json` and will need one new key
+ * here; no key was added from this side. Containment holds in every locale
+ * regardless, because the visible text is a digit string and a digit string is
+ * inside the English name whatever the page renders around it.
+ *
+ * The author is named because it is the only thing that tells two of these
+ * apart in a button list; `comments.unknown` is the fallback for a deleted
+ * account, and it is the one translated fragment in the string.
+ */
+const likeLabel = computed(
+    () =>
+        `Like ${author.value?.name ?? t('comments.unknown')}'s comment, ${countLabel(comment.likes_count, 'like')}`,
+);
 </script>
 
 <template>
@@ -295,6 +343,7 @@ const hasMenu = computed(() => comment.is_author || canReport.value);
                     preserve-state
                     v-bind="surface.visit"
                     class="hover:text-primary flex items-center gap-1 transition-colors"
+                    :aria-label="likeLabel"
                     :aria-pressed="comment.is_liked"
                     @success="surface.onMutated()"
                 >

@@ -4,6 +4,7 @@ import { Bell } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import NotificationInboxActions from '@/components/notifications/NotificationInboxActions.vue';
 import NotificationPanel from '@/components/notifications/NotificationPanel.vue';
+import { nameContaining, unreadBadgeLabel } from '@/components/shell/labels';
 import UnreadBadge from '@/components/shell/UnreadBadge.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,9 +33,10 @@ import { useTranslations } from '@/composables/useTranslations';
  * and it gates the whole `Sheet` and the mount fetch alike. Mount this on a
  * guest-reachable surface and it renders nothing and requests nothing.
  *
- * The `v-if="user"` both callers wrap it in (`PublicHeader`, `AppSidebarHeader`)
- * groups the signed-in cluster for layout; it is not what prevents the fetch,
- * and nothing here depends on it. `MessagesDropdown` carries the same gate.
+ * The `v-if="user"` its caller wraps it in (`PublicHeader`, the only header
+ * since the sidebar shell was removed) groups the signed-in cluster for layout;
+ * it is not what prevents the fetch, and nothing here depends on it.
+ * `MessagesDropdown` carries the same gate.
  *
  * The predicate is decided here rather than on a caller because it is this
  * component's own request that it governs. An unverified account used to mount
@@ -172,9 +174,55 @@ const unreadLabel = computed(() =>
  * That is a deliberate divergence from `MessagesDropdown`, which still builds
  * "Messages (2 unread)" by hand — `messaging.unread` is a bare count there and
  * cannot stand alone the way this one can.
+ *
+ * ## The name has to contain what the badge shows, and the sentence alone did
+ * not
+ *
+ * `unreadLabel` states the **exact** count; `UnreadBadge` renders a **capped**
+ * one. Above nine those are different strings, so the sentence on its own broke
+ * WCAG 2.5.3: the control showed "9+" and announced "89 unread notifications",
+ * which contains no "9+". `nameContaining` restores it by prefixing the badge's
+ * own text when — and only when — the sentence does not already carry it, so a
+ * count of 3 still announces as the plain "3 unread notifications".
+ *
+ * Measured out of Chrome's accessibility tree (`Accessibility.getFullAXTree`
+ * over CDP), against a build of this tree served from an isolated copy on a
+ * throwaway sqlite database, 2026-09-06, viewer with 89 unread:
+ *
+ * | locale | visible | before                    | after                          |
+ * | ------ | ------- | ------------------------- | ------------------------------ |
+ * | `en`   | `9+`    | `89 unread notifications` | `9+, 89 unread notifications`   |
+ * | `ar`   | `9+`    | `89 إشعارات غير مقروءة`    | `9+, 89 إشعارات غير مقروءة`     |
+ *
+ * The counterfactual is what makes those readings evidence rather than a
+ * screenshot: the same probe against the same tree with `nameContaining`
+ * reduced to `(visible, name) => name` recomputes the "before" column, so the
+ * instrument distinguishes the two arrangements.
+ *
+ * It also covers a case no amount of care in this file would have, and this one
+ * was **measured, not predicted**: `ar.json`'s `notifications.unread_one` is
+ * "إشعار غير مقروء", with **no `:count` placeholder**, so at exactly one unread
+ * the Arabic sentence contains no digit while the English one does. Marking all
+ * but one notification read and re-reading the tree, same day and tree:
+ *
+ * | locale | visible | name                    |
+ * | ------ | ------- | ----------------------- |
+ * | `en`   | `1`     | `1 unread notification` |
+ * | `ar`   | `1`     | `1, إشعار غير مقروء`     |
+ *
+ * Both are correct, and the pair is the argument for the shape of the fix: the
+ * English name already contained its visible text so nothing was prefixed, and
+ * the Arabic one did not so it was. A hand-written `${badge} ${sentence}` would
+ * have doubled the digit in English; interpolating the badge text as `:count`
+ * would have left the Arabic case broken, because there is no placeholder to
+ * interpolate into. That is a containment failure a translator can introduce
+ * without touching code, which is why the check is a function call here rather
+ * than a property assumed of the catalogue.
  */
 const triggerLabel = computed(() =>
-    hasUnread.value ? unreadLabel.value : t('notifications.notifications'),
+    hasUnread.value
+        ? nameContaining(unreadBadgeLabel(unreadCount.value), unreadLabel.value)
+        : t('notifications.notifications'),
 );
 </script>
 

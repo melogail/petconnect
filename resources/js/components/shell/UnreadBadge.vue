@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { unreadBadgeLabel } from '@/components/shell/labels';
 
 /**
  * The red count that sits on the corner of a header control.
@@ -47,13 +48,24 @@ import { computed } from 'vue';
  * also the widest thing this badge ever has to hold, which is what lets the
  * geometry above be checked once instead of per count.
  *
- * It is `aria-hidden` everywhere it is used: the count already reaches
- * assistive technology through the trigger's accessible name, and announcing
- * a bare "3" beside "Messages" reads as a second, unexplained control.
+ * The cap now lives in `shell/labels`' `unreadBadgeLabel` rather than in this
+ * file, and it moved because **both triggers have to know what this badge is
+ * rendering**: above nine the string on screen ("9+") and the string in the
+ * trigger's accessible name ("89 unread notifications") are different, and
+ * WCAG 2.5.3 is about the first. Two copies of `count > 9` would let the cap
+ * and the name drift apart with nothing failing. This still renders it; it no
+ * longer owns it.
+ *
+ * It is `aria-hidden` everywhere it is used, and that is unchanged: the count
+ * reaches assistive technology through the trigger's accessible name, and
+ * announcing a bare "3" beside "Messages" reads as a second, unexplained
+ * control. `aria-hidden` keeps it out of the *name computation*; it does not
+ * make the glyphs invisible, which is why the trigger still has to contain
+ * them — see `shell/labels`' `nameContaining`.
  */
 const { count } = defineProps<{ count: number }>();
 
-const label = computed(() => (count > 9 ? '9+' : String(count)));
+const label = computed(() => unreadBadgeLabel(count));
 </script>
 
 <template>

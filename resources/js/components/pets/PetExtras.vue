@@ -32,7 +32,10 @@ const items = computed<DetailItem[]>(() =>
 
 <template>
     <section v-if="items.length > 0">
-        <PetSectionHeading :title="t('pets.additional_information')" />
+        <PetSectionHeading
+            :title="t('pets.additional_information')"
+            level="h2"
+        />
         <div class="border-border/50 bg-muted/10 rounded-xl border p-4">
             <DetailList :items="items" />
         </div>

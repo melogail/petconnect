@@ -58,6 +58,38 @@ function label(raw: string): string {
         .trim();
 }
 
+/**
+ * A numbered page control's visible label is a bare number, and unnamed it
+ * announces as one: a screen reader's link list read `1 2 3 4 5 6` with nothing
+ * to say what the numbers are. The `aria-label="Pagination"` on the `<nav>`
+ * names the region, not the controls inside it, and a control is reachable
+ * without ever entering its region.
+ *
+ * Measured out of Chrome's accessibility tree (`Accessibility.getFullAXTree`
+ * over CDP) against an isolated build on a throwaway sqlite database,
+ * 2026-09-06. Both render modes were read, because they are different roles and
+ * one is only reachable inside an open sheet: `/conversations` (`as="link"`)
+ * computed `1` and `2` for its two page links; the notification sheet
+ * (`as="button"`) computed `1` … `6`. After: `Page 1` … `Page 6` in both, with
+ * `aria-current="page"` on the active one unchanged.
+ *
+ * Returns `undefined` for anything that is not a bare number — "Previous",
+ * "Next »" and the "…" separator already say what they do, and an `aria-label`
+ * would override their visible text rather than extend it, which is the
+ * containment failure this is here to avoid. Vue emits no attribute at all for
+ * `undefined`, so those controls render byte-identically.
+ *
+ * English, like this file's existing `aria-label="Pagination"`. The scheduled
+ * i18n pass (.ai/rules/lang.md) owns `lang/*.json`; no key was added here.
+ * Containment is locale-independent either way — the visible text is a digit
+ * string and it is inside `Page 3` whatever word precedes it.
+ */
+function pageName(raw: string): string | undefined {
+    const text = label(raw);
+
+    return /^\d+$/.test(text) ? `Page ${text}` : undefined;
+}
+
 const hasPages = computed(
     () => links.filter((link) => link.url !== null).length > 1,
 );
@@ -87,6 +119,7 @@ const hasPages = computed(
                     :only="only"
                     preserve-scroll
                     preserve-state
+                    :aria-label="pageName(link.label)"
                     :aria-current="link.active ? 'page' : undefined"
                 >
                     {{ label(link.label) }}
@@ -96,6 +129,7 @@ const hasPages = computed(
                 v-else
                 size="sm"
                 :variant="link.active ? 'default' : 'ghost'"
+                :aria-label="pageName(link.label)"
                 :aria-current="link.active ? 'page' : undefined"
                 @click="emit('navigate', link.url)"
             >

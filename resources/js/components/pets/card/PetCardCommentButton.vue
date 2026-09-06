@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MessageSquare } from '@lucide/vue';
+import { MessageCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CommentsDialog from '@/components/comments/CommentsDialog.vue';
 import { countLabel } from '@/components/pets/card/labels';
@@ -44,6 +44,24 @@ import type {
  * without the bound, no report entry in a comment's menu without both
  * vocabularies. Nothing errors, `vue-tsc` stays clean, and the suite stays
  * green.
+ *
+ * ## The card's comment preview is consumed here, and only here
+ *
+ * `comments` is the feed's bounded preview of the newest top-level comments.
+ * `EagerLoadFeedRelations` loads them with `user.media`,
+ * `withCount(['likes','replies'])`, `withLikedBy`, `withReportedBy` and
+ * `latest()`, bounded by `config('petconnect.pets.feed_comment_preview')` —
+ * which `ListHomeFeedPets` carries in as `HomeFeedContext::$commentPreview` —
+ * and `PetCardResource` ships them as `comments`. Cite the config key, not the
+ * number it currently holds: the bound is `env('PETS_FEED_COMMENT_PREVIEW')`
+ * with a default of 3, so any literal written here is one deployment away from
+ * being false.
+ *
+ * The card used to render that preview as a teaser under its buttons as well;
+ * the user ruled that out (2026-09-06) and the teaser component is gone. The
+ * dialog is now the preview's **only** consumer: it opens on these rows and
+ * then fetches the real thread. Delete the eager load or keep consuming it
+ * here; do not go back to paying for it silently.
  *
  * Reading a thread is public, so this control is identical for a guest — the
  * dialog opens, the composer is replaced by a sign-in line, and no write
@@ -116,8 +134,13 @@ const label = computed(
         @posted="countPosted"
         @deleted="countDeleted"
     >
-        <Button variant="outline" :aria-label="label">
-            <MessageSquare class="size-4" aria-hidden="true" />
+        <!-- A quiet round pill, legacy's action-row shape (restyled 2026-09-06). -->
+        <Button
+            variant="ghost"
+            :aria-label="label"
+            class="text-muted-foreground hover:bg-muted hover:text-primary-600 dark:hover:text-primary-400 rounded-full"
+        >
+            <MessageCircle class="size-5" aria-hidden="true" />
             {{ commentsShown }}
         </Button>
     </CommentsDialog>

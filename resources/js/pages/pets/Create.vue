@@ -4,8 +4,7 @@ import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import PetFormWizard from '@/components/pets/form/PetFormWizard.vue';
 import { blankPetForm, toPetPayload, type PetFormState } from '@/lib/petForm';
-import { home } from '@/routes';
-import { create, store as storePet } from '@/routes/pets';
+import { store as storePet } from '@/routes/pets';
 import type {
     PetCategoryOption,
     PetFormOptions,
@@ -39,15 +38,6 @@ const props = defineProps<{
     photoBounds: PetPhotoBounds;
 }>();
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            { title: 'Home', href: home() },
-            { title: 'Publish a listing', href: create() },
-        ],
-    },
-});
-
 const options = computed<PetFormOptions>(() => ({
     categories: props.categories,
     listingTypes: props.listingTypes,
@@ -68,7 +58,7 @@ function submit(): void {
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
+    <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <Head title="Publish a listing" />
 
         <!-- `Heading` renders an h2, so the page still owes the document an h1. -->

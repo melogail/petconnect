@@ -1,3 +1,5 @@
+import type { useTranslations } from '@/composables/useTranslations';
+
 /**
  * Accessible-name helpers for the card's counted controls.
  *
@@ -13,4 +15,21 @@
  */
 export function countLabel(count: number, singular: string): string {
     return `${count} ${count === 1 ? singular : `${singular}s`}`;
+}
+
+type Translate = ReturnType<typeof useTranslations>['t'];
+
+/**
+ * "7 years" / "1 year", from the varchar `age` column.
+ *
+ * Shared by the card's meta line and its hover bar so the two cannot disagree
+ * about the plural. Takes the caller's `t` rather than calling
+ * `useTranslations()` itself: this file is a plain module, not a component,
+ * and the composable reads `usePage()`. `pets.age_year` / `pets.age_years`
+ * exist in both catalogues.
+ */
+export function ageLabel(t: Translate, age: string): string {
+    return t(Number(age) === 1 ? 'pets.age_year' : 'pets.age_years', {
+        count: age,
+    });
 }

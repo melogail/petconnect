@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ArrowRight } from '@lucide/vue';
 import { computed } from 'vue';
 import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
 import { countLabel } from '@/components/pets/card/labels';
 import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vue';
 import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
-import { Button } from '@/components/ui/button';
+import { useTranslations } from '@/composables/useTranslations';
 import { show as showPet } from '@/routes/pets';
 import type {
     PetCard,
@@ -17,7 +16,10 @@ import type {
 } from '@/types';
 
 /**
- * The card's action row.
+ * The card's action rows, laid out as legacy's (`components/web/PetCard.vue`,
+ * the two "Action Buttons" blocks) on the user's instruction (2026-09-06):
+ * like, comment and share spread across one line as quiet round pills, then a
+ * round gradient message button beside a full-width gradient "View Details".
  *
  * It exists as its own component because none of these could have lived inside
  * the anchor that used to wrap the whole card: a button nested in an anchor is
@@ -55,23 +57,22 @@ import type {
  *
  * Every `aria-label` built here **extends** the visible text rather than
  * replacing it — the visible characters stay a substring of the accessible
- * name ("10" inside "Like Ruthe, 10 likes") — because speech input matches the
- * words a user reads off the screen, and a label that drops them breaks it
- * silently, with nothing visibly wrong.
+ * name ("10" inside "Like Ruthe, 10 likes", the translated "View Details"
+ * inside "View Details: Ruthe") — because speech input matches the words a
+ * user reads off the screen, and a label that drops them breaks it silently,
+ * with nothing visibly wrong. The message trigger is the exception that proves
+ * it: with `appearance="icon"` it has no visible text at all, so its
+ * `aria-label` is the whole name (see `StartConversationButton`).
  *
  * ## Two rows, not one
  *
  * The engagement controls and the two navigational ones are separate flex rows
- * rather than one wrapping row, so the wrap point is a deliberate grouping
- * instead of a function of how long the owner's name happens to be. Tab order
- * follows the same grouping.
- *
- * The height is deliberately uniform. Nothing on either row asks for a smaller
- * size — four controls take the default `Button` size (`h-9`) and the share
- * trigger takes `size="icon"` (`size-9`), which is square at that same height —
- * so all five render at 36px, measured on the SSR-rendered card at a 320px
- * viewport. That is a behavioural change from 2a, where "View details" alone
- * carried `size="sm"` (`h-8`) and sat 4px shorter than its neighbours.
+ * rather than one wrapping row, so the grouping is deliberate instead of a
+ * function of how long the owner's name happens to be. Tab order follows the
+ * same grouping. The previous note here that all five controls measured 36px
+ * described the outline-button layout this replaced; the first row is now
+ * three ghost pills and the second row is two 48px (`h-12`) controls, as
+ * legacy's were. Not re-measured.
  */
 const { pet, canInteract } = defineProps<{
     pet: PetCard;
@@ -96,6 +97,8 @@ const { pet, canInteract } = defineProps<{
     reportReasons?: SelectOption<ReportReason>[];
 }>();
 
+const { t } = useTranslations();
+
 /** The owner, only when there is somebody signed in who is not them. */
 const owner = computed(() =>
     canInteract && !pet.is_owner ? (pet.user ?? null) : null,
@@ -113,35 +116,29 @@ const likeLabel = computed(
 );
 
 /**
- * `StartConversationButton` reads "Message" on every card, so a screen
- * reader's button list is one entry per listing with nothing to tell them
- * apart. Both the owner and the listing are named, because either alone is
- * ambiguous on a feed: one owner can have several listings, and two owners can
- * have listings with the same pet name.
+ * The message trigger is icon-only on the card, so this is its whole
+ * accessible name, not an extension of a visible one. Both the owner and the
+ * listing are named, because either alone is ambiguous on a feed: one owner
+ * can have several listings, and two owners can have listings with the same
+ * pet name.
  *
  * Passed as a prop and not as a fall-through `aria-label`. That component's
  * root is reka-ui's `DialogRoot`, which renders no element and drops attributes
  * silently — the technique that works on `PetLikeButton` above produces a
  * still-nameless button here. See its docblock, which records the measurement.
- *
- * The change is confined to that one attribute, established by SSR-rendering
- * this component through `vue/server-renderer` against the same render of the
- * file at `HEAD` (pet `Luna`, owner `Ruthe`, `likes_count` 10,
- * `comments_count` 4). Signed-in non-owner: 6128 → 6166 bytes, and the whole
- * 38-byte insertion is ` aria-label="Message Ruthe about Luna"` on the
- * `aria-haspopup="dialog"` trigger. Guest (4954 bytes) and owner (4985 bytes)
- * are byte-identical, which is the point: `messageLabel` is `undefined`
- * wherever the button is absent, so Vue emits no attribute at all rather than
- * an empty one.
  */
 const messageLabel = computed(() =>
     owner.value ? `Message ${owner.value.name} about ${pet.name}` : undefined,
 );
+
+const viewDetailsLabel = computed(
+    () => `${t('pets.view_details')}: ${pet.name}`,
+);
 </script>
 
 <template>
-    <div class="space-y-2 pt-1">
-        <div class="flex flex-wrap items-center gap-2">
+    <div class="space-y-4">
+        <div class="text-muted-foreground flex items-center justify-between">
             <PetLikeButton
                 :pet-id="pet.id"
                 :likes-count="pet.likes_count"
@@ -164,26 +161,22 @@ const messageLabel = computed(() =>
             <PetCardShareMenu :pet-id="pet.id" :name="pet.name" />
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-2">
             <StartConversationButton
                 v-if="owner"
                 :recipient-id="owner.id"
                 :recipient-name="owner.name"
                 :trigger-label="messageLabel"
+                appearance="icon"
             />
 
-            <Button as-child variant="outline">
-                <Link
-                    :href="showPet(pet.id)"
-                    :aria-label="`View details for ${pet.name}`"
-                >
-                    View details
-                    <ArrowRight
-                        class="size-4 rtl:rotate-180"
-                        aria-hidden="true"
-                    />
-                </Link>
-            </Button>
+            <Link
+                :href="showPet(pet.id)"
+                :aria-label="viewDetailsLabel"
+                class="flex h-12 flex-1 items-center justify-center rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:from-violet-600 hover:to-fuchsia-600 focus-visible:ring-[3px] focus-visible:ring-violet-500/50 focus-visible:outline-none"
+            >
+                {{ t('pets.view_details') }}
+            </Link>
         </div>
     </div>
 </template>

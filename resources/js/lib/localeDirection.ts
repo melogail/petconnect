@@ -35,7 +35,7 @@ export const localeDirection: ComputedRef<LocaleState['direction']> = computed(
 );
 
 function apply(locale: LocaleState | undefined): void {
-    if (!locale) {
+    if (!locale || typeof document === 'undefined') {
         return;
     }
 
@@ -71,7 +71,38 @@ function apply(locale: LocaleState | undefined): void {
  * client — push, replace, back/forward, client visit or partial reload all end
  * in the same assignment — so there is no event taxonomy to keep in step with
  * the router's.
+ *
+ * ## It must not run on the server, and "must not" here meant "kills the process"
+ *
+ * `app.ts` calls this at module level, and `app.ts` is also the SSR entry
+ * (`@inertiajs/vite` builds the server bundle from it), so this ran once per
+ * SSR process. `usePage()` is a **module-level** ref there, shared by every
+ * request the process renders. The first render assigned it with the watcher
+ * already registered; the watcher re-ran on Vue's scheduler, `apply()` read
+ * `document`, and the `ReferenceError` was thrown from a scheduler job —
+ * outside the render's `try`, so nothing in `@inertiajs/vite` or
+ * `@inertiajs/core`'s server caught it and **the Node process exited**. In
+ * development that process is the Vite dev server: every page after the first
+ * one rendered took the dev server down with it, and the browser saw
+ * `ERR_CONNECTION_RESET` for every module on the next load.
+ *
+ * Measured 2026-09-06 by POSTing captured page objects to a private dev
+ * server's `/__inertia_ssr`: `Home` rendered in 1033ms, the next request
+ * (`auth/Login`) died with `localeDirection.ts:41 ReferenceError: document is
+ * not defined … at flushJobs`, and the port stopped listening. The built
+ * bundle under `inertia:start-ssr` died the same way. `npm run build:ssr`
+ * exiting 0 (recorded in `.ai/rules/general.md`) said nothing about this —
+ * a build is not a second render.
+ *
+ * So both halves guard on `document`: the watcher is never registered on the
+ * server, and `apply()` bails even if something registers it. The document's
+ * `lang` and `dir` for the first paint come from `app.blade.php`, which is
+ * why there is nothing for the server to do here.
  */
 export function initializeLocaleDirection(): void {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
     watchEffect(() => apply(currentLocale()));
 }

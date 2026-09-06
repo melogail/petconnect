@@ -56,7 +56,7 @@ test('leaves the deactivated account unable to use its existing session', functi
         ->assertOk();
 
     $this->actingAs($member->fresh())
-        ->get(route('dashboard'))
+        ->get(route('profile.edit'))
         ->assertRedirect(route('login'))
         ->assertSessionHas('status', 'Your account has been deactivated.');
 

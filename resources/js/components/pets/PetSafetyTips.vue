@@ -16,6 +16,26 @@ import { useTranslations } from '@/composables/useTranslations';
  * use. That is legacy's own split: it builds those two by hand and reaches for
  * its `Card` component here, so the block reads as an aside rather than as a
  * third thing about this listing.
+ *
+ * ## `as="h2"` is read off the assembled page, not off this component
+ *
+ * `pages/pets/Show.vue` is flat under the listing name: one `h1`, and every
+ * top-level block below it opens an `h2`. Measured on `/pets/1` in an isolated
+ * build, 2026-09-06, via `Accessibility.getFullAXTree` — `h1 Jany`,
+ * `h2 معلومات سريعة`, `h2 تعرّف على Jany!`, `h3 سمات الشخصية`, `h2 الموقع`,
+ * `h2 الصحة والرعاية البيطرية`, `h2 التعليقات`, `h2 Mr. Roy McDermott`, then
+ * this card. The only `h3` on the page is "Personality Traits", which really is
+ * inside `PetAboutSection`'s `h2`.
+ *
+ * This block is the second of the two sidebar panels and a **sibling** of the
+ * owner panel, not a part of it. On `CardTitle`'s hardcoded `h3` it landed
+ * directly after `PetOwnerCard`'s `h2` and therefore read as a subsection of
+ * the owner — the same defect `PetSectionHeading`'s docblock records for
+ * Location and Health, one level down. Same probe, same tree, only this prop
+ * removed: the last line comes back as `h3 نصائح السلامة`.
+ *
+ * So the level is a fact about this component's **position**, which is why it
+ * is passed from here and not decided in `ui/card`.
  */
 const { t } = useTranslations();
 
@@ -30,7 +50,9 @@ const tips = computed(() => [
 <template>
     <Card class="border-border/50">
         <CardHeader class="pb-3">
-            <CardTitle class="text-base">{{ t('pets.safety_tips') }}</CardTitle>
+            <CardTitle as="h2" class="text-base">
+                {{ t('pets.safety_tips') }}
+            </CardTitle>
         </CardHeader>
         <CardContent>
             <ul class="space-y-2.5">

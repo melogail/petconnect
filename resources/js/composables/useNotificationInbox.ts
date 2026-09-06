@@ -21,12 +21,14 @@ import type {
 | Module scope, not component scope, and that is the whole reason this is a
 | composable rather than three refs inside `NotificationBell`.
 |
-| The bell lives in a layout header, and there are two of them —
+| The bell lives in a layout header. There used to be two of them —
 | `AppSidebarHeader` for members and `PublicHeader` for the shell a guest can
-| also reach. Moving between the two remounts the component. Keeping the list
-| and the badge out here means a remount does not throw the inbox away and does
-| not re-query for it, so the cost of the badge is **one request per full
-| document load**, not one per page.
+| also reach — and moving between the two remounted the component; since the
+| sidebar shell was removed (2026-09-06) `PublicHeader` is the only one, and a
+| page-to-page visit keeps it mounted. Keeping the list and the badge out here
+| still earns its place: a full document load is the one thing that does
+| remount it, and this is what makes the cost of the badge **one request per
+| full document load**, not one per page.
 |
 | That distinction is the point. `BuildNotificationInbox` and
 | `HandleInertiaRequests::localeProps()` both record why the inbox is a route

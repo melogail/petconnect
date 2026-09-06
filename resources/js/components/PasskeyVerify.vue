@@ -7,6 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { home } from '@/routes';
 
 type Props = {
     routes?: {
@@ -30,7 +31,8 @@ const { verify, isLoading, error, isSupported } = usePasskeyVerify({
           }
         : {}),
     onSuccess: (response) => {
-        router.visit(response.redirect ?? '/dashboard');
+        // The feed: `fortify.home` is `/` and there is no dashboard route.
+        router.visit(response.redirect ?? home().url);
     },
 });
 </script>

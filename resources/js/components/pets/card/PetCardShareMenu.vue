@@ -104,8 +104,14 @@ async function copyLink(): Promise<void> {
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="icon" :aria-label="`Share ${name}`">
-                <Share2 class="size-4" aria-hidden="true" />
+            <!-- A quiet round pill, legacy's action-row shape (restyled 2026-09-06). -->
+            <Button
+                variant="ghost"
+                size="icon"
+                :aria-label="`Share ${name}`"
+                class="text-muted-foreground hover:bg-muted hover:text-primary-600 dark:hover:text-primary-400 rounded-full"
+            >
+                <Share2 class="size-5" aria-hidden="true" />
             </Button>
         </DropdownMenuTrigger>
 

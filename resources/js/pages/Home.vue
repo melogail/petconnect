@@ -49,15 +49,24 @@ import type {
  * which is the correct predicate: `pets.create` sits behind
  * `['auth', 'verified']`.
  *
- * ## The feed makes itself a nearby feed, once
+ * ## The feed makes itself a nearby feed, once — and offers a button after that
  *
- * There is no "search near me" button, and the legacy screen had none either:
- * the page asks the browser for a position on mount and, if it is given one,
- * re-visits itself with the coordinates in the query string. What that costs is
+ * The legacy screen had no location control: it asked the browser for a
+ * position on mount and, if it was given one, re-visited itself with the
+ * coordinates in the query string. This page does the same. What that costs is
  * a permission prompt on a first visit, so the cycle is gated three ways —
  * `useGeolocation` remembers a refusal for an hour and a position for five
  * minutes, and the `sessionStorage` visit key below holds it to at most one
  * attempt per tab whatever the composable would allow.
+ *
+ * Those gates are also why `NearbySearchButton` carries a "Show near me"
+ * control on the recency feed — a deliberate addition to legacy, made on the
+ * user's instruction (2026-09-06). Without it a visitor who dismissed the
+ * prompt, or whose tab had already spent its one attempt, had no way onto the
+ * nearby feed at all. The button asks with `fresh: true`, so it is the one
+ * path that re-prompts past a memoised refusal, and it issues the same
+ * `only` / `reset` visit this file does below. The automatic cycle is
+ * untouched by it.
  *
  * The visit key is claimed **before** the await, not after. `requestLocation`
  * stays open for as long as the visitor leaves the browser prompt up
@@ -112,10 +121,13 @@ import type {
  * `home.clear_all`, `home.animal_type`, `home.age_range`,
  * `home.adoption_type`, `home.vaccination_status`, `home.vaccinated_only`,
  * `home.apply_filters`), with the `components/pets/filter/*` children that
- * rewrite extracted translating the rest. Still outstanding on this screen,
- * all inside the card and none of it this file's to fix:
- * `card/PetCardActions` renders a literal `View details` and builds a literal
- * `Message :name about :pet` accessible name, and
+ * rewrite extracted translating the rest. The card itself went through `t()`
+ * for its visible strings when it was redrawn after legacy on 2026-09-06
+ * (`card/*`: the pills, gender, age, "Read more", "View Details"). Still
+ * outstanding on this screen, all inside the card and none of it this file's
+ * to fix: `card/PetCardActions` builds literal English accessible names
+ * (`Like :name, N likes`, `Message :name about :pet`, the `card/labels`
+ * count helper), and
  * `messaging/StartConversationButton` is untranslated throughout — the literal
  * `Message` on its trigger, and its dialog title, description, field label and
  * submit button with it.
@@ -350,7 +362,11 @@ onMounted(async () => {
                 :categories="categories"
             />
 
-            <NearbySearchButton :nearby="nearby" :radius="radius" />
+            <NearbySearchButton
+                :nearby="nearby"
+                :radius="radius"
+                :default-radius="filterBounds.default_radius_km"
+            />
         </div>
 
         <div class="w-full">

@@ -10,12 +10,21 @@ use Illuminate\Support\Facades\DB;
  * This middleware is what turned the flag into "no session", and it runs in the
  * `web` group rather than inside `auth`, so it also covers routes that are
  * merely user-aware.
+ *
+ * `appearance.edit` is the probe route throughout: a `Route::inertia()` page
+ * behind `auth` with no controller and no query of its own, which is the shape
+ * the starter kit's `dashboard` had before it was removed (2026-09-06). It is
+ * deliberately **not** `profile.edit` — that controller calls
+ * `loadMissing('media')` on the acting user, and `actingAs()` hands both arms
+ * of the "costs no query" comparison the same model instance, so the second
+ * request would find the relation already loaded and count one query fewer for
+ * a reason that has nothing to do with the middleware.
  */
 test('signs a deactivated account out and returns it to the login page', function () {
     $deactivated = User::factory()->inactive()->create();
 
     $this->actingAs($deactivated)
-        ->get(route('dashboard'))
+        ->get(route('appearance.edit'))
         ->assertRedirect(route('login'))
         ->assertSessionHas('status', 'Your account has been deactivated.');
 
@@ -32,7 +41,7 @@ test('invalidates the session and regenerates the csrf token', function () {
 
     $this->actingAs($deactivated)
         ->withSession(['_token' => 'token-from-before', 'checkout.step' => 'payment'])
-        ->get(route('dashboard'))
+        ->get(route('appearance.edit'))
         ->assertSessionMissing('checkout.step');
 
     expect(session('_token'))->not->toBe('token-from-before');
@@ -52,7 +61,7 @@ test('lets a deactivated sign-in authenticate and ends it on the next request', 
 
     $this->assertAuthenticatedAs($deactivated);
 
-    $this->get(route('dashboard'))->assertRedirect(route('login'));
+    $this->get(route('appearance.edit'))->assertRedirect(route('login'));
 
     $this->assertGuest();
 });
@@ -72,7 +81,7 @@ test('returns 403 to a json request from a deactivated account', function () {
 
 test('lets an active account through', function () {
     $this->actingAs(User::factory()->create())
-        ->get(route('dashboard'))
+        ->get(route('appearance.edit'))
         ->assertOk();
 
     $this->assertAuthenticated();
@@ -95,11 +104,11 @@ test('lets a guest through to a public page', function () {
 test('costs no query', function () {
     $user = User::factory()->create();
 
-    $withMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user)->get(route('dashboard'))->assertOk());
+    $withMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user)->get(route('appearance.edit'))->assertOk());
 
     $withoutMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user)
         ->withoutMiddleware(EnsureAccountIsActive::class)
-        ->get(route('dashboard'))
+        ->get(route('appearance.edit'))
         ->assertOk());
 
     expect($withMiddleware)->toBe($withoutMiddleware);

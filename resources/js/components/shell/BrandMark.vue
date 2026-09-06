@@ -7,9 +7,10 @@ import { home } from '@/routes';
  * The wordmark in the public header: a violet rounded square with a white
  * circle punched out of it, and the brand name beside it.
  *
- * `AppLogo` is the member-shell equivalent and paints itself with
- * `--sidebar-primary`; this one is the public face and pins the brand step
- * directly, because it is the same violet in both schemes.
+ * It is the only wordmark now. `AppLogo` was the member-shell equivalent and
+ * painted itself with `--sidebar-primary`; it went with the sidebar shell
+ * (2026-09-06). This one pins the brand step directly, because it is the same
+ * violet in both schemes.
  */
 const { t } = useTranslations();
 </script>

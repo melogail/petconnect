@@ -125,7 +125,7 @@ test('leaks no back office prop onto a public page rendered after a nova request
     $response = $this->get(route('help'))->assertOk();
 
     expect(array_keys($response->inertiaProps()))
-        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'sidebarOpen', 'locale', 'translations']);
+        ->toEqualCanonicalizing(['errors', 'name', 'auth', 'locale', 'translations']);
 });
 
 /**

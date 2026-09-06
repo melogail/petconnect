@@ -26,6 +26,22 @@ import type { PetDetail } from '@/types';
  * divider legacy draws inside the card; the headings do the rest of the
  * separating.
  *
+ * ## The card is a visual grouping and not an outline level
+ *
+ * It renders **no heading of its own**, deliberately: legacy draws none, and
+ * the only name the block could take is the listing's, which is already the
+ * `h1` in `PetDetailHeader`. So the outline stays flat — `PetQuickInfo`,
+ * `PetAboutSection`, `PetLocationSection`, `PetHealthSection` and `PetExtras`
+ * each open a top-level `h2`, siblings of the comment thread's and the owner
+ * panel's, rather than children of the card.
+ *
+ * Read that as a constraint on the blocks, not as trivia: `PetSectionHeading`'s
+ * `level` default is `h3`, and its docblock justified that by "the card's own
+ * `h2`" — a heading this template has never contained. Under that assumption
+ * Location, Health and Extras nested under "Meet Luna!" in the outline. If a
+ * heading is ever added here, the four `level="h2"` call sites are what has to
+ * move with it.
+ *
  * `PetAttributesCard` is gone rather than moved. Its six rows are all here:
  * category and breed are badges in `PetDetailHeader`, age and gender are its
  * meta line, colour and weight are `PetQuickInfo` tiles — which is where legacy

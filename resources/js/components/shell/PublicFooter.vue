@@ -19,9 +19,9 @@ import { help, support } from '@/routes';
  *
  * ## `help` and `support` are load bearing, the legal links are not
  *
- * This is the **only** route a guest has to `help` or `support`: no sidebar
- * carries either (`AppSidebar` has neither), and the signed-in path to `help`
- * is one item in the account dropdown. Nothing but this footer and the button
+ * This is the **only** route a guest has to `help` or `support`: there is no
+ * sidebar any more (and the removed `AppSidebar` carried neither), and the
+ * signed-in path to `help` is one item in the account dropdown. Nothing but this footer and the button
  * at the bottom of `Help` links `support` at all. They came from the target's
  * own footer, not the legacy one, and they stay first in the row.
  *

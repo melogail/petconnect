@@ -49,7 +49,7 @@ test('lets the reactivated account use the application again', function () {
         ])
         ->assertOk();
 
-    $this->actingAs($member->fresh())->get(route('dashboard'))->assertOk();
+    $this->actingAs($member->fresh())->get(route('profile.edit'))->assertOk();
 
     $this->assertAuthenticatedAs($member);
 });

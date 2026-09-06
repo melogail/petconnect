@@ -204,7 +204,7 @@ function toggleAttached(id: number): void {
                 v-if="compressing"
                 class="text-muted-foreground flex items-center gap-1.5 text-xs"
             >
-                <Spinner class="size-3" />
+                <Spinner status class="size-3" />
                 Compressing…
             </span>
         </div>

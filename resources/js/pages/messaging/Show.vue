@@ -5,7 +5,7 @@ import ConversationHeader from '@/components/messaging/ConversationHeader.vue';
 import MessageComposer from '@/components/messaging/MessageComposer.vue';
 import MessageThread from '@/components/messaging/MessageThread.vue';
 import { useMessagingPreviews } from '@/composables/useMessagingPreviews';
-import { index as conversationsIndex, read } from '@/routes/conversations';
+import { read } from '@/routes/conversations';
 import { index as messagesIndex } from '@/routes/conversations/messages';
 import type { Conversation, Message, MessageBounds, Paginated } from '@/types';
 
@@ -36,12 +36,6 @@ const { conversation, messages } = defineProps<{
      */
     messageBounds: MessageBounds;
 }>();
-
-defineOptions({
-    layout: {
-        breadcrumbs: [{ title: 'Messages', href: conversationsIndex() }],
-    },
-});
 
 /** Older pages, newest-first as the endpoint returns them. */
 const olderPages = ref<Message[]>([]);
@@ -141,7 +135,7 @@ onMounted(() => {
 
 <template>
     <div
-        class="mx-auto flex h-[calc(100vh-6rem)] w-full max-w-3xl flex-col p-4"
+        class="mx-auto flex h-[calc(100vh-6rem)] w-full max-w-3xl flex-col px-4 py-4 sm:px-6"
     >
         <Head :title="conversation.peer?.name ?? 'Conversation'" />
 
