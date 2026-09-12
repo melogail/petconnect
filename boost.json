@@ -13,8 +13,11 @@
         "fortify-development",
         "laravel-best-practices",
         "testing-best-practices",
+        "configuring-horizon",
         "wayfinder-development",
         "inertia-vue-development",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "echo-vue-development",
+        "echo-development"
     ]
 }

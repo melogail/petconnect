@@ -64,6 +64,20 @@ test('notifies the listing owner of a top level comment, storing the translation
         ]);
 });
 
+test('broadcasts the comment notification to the listing owner as well as storing it', function () {
+    $owner = User::factory()->create();
+    $pet = Pet::factory()->for($owner)->create();
+    Notification::fake();
+
+    publishComment(User::factory()->create(), $pet, 'Is she still available?');
+
+    Notification::assertSentTo(
+        $owner,
+        ModelCommentedNotification::class,
+        fn (ModelCommentedNotification $notification, array $channels): bool => $channels === ['database', 'broadcast'],
+    );
+});
+
 test('notifies the author of the comment being answered rather than the listing owner', function () {
     $owner = User::factory()->create();
     $pet = Pet::factory()->for($owner)->create();

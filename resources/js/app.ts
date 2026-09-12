@@ -7,6 +7,11 @@ import PublicLayout from '@/layouts/PublicLayout.vue';
 import RootLayout from '@/layouts/RootLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { configureEcho } from '@laravel/echo-vue';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 import {
     initializeLocaleDirection,
     localeDirection,

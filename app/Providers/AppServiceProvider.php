@@ -66,9 +66,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Artisan dev command
-        DevCommands::except('server', 'queue', 'logs');
-        // DevCommands::artisan('horizon');
+        // Artisan dev command. Horizon and Reverb each register their own pane
+        // (`horizon`, `reverb:start`) from their service providers, so nothing
+        // is added here. An earlier `DevCommands::artisan('horizon', 'reverb')`
+        // read as "name the horizon pane reverb" and shadowed Reverb's pane
+        // with a second Horizon: the socket server never started.
+        DevCommands::except('server', 'logs');
 
         $this->configureDefaults();
         $this->configureMorphMap();

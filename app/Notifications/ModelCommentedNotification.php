@@ -19,9 +19,14 @@ use Illuminate\Support\Str;
  * seeded database a poor mirror of a real one. The publish flow is the only
  * path a human comment arrives by, so it is the only path that notifies.
  *
- * Not queued, matching App\Observers\LikeObserver and ModelLikedNotification —
- * the app has no queue worker configured yet, and a database write inside the
- * request is cheaper than the sync driver pretending otherwise.
+ * The database row is written inside the request, matching
+ * App\Observers\LikeObserver and ModelLikedNotification. The broadcast copy
+ * goes through the framework's BroadcastNotificationCreated event, which is
+ * queued, so a queue worker and the Reverb server must both be running for the
+ * recipient's open tab to hear it. It is delivered on the recipient's default
+ * private channel, `App.Models.User.{id}` (routes/channels.php), and the
+ * payload is `toArray()` unchanged, so the client renders it exactly as it
+ * renders an inbox row. `NotificationBell.vue` is the listener.
  */
 class ModelCommentedNotification extends Notification
 {
@@ -39,7 +44,7 @@ class ModelCommentedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
