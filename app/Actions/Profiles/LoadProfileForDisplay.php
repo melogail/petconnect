@@ -101,7 +101,7 @@ class LoadProfileForDisplay
     /**
      * The profile itself, with its avatar and its rating summary.
      */
-    protected function summary(User $profile, ?User $viewer): User
+    public function summary(User $profile, ?User $viewer): User
     {
         /** @var User $user */
         $user = User::query()
@@ -120,7 +120,7 @@ class LoadProfileForDisplay
      *
      * @return LengthAwarePaginator<int, Pet>
      */
-    protected function listings(User $profile, ?User $viewer): LengthAwarePaginator
+    public function listings(User $profile, ?User $viewer): LengthAwarePaginator
     {
         return $profile->pets()
             ->with(['media', 'category.media', 'breed'])
@@ -142,7 +142,7 @@ class LoadProfileForDisplay
      *
      * @return LengthAwarePaginator<int, Review>
      */
-    protected function reviews(User $profile, ?User $viewer): LengthAwarePaginator
+    public function reviews(User $profile, ?User $viewer): LengthAwarePaginator
     {
         return $profile->reviews()
             ->with('user.media')

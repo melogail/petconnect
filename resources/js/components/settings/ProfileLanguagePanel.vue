@@ -43,7 +43,7 @@ function submit(): void {
 <template>
     <SettingsPanel
         title="Language"
-        description="The language PetConnect speaks to you in."
+        description="The language SniffPal speaks to you in."
     >
         <form class="space-y-6" @submit.prevent="submit">
             <div class="grid gap-2">

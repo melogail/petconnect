@@ -49,7 +49,7 @@ class VerifyEmailNotification extends VerifyEmail
 {
     public function toMail(mixed $notifiable): MailMessage
     {
-        $appName = (string) config('app.name', 'PetConnect');
+        $appName = (string) config('app.name', 'SniffPal');
         $locale = $this->localeFor($notifiable);
         $expireMinutes = (int) config('auth.verification.expire', 60);
         $userName = (string) ($notifiable->name ?? '');

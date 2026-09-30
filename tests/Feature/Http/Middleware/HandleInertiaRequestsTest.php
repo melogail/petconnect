@@ -39,7 +39,7 @@ test('sends the active language catalogue on a full page visit', function () {
 
     expect($response->inertiaProps('translations'))
         ->toHaveKey('nav.brand')
-        ->and($response->inertiaProps('translations')['nav.brand'])->toBe('PetConnect')
+        ->and($response->inertiaProps('translations')['nav.brand'])->toBe('SniffPal')
         ->and($response->inertiaProps('locale')['current'])->toBe('en');
 });
 
@@ -63,7 +63,7 @@ test('keys the catalogue by language, so a switch resends it in the same respons
     expect($response->json('onceProps'))->toHaveKey('translations.ar')
         ->and($response->json('onceProps'))->not->toHaveKey('translations.en')
         ->and($response->json('props.translations'))->toHaveKey('nav.brand')
-        ->and($response->json('props.translations')['nav.brand'])->toBe('بيت كونكت')
+        ->and($response->json('props.translations')['nav.brand'])->toBe('سنيف بال')
         ->and($response->json('props.locale.current'))->toBe('ar');
 });
 

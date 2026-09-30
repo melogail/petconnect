@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\UseSanctumGuard;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -81,6 +83,38 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
+        ]);
+
+        /*
+         * The `api` group is what the mobile app talks to (routes/api.php),
+         * authenticated by a Sanctum bearer token. It carries over two of the
+         * four web entries and deliberately not the other two:
+         *
+         * - `UseSanctumGuard` is new and comes first so that every later
+         *   middleware, every policy and every resource sees the token bearer
+         *   as `$request->user()` — including on the public reads that carry
+         *   no `auth` middleware at all.
+         * - `EnsureAccountIsActive` is carried over, and on this group it also
+         *   revokes the bearer token (see its docblock) — a deactivated account
+         *   is signed out of the app the same way it is signed out of a browser.
+         * - `SetLocale` is carried over so `__()` in a 422 body and a
+         *   notification label render in the caller's language; it reads the
+         *   `X-Locale` header here because there is no cookie to read.
+         * - `HandleAppearance` and `HandleInertiaRequests` are not: the first
+         *   only sets a cookie-derived view variable and the second builds
+         *   Inertia shared props, and a JSON API has neither.
+         *
+         * No `throttleApi()`: this application has no `api` limiter, and
+         * routes/api.php names an existing limiter on every mutating route
+         * instead, the same way routes/web.php does (.ai/rules/routes.md).
+         */
+        $middleware->api(prepend: [
+            UseSanctumGuard::class,
+        ]);
+
+        $middleware->api(append: [
+            EnsureAccountIsActive::class,
+            SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

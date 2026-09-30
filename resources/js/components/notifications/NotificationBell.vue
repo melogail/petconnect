@@ -4,6 +4,10 @@ import { useEchoNotification } from '@laravel/echo-vue';
 import { Bell } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
+import {
+    notificationMessage,
+    type NotificationMessage,
+} from '@/components/notifications/message';
 import NotificationInboxActions from '@/components/notifications/NotificationInboxActions.vue';
 import NotificationPanel from '@/components/notifications/NotificationPanel.vue';
 import { nameContaining, unreadBadgeLabel } from '@/components/shell/labels';
@@ -111,7 +115,8 @@ import { useTranslations } from '@/composables/useTranslations';
  */
 const page = usePage();
 
-const { unreadCount, hasUnread, ensureLoaded, load } = useNotificationInbox();
+const { unreadCount, hasUnread, ensureLoaded, load, currentPage } =
+    useNotificationInbox();
 
 const { t } = useTranslations();
 const { isRtl } = useLocale();
@@ -141,39 +146,22 @@ onMounted(() => {
 });
 
 /**
- * Realtime: a comment on something of the reader's arrives over Echo on their
- * private `App.Models.User.{id}` channel, the channel the framework picks for
- * a broadcast notification by default. The payload is the notification's
- * `toArray()`, so the same translation key the inbox row uses renders the
- * toast; then the inbox is refetched so the badge and the list are the
- * server's truth rather than a client-side guess.
- *
- * The composable subscribes on mount and unsubscribes on unmount by itself,
- * and it is only reached behind `canRead` for the same reason the mount fetch
- * is: a guest has no channel to authorise, and an unverified account has no
- * inbox to refresh.
+ * Realtime: whatever a notification class chooses to broadcast in its `via()`
+ * arrives here on the reader's private channel, is shown as a toast, and the
+ * inbox is refetched so the badge and list are the server's truth. Subscribed
+ * only behind `canRead`, like the mount fetch: a guest has no channel to
+ * authorise and an unverified account no inbox to refresh.
  */
-type CommentNotificationPayload = {
-    message_key: string;
-    message_replace: { name: string; subject: string };
-};
+const viewerId = viewer.value?.id;
 
-if (canRead.value) {
-    useEchoNotification<CommentNotificationPayload>(
-        `App.Models.User.${viewer.value?.id}`,
+if (viewerId && canRead.value) {
+    useEchoNotification<NotificationMessage>(
+        `App.Models.User.${viewerId}`,
         (notification) => {
-            toast(
-                t(notification.message_key, {
-                    ...notification.message_replace,
-                    name:
-                        notification.message_replace.name ||
-                        t('notifications.someone'),
-                }),
-            );
+            toast(notificationMessage(notification, t));
 
-            void load();
+            void load(currentPage.value);
         },
-        'App\\Notifications\\ModelCommentedNotification',
     );
 }
 

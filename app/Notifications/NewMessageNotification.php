@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 /**
- * Database notification telling a user that a message arrived in one of their
+ * Notification telling a user that a message arrived in one of their
  * conversations.
  *
  * Sent from Pipelines\Messages\Send\NotifyRecipient rather than from
@@ -24,8 +24,9 @@ use Illuminate\Support\Str;
  * The legacy app sent nothing here at all: a user learned they had mail only by
  * opening the inbox.
  *
- * Not queued, matching every other notification in this application — there is
- * no queue worker configured yet and the sync driver would only pretend.
+ * The database row is written inside the request. The broadcast copy is queued
+ * by the framework, so a queue worker and Reverb must be running for an open
+ * tab to hear it; `NotificationBell.vue` listens.
  */
 class NewMessageNotification extends Notification
 {
@@ -49,7 +50,7 @@ class NewMessageNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**

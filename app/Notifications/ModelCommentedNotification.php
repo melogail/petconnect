@@ -20,13 +20,9 @@ use Illuminate\Support\Str;
  * path a human comment arrives by, so it is the only path that notifies.
  *
  * The database row is written inside the request, matching
- * App\Observers\LikeObserver and ModelLikedNotification. The broadcast copy
- * goes through the framework's BroadcastNotificationCreated event, which is
- * queued, so a queue worker and the Reverb server must both be running for the
- * recipient's open tab to hear it. It is delivered on the recipient's default
- * private channel, `App.Models.User.{id}` (routes/channels.php), and the
- * payload is `toArray()` unchanged, so the client renders it exactly as it
- * renders an inbox row. `NotificationBell.vue` is the listener.
+ * App\Observers\LikeObserver and ModelLikedNotification. The broadcast copy is
+ * queued by the framework, so a queue worker and Reverb must be running for an
+ * open tab to hear it; `NotificationBell.vue` listens.
  */
 class ModelCommentedNotification extends Notification
 {

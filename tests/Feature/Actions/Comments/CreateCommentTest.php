@@ -64,7 +64,7 @@ test('notifies the listing owner of a top level comment, storing the translation
         ]);
 });
 
-test('broadcasts the comment notification to the listing owner as well as storing it', function () {
+test('sends the listing owner the comment notification on the database and broadcast channels', function () {
     $owner = User::factory()->create();
     $pet = Pet::factory()->for($owner)->create();
     Notification::fake();

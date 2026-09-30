@@ -29,9 +29,7 @@
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="padding-inline-end:10px;vertical-align:middle;">
-                                        <div style="width:40px;height:40px;border-radius:16px;background-color:#7C3AED;text-align:center;line-height:40px;">
-                                            <span style="display:inline-block;width:22px;height:22px;border-radius:999px;background-color:#ffffff;vertical-align:middle;"></span>
-                                        </div>
+                                        <img src="{{ asset('brand/sniffpal-mark-128.png') }}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;">
                                     </td>
                                     <td style="vertical-align:middle;">
                                         <span style="font-size:20px;font-weight:700;color:#1f2937;letter-spacing:-0.02em;">{{ $appName }}</span>

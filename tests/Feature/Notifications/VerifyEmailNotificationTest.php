@@ -73,3 +73,18 @@ test('escapes a name carrying markup in the rendered mail', function () {
         ->toContain('O&#039;Reilly')
         ->not->toContain("<script>alert('xss')</script>");
 });
+
+/**
+ * A mail client cannot resolve a relative path and most strip inline SVG, so
+ * the brand mark is a PNG addressed by absolute URL. The file is asserted too:
+ * renaming it under `public/brand` would otherwise ship a broken image in
+ * every verification mail with nothing failing.
+ */
+test('shows the brand mark from an absolute url to a file that exists', function () {
+    $user = User::factory()->create(['locale' => 'en']);
+
+    $content = (new VerifyEmailNotification)->toMail($user)->render();
+
+    expect($content)->toContain('src="'.asset('brand/sniffpal-mark-128.png').'"')
+        ->and(public_path('brand/sniffpal-mark-128.png'))->toBeFile();
+});

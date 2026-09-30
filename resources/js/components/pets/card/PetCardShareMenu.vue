@@ -65,7 +65,7 @@ const petUrl = computed(() => {
 /** Brand icons were dropped from `@lucide/vue` v1, so these are text-only. */
 const destinations = computed(() => {
     const url = encodeURIComponent(petUrl.value);
-    const text = encodeURIComponent(`Meet ${name} on PetConnect`);
+    const text = encodeURIComponent(`Meet ${name} on SniffPal`);
 
     return [
         {

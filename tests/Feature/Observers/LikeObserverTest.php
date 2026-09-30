@@ -42,6 +42,20 @@ test('notifies the profile owner when their profile is liked', function () {
     Notification::assertSentTo($profileOwner, ModelLikedNotification::class);
 });
 
+test('sends the like notification on the database and broadcast channels', function () {
+    $owner = User::factory()->create();
+    $pet = Pet::factory()->for($owner)->create();
+    Notification::fake();
+
+    Like::factory()->forPet($pet)->for(User::factory()->create())->create();
+
+    Notification::assertSentTo(
+        $owner,
+        ModelLikedNotification::class,
+        fn (ModelLikedNotification $notification, array $channels): bool => $channels === ['database', 'broadcast'],
+    );
+});
+
 test('sends no notification when an owner likes their own pet', function () {
     $owner = User::factory()->create();
     $pet = Pet::factory()->for($owner)->create();

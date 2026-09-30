@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Bell, Flag, Heart, Mail, MessageSquare, Star } from '@lucide/vue';
 import { computed, type Component } from 'vue';
+import { notificationMessage } from '@/components/notifications/message';
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
 import { formatRelative } from '@/lib/datetime';
@@ -43,21 +44,17 @@ import type { InboxNotification } from '@/types';
  * thing that can turn a row into a sentence, and this component is where that
  * happens.
  *
- * `message_replace.name` is `(string) $actor?->name`, so a notification whose
- * actor has since been deleted arrives with an **empty string** rather than a
- * null. Substituting it would render ":name liked your pet Rex" as " liked your
- * pet Rex". The localized `notifications.someone` stands in — supplied on this
- * side, which is exactly where the rule says a "someone"-style fallback
- * belongs.
+ * The sentence itself, and the `notifications.someone` fallback for a deleted
+ * actor, come from `notificationMessage` in `./message.ts`, which the realtime
+ * toast in `NotificationBell` shares.
  *
  * ## Why the sentence carries an id it does not use itself
  *
  * `messageId` lands on the `<p>` below and is read by `NotificationItem`: that
  * component's mark-read button builds its accessible name with
  * `aria-labelledby` out of this paragraph, so the N buttons on screen are told
- * apart by name. The sentence stays computed in exactly one place — referencing
- * the rendered element is what keeps a second copy of
- * `t(message_key, message_replace)` from existing.
+ * apart by name. Referencing the rendered element is what keeps a second copy
+ * of the sentence from existing in that component.
  *
  * Required, not optional: there is one caller, and a row whose sentence had no
  * id would quietly hand that button the same name as every other one.
@@ -85,18 +82,7 @@ const ICONS: Record<string, Component> = {
 
 const icon = computed<Component>(() => ICONS[notification.type] ?? Bell);
 
-const actorName = computed<string | null>(() => {
-    const name = notification.message_replace.name?.trim();
-
-    return name ? name : null;
-});
-
-const message = computed(() =>
-    t(notification.message_key, {
-        ...notification.message_replace,
-        name: actorName.value ?? t('notifications.someone'),
-    }),
-);
+const message = computed(() => notificationMessage(notification, t));
 
 const timestamp = computed(() =>
     formatRelative(notification.created_at, tag.value),

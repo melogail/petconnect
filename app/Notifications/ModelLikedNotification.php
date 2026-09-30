@@ -9,7 +9,9 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Database notification telling a user that one of their models was liked.
+ * Notification telling a user that one of their models — a pet listing or
+ * their profile — was liked. Stored, and broadcast so an open tab hears it;
+ * `NotificationBell.vue` listens.
  */
 class ModelLikedNotification extends Notification
 {
@@ -22,7 +24,7 @@ class ModelLikedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**

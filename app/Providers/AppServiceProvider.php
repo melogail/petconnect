@@ -66,11 +66,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Artisan dev command. Horizon and Reverb each register their own pane
-        // (`horizon`, `reverb:start`) from their service providers, so nothing
-        // is added here. An earlier `DevCommands::artisan('horizon', 'reverb')`
-        // read as "name the horizon pane reverb" and shadowed Reverb's pane
-        // with a second Horizon: the socket server never started.
+        // Artisan dev command. Horizon and Reverb register their own panes.
         DevCommands::except('server', 'logs');
 
         $this->configureDefaults();
@@ -465,6 +461,23 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by('minute:'.$this->unauthenticatedCallerKey($request)),
             Limit::perHour(20)->by('hour:'.$this->unauthenticatedCallerKey($request)),
         ]);
+
+        /*
+         * The two API-only writes that had no limiter to borrow. Both are
+         * keyed on the authenticated caller, because both sit behind
+         * `auth:sanctum`.
+         *
+         * `verification-notifications` matches the `throttle:6,1` Fortify puts
+         * on its own `verification.send` route, named so routes/api.php can
+         * carry it like every other limiter here. `password-changes` matches
+         * the `throttle:6,1` on `user-password.update` in routes/settings.php
+         * for the same reason.
+         */
+        RateLimiter::for('verification-notifications', fn (Request $request): Limit => Limit::perMinute(6)
+            ->by($this->rateLimitKey($request)));
+
+        RateLimiter::for('password-changes', fn (Request $request): Limit => Limit::perMinute(6)
+            ->by($this->rateLimitKey($request)));
     }
 
     /**

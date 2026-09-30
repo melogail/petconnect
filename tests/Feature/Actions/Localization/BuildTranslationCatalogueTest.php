@@ -22,8 +22,8 @@ test('ships the application catalogue for a locale without the nova vendor one',
         ->and($catalogue['nav.brand'])->toBe($brand)
         ->and($catalogue)->not->toHaveKey('Sorry! You are not authorized to perform this action.');
 })->with([
-    'english' => ['en', 'PetConnect'],
-    'arabic' => ['ar', 'بيت كونكت'],
+    'english' => ['en', 'SniffPal'],
+    'arabic' => ['ar', 'سنيف بال'],
 ]);
 
 /**
@@ -52,7 +52,7 @@ test('falls back to the application language rather than reading a path the whit
 
     $catalogue = app(BuildTranslationCatalogue::class)->handle($locale);
 
-    expect($catalogue['nav.brand'])->toBe('PetConnect');
+    expect($catalogue['nav.brand'])->toBe('SniffPal');
 })->with([
     'an unsupported language' => ['fr'],
     'a traversal out of lang' => ['../../composer'],
@@ -63,7 +63,7 @@ test('falls back to the application language rather than reading a path the whit
 test('reads the language the application is currently in when it is given none', function () {
     App::setLocale('ar');
 
-    expect(app(BuildTranslationCatalogue::class)->handle()['nav.brand'])->toBe('بيت كونكت');
+    expect(app(BuildTranslationCatalogue::class)->handle()['nav.brand'])->toBe('سنيف بال');
 });
 
 /**

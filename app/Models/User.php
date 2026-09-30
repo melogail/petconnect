@@ -27,6 +27,7 @@ use Illuminate\Support\Collection;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -82,7 +83,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class User extends Authenticatable implements HasLocalePreference, HasMedia, Likeable, MustVerifyEmail, PasskeyUser, Reviewable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasLikes, HasReviews, InteractsWithMedia, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasLikes, HasReviews, InteractsWithMedia, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.

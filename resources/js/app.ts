@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import { configureEcho } from '@laravel/echo-vue';
 import { ConfigProvider } from 'reka-ui';
 import { createApp, h } from 'vue';
 import { initializeTheme } from '@/composables/useAppearance';
@@ -7,11 +8,6 @@ import PublicLayout from '@/layouts/PublicLayout.vue';
 import RootLayout from '@/layouts/RootLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
-import { configureEcho } from '@laravel/echo-vue';
-
-configureEcho({
-    broadcaster: 'reverb',
-});
 import {
     initializeLocaleDirection,
     localeDirection,
@@ -90,6 +86,10 @@ void createInertiaApp({
         return app;
     },
 });
+
+// Echo reads its Reverb connection from the VITE_REVERB_* env; the socket is
+// only opened by the first component that subscribes...
+configureEcho({ broadcaster: 'reverb' });
 
 // This will set light / dark mode on page load...
 initializeTheme();

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import { useEchoNotification } from '@laravel/echo-vue';
 import { MessageSquareMore } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import MessagePreviewRow from '@/components/messaging/MessagePreviewRow.vue';
@@ -143,6 +144,21 @@ onMounted(() => {
         void ensureLoaded();
     }
 });
+
+/**
+ * Realtime: a new message arrives as `NewMessageNotification` on the reader's
+ * private channel, and the previews are refetched so the unread badge and the
+ * rows are the server's count. Only the message notification is listened for,
+ * since nothing else on that channel changes this menu. Subscribed only
+ * behind `canRead`, like the mount fetch above.
+ */
+if (viewerId.value && canRead.value) {
+    useEchoNotification(
+        `App.Models.User.${viewerId.value}`,
+        () => void load(),
+        'App\\Notifications\\NewMessageNotification',
+    );
+}
 
 /**
  * Following a row does two things beyond the navigation itself: it closes the

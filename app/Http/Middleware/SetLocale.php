@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -50,6 +51,20 @@ use Symfony\Component\HttpFoundation\Response;
 class SetLocale
 {
     /**
+     * The mobile client's locale, sent on every request.
+     *
+     * A bearer-token request has no cookie and no session, so without this
+     * the API would answer in the account's stored `locale` — or, for a
+     * guest, in `app.locale` — whatever language the phone is set to. The
+     * header sits first because it is the most specific statement of intent
+     * the caller can make; the web client never sends it, so the cookie stays
+     * the first candidate there. Read-only, like every other candidate:
+     * persisting a preference is still ApplyUserLocale's job, reached through
+     * `api.v1.me.update`.
+     */
+    public const HEADER = 'X-Locale';
+
+    /**
      * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
@@ -69,9 +84,12 @@ class SetLocale
         /** @var list<string> $supported */
         $supported = config('petconnect.locales.supported', ['en']);
 
+        $user = $request->user();
+
         $candidates = [
+            $request->header(self::HEADER),
             $request->cookie($this->cookieName()),
-            $request->user()?->locale,
+            $user instanceof User ? $user->locale : null,
             $request->hasSession() ? $request->session()->get($this->cookieName()) : null,
         ];
 

@@ -73,7 +73,7 @@ class UserSeeder extends Seeder
                 'username' => 'testuser',
                 'password' => 'password',
                 'email_verified_at' => now(),
-                'bio' => 'PetConnect demo account.',
+                'bio' => 'SniffPal demo account.',
                 'phone' => '+20-100-000-0000',
                 'city' => $cairo['city'],
                 'state' => $cairo['state'],

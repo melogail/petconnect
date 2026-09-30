@@ -55,7 +55,11 @@ test('sends into the same thread when the recipient still accepts messages', fun
         'sender_id' => $sender->getKey(),
         'content' => 'Are you still there?',
     ]);
-    Notification::assertSentTo($recipient, NewMessageNotification::class);
+    Notification::assertSentTo(
+        $recipient,
+        NewMessageNotification::class,
+        fn (NewMessageNotification $notification, array $channels): bool => $channels === ['database', 'broadcast'],
+    );
 });
 
 /**
