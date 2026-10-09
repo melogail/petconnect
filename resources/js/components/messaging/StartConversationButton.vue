@@ -116,8 +116,15 @@ import { store as storeConversation } from '@/routes/conversations';
  *
  * `appearance="icon"` renders the trigger as legacy's feed-card control
  * (`components/web/PetCard.vue`, the "Quick Message Dialog Trigger" block):
- * a 48px round brand-gradient button holding only the icon, added on the
- * user's instruction (2026-09-06). It has **no visible text**, so the
+ * a square icon-only button, added on the user's instruction (2026-09-06).
+ * Legacy drew it as a 48px round brand-gradient disc; the "Aubergine &
+ * Lavender" guide (§5.1, §5.2) retires the gradient and draws it as the
+ * `outline` variant at `size-11` — `border-border bg-card`, lavender wash on
+ * hover, 14px radius — so the card keeps one solid violet (the listing-type
+ * pill) and the secondary "View Details" beside this stays the only tinted
+ * button. It goes through `ui/button` rather than a hand-written class
+ * string, which is also what gives it the brand focus ring (2px solid
+ * `--ring` with a page-coloured offset). It has **no visible text**, so the
  * containment constraint above has nothing to contain and the `aria-label` is
  * the whole accessible name — which is why this branch supplies a default
  * (`Message {recipientName}`) rather than leaving the button nameless when a
@@ -140,7 +147,7 @@ const {
      * that **contains** "Message", per the containment constraint above.
      */
     triggerLabel?: string;
-    /** `icon` is the round gradient button the feed card renders. */
+    /** `icon` is the square outline icon button the feed card renders. */
     appearance?: 'default' | 'icon';
 }>();
 
@@ -150,15 +157,17 @@ const open = ref(false);
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <button
+            <Button
                 v-if="appearance === 'icon'"
                 type="button"
+                variant="outline"
+                size="icon-lg"
                 :aria-label="triggerLabel ?? `Message ${recipientName}`"
                 :title="triggerLabel ?? `Message ${recipientName}`"
-                class="flex size-12 shrink-0 items-center justify-center rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 text-white transition hover:from-violet-600 hover:to-fuchsia-600 focus-visible:ring-[3px] focus-visible:ring-violet-500/50 focus-visible:outline-none"
+                class="size-11 shrink-0 rounded-[14px]"
             >
                 <MessageCircle class="size-5" aria-hidden="true" />
-            </button>
+            </Button>
             <Button v-else :aria-label="triggerLabel">
                 <MessageCircle class="size-4" />
                 Message

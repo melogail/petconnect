@@ -13,7 +13,7 @@ import { create as createPet } from '@/routes/pets';
  *
  * `PublicHeader` used to render a second one. It was removed in phase 3 on the
  * user's ruling for exact legacy parity — the legacy navbar had no publish
- * button and the violet→fuchsia CTA belongs on Home alone — so no chrome links
+ * button and the publish CTA belongs on Home alone — so no chrome links
  * `pets.create`; that consequence was accepted knowingly, see the docblock on
  * `components/PublicHeader.vue`. It is mounted on two pages: `Home`, and since
  * 2026-09-06 the owner's own `profile/Show`, in the heading above the listings
@@ -34,44 +34,28 @@ import { create as createPet } from '@/routes/pets';
  * no auth props at all — the same reasoning `PetListingCard` records for
  * `canInteract`.
  *
- * ## Why the label is pinned to `text-white`
+ * ## The treatment is the `default` button variant, and the label is not pinned
  *
- * The background is a fixed pair of colour-scale stops, so it does not change
- * between light and dark; the default button variant's `text-primary-foreground`
- * does — `hsl(0 0% 100%)` light, `hsl(0 0% 9%)` dark (`resources/css/app.css`).
- * Pinning the label keeps one legible colour over one background.
+ * This used to carry the legacy violet→fuchsia gradient with a pinned
+ * `text-white` label, and a long measurement of why that pair failed AA at
+ * rest (white on `violet-500` 4.40:1, on `fuchsia-500` 3.53:1, with the worse
+ * stop under the end of the word) — shipped anyway on a phase-3 ruling for
+ * exact legacy parity. The "Aubergine & Lavender" restyle
+ * (`.claude/PETCONNECT-STYLE-GUIDE.md`, §1 and §5.1) retires every gradient:
+ * violet is the single brand colour, and the primary action on a surface is
+ * one solid `--primary` button under `shadow-cta`. So this is now a bare
+ * `variant="default"`, and that ruling is superseded rather than re-opened.
  *
- * White is also the better of the two. Contrast computed from Tailwind v4's
- * own token values (`node_modules/tailwindcss/theme.css`), converting the
- * `oklch()` stops to linear sRGB and applying the WCAG relative-luminance
- * formula — each number names the pair it was measured against:
- *
- * - rest, white on `violet-500` **4.40:1**, on `fuchsia-500` **3.53:1**
- * - rest, `hsl(0 0% 9%)` on the same two: 4.07:1 and 5.07:1
- * - hover, white on `violet-600` **5.88:1**, on `fuchsia-600` **4.66:1**
- *
- * Two things the numbers depend on, so that a re-measurement that disagrees
- * knows where to look. **`violet-500` and `fuchsia-600` are outside the sRGB
- * gamut** at those oklch coordinates; the figures above clip the converted
- * channels to [0, 1] (giving `#8E51FF` and `#C800DE`), and a different
- * out-of-gamut strategy — chroma reduction, or a wide-gamut display that does
- * not clip at all — lands on different colours and therefore different ratios.
- * And **the gradient runs left→right**, `from-violet-500 to-fuchsia-500`, so
- * the label's *final* characters sit over the 3.53:1 end. The worse stop is
- * under the end of the word, not at some edge nobody reads.
- *
- * So the rest state is below the 4.5:1 AA floor for this text (14px/500)
- * across both ends of the gradient whichever label colour is used, while the
- * hover stops clear it with white.
- *
- * **This ships anyway, and that is a ruling, not an omission.** The user
- * decided in phase 3 to carry the legacy gradient over exactly as it is:
- * contrast failure accepted, recorded here, not fixed. It is the one place in
- * the port where the class string wins over the rendered result, and it is
- * deliberately narrow — `PetFeed` records the opposite call for its two greys,
- * and `resources/css/app.css` records the opposite call for `--destructive`
- * ("A contrast failure is a defect, not a design decision"). Do not generalise
- * from this component; do not re-open it either.
+ * The label is no longer pinned because the variant's `text-primary-foreground`
+ * is now correct in both schemes over a background that itself re-tones: white
+ * on `#5A3FE0` in light (**6.2:1**), `#15102A` on `#A78BFF` in dark
+ * (**9.6:1**), both from the guide's token table. Hover moves one ramp step
+ * (`primary-700` light, `primary-500` dark) rather than fading with alpha, so
+ * the hover colour is a measured token too. The contrast exception this file
+ * used to be — "the one place in the port where the class string wins over the
+ * rendered result" — no longer exists; `PetFeed` and `resources/css/app.css`
+ * record the standing position ("A contrast failure is a defect, not a design
+ * decision"), and this component now agrees with it.
  */
 const page = usePage();
 
@@ -84,11 +68,7 @@ const canPublish = computed(
 </script>
 
 <template>
-    <Button
-        v-if="canPublish"
-        as-child
-        class="bg-linear-to-r from-violet-500 to-fuchsia-500 text-white hover:from-violet-600 hover:to-fuchsia-600"
-    >
+    <Button v-if="canPublish" as-child variant="default">
         <Link :href="createPet()">
             <!--
               20px, as legacy's `h-5 w-5` was. The variant only supplies its

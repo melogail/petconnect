@@ -43,6 +43,13 @@ type Attribute = {
  *
  * The `group-hover:` and `group-focus-within:` utilities key off the `group`
  * class on the card's root `<article>`.
+ *
+ * Colours follow the "Aubergine & Lavender" guide (§1, §7): legacy's
+ * four-hue set (green, blue, amber, purple) is reduced to `--primary` for
+ * every icon except the vaccination tick, which keeps emerald as the one
+ * semantic-success exception. The discs are `bg-card/90` with a blur, like the
+ * other over-photo chips, at the guide's small radius (10px) rather than
+ * circular. The black scrim under the bar stays — it is not brand chroma.
  */
 const { age, gender, vaccinated, spayedNeutered, place } = defineProps<{
     /** A varchar column, so a string even though it reads numeric. */
@@ -63,7 +70,7 @@ const attributes = computed<Attribute[]>(() => {
                   key: 'vaccinated',
                   icon: Syringe,
                   label: t('pets.vaccinated'),
-                  color: 'text-green-600',
+                  color: 'text-emerald-600',
               }
             : null,
         spayedNeutered
@@ -73,7 +80,7 @@ const attributes = computed<Attribute[]>(() => {
                   label: t(
                       gender === 'female' ? 'pets.spayed' : 'pets.neutered',
                   ),
-                  color: 'text-blue-600',
+                  color: 'text-primary',
               }
             : null,
         age === ''
@@ -82,7 +89,7 @@ const attributes = computed<Attribute[]>(() => {
                   key: 'age',
                   icon: Clock,
                   label: ageLabel(t, age),
-                  color: 'text-amber-600',
+                  color: 'text-primary',
               },
         place === ''
             ? null
@@ -90,7 +97,7 @@ const attributes = computed<Attribute[]>(() => {
                   key: 'location',
                   icon: MapPin,
                   label: t('pets.located_in', { location: place }),
-                  color: 'text-purple-600',
+                  color: 'text-primary',
               },
     ];
 
@@ -110,7 +117,7 @@ const attributes = computed<Attribute[]>(() => {
                     <Tooltip>
                         <TooltipTrigger
                             :aria-label="attribute.label"
-                            class="flex size-8 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-transform duration-200 hover:scale-110 hover:bg-white"
+                            class="bg-card/90 hover:bg-card flex size-8 items-center justify-center rounded-[10px] backdrop-blur transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:scale-110"
                             :class="attribute.color"
                         >
                             <component

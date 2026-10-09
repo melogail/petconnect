@@ -97,12 +97,16 @@ import { useTranslations } from '@/composables/useTranslations';
  *
  * ## The trigger, and where its numbers come from
  *
- * All of it read off legacy's `components/web/NotificationsSheet.vue`: a 40px
- * round control (`p-2` around a 24px glyph, which is `size-icon-lg` +
- * `size-6` here) that tints violet while the sheet is open, with the shared
- * red `UnreadBadge` on its corner. It was a 36px `size="icon"` with a `size-5`
- * glyph and a violet `bg-primary` badge capped at `99+`; the badge component's
- * docblock records why red and why `9+`.
+ * Read off legacy's `components/web/NotificationsSheet.vue`: a 40px round
+ * control (`p-2` around a 24px glyph) that tints violet while the sheet is
+ * open, with the shared `UnreadBadge` on its corner. The "Aubergine &
+ * Lavender" guide (`.claude/PETCONNECT-STYLE-GUIDE.md` §5.3) re-sizes that to
+ * the header's 38px `rounded-[14px]` ghost control — `size-[38px]` over
+ * `size="icon-lg"`, the glyph still `size-6`, the open tint `text-primary` —
+ * and the badge is now the guide's 7px `bg-primary` dot; the badge component's
+ * docblock records how the count still reaches assistive technology. Before
+ * the legacy port it was a 36px `size="icon"` with a `size-5` glyph and a
+ * count badge capped at `99+`.
  *
  * ## The sheet opens from the reading edge
  *
@@ -259,12 +263,12 @@ const triggerLabel = computed(() =>
             <Button
                 variant="ghost"
                 size="icon-lg"
-                class="relative rounded-full"
+                class="relative size-[38px]"
                 :aria-label="triggerLabel"
             >
                 <Bell
                     class="text-muted-foreground size-6 transition-colors duration-200"
-                    :class="{ 'text-primary-600 dark:text-primary-400': open }"
+                    :class="{ 'text-primary': open }"
                     aria-hidden="true"
                 />
                 <UnreadBadge :count="unreadCount" />

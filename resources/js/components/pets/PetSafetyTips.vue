@@ -12,10 +12,14 @@ import { useTranslations } from '@/composables/useTranslations';
  * four keys were already in `lang/en.json` and `lang/ar.json` — they were
  * ported with the rest of the legacy catalogue and had no reader until now.
  *
- * A plain `ui/card`, not the `rounded-2xl` frame the owner panel and the header
- * use. That is legacy's own split: it builds those two by hand and reaches for
- * its `Card` component here, so the block reads as an aside rather than as a
- * third thing about this listing.
+ * A plain `ui/card`, not the hand-built frame the owner panel and the header
+ * use (under the "Aubergine & Lavender" guide the two frames share one
+ * surface — 20px, hairline, `shadow-card` — so the split is now structural
+ * rather than visible). It is legacy's own split: it builds those two by hand
+ * and reaches for its `Card` component here, so the block reads as an aside
+ * rather than as a third thing about this listing. The card takes `ui/card`'s
+ * own border; the `border-border/50` override it carried is gone because the
+ * guide draws every border as the one hairline token, never lighter or darker.
  *
  * ## `as="h2"` is read off the assembled page, not off this component
  *
@@ -48,7 +52,7 @@ const tips = computed(() => [
 </script>
 
 <template>
-    <Card class="border-border/50">
+    <Card>
         <CardHeader class="pb-3">
             <CardTitle as="h2" class="text-base">
                 {{ t('pets.safety_tips') }}

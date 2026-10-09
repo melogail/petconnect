@@ -57,13 +57,14 @@ import type { InboxNotification } from '@/types';
  * ## The padding and the tint are legacy's
  *
  * `px-6 py-4` rows separated by `divide-y` (applied by `NotificationPanel` on
- * the `<ul>`), with an unread row tinted `primary-50/70`. The mark-read button
- * is `me-6`, not `me-4`, so that an unread row and a read one end on the same
- * edge — the button replaces the row's own end padding rather than sitting
- * inside a narrower one. Legacy's dark tint
- * was `violet-950/20`; `app.css` registers the ramp to `primary-900` and no
- * further, so the dark step here is `primary-900/20` — one stop lighter than
- * legacy's and the closest the token ramp reaches.
+ * the `<ul>`), with an unread row tinted. The mark-read button is `me-6`, not
+ * `me-4`, so that an unread row and a read one end on the same edge — the
+ * button replaces the row's own end padding rather than sitting inside a
+ * narrower one. The tint was legacy's `violet-50/70` light / `violet-950/20`
+ * dark, carried as `primary-50/70` / `primary-900/20`; the "Aubergine &
+ * Lavender" guide (§5.8) makes it the `bg-accent` token — the same lavender
+ * wash an open menu item and an unread `MessagePreviewRow` use — so the three
+ * "this needs you" surfaces in the shell are one colour.
  *
  * The button's label used to be an English literal, because `lang/*.json` had
  * `notifications.mark_all_as_read` and no singular, and borrowing the plural
@@ -126,16 +127,11 @@ function open(): void {
 }
 
 const ROW_CLASS =
-    'hover:bg-muted/50 focus-visible:ring-ring flex-1 px-6 py-4 transition-colors focus-visible:ring-2 focus-visible:outline-hidden';
+    'hover:bg-accent/50 focus-visible:ring-ring flex-1 px-6 py-4 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-hidden';
 </script>
 
 <template>
-    <li
-        class="flex items-start"
-        :class="{
-            'bg-primary-50/70 dark:bg-primary-900/20': !notification.read,
-        }"
-    >
+    <li class="flex items-start" :class="{ 'bg-accent': !notification.read }">
         <Link
             v-if="notification.url"
             :href="notification.url"

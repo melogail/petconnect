@@ -45,7 +45,7 @@ const { t } = useTranslations();
             <Button
                 variant="ghost"
                 size="icon"
-                class="rounded-full sm:hidden"
+                class="size-[38px] sm:hidden"
                 :aria-label="t('nav.preferences')"
             >
                 <SlidersHorizontal class="size-5" aria-hidden="true" />

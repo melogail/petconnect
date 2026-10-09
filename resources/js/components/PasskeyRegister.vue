@@ -71,7 +71,7 @@ const handleCancel = () => {
     <form
         v-else
         @submit="handleSubmit"
-        class="border-border bg-muted/50 space-y-4 rounded-lg border p-4"
+        class="border-border bg-card shadow-card space-y-4 rounded-[20px] border p-4"
     >
         <div class="grid gap-2">
             <Label for="passkey-name">Passkey name</Label>
@@ -80,7 +80,7 @@ const handleCancel = () => {
                 type="text"
                 v-model="name"
                 placeholder="e.g., MacBook Pro, iPhone"
-                class="border-foreground/20 mt-1 block w-full"
+                class="mt-1 block w-full"
                 autofocus
             />
             <p class="text-muted-foreground text-xs">

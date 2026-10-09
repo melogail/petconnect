@@ -17,14 +17,24 @@ import { edit as editSecurity } from '@/routes/security';
  *
  * `app.ts` nests this inside `PublicLayout` for every `settings/*` page, so it
  * sits under the same navbar and above the same footer as the feed. It is a
- * port of legacy's `pages/profile/Edit.vue` — the gradient banner from
- * `components/web/profile/edit/EditHeader.vue` (its `bg-violet-*` literals
- * written as the `primary-*` ramp `resources/css/app.css` registers for exactly
- * this purpose), the card pulled up over it with `-mt-24`, and the section list
- * down the start edge with an icon, a label and, on the active row, its
- * description. The starter kit's own settings layout — a plain heading and a
- * column of ghost buttons inside the sidebar shell — is what this replaced, on
- * the user's instruction (2026-09-06).
+ * port of legacy's `pages/profile/Edit.vue` — the banner from
+ * `components/web/profile/edit/EditHeader.vue`, the card pulled up over it with
+ * `-mt-24`, and the section list down the start edge with an icon, a label
+ * and, on the active row, its description. The starter kit's own settings
+ * layout — a plain heading and a column of ghost buttons inside the sidebar
+ * shell — is what this replaced, on the user's instruction (2026-09-06).
+ *
+ * The banner was legacy's violet→purple→pink gradient with three blurred orbs
+ * over it (the `bg-violet-*` literals written as the `primary-*` ramp). The
+ * "Aubergine & Lavender" restyle replaced it with the lavender
+ * `bg-gradient-wash` (primary-100 into the card colour, a single hue) over a
+ * `bg-secondary` fallback — same height, same pull-up, no orbs — with the
+ * heading in Newsreader and the copy in the
+ * `--foreground` / `--soft-foreground` / `--secondary-foreground` tokens, all of
+ * which clear AA on `--secondary` (#4A32C4 on #EEEAFB is 7.4:1 light; #CDBDFF
+ * on #261D45 is 9.2:1 dark). The card is the guide's card frame
+ * (`rounded-[20px] border-border shadow-card`) and the section rows take the
+ * `bg-accent` / `text-accent-foreground` active treatment.
  *
  * ## Links, not tabs, and the reason is the middleware
  *
@@ -84,37 +94,22 @@ function isActive(section: SettingsSection): boolean {
 </script>
 
 <template>
-    <div class="bg-muted/40 dark:bg-background">
+    <div class="bg-background">
         <div
-            class="bg-primary-600 relative overflow-hidden pt-16 pb-32 shadow-xl lg:pt-24 dark:bg-gray-900"
+            class="bg-secondary bg-gradient-wash relative overflow-hidden pt-16 pb-32 lg:pt-24"
         >
-            <div class="absolute inset-0" aria-hidden="true">
-                <div
-                    class="from-primary-500 dark:from-primary-900 absolute inset-0 bg-gradient-to-br via-purple-100 to-pink-100 opacity-90 mix-blend-multiply dark:via-gray-900 dark:to-gray-950 dark:mix-blend-normal"
-                ></div>
-                <div
-                    class="absolute -start-20 -top-20 h-96 w-96 rounded-full bg-white/20 blur-3xl"
-                ></div>
-                <div
-                    class="absolute -end-20 top-20 h-80 w-80 rounded-full bg-purple-300/20 blur-3xl"
-                ></div>
-                <div
-                    class="absolute bottom-0 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-white/10 blur-2xl"
-                ></div>
-            </div>
-
             <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="max-w-3xl">
                     <div
-                        class="text-primary-100 mb-4 flex items-center gap-x-3"
+                        class="text-secondary-foreground mb-4 flex items-center gap-x-3"
                     >
                         <span
-                            class="inline-flex items-center rounded-md bg-white/20 px-2 py-1 text-xs font-medium text-white ring-1 ring-white/30 ring-inset"
+                            class="bg-card text-secondary-foreground ring-border inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset"
                         >
                             {{ t('profile.settings') }}
                         </span>
                         <span
-                            class="bg-primary-200 h-1 w-1 rounded-full"
+                            class="bg-primary h-1 w-1 rounded-full"
                             aria-hidden="true"
                         ></span>
                         <span class="text-sm font-medium">
@@ -123,13 +118,13 @@ function isActive(section: SettingsSection): boolean {
                     </div>
 
                     <h1
-                        class="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl"
+                        class="text-foreground font-serif text-4xl leading-[1.05] font-medium tracking-[-0.015em] sm:text-5xl lg:text-6xl"
                     >
                         {{ t('profile.edit_profile') }}
                     </h1>
 
                     <p
-                        class="text-primary-50 mt-4 max-w-2xl text-lg leading-relaxed"
+                        class="text-soft-foreground mt-4 max-w-2xl text-lg leading-relaxed"
                     >
                         {{ t('profile.edit_header_description') }}
                     </p>
@@ -140,7 +135,9 @@ function isActive(section: SettingsSection): boolean {
         <div
             class="relative z-10 mx-auto -mt-24 max-w-7xl px-4 pb-12 sm:px-6 lg:px-8"
         >
-            <div class="bg-card ring-border rounded-2xl shadow-xl ring-1">
+            <div
+                class="bg-card border-border shadow-card rounded-[20px] border"
+            >
                 <div class="flex flex-col lg:flex-row">
                     <aside
                         class="border-border w-full border-b px-4 py-6 lg:w-72 lg:shrink-0 lg:border-e lg:border-b-0 lg:px-6 lg:py-8"
@@ -156,11 +153,11 @@ function isActive(section: SettingsSection): boolean {
                                 :aria-current="
                                     isActive(section) ? 'page' : undefined
                                 "
-                                class="group flex w-full items-center rounded-xl px-3 py-3 text-sm font-medium transition-colors"
+                                class="group focus-visible:ring-ring focus-visible:ring-offset-background flex w-full items-center rounded-[14px] px-3 py-3 text-sm font-medium transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                                 :class="
                                     isActive(section)
-                                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                        ? 'bg-accent text-accent-foreground'
+                                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 "
                             >
                                 <component
@@ -168,8 +165,8 @@ function isActive(section: SettingsSection): boolean {
                                     class="me-3 size-5 shrink-0"
                                     :class="
                                         isActive(section)
-                                            ? 'text-primary-600 dark:text-primary-400'
-                                            : 'text-muted-foreground group-hover:text-foreground'
+                                            ? 'text-accent-foreground'
+                                            : 'text-muted-foreground group-hover:text-accent-foreground'
                                     "
                                     aria-hidden="true"
                                 />
@@ -188,7 +185,7 @@ function isActive(section: SettingsSection): boolean {
 
                                 <span
                                     v-if="isActive(section)"
-                                    class="bg-primary-500 ms-auto size-1 shrink-0 rounded-full"
+                                    class="bg-primary ms-auto size-1 shrink-0 rounded-full"
                                     aria-hidden="true"
                                 ></span>
                             </Link>

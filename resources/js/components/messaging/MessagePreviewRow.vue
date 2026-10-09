@@ -34,29 +34,31 @@ import type { ConversationPreview } from '@/types';
  * later. A string rendered on the server would also freeze both the locale and
  * the reading time into text that goes stale while the menu is open.
  *
- * ## Colours: tokens for surfaces, the brand ramp for the accents
+ * ## Colours: tokens throughout
  *
  * Legacy hardcoded `bg-violet-50` / `dark:bg-violet-900/20` for the unread row,
- * `ring-violet-400` for the unread avatar and `bg-violet-500` for the dot.
- * `primary-50` … `primary-900` are the same violet ramp registered as tokens
- * (`app.css`, where they are documented as holding the same value in both
- * schemes), so those four keep their exact legacy step. Everything that was a
- * grey — the divider, the hover, the two text colours — becomes a token,
- * because matching legacy's hex does not match legacy's appearance under this
- * app's blue-tinted dark scheme.
+ * `ring-violet-400` for the unread avatar and `bg-violet-500` for the dot. The
+ * "Aubergine & Lavender" guide (`.claude/PETCONNECT-STYLE-GUIDE.md` §5.7) maps
+ * those onto the semantic tokens rather than onto ramp steps: the unread row is
+ * `bg-accent` (the lavender wash, #EEEAFB light / #261D45 dark), the unread
+ * avatar ring is `ring-primary` and the dot is `bg-primary`. Everything that
+ * was a grey — the divider, the hover, the two text colours — is a token as
+ * well, because matching legacy's hex never matched legacy's appearance under
+ * a tinted dark scheme.
  *
- * The avatar ring is `ring-popover`, i.e. the panel it sits on, which is what
- * legacy's `ring-white dark:ring-gray-700` was reaching for by hand.
+ * The read avatar ring is `ring-popover`, i.e. the panel it sits on, which is
+ * what legacy's `ring-white dark:ring-gray-700` was reaching for by hand; on an
+ * unread row the brand ring replaces it.
  *
  * One addition rather than a translation, and it is ours, not legacy's: an
  * unread snippet also takes `text-foreground`, where legacy added only
  * `font-medium`. The reason is that the grey underneath it is not legacy's
  * grey. Legacy's snippet was `text-gray-600` (#4B5563, **7.44:1** on white,
  * computed from the sRGB values); the token that replaces it is
- * `--muted-foreground` (#637083, **5.02:1** on `--background`, which is
- * `#FFFFFF` in light — both figures are against the same white, and the second
- * is app.css's own annotation). Weight alone on the lighter grey does not
- * separate an unread row from a read one, so the colour carries the rest.
+ * `--muted-foreground` (#756B88, **4.9:1** on `--popover` white — the guide's
+ * own figure, re-measured against the sRGB values). Weight alone on the lighter
+ * grey does not separate an unread row from a read one, so the colour carries
+ * the rest.
  *
  * ## No `prefetch`
  *
@@ -96,7 +98,7 @@ const isMine = computed(
  */
 const avatarClass = computed(() =>
     preview.unread
-        ? 'ring-popover ring-primary-400 size-10 ring-2'
+        ? 'ring-primary size-10 ring-2'
         : 'ring-popover size-10 ring-2',
 );
 
@@ -114,8 +116,8 @@ const snippet = computed(() => {
 <template>
     <Link
         :href="showConversation(preview.id)"
-        class="group border-border hover:bg-accent/50 relative block border-b px-4 py-3 transition-colors duration-150"
-        :class="{ 'bg-primary-50 dark:bg-primary-900/20': preview.unread }"
+        class="group border-border hover:bg-accent/50 relative block border-b px-4 py-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out"
+        :class="{ 'bg-accent': preview.unread }"
         @click="emit('navigate')"
     >
         <div class="flex items-start gap-3">
@@ -127,7 +129,7 @@ const snippet = computed(() => {
                 />
                 <span
                     v-if="preview.unread"
-                    class="bg-primary-500 border-popover absolute -end-1 -top-1 size-3 rounded-full border-2"
+                    class="bg-primary border-popover absolute -end-1 -top-1 size-3 rounded-full border-2"
                     aria-hidden="true"
                 />
             </div>

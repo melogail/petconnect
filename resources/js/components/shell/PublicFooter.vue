@@ -32,11 +32,17 @@ import { help, support } from '@/routes';
  * does not navigate is worse than a label. Turn each into a `<Link>` when its
  * route exists.
  *
- * What tells the two apart on screen is weight, not colour: the two real links
- * are `font-semibold` and underline on hover, the labels are `font-normal` with
- * no hover state at all. They previously carried `/70`, which read as 2.82:1 in
- * light mode — an AA failure that also happened to be the only thing
- * distinguishing them. Never mark a non-interactive element by dimming it.
+ * What tells the two apart on screen is weight first: the two real links are
+ * `font-semibold` and underline on hover, the labels are `font-normal` with no
+ * hover state at all. The style guide (§5.10) also gives them different text
+ * tokens — links `text-foreground` (15.6:1 light), labels
+ * `text-muted-foreground` — and that is allowed only because the muted token
+ * itself clears AA on the bar's own surface: #756B88 on `--background` #F6F4FB
+ * is 4.55:1 in light, #9C92B4 on #0F0C18 is 6.9:1 in dark. The labels
+ * previously carried `/70`, which read as 2.82:1 in light mode — an AA failure
+ * that also happened to be the only thing distinguishing them. Never mark a
+ * non-interactive element by dimming it below the threshold; weight is what
+ * carries the distinction, colour merely agrees with it.
  */
 const { t } = useTranslations();
 
@@ -53,7 +59,7 @@ const year = new Date().getFullYear();
 
 <template>
     <footer
-        class="border-border bg-background/80 border-t backdrop-blur-md md:fixed md:inset-x-0 md:bottom-0 md:z-40"
+        class="border-border bg-background/90 border-t backdrop-blur-md md:fixed md:inset-x-0 md:bottom-0 md:z-40"
     >
         <div
             class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-4 px-4 py-4 sm:px-6 md:grid-cols-3"
@@ -69,13 +75,13 @@ const year = new Date().getFullYear();
             >
                 <Link
                     :href="help()"
-                    class="text-muted-foreground hover:text-primary-600 dark:hover:text-primary-400 text-xs font-semibold underline-offset-4 transition-colors hover:underline"
+                    class="text-foreground hover:text-primary text-xs font-semibold underline-offset-4 transition-colors duration-200 ease-out hover:underline"
                 >
                     {{ t('nav.help_center') }}
                 </Link>
                 <Link
                     :href="support()"
-                    class="text-muted-foreground hover:text-primary-600 dark:hover:text-primary-400 text-xs font-semibold underline-offset-4 transition-colors hover:underline"
+                    class="text-foreground hover:text-primary text-xs font-semibold underline-offset-4 transition-colors duration-200 ease-out hover:underline"
                 >
                     {{ t('support.title') }}
                 </Link>

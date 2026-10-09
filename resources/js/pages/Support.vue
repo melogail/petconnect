@@ -57,7 +57,9 @@ const { t } = useTranslations();
         />
 
         <section class="space-y-4">
-            <h2 class="text-lg font-semibold">
+            <h2
+                class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+            >
                 {{ t('support.ways_to_reach_us') }}
             </h2>
 

@@ -19,9 +19,14 @@ import { update as updateLocale } from '@/routes/locale';
  * locale and `initializeLocaleDirection()` rewrites `<html lang|dir>`, so the
  * Inertia visit is enough — no reload.
  *
- * The selected pill is `bg-primary-600`, not `-500`: white on violet-500
- * measures 4.23:1 and fails AA, white on violet-600 measures 5.70:1. `app.css`
- * says as much next to the step — violet-500 does not carry readable text.
+ * The selected segment is `bg-primary text-primary-foreground`, the one solid
+ * violet the style guide allows per surface (§1, §5.3): white on `--primary`
+ * #5A3FE0 measures 6.2:1 in light, and #15102A on #A78BFF 9.6:1 in dark. It
+ * used to be pinned to `bg-primary-600` because white on violet-500 measured
+ * 4.23:1 and failed AA; the token now carries that choice, so the step is not
+ * repeated here. The frame is the header's 14px control radius with 10px
+ * segments inside it, not a pill — it is a segmented control, and the
+ * `rounded-full` treatment is reserved for status and count pills.
  */
 const { locale } = useLocale();
 const { t } = useTranslations();
@@ -83,7 +88,7 @@ function select(code: string): void {
 
 <template>
     <div
-        class="border-border inline-flex items-center rounded-full border p-0.5"
+        class="border-border bg-card inline-flex items-center rounded-[14px] border p-0.5"
         role="group"
         :aria-label="t('nav.language')"
     >
@@ -95,11 +100,11 @@ function select(code: string): void {
             :title="option.label"
             :aria-label="option.name"
             :aria-pressed="option.code === locale.current"
-            class="rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+            class="focus-visible:ring-ring focus-visible:ring-offset-background rounded-[10px] px-2.5 py-1 text-xs font-semibold transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             :class="
                 option.code === locale.current
-                    ? 'bg-primary-600 text-white'
-                    : 'text-muted-foreground hover:text-primary-600 dark:hover:text-primary-400'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
             "
             @click="select(option.code)"
         >

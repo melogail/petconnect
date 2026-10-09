@@ -21,8 +21,12 @@ import type { PetCard } from '@/types';
  * One of the owner's listings, as a row of `ProfileListingsTable`.
  *
  * The port of legacy's `components/web/profile/ProfilePetsTable.vue` row: a
- * thumbnail, the name, a green/yellow availability pill, the date, the view
- * count and three icon controls at the end. Kept from this app's card and
+ * thumbnail, the name, an availability pill, the date, the view count and
+ * three icon controls at the end. The pill was legacy's green/yellow; under the
+ * "Aubergine & Lavender" guide (§7) the only chroma besides violet is the
+ * semantic pair, so it is emerald for "available" (success) and amber for
+ * "unavailable" (warning) — the same two hues the guide reserves for the
+ * verification-sent notice and warnings elsewhere. Kept from this app's card and
  * absent from legacy: the listing type, the price, and the like and comment
  * counts — the resource already pays for them, and a table is where a number
  * per row earns its column.
@@ -101,7 +105,7 @@ const removeLabel = computed(() =>
         <td class="px-4 py-3">
             <div class="flex items-center gap-3">
                 <div
-                    class="bg-muted size-10 shrink-0 overflow-hidden rounded-lg"
+                    class="bg-muted size-10 shrink-0 overflow-hidden rounded-xl"
                 >
                     <img
                         v-if="pet.image"
@@ -121,7 +125,7 @@ const removeLabel = computed(() =>
                 <div class="min-w-0">
                     <Link
                         :href="showPet(pet.id)"
-                        class="text-foreground hover:text-primary focus-visible:ring-ring/50 block truncate rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:outline-none"
+                        class="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-background block truncate rounded-sm text-sm font-semibold transition-colors duration-200 ease-out hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
                         {{ pet.name }}
                     </Link>
@@ -145,19 +149,19 @@ const removeLabel = computed(() =>
 
         <td class="px-4 py-3 whitespace-nowrap">
             <span
-                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                 :class="
                     isAvailable
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
                 "
             >
                 <span
                     class="size-1.5 rounded-full"
                     :class="
                         isAvailable
-                            ? 'bg-green-500 dark:bg-green-400'
-                            : 'bg-yellow-500 dark:bg-yellow-400'
+                            ? 'bg-emerald-600 dark:bg-emerald-400'
+                            : 'bg-amber-600 dark:bg-amber-400'
                     "
                     aria-hidden="true"
                 ></span>

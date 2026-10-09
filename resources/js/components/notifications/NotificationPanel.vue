@@ -172,7 +172,7 @@ const inboxStatus = computed(() => {
                 class="flex h-full min-h-64 flex-col items-center justify-center gap-3 px-6 text-center"
             >
                 <div
-                    class="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full"
+                    class="bg-secondary text-secondary-foreground flex size-14 items-center justify-center rounded-full"
                 >
                     <RefreshCw class="size-6" aria-hidden="true" />
                 </div>
@@ -195,7 +195,7 @@ const inboxStatus = computed(() => {
                 class="flex h-full min-h-64 flex-col items-center justify-center gap-3 px-6 text-center"
             >
                 <div
-                    class="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full"
+                    class="bg-secondary text-secondary-foreground flex size-14 items-center justify-center rounded-full"
                 >
                     <Bell class="size-6" aria-hidden="true" />
                 </div>

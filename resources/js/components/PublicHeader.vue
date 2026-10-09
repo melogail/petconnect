@@ -151,7 +151,7 @@ const user = computed(() => page.props.auth.user ?? null);
 
 <template>
     <header
-        class="border-border bg-background/80 sticky top-0 z-50 border-b shadow-sm backdrop-blur-md"
+        class="border-border bg-background/90 sticky top-0 z-50 border-b backdrop-blur-md"
     >
         <div
             class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6"

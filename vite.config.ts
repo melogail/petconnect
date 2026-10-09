@@ -11,9 +11,21 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
+            // "Aubergine & Lavender" type: Manrope for UI/body, Newsreader
+            // for headings, Readex Pro for every Arabic role. Self-hosted
+            // through the plugin's font pipeline rather than a Google Fonts
+            // <link>, which is what the `@fonts` directive in app.blade.php
+            // renders. Families are referenced in app.css by name.
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                bunny('Manrope', {
+                    weights: [400, 500, 600, 700],
+                }),
+                bunny('Newsreader', {
+                    weights: [500, 600],
+                }),
+                bunny('Readex Pro', {
+                    weights: [400, 500, 600, 700],
+                    subsets: ['latin', 'arabic'],
                 }),
             ],
         }),

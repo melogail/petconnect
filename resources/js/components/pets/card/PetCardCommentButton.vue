@@ -134,13 +134,17 @@ const label = computed(
         @posted="countPosted"
         @deleted="countDeleted"
     >
-        <!-- A quiet round pill, legacy's action-row shape (restyled 2026-09-06). -->
+        <!--
+          A quiet ghost pill, legacy's action-row shape (restyled 2026-09-06);
+          re-toned to the guide's engagement row — 12px/500 muted, 16px icon,
+          `--primary` on hover, the button's 14px radius.
+        -->
         <Button
             variant="ghost"
             :aria-label="label"
-            class="text-muted-foreground hover:bg-muted hover:text-primary-600 dark:hover:text-primary-400 rounded-full"
+            class="text-muted-foreground hover:bg-accent hover:text-primary text-xs font-medium"
         >
-            <MessageCircle class="size-5" aria-hidden="true" />
+            <MessageCircle class="size-4" aria-hidden="true" />
             {{ commentsShown }}
         </Button>
     </CommentsDialog>

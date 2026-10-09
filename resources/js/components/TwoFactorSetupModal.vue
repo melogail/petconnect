@@ -114,7 +114,7 @@ watch(
         <DialogContent class="sm:max-w-md">
             <DialogHeader class="flex items-center justify-center">
                 <div
-                    class="border-border bg-card mb-3 w-auto rounded-full border p-0.5 shadow-sm"
+                    class="border-border bg-card shadow-card mb-3 w-auto rounded-full border p-0.5"
                 >
                     <div
                         class="border-border bg-muted relative overflow-hidden rounded-full border p-2.5"
@@ -158,11 +158,11 @@ watch(
                             class="relative mx-auto flex max-w-md items-center overflow-hidden"
                         >
                             <div
-                                class="border-border relative mx-auto aspect-square w-64 overflow-hidden rounded-lg border"
+                                class="border-border relative mx-auto aspect-square w-64 overflow-hidden rounded-[14px] border"
                             >
                                 <div
                                     v-if="!qrCodeSvg"
-                                    class="bg-background absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center"
+                                    class="bg-muted absolute inset-0 z-10 flex aspect-square h-auto w-full animate-pulse items-center justify-center"
                                 >
                                     <Spinner status class="size-6" />
                                 </div>
@@ -205,7 +205,7 @@ watch(
                             class="flex w-full items-center justify-center space-x-2"
                         >
                             <div
-                                class="border-border flex w-full items-stretch overflow-hidden rounded-xl border"
+                                class="border-border flex w-full items-stretch overflow-hidden rounded-[14px] border"
                             >
                                 <div
                                     v-if="!manualSetupKey"
@@ -218,15 +218,15 @@ watch(
                                         type="text"
                                         readonly
                                         :value="manualSetupKey"
-                                        class="bg-background text-foreground h-full w-full p-3"
+                                        class="bg-input text-foreground h-full w-full p-3"
                                     />
                                     <button
                                         @click="copy(manualSetupKey || '')"
-                                        class="border-border hover:bg-muted relative block h-auto border-l px-3"
+                                        class="border-border hover:bg-accent hover:text-accent-foreground relative block h-auto border-l px-3 transition-colors duration-200 ease-out"
                                     >
                                         <Check
                                             v-if="copied"
-                                            class="w-4 text-green-500"
+                                            class="w-4 text-emerald-600 dark:text-emerald-400"
                                         />
                                         <Copy v-else class="w-4" />
                                     </button>

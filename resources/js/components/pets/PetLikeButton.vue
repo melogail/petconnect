@@ -14,12 +14,17 @@ import { like as likePet } from '@/routes/pets';
  * account, so a guest is sent to the sign-in page instead of a 403.
  *
  * Drawn as legacy drew it (`components/web/PetCard.vue`, the "Likes with
- * Animation" block): a thumbs-up in a quiet round pill that turns brand-violet
+ * Animation" block): a thumbs-up in a quiet ghost pill that turns brand-violet
  * and fills when liked. Restyled from the outline heart on the user's
- * instruction (2026-09-06). The classes go through `cn` because `Button`'s
- * ghost variant already sets a hover background and tailwind-merge has to
- * resolve the conflict in favour of the ones written here — see "Shared
- * machinery silently alters your result" in `.ai/rules/general.md`.
+ * instruction (2026-09-06), then re-toned to the "Aubergine & Lavender" guide
+ * (§5.2): the engagement row is 12px/500 `--muted-foreground` with 16px
+ * icons, the liked and hover colour is `--primary` (which re-tones per scheme,
+ * so no `dark:` pair), and the pill takes the button's 14px radius rather
+ * than `rounded-full`, which the guide keeps for status/type/count pills
+ * only. The classes go through `cn` because `Button`'s ghost variant already
+ * sets a hover background and tailwind-merge has to resolve the conflict in
+ * favour of the ones written here — see "Shared machinery silently alters
+ * your result" in `.ai/rules/general.md`.
  *
  * `aria-pressed` sits on the signed-in branch's control, not on the wrapping
  * `Button`. `Button` renders `Primitive` with `as-child`, so anything written
@@ -70,8 +75,8 @@ const { petId, likesCount, isLiked, canLike } = defineProps<{
         variant="ghost"
         :class="
             cn(
-                'text-muted-foreground hover:bg-muted hover:text-primary-600 dark:hover:text-primary-400 rounded-full',
-                isLiked && 'text-primary-600 dark:text-primary-400',
+                'text-muted-foreground hover:bg-accent hover:text-primary text-xs font-medium',
+                isLiked && 'text-primary',
             )
         "
     >
@@ -84,14 +89,14 @@ const { petId, likesCount, isLiked, canLike } = defineProps<{
             :aria-pressed="isLiked"
         >
             <ThumbsUp
-                class="size-5 transition-transform duration-300"
+                class="size-4 transition-transform duration-300"
                 :class="isLiked ? 'scale-110 fill-current' : ''"
                 aria-hidden="true"
             />
             {{ likesCount }}
         </Link>
         <Link v-else :href="login()">
-            <ThumbsUp class="size-5" aria-hidden="true" />
+            <ThumbsUp class="size-4" aria-hidden="true" />
             {{ likesCount }}
         </Link>
     </Button>

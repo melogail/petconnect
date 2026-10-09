@@ -51,14 +51,15 @@ defineProps<{ pet: PetDetail }>();
 </script>
 
 <template>
+    <!-- The guide's card frame (§4): a hairline under a soft shadow, 20px corners. -->
     <div
-        class="border-border/50 bg-card mb-6 overflow-hidden rounded-2xl border shadow-sm"
+        class="border-border bg-card shadow-card mb-6 overflow-hidden rounded-[20px] border"
     >
         <div class="p-6">
             <PetQuickInfo :pet="pet" />
             <PetListingSummary :pet="pet" />
 
-            <div class="border-border/50 mb-6 border-t" />
+            <div class="border-border mb-6 border-t" />
 
             <PetAboutSection :pet="pet" />
             <PetLocationSection :pet="pet" />

@@ -9,12 +9,21 @@ import { show as showPet } from '@/routes/pets';
  * that sit over it.
  *
  * Restyled after legacy's `components/web/PetCard.vue` figure on the user's
- * instruction (2026-09-06): a fixed `h-64` frame, the photo zooming on hover
+ * instruction (2026-09-06): a fixed-height frame, the photo zooming on hover
  * under a dark wash, a "My Listing" pill for the owner at the start corner,
  * and — through the default slot — the listing-type pill at the end corner and
  * the icon bar that slides up from the bottom. What the slot renders is the
  * parent's business; what this file owns is that every overlay is a
  * **sibling** of the link, for the reason below.
+ *
+ * The frame is 220px tall (`h-[220px]`, was legacy's `h-64`) per the
+ * "Aubergine & Lavender" guide (§5.2), full-bleed under the card's 20px
+ * corners. The owner pill and the distance chip are the guide's over-photo
+ * chips — `bg-card/90 text-foreground backdrop-blur`, 11px, `rounded-full`,
+ * no coloured shadow — rather than legacy's emerald→teal gradient and the
+ * white/grey literal pair; the one accent on the photo is the listing-type
+ * pill in the slot. The hover wash is a black scrim and stays: it is not brand
+ * chroma.
  *
  * The chips are SIBLINGS of the `<Link>`, not children. The wrapper `<figure>`
  * is independently required and is not here for positioning: making a chip a
@@ -71,7 +80,7 @@ const { t } = useTranslations();
 </script>
 
 <template>
-    <figure class="bg-muted relative h-64 overflow-hidden">
+    <figure class="bg-muted relative h-[220px] overflow-hidden">
         <Link
             :href="showPet(petId)"
             :aria-label="`Photo of ${name}`"
@@ -98,15 +107,18 @@ const { t } = useTranslations();
 
         <div
             v-if="isOwner"
-            class="pointer-events-none absolute start-4 top-4 flex items-center gap-1 rounded-full bg-linear-to-r from-emerald-400 to-teal-500 px-3 py-1 text-xs font-bold tracking-wide text-white shadow-lg shadow-emerald-500/30"
+            class="bg-card/90 text-foreground pointer-events-none absolute start-4 top-4 flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold backdrop-blur"
         >
-            <CircleCheck class="size-3 shrink-0" aria-hidden="true" />
+            <CircleCheck
+                class="text-primary size-3 shrink-0"
+                aria-hidden="true"
+            />
             {{ t('pets.my_listing') }}
         </div>
 
         <div
             v-if="distance"
-            class="pointer-events-none absolute start-4 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-gray-800 shadow-md backdrop-blur-sm dark:bg-gray-900/80 dark:text-gray-100"
+            class="bg-card/90 text-foreground pointer-events-none absolute start-4 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur"
             :class="isOwner ? 'top-14' : 'top-4'"
         >
             <MapPin class="size-3" aria-hidden="true" />

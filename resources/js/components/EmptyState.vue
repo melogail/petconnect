@@ -11,7 +11,7 @@ defineProps<{
 
 <template>
     <div
-        class="border-border flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center"
+        class="border-border flex flex-col items-center justify-center gap-2 rounded-[20px] border border-dashed px-6 py-12 text-center"
     >
         <component
             :is="icon"

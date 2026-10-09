@@ -42,7 +42,7 @@ const rate = ref(bounds.max_rate);
         "
         reset-on-success
         :options="{ preserveScroll: true }"
-        class="border-border space-y-4 rounded-xl border p-4"
+        class="border-border bg-card shadow-card space-y-4 rounded-[20px] border p-4"
         v-slot="{ errors, processing }"
     >
         <InputError :message="errors.review" />

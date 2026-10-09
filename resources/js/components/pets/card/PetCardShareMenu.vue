@@ -104,14 +104,18 @@ async function copyLink(): Promise<void> {
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <!-- A quiet round pill, legacy's action-row shape (restyled 2026-09-06). -->
+            <!--
+              A quiet ghost pill, legacy's action-row shape (restyled 2026-09-06);
+              re-toned to the guide's engagement row — muted, 16px icon,
+              `--primary` on hover, the button's 14px radius.
+            -->
             <Button
                 variant="ghost"
                 size="icon"
                 :aria-label="`Share ${name}`"
-                class="text-muted-foreground hover:bg-muted hover:text-primary-600 dark:hover:text-primary-400 rounded-full"
+                class="text-muted-foreground hover:bg-accent hover:text-primary"
             >
-                <Share2 class="size-5" aria-hidden="true" />
+                <Share2 class="size-4" aria-hidden="true" />
             </Button>
         </DropdownMenuTrigger>
 

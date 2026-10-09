@@ -20,9 +20,11 @@ defineProps<{ question: string }>();
 </script>
 
 <template>
-    <details class="border-border bg-card group rounded-xl border">
+    <details
+        class="border-border bg-card shadow-card group rounded-[20px] border"
+    >
         <summary
-            class="hover:bg-accent/40 flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl p-4 font-medium [&::-webkit-details-marker]:hidden"
+            class="hover:bg-accent/40 focus-visible:ring-ring focus-visible:ring-offset-background flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] p-4 font-medium transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
         >
             {{ question }}
             <ChevronDown

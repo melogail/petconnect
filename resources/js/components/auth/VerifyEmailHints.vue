@@ -5,11 +5,18 @@ import { useTranslations } from '@/composables/useTranslations';
 /**
  * The two "what to do next" lines under the card's status area.
  *
- * The tile colours are spelled out per item rather than derived from a `tone`
+ * Both tiles are the same `bg-secondary text-secondary-foreground` disc. They
+ * used to be two literal palettes — violet for the inbox, fuchsia for the spam
+ * hint — and the "Aubergine & Lavender" restyle collapsed them to one: violet
+ * is the only accent, so there is no second tone to give the second tile. The
+ * classes are still written out per item rather than derived from a `tone`
  * prop, because Tailwind resolves class names at build time from the source
- * text: a `bg-${tone}-50` would compile to nothing at all and the tiles would
- * come out transparent. Two items with two literal palettes is also the whole
- * of the design — there is no third tone waiting to be parameterised.
+ * text: a `bg-${tone}` would compile to nothing at all and the tiles would come
+ * out transparent — and with one palette there is nothing to parameterise.
+ *
+ * The hint copy stays `text-muted-foreground` because it sits on the card
+ * (`#756B88` on `#FFFFFF` 4.98:1), not on the lavender panel, where the same
+ * token would fall to 4.22:1.
  */
 const { t } = useTranslations();
 </script>
@@ -18,7 +25,7 @@ const { t } = useTranslations();
     <ul class="space-y-3">
         <li class="flex items-start gap-3 text-start">
             <div
-                class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300"
+                class="bg-secondary text-secondary-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl"
             >
                 <Inbox class="size-4" />
             </div>
@@ -28,7 +35,7 @@ const { t } = useTranslations();
         </li>
         <li class="flex items-start gap-3 text-start">
             <div
-                class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-950/60 dark:text-fuchsia-300"
+                class="bg-secondary text-secondary-foreground mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl"
             >
                 <ShieldCheck class="size-4" />
             </div>

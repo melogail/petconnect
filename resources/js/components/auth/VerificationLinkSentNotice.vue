@@ -20,19 +20,23 @@ import { useTranslations } from '@/composables/useTranslations';
  * have given.
  *
  * Emerald is a literal palette rather than a token because success is not a
- * colour this theme names — there is no `--success`. Contrast computed from
- * Tailwind v4's `oklch()` stops (`node_modules/tailwindcss/theme.css`)
+ * colour this theme names — there is no `--success`. It is also the single
+ * semantic-success exception to the "Aubergine & Lavender" one-accent rule, so
+ * it survived the restyle that retired every other non-violet chroma; only the
+ * radius moved, to the 14px that chips and panels share. Contrast computed
+ * from Tailwind v4's `oklch()` stops (`node_modules/tailwindcss/theme.css`)
  * converted to linear sRGB: `emerald-800` on `emerald-50` **7.19:1** light,
- * and in dark the panel is `emerald-950/40` over `--card` `#1D283A`, where
- * `emerald-200` measures **13.96:1** against the darkest thing behind it,
- * `--background` `#0F1729`. Both clear the 4.5:1 AA floor.
+ * and in dark the panel is `emerald-950/40` over `--card` `#181329`, where
+ * `emerald-200` measures **13.39:1** on that blend and **15.10:1** against
+ * the darkest thing behind it, `--background` `#0F0C18`. All clear the 4.5:1
+ * AA floor.
  */
 const { t } = useTranslations();
 </script>
 
 <template>
     <div
-        class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-start dark:border-emerald-900/50 dark:bg-emerald-950/40"
+        class="flex items-start gap-3 rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-start dark:border-emerald-900/50 dark:bg-emerald-950/40"
         role="status"
     >
         <CircleCheck

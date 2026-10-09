@@ -18,7 +18,9 @@ defineProps<{ conversations: Paginated<Conversation> }>();
         />
 
         <template v-else>
-            <ul class="divide-border divide-y">
+            <ul
+                class="divide-border bg-card border-border shadow-card divide-y overflow-hidden rounded-[20px] border"
+            >
                 <li
                     v-for="conversation in conversations.data"
                     :key="conversation.id"

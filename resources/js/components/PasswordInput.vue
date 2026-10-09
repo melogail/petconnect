@@ -21,7 +21,10 @@ defineOptions({ inheritAttrs: false });
  * (not the `resources/js/app.ts` one, which carries no Tailwind utilities),
  * screenshotted and read back in Chrome under `dir="ltr"` and `dir="rtl"`.
  * Stylesheet-live guard: body `margin` 0px, field `border-radius` 10px
- * (`rounded-md`), field `height` 36px (`h-9`). The box is pinned by CSS
+ * (`rounded-md`), field `height` 36px (`h-9`) — those two were the `Input`
+ * of the day; under the "Aubergine & Lavender" tokens it is `rounded-[14px]`
+ * and `h-11`, and the toggle's `rounded-e-[14px]` follows it, but the
+ * direction findings below do not depend on either. The box is pinned by CSS
  * (`width: 320px`), not by the viewport — `innerWidth` read 500px — and no
  * figure below depends on the viewport.
  *
@@ -40,6 +43,11 @@ defineOptions({ inheritAttrs: false });
  * 12px, and the 10px radii move from the two right corners to the two left
  * ones. Re-run before trusting these: they are one component in one box, not a
  * whole page.
+ *
+ * The toggle's focus ring is the brand convention — `ring-2 ring-ring` at full
+ * opacity with a `ring-offset-background` offset — rather than the older
+ * `ring-[3px]` at half alpha. It is `tabindex="-1"`, so the ring only shows on
+ * programmatic focus under keyboard modality.
  */
 const { t } = useTranslations();
 
@@ -69,7 +77,7 @@ defineExpose({
             @click="showPassword = !showPassword"
             :class="
                 cn(
-                    'text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-y-0 end-0 flex items-center rounded-e-md px-3 focus-visible:ring-[3px] focus-visible:outline-none',
+                    'text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background absolute inset-y-0 end-0 flex items-center rounded-e-[14px] px-3 transition-colors duration-200 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                 )
             "
             :aria-label="

@@ -55,13 +55,14 @@ const { conversationId, maxLength, canSend } = defineProps<{
                 :maxlength="maxLength"
                 placeholder="Write a message…"
                 aria-label="Message"
-                class="max-h-40 min-h-10 resize-none"
+                class="bg-card max-h-40 min-h-10 resize-none rounded-[14px]"
             />
             <InputError :message="errors.content" />
         </div>
 
         <Button
             type="submit"
+            variant="default"
             size="icon"
             :disabled="processing"
             aria-label="Send"

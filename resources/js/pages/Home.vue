@@ -373,8 +373,13 @@ onMounted(async () => {
             <div
                 class="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
             >
+                <!--
+                  The guide's page-title scale (§3.2): Newsreader 40/1.05 at
+                  weight 500, in `--foreground` rather than legacy's violet so
+                  the solid publish button beside it is the row's one accent.
+                -->
                 <h2
-                    class="text-primary dark:text-primary-400 text-2xl font-bold"
+                    class="text-foreground font-serif text-[40px] leading-[1.05] font-medium tracking-[-0.015em] text-balance"
                 >
                     {{ heading }}
                 </h2>

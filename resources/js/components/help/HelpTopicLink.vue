@@ -24,14 +24,10 @@ defineProps<{
 <template>
     <Link
         :href="href"
-        class="border-border bg-card hover:border-primary/50 hover:bg-accent/40 flex items-start gap-3 rounded-xl border p-4 transition-colors"
+        class="border-border bg-card shadow-card hover:border-primary-200 dark:hover:border-primary-800 focus-visible:ring-ring focus-visible:ring-offset-background flex items-start gap-3 rounded-[20px] border p-4 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2"
     >
-        <span class="bg-muted rounded-lg p-2">
-            <component
-                :is="icon"
-                class="text-muted-foreground size-5"
-                aria-hidden="true"
-            />
+        <span class="bg-secondary text-secondary-foreground rounded-xl p-2">
+            <component :is="icon" class="size-5" aria-hidden="true" />
         </span>
 
         <!--
@@ -41,8 +37,8 @@ defineProps<{
             the link.
         -->
         <div class="min-w-0 flex-1">
-            <h3 class="font-medium">{{ title }}</h3>
-            <p class="text-muted-foreground mt-1 text-sm">
+            <h3 class="font-serif text-lg font-medium">{{ title }}</h3>
+            <p class="text-soft-foreground mt-1 text-sm">
                 {{ description }}
             </p>
         </div>

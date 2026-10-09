@@ -37,13 +37,13 @@ setLayoutProps({
  * from Tailwind v4's own `oklch()` stops
  * (`node_modules/tailwindcss/theme.css`) converted to linear sRGB, each figure
  * against the surface `AuthSimpleLayout` actually paints — `bg-background`,
- * which `resources/css/app.css` sets to `#FFFFFF` light and `#0F1729` dark.
- * Not the `oklch(0.145 0 0)` in `app.blade.php`'s inline `html.dark` rule:
- * that paints the document behind the layout and is a different colour from
- * the token, so measuring against it would answer a question nobody asked.
+ * which `resources/css/app.css` sets to `#F6F4FB` light and `#0F0C18` dark
+ * under the "Aubergine & Lavender" tokens (`app.blade.php`'s inline pre-paint
+ * rule now carries the same two values, so there is no longer a second colour
+ * to be tempted to measure against). Re-measured for those surfaces:
  *
- * - `green-600` on `#FFFFFF` **3.22:1** — below the 4.5:1 AA floor for 14px text
- * - `green-600` on `#0F1729` **5.56:1** — passes
+ * - `green-600` on `#F6F4FB` **2.95:1** — below the 4.5:1 AA floor for 14px text
+ * - `green-600` on `#0F0C18` **6.01:1** — passes
  *
  * So the obvious repair, adding a `dark:` variant, would have "fixed" the half
  * that already worked. `StatusMessage` sidesteps the choice: its `Alert` is

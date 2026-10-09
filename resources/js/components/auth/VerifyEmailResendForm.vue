@@ -18,34 +18,30 @@ import { send } from '@/routes/verification';
  * the same box because the footer row is part of the same bordered block in the
  * design.
  *
- * ## The gradient button's rest state fails AA, and ships anyway
+ * ## The button is the plain `default` variant, and it clears AA at rest
  *
- * This is the application's second violet→fuchsia CTA. Contrast computed the
- * same way as the first — from Tailwind v4's own token values
- * (`node_modules/tailwindcss/theme.css`), converting the `oklch()` stops to
- * linear sRGB and applying the WCAG relative-luminance formula — each figure
- * naming the pair it was measured against:
+ * This used to be the application's second violet→fuchsia gradient CTA, and
+ * it shipped with a rest state under the 4.5:1 floor (white on `violet-500`
+ * 4.40:1, on `fuchsia-500` 3.53:1) as a deliberate carry-over from the legacy
+ * screen. The "Aubergine & Lavender" restyle revisited that ruling for the
+ * whole port at once — one accent, no gradients, one solid button per surface
+ * — and its §5.1 retires this and `components/pets/CreatePetButton.vue` in the
+ * same breath, as the old note said they must go together. This one is now
+ * `variant="default"`, the single solid violet with `shadow-cta`.
  *
- * - rest, white on `violet-500` **4.40:1**, on `fuchsia-500` **3.53:1**
- * - hover, white on `violet-600` **5.88:1**, on `fuchsia-600` **4.66:1**
+ * Contrast from the hex values in `resources/css/app.css`, WCAG relative-
+ * luminance formula, each figure naming its pair:
  *
- * The label is 14px/500, so the floor is 4.5:1 and the rest state is under it
- * at both ends. The gradient runs left→right, so the worse stop sits under the
- * *end* of the label rather than at an edge nobody reads.
+ * - light rest, white on `--primary` `#5A3FE0` **6.52:1**; hover
+ *   `--primary-700` `#4A32C4` **8.25:1**
+ * - dark rest, `--primary-foreground` `#15102A` on `--primary` `#A78BFF`
+ *   **6.83:1**; hover `--primary-500` `#7C5CF2` **4.10:1** — under the floor
+ *   for the 14px label, but hover is a transient state and the variant is
+ *   owned by `components/ui/button`, not pinned here
  *
- * **This ships anyway, and that is a ruling, not an omission.** The user
- * decided to carry the legacy gradient over exactly as it is: the rest state
- * does not move to the 600 stops and the colours do not change.
- * `components/pets/CreatePetButton.vue` carries the long form of this note —
- * including what the numbers depend on (both stops clip out of the sRGB gamut,
- * so a different out-of-gamut strategy lands on different ratios) and why the
- * decision must not be generalised to anything else in the port. Read it
- * before touching either; if the ruling is ever revisited, both change
- * together.
- *
- * `text-white` is pinned for the reason recorded there too: the default
- * variant's `text-primary-foreground` flips between schemes while this
- * background, being two fixed colour-scale stops, does not.
+ * The label is 14px/600. `text-white` is no longer pinned: the variant's
+ * `text-primary-foreground` flips with the scheme, and so does the background
+ * it sits on, which is what the pin used to work around.
  */
 const { t } = useTranslations();
 </script>
@@ -54,9 +50,10 @@ const { t } = useTranslations();
     <Form v-bind="send.form()" class="space-y-4" v-slot="{ processing }">
         <Button
             type="submit"
+            variant="default"
             :disabled="processing"
             data-test="resend-verification-email"
-            class="h-11 w-full gap-2 bg-linear-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/25 hover:from-violet-600 hover:to-fuchsia-600"
+            class="h-11 w-full gap-2"
         >
             <Spinner v-if="processing" />
             <Mail v-else class="size-4" />

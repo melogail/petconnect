@@ -10,6 +10,15 @@ import { useTranslations } from '@/composables/useTranslations';
  * bounded, so it gets `truncate` and the row gets `min-w-0` — a flex child
  * defaults to `min-width: auto` and would otherwise push the chip wider than
  * the card rather than clipping.
+ *
+ * The chip is a `bg-secondary` panel with a hairline `border-border`. Its icon
+ * disc is `bg-card text-secondary-foreground`, not `bg-primary`: the hero
+ * directly above already carries this card's one solid violet, and a second
+ * solid disc here would break the one-accent rule. White on the lavender wash
+ * reads as a lift, and the violet glyph on it measures 8.25:1 light (`#4A32C4`
+ * on `#FFFFFF`) and 10.58:1 dark (`#CDBDFF` on `#181329`). The label is
+ * `text-secondary-foreground` on the panel — 6.99:1 light, 9.17:1 dark —
+ * computed from the hex values in `resources/css/app.css`.
  */
 defineProps<{
     email: string;
@@ -20,15 +29,15 @@ const { t } = useTranslations();
 
 <template>
     <div
-        class="flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50/70 px-4 py-3 dark:border-violet-900/60 dark:bg-violet-950/40"
+        class="border-border bg-secondary flex items-center gap-3 rounded-[14px] border px-4 py-3"
     >
         <div
-            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/70 dark:text-violet-300"
+            class="bg-card text-secondary-foreground flex size-10 shrink-0 items-center justify-center rounded-xl"
         >
             <Inbox class="size-5" />
         </div>
         <div class="min-w-0 text-start">
-            <p class="text-xs font-medium text-violet-700 dark:text-violet-300">
+            <p class="text-secondary-foreground text-xs font-medium">
                 {{ t('auth.verify_email_sent_to') }}
             </p>
             <p class="text-foreground truncate text-sm font-semibold">

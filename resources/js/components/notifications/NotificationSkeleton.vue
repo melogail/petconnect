@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 <template>
     <ul class="space-y-6" aria-hidden="true">
         <li v-for="row in 3" :key="row" class="flex items-start gap-3">
-            <Skeleton class="size-9 shrink-0 rounded-full" />
+            <Skeleton class="size-9 shrink-0 rounded-xl" />
             <div class="min-w-0 flex-1 space-y-2">
                 <Skeleton class="h-3.5 w-4/5" />
                 <Skeleton class="h-3 w-1/4" />

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { Users } from '@lucide/vue';
 import { computed } from 'vue';
 import PetCardActions from '@/components/pets/card/PetCardActions.vue';
 import PetCardAttributeIcons from '@/components/pets/card/PetCardAttributeIcons.vue';
@@ -22,11 +21,21 @@ import type {
 /**
  * One listing, as a grid tile — drawn as legacy's `components/web/PetCard.vue`
  * drew it, on the user's instruction (2026-09-06): a rounded `<article>` that
- * lifts on hover, an emerald border when the listing is the viewer's own, a
- * tall photo with pills and a hover icon bar over it, then name and gender
- * pill, breed and age, the description with its reveal, a divider, the
- * engagement row and the two gradient buttons. The decomposition into
- * `card/*` components is unchanged; only what each one renders moved.
+ * lifts on hover, a tall photo with pills and a hover icon bar over it, then
+ * name and gender pill, breed and age, the description with its reveal, a
+ * divider, the engagement row and the two action buttons. The decomposition
+ * into `card/*` components is unchanged; only what each one renders moved.
+ *
+ * The surface is the "Aubergine & Lavender" guide's listing card (§4, §5.2):
+ * `bg-card rounded-[20px] border border-border shadow-card`, lifting
+ * `-translate-y-0.5` on hover with the hairline going one ramp step violet
+ * (`primary-200` light, `primary-800` dark) — shadows over borders, so there
+ * is no violet glow and no coloured shadow. Two of legacy's frame treatments
+ * are retired by it: the emerald own-listing border (ownership is already
+ * stated by the "My Listing" pill on the photo, and emerald is reserved for
+ * semantic success), and the people-glyph ornament on the divider, which is
+ * now a plain 1px `--border` rule. The photo is 220px tall, and the content
+ * box is `px-[18px] pt-4 pb-[18px]` with `gap-3`.
  *
  * Kept from the previous card and absent from legacy, deliberately: the price
  * beside the name and the distance chip on a nearby feed. They carry
@@ -45,7 +54,7 @@ import type {
  * `card/PetCardCommentButton` records that contract.
  *
  * The same ruling asked for cards of one size. Everything above the buttons is
- * fixed-height by construction — a 256px photo, a one-line name row, a
+ * fixed-height by construction — a 220px photo, a one-line name row, a
  * one-line breed and age row, a description clipped to exactly three lines
  * (`PetCardDescription`) — and the root is a flex column with the action rows
  * pushed to the bottom (`mt-auto`), so the grid's default `stretch` gives every
@@ -80,9 +89,9 @@ import type {
  * sized to that nowrap line's min-content width **plus its horizontal padding
  * and borders**. Measured on the previous layout as +34px — `CardContent`'s
  * `p-4` contributing 16px per side and the border 1px per side. The content
- * box is now `p-5`, so the same arithmetic gives +42px; that figure is derived
- * from the padding change, not re-measured. With `overflow-hidden` the card is
- * the grid track's width instead and the ellipsis applies.
+ * box is now `px-[18px]`, so the same arithmetic gives +38px; that figure is
+ * derived from the padding change, not re-measured. With `overflow-hidden` the
+ * card is the grid track's width instead and the ellipsis applies.
  *
  * Worked example from that measurement, naming its input so it can be re-run:
  * at a 320px viewport, with kind "Golden Retriever" and place "Sheikh Zayed
@@ -204,17 +213,15 @@ const kind = computed(() => {
 });
 
 /**
- * Legacy's two card frames: emerald for the viewer's own listing, brand-violet
- * on hover for everyone else's. Through `cn` so the variant's border colour
- * replaces the base `border` colour rather than fighting it.
+ * One frame for every card. Legacy drew two — emerald for the viewer's own
+ * listing, brand-violet glow on hover for everyone else's — and the guide
+ * collapses them (see the docblock above): the hairline is `--border` at rest
+ * and one ramp step of violet on hover, the shadow is `shadow-card` in both
+ * states, and the lift is the only other hover change. Still through `cn` so a
+ * consumer's `class` can override a utility rather than fight it.
  */
-const frame = computed(() =>
-    cn(
-        'group bg-card text-card-foreground relative flex w-full flex-col overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
-        pet.is_owner
-            ? 'border-emerald-300/70 hover:border-emerald-400/80 hover:shadow-emerald-100 dark:border-emerald-700/60 dark:hover:border-emerald-600/70 dark:hover:shadow-emerald-950/60'
-            : 'border-border hover:border-primary-400/50 hover:shadow-primary-100 dark:hover:border-primary-500/50 dark:hover:shadow-primary-900/20',
-    ),
+const frame = cn(
+    'group bg-card text-card-foreground shadow-card border-border hover:border-primary-200 dark:hover:border-primary-800 relative flex w-full flex-col overflow-hidden rounded-[20px] border transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5',
 );
 </script>
 
@@ -241,7 +248,7 @@ const frame = computed(() =>
             />
         </PetCardMedia>
 
-        <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
+        <div class="flex flex-1 flex-col gap-3 px-[18px] pt-4 pb-[18px]">
             <PetCardHeader
                 :pet-id="pet.id"
                 :name="pet.name"
@@ -256,17 +263,8 @@ const frame = computed(() =>
                 :name="pet.name"
             />
 
-            <!-- Legacy's patterned divider: a rule with a people glyph on it. -->
-            <div class="relative" aria-hidden="true">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="border-border w-full border-t"></div>
-                </div>
-                <div class="relative flex justify-center">
-                    <span class="bg-card text-muted-foreground px-2">
-                        <Users class="size-4" />
-                    </span>
-                </div>
-            </div>
+            <!-- A plain hairline; the guide retires legacy's people-glyph ornament. -->
+            <div class="border-border border-t" aria-hidden="true"></div>
 
             <PetCardActions
                 :pet="pet"

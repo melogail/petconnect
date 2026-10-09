@@ -12,10 +12,18 @@ import type { PetOwner } from '@/types';
  * Who published the listing — legacy's `PetOwnerCard`, top of the sticky
  * sidebar.
  *
- * The frame is legacy's: `rounded-2xl` with the same violet→blue accent bar
- * `PetDetailHeader` carries, a 64px avatar, the name as a link to the profile,
- * the owner's location, and the two calls to action side by side in a
- * `grid-cols-2` when both are there.
+ * The arrangement is legacy's: an accent bar like the one `PetDetailHeader`
+ * carries, a 64px avatar, the name as a link to the profile, the owner's
+ * location, and the two calls to action side by side in a `grid-cols-2` when
+ * both are there. The surface is the "Aubergine & Lavender" guide's (§1, §4,
+ * §5.1): the bar is the tonal `bg-gradient-brand` (one hue, primary-600→700)
+ * rather than legacy's violet→blue
+ * gradient, the frame is `rounded-[20px] border border-border shadow-card`,
+ * the avatar is square-rounded (`rounded-xl`, from `ui/avatar`) with a
+ * card-coloured ring instead of a white/grey literal pair, the pin icon is
+ * `--primary` rather than `blue-400`, and "View profile" is the plain
+ * `outline` variant — one tinted/outline pair beside the solid "Message"
+ * button, never two solids.
  *
  * ## Five of legacy's elements are deliberately absent
  *
@@ -88,11 +96,9 @@ const { t } = useTranslations();
 
 <template>
     <div
-        class="border-border/50 bg-card overflow-hidden rounded-2xl border shadow-sm"
+        class="border-border bg-card shadow-card overflow-hidden rounded-[20px] border"
     >
-        <div
-            class="from-primary to-primary/60 h-1.5 bg-gradient-to-r via-blue-500"
-        />
+        <div class="bg-primary bg-gradient-brand h-1.5" />
 
         <div class="p-6">
             <div class="mb-5 flex items-start gap-4">
@@ -100,15 +106,17 @@ const { t } = useTranslations();
                     <UserAvatar
                         :name="owner.name"
                         :avatar="owner.avatar"
-                        class="size-16 border-2 border-white shadow-md dark:border-gray-800"
+                        class="border-card shadow-card size-16 border-2"
                     />
                 </Link>
 
                 <div class="min-w-0 flex-1">
-                    <h2 class="mb-1 truncate text-lg font-bold">
+                    <h2
+                        class="mb-1 truncate font-serif text-[21px] leading-[1.2] font-medium tracking-[-0.015em]"
+                    >
                         <Link
                             :href="showProfile(owner.id)"
-                            class="hover:text-primary transition-colors duration-300 ease-out"
+                            class="hover:text-primary transition-colors duration-200 ease-out"
                         >
                             {{ owner.name }}
                         </Link>
@@ -118,7 +126,7 @@ const { t } = useTranslations();
                         class="text-muted-foreground flex items-center gap-1.5 text-sm"
                     >
                         <MapPin
-                            class="size-3.5 shrink-0 text-blue-400"
+                            class="text-primary size-3.5 shrink-0"
                             aria-hidden="true"
                         />
                         <span class="truncate">
@@ -138,11 +146,7 @@ const { t } = useTranslations();
                     :recipient-name="owner.name"
                     :trigger-label="t('messaging.send_message')"
                 />
-                <Button
-                    as-child
-                    variant="outline"
-                    class="border-primary/20 hover:border-primary/50 hover:bg-primary/5 h-11 rounded-xl border-2 font-semibold transition-all duration-200"
-                >
+                <Button as-child variant="outline" class="h-11">
                     <Link :href="showProfile(owner.id)">
                         {{ t('pets.view_profile') }}
                     </Link>

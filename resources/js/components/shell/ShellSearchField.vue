@@ -34,7 +34,7 @@ const { t } = useTranslations();
             disabled
             :placeholder="t('nav.search_placeholder')"
             :aria-label="t('nav.search_placeholder')"
-            class="peer border-border bg-muted/50 text-foreground placeholder:text-muted-foreground focus:border-primary-400 focus:ring-primary-200 w-full rounded-full border py-2 ps-11 pe-4 text-sm focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            class="peer border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-ring/30 h-11 w-full rounded-[14px] border ps-11 pe-4 text-sm transition-[border-color,box-shadow] duration-200 ease-out focus:ring-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Search
             class="text-muted-foreground pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 peer-disabled:opacity-50"

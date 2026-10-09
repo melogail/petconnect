@@ -51,8 +51,10 @@ import type { PetCategoryOption } from '@/types';
  * Measured in headless Chrome, driving this row with three breeds: one breed
  * picked reports `aria-checked="mixed"` and `data-state="indeterminate"`, draws
  * `lucide-minus` rather than `lucide-check`, and computes to
- * `rgb(124, 58, 237)` — `--primary` in the light theme — so the indeterminate
- * class does land. Clicking it there **cleared** the category (`aria-checked`
+ * `rgb(124, 58, 237)` — `--primary` in the light theme as it then stood; the
+ * token is `#5A3FE0` (`rgb(90, 63, 224)`) since the "Aubergine & Lavender"
+ * restyle, and the class is unchanged — so the indeterminate class does land.
+ * Clicking it there **cleared** the category (`aria-checked`
  * `false`, badge gone) rather than completing it, and clicking again selected
  * all three and left the panel open.
  *
@@ -103,14 +105,14 @@ const state = computed(() => categoryState(selectedBreedIds, category));
 </script>
 
 <template>
-    <Collapsible v-model:open="expanded" class="rounded-xl">
+    <Collapsible v-model:open="expanded" class="rounded-[14px]">
         <div
-            class="hover:bg-muted/50 flex items-center gap-2 rounded-xl p-2 transition-colors"
+            class="hover:bg-accent flex items-center gap-2 rounded-[14px] p-2 transition-colors duration-200 ease-out"
         >
             <CollapsibleTrigger as-child>
                 <button
                     type="button"
-                    class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex size-8 shrink-0 items-center justify-center rounded-md focus-visible:ring-[3px] focus-visible:outline-none"
+                    class="text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex size-8 shrink-0 items-center justify-center rounded-[10px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     :aria-label="
                         expanded
                             ? t('home.collapse_breeds')

@@ -16,9 +16,16 @@ import type { PetDetail } from '@/types';
  * collapsing the block, because legacy always renders the paragraph and the
  * greeting reads oddly followed by nothing.
  *
- * The traits are violet outline pills, not `Badge`s: legacy's own treatment,
- * and `Badge`'s `secondary` variant is the grey one the taxonomy badges in the
- * header use, so reusing it here would make a trait look like a breed.
+ * The traits are lavender-wash pills (`bg-secondary text-secondary-foreground`,
+ * the guide's tinted surface), not `Badge`s: legacy drew them as violet
+ * outline pills, and the pill shape is kept while the paint moves onto the
+ * tokens. They are hand-written rather than `Badge variant="secondary"` so a
+ * trait keeps its own padding and size and does not read as one of the
+ * taxonomy badges in the header.
+ *
+ * The greeting is the guide's section-heading scale (§3.2) — Newsreader
+ * 26/1.15 at weight 500 — and the description is 15px body in
+ * `--soft-foreground`, the reading step one below `--foreground`.
  *
  * The greeting is this section's own `h2`; the traits heading below it takes
  * `PetSectionHeading`'s `h3` default because it genuinely is nested inside that
@@ -43,12 +50,14 @@ const traits = computed(() => pet.traits ?? []);
 
 <template>
     <section class="mb-6">
-        <h2 class="text-foreground mb-4 text-xl font-bold">
+        <h2
+            class="text-foreground mb-4 font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em] text-balance"
+        >
             {{ t('pets.meet_name', { name: firstName }) }}
         </h2>
 
         <p
-            class="text-muted-foreground mb-6 leading-relaxed whitespace-pre-line"
+            class="text-soft-foreground mb-6 text-[15px] leading-[1.55] text-pretty whitespace-pre-line"
         >
             {{ pet.description || t('pets.no_description') }}
         </p>
@@ -62,7 +71,7 @@ const traits = computed(() => pet.traits ?? []);
                 <span
                     v-for="trait in traits"
                     :key="trait"
-                    class="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors"
+                    class="bg-secondary text-secondary-foreground hover:bg-primary-200 dark:hover:bg-primary-800 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200 ease-out"
                 >
                     {{ trait }}
                 </span>

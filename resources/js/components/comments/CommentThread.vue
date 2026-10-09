@@ -17,11 +17,15 @@ import type {
  * `pet/show/PetComments`.
  *
  * The frame is legacy's and is the delta from what this rendered before: a
- * `rounded-2xl` card whose header is a ruled bar carrying a violet speech
- * bubble, the word "Comments" and the total as a grey pill, with the composer
- * and the thread in a `p-6` body under it. It used to be a bare `<section>`
- * with an `h2` and no card at all, which left it looking like page furniture
- * rather than the last panel of the listing.
+ * card whose header is a ruled bar carrying a violet speech bubble, the word
+ * "Comments" and the total as a pill, with the composer and the thread in a
+ * `p-6` body under it. It used to be a bare `<section>` with an `h2` and no
+ * card at all, which left it looking like page furniture rather than the last
+ * panel of the listing. The card is drawn to the "Aubergine & Lavender" guide
+ * (§4): `rounded-[20px] border border-border shadow-card` where legacy had
+ * `rounded-2xl` on a half-alpha border with `shadow-sm`; the heading is the
+ * card-title scale (Newsreader 21/1.2, weight 500) and the count pill the
+ * lavender wash (`bg-secondary text-secondary-foreground`) rather than grey.
  *
  * The composer sits **above** the thread here and **below** it in
  * `CommentsDialog`; that is legacy's split too, and it is the reason the
@@ -55,17 +59,19 @@ const { t } = useTranslations();
 
 <template>
     <section
-        class="border-border/50 bg-card overflow-hidden rounded-2xl border shadow-sm"
+        class="border-border bg-card shadow-card overflow-hidden rounded-[20px] border"
     >
         <div
-            class="border-border/50 flex items-center justify-between gap-3 border-b px-6 py-4"
+            class="border-border flex items-center justify-between gap-3 border-b px-6 py-4"
         >
-            <h2 class="flex items-center gap-2.5 text-lg font-semibold">
+            <h2
+                class="flex items-center gap-2.5 font-serif text-[21px] leading-[1.2] font-medium tracking-[-0.015em]"
+            >
                 <MessageSquare class="text-primary size-5" aria-hidden="true" />
                 {{ t('comments.comments') }}
             </h2>
             <span
-                class="bg-muted text-muted-foreground rounded-full px-3 py-0.5 text-sm font-medium"
+                class="bg-secondary text-secondary-foreground rounded-full px-3 py-0.5 text-[11px] font-semibold"
             >
                 {{ t('comments.count', { count: commentsCount }) }}
             </span>

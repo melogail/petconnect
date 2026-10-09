@@ -24,9 +24,14 @@ import type { PetMedia } from '@/types';
  * derived by comparing `currentSlide` against `images.length - 1` by hand.
  *
  * Each rule is legacy's, not a preference:
- * - The frame is `rounded-3xl shadow-2xl ring-1`, and each slide is 60% tall
- *   relative to its width (`padding-top: 60%` there, `aspect-5/3` here — the
- *   same ratio, expressed as a ratio).
+ * - The frame is a card: legacy's `rounded-3xl shadow-2xl ring-1` is drawn
+ *   at the "Aubergine & Lavender" card radius and shadow (`rounded-[20px]
+ *   shadow-card ring-1 ring-border`, §4 — a hairline under a soft shadow),
+ *   and each slide is 60% tall relative to its width (`padding-top: 60%`
+ *   there, `aspect-5/3` here — the same ratio, expressed as a ratio). The
+ *   arrows and the counter are the guide's over-photo chips (`bg-card/90`
+ *   with a blur) at the 14px button radius; the dark scrim at the foot of
+ *   each slide stays, not being brand chroma.
  * - The counter and the arrows appear only past one photo.
  * - The dots appear only for **2 to 8** photos. Past eight legacy drops them
  *   and leaves the thumbnail rail to carry the position, because sixteen dots
@@ -94,16 +99,16 @@ function scrollTo(index: number): void {
 <template>
     <div
         v-if="slides.length === 0"
-        class="bg-muted flex aspect-5/3 items-center justify-center rounded-3xl"
+        class="bg-muted flex aspect-5/3 items-center justify-center rounded-[20px]"
     >
         <PawPrint class="text-muted-foreground size-12" aria-hidden="true" />
     </div>
 
     <div v-else>
         <div
-            class="relative mb-3 w-full overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/10 dark:ring-white/10"
+            class="shadow-card ring-border relative mb-3 w-full overflow-hidden rounded-[20px] ring-1"
         >
-            <div ref="emblaRef" class="overflow-hidden rounded-3xl">
+            <div ref="emblaRef" class="overflow-hidden rounded-[20px]">
                 <div class="flex">
                     <div
                         v-for="(slide, index) in slides"
@@ -132,7 +137,7 @@ function scrollTo(index: number): void {
 
             <template v-if="slides.length > 1">
                 <div
-                    class="absolute end-4 bottom-4 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm"
+                    class="bg-card/90 text-foreground absolute end-4 bottom-4 rounded-full px-3 py-1 text-[11px] font-medium backdrop-blur"
                 >
                     {{ selected + 1 }} / {{ slides.length }}
                 </div>
@@ -141,7 +146,7 @@ function scrollTo(index: number): void {
                     type="button"
                     :disabled="!canScrollPrev"
                     :aria-label="t('pets.previous_photo')"
-                    class="absolute start-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0 dark:bg-black/50 dark:hover:bg-black/70"
+                    class="bg-card/90 text-foreground shadow-card hover:bg-card focus-visible:ring-ring focus-visible:ring-offset-background absolute start-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-[14px] backdrop-blur transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-0"
                     @click="emblaApi?.scrollPrev()"
                 >
                     <ChevronLeft class="size-5 rtl:rotate-180" />
@@ -150,7 +155,7 @@ function scrollTo(index: number): void {
                     type="button"
                     :disabled="!canScrollNext"
                     :aria-label="t('pets.next_photo')"
-                    class="absolute end-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:bg-white disabled:pointer-events-none disabled:opacity-0 dark:bg-black/50 dark:hover:bg-black/70"
+                    class="bg-card/90 text-foreground shadow-card hover:bg-card focus-visible:ring-ring focus-visible:ring-offset-background absolute end-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-[14px] backdrop-blur transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:scale-110 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-0"
                     @click="emblaApi?.scrollNext()"
                 >
                     <ChevronRight class="size-5 rtl:rotate-180" />
@@ -189,8 +194,8 @@ function scrollTo(index: number): void {
                 class="size-16 shrink-0 overflow-hidden rounded-xl transition-all duration-200"
                 :class="
                     selected === index
-                        ? 'ring-primary dark:ring-offset-background scale-105 ring-2 ring-offset-2'
-                        : 'ring-border/50 hover:ring-border ring-1 hover:scale-105'
+                        ? 'ring-primary ring-offset-background scale-105 ring-2 ring-offset-2'
+                        : 'ring-border hover:ring-primary-200 dark:hover:ring-primary-800 ring-1 hover:scale-105'
                 "
                 :aria-label="t('pets.go_to_photo', { number: index + 1 })"
                 :aria-current="selected === index"

@@ -124,7 +124,10 @@ const rows = computed(() =>
 </script>
 
 <template>
-    <div ref="viewport" class="flex-1 space-y-3 overflow-y-auto p-4">
+    <div
+        ref="viewport"
+        class="bg-background flex-1 space-y-3 overflow-y-auto p-4"
+    >
         <div v-if="hasOlder" class="flex justify-center">
             <Button
                 variant="ghost"

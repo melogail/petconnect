@@ -86,27 +86,33 @@ import { index as conversationsIndex } from '@/routes/conversations';
  * ## Geometry, and where each number comes from
  *
  * Read off `components/web/MessagesDropdown.vue` in petconnect-old: a 40px
- * round trigger (`p-2` around a 24px glyph, which is `size-icon-lg` + `size-6`
- * here), a `w-80` panel `mt-2` below it (the `:side-offset="8"`), `rounded-lg`
- * with `shadow-xl ring-1`, a `max-h-96` scroll region, and `px-4 py-3` rows.
- * The enter/leave transition is legacy's too — 100ms scale-and-fade in, 75ms
- * out — expressed through Reka's `data-[state]` attributes instead of a
- * `<Transition>` wrapper, because the portalled content is mounted and
- * unmounted by the primitive.
+ * round trigger (`p-2` around a 24px glyph), a `w-80` panel `mt-2` below it
+ * (the `:side-offset="8"`), `rounded-lg` with `shadow-xl ring-1`, a `max-h-96`
+ * scroll region, and `px-4 py-3` rows. The enter/leave transition is legacy's
+ * too — 100ms scale-and-fade in, 75ms out — expressed through Reka's
+ * `data-[state]` attributes instead of a `<Transition>` wrapper, because the
+ * portalled content is mounted and unmounted by the primitive.
  *
- * Three numbers depart from legacy's, all knowingly: `rounded-lg` is 12px
- * under Tailwind v4's scale and was 8px in legacy's v3 (a repo-wide,
- * deliberate difference); the row list's `translate-x-8` is 32px against
- * legacy's hand-written `translateX(30px)`, which no utility step reaches; and that list's enter and leave are `ease-out` where legacy's scoped
- * CSS said plain `ease` (the 300ms is legacy's `0.3s`).
+ * The "Aubergine & Lavender" guide (`.claude/PETCONNECT-STYLE-GUIDE.md` §5.3,
+ * §5.6) re-sets the geometry on top of that: the trigger is a 38px
+ * `rounded-[14px]` ghost control (`size-[38px]` over `size="icon-lg"`, the
+ * glyph still `size-6`), and the panel is the popover frame — `rounded-[20px]`,
+ * a hairline `border-border` and `shadow-popover` — passed here because
+ * `ui/popover`'s `PopoverContent` deliberately carries no border, padding or
+ * shadow of its own (see its docblock). Two numbers still depart from legacy's,
+ * knowingly: the row list's `translate-x-8` is 32px against legacy's
+ * hand-written `translateX(30px)`, which no utility step reaches; and that
+ * list's enter and leave are `ease-out` where legacy's scoped CSS said plain
+ * `ease` (the 300ms is legacy's `0.3s`).
  *
- * What changed is colour, and only where legacy reached past a token: the
- * panel, the header strip, the dividers and the two greys become
- * `bg-popover` / `bg-muted/50` / `border-border` / `text-muted-foreground`, so
- * dark mode works, while the violet accents keep their exact legacy step
- * through the `primary-*` ramp and the unread badge stays literally red. Phase
- * 3a established the distinction: matching legacy's hex does not match legacy's
- * appearance under this app's blue-tinted dark scheme.
+ * Colour is tokens throughout. The panel, the header strip, the dividers and
+ * the two greys are `bg-popover` / `bg-muted/50` / `border-border` /
+ * `text-muted-foreground`, so dark mode works; the violet accents — the open
+ * glyph tint, the "close" and "view all" links — are `text-primary`, the unread
+ * chip is `bg-secondary text-secondary-foreground` (7.4:1 light, 9.2:1 dark)
+ * and the corner marker is `UnreadBadge`'s `bg-primary` dot. Phase 3a
+ * established the distinction this rests on: matching legacy's hex does not
+ * match legacy's appearance under a tinted dark scheme.
  */
 const page = usePage();
 
@@ -229,12 +235,12 @@ const triggerLabel = computed(() =>
             <Button
                 variant="ghost"
                 size="icon-lg"
-                class="relative rounded-full"
+                class="relative size-[38px]"
                 :aria-label="triggerLabel"
             >
                 <MessageSquareMore
                     class="text-muted-foreground size-6 transition-colors duration-200"
-                    :class="{ 'text-primary-600 dark:text-primary-400': open }"
+                    :class="{ 'text-primary': open }"
                     aria-hidden="true"
                 />
                 <UnreadBadge :count="unreadCount" />
@@ -244,7 +250,7 @@ const triggerLabel = computed(() =>
         <PopoverContent
             align="end"
             :side-offset="8"
-            class="ring-border w-80 overflow-hidden rounded-lg shadow-xl ring-1 outline-none data-[state=closed]:duration-75 data-[state=open]:duration-100"
+            class="border-border shadow-popover w-80 overflow-hidden rounded-[20px] border outline-none data-[state=closed]:duration-75 data-[state=open]:duration-100"
             :aria-label="t('messaging.messages')"
         >
             <div
@@ -256,14 +262,14 @@ const triggerLabel = computed(() =>
                     <span>{{ t('messaging.messages') }}</span>
                     <span
                         v-if="hasUnread"
-                        class="bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-200 rounded-full px-2 py-0.5 text-xs"
+                        class="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-[11px] font-semibold"
                     >
                         {{ t('messaging.unread', { count: unreadCount }) }}
                     </span>
                 </h3>
 
                 <PopoverClose
-                    class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 focus-visible:ring-ring/50 rounded-sm text-xs font-medium transition-colors outline-none focus-visible:ring-[3px]"
+                    class="text-primary hover:text-primary-700 dark:hover:text-primary-300 focus-visible:ring-ring focus-visible:ring-offset-background rounded-sm text-xs font-medium transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                     {{ t('messaging.close') }}
                 </PopoverClose>
@@ -324,7 +330,7 @@ const triggerLabel = computed(() =>
             >
                 <Link
                     :href="conversationsIndex()"
-                    class="text-primary-600 dark:text-primary-400 text-xs font-medium hover:underline"
+                    class="text-primary text-xs font-medium hover:underline"
                     @click="open = false"
                 >
                     {{ t('messaging.view_all_messages') }}

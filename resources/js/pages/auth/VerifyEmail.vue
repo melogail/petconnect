@@ -13,8 +13,9 @@ import { useTranslations } from '@/composables/useTranslations';
  * The verification notice, and the one auth screen that is not a card in
  * `AuthLayout`.
  *
- * It owns its whole viewport — `min-h-svh`, its own radial-gradient wash, its
- * own brand lockup — so `app.ts` gives `auth/VerifyEmail` an empty shell the
+ * It owns its whole viewport — `min-h-svh`, the lavender `bg-background` page
+ * with no decoration on it, its own brand lockup — so `app.ts` gives
+ * `auth/VerifyEmail` an empty shell the
  * way `Welcome` gets one, rather than the `auth/*` fallthrough that wraps every
  * other page here in `AuthSimpleLayout`. Wrapped, it rendered a heading and a
  * logo above a second, larger heading and a second logo. `RootLayout` still
@@ -28,6 +29,13 @@ import { useTranslations } from '@/composables/useTranslations';
  *
  * The emerald panel is keyed to the exact string Fortify flashes,
  * `'verification-link-sent'`, not to the mere presence of `status`.
+ *
+ * The "Aubergine & Lavender" restyle removed the radial violet/fuchsia wash and
+ * the two blurred orbs that used to float behind the card: violet is the one
+ * accent, and cards lift on a neutral shadow, not on tinted glows. The card is
+ * therefore opaque `bg-card` with a hairline `border-border` and
+ * `shadow-popover` — no `backdrop-blur`, because there is nothing behind it to
+ * blur any more.
  */
 const page = usePage();
 
@@ -46,21 +54,11 @@ const email = computed(() => (page.props.auth.user ?? null)?.email ?? null);
     >
         <Head :title="t('auth.email_verification')" />
 
-        <div
-            class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,58,237,0.14),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(217,70,239,0.12),_transparent_45%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(167,139,250,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(192,132,252,0.12),_transparent_45%)]"
-        />
-        <div
-            class="pointer-events-none absolute -start-24 top-16 size-64 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/10"
-        />
-        <div
-            class="pointer-events-none absolute -end-16 bottom-10 size-72 rounded-full bg-fuchsia-400/20 blur-3xl dark:bg-fuchsia-500/10"
-        />
-
         <div class="relative z-10 w-full max-w-lg">
             <AuthBrandLockup class="mb-6" />
 
             <div
-                class="bg-card/90 overflow-hidden rounded-2xl border border-violet-100/80 shadow-xl shadow-violet-500/10 backdrop-blur-sm dark:border-violet-900/50 dark:shadow-violet-950/40"
+                class="bg-card border-border shadow-popover overflow-hidden rounded-[20px] border"
             >
                 <VerifyEmailHero />
 

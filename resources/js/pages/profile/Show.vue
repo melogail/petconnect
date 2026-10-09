@@ -79,7 +79,9 @@ const canReview = computed(() => canInteract.value && !profile.has_reviewed);
 
         <section class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="text-lg font-semibold">
+                <h2
+                    class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+                >
                     Listings
                     <span class="text-muted-foreground font-normal">
                         ({{ listings.meta.total }})
@@ -94,7 +96,9 @@ const canReview = computed(() => canInteract.value && !profile.has_reviewed);
         </section>
 
         <section class="space-y-4">
-            <h2 class="text-lg font-semibold">
+            <h2
+                class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+            >
                 Reviews
                 <span class="text-muted-foreground font-normal">
                     ({{ reviews.meta.total }})

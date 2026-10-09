@@ -44,7 +44,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <PopoverContent
       data-slot="popover-content"
       v-bind="{ ...$attrs, ...forwarded }"
-      :class="cn('bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 origin-(--reka-popover-content-transform-origin) rounded-md outline-hidden', props.class)"
+      :class="cn('bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 origin-(--reka-popover-content-transform-origin) rounded-[20px] outline-hidden', props.class)"
     >
       <slot />
     </PopoverContent>

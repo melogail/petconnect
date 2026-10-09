@@ -86,7 +86,7 @@ function submit(): void {
                 </p>
                 <p
                     v-if="status === 'verification-link-sent'"
-                    class="text-sm font-medium text-green-600"
+                    class="text-sm font-medium text-emerald-600 dark:text-emerald-400"
                 >
                     A new verification link has been sent to your email address.
                 </p>

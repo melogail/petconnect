@@ -6,6 +6,7 @@ import { countLabel } from '@/components/pets/card/labels';
 import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vue';
 import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
+import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/composables/useTranslations';
 import { show as showPet } from '@/routes/pets';
 import type {
@@ -18,8 +19,14 @@ import type {
 /**
  * The card's action rows, laid out as legacy's (`components/web/PetCard.vue`,
  * the two "Action Buttons" blocks) on the user's instruction (2026-09-06):
- * like, comment and share spread across one line as quiet round pills, then a
- * round gradient message button beside a full-width gradient "View Details".
+ * like, comment and share spread across one line as quiet ghost pills, then a
+ * 44px outline message button beside a full-width "View Details". The two
+ * gradient buttons legacy drew there are retired by the "Aubergine &
+ * Lavender" guide (§1, §5.2): one accent, and one solid button per surface —
+ * the card's solid violet is the listing-type pill on the photo, so "View
+ * Details" is the tinted `secondary` wash and the message trigger is an
+ * `outline` icon button, both at the guide's 14px radius rather than
+ * `rounded-full`.
  *
  * It exists as its own component because none of these could have lived inside
  * the anchor that used to wrap the whole card: a button nested in an anchor is
@@ -71,8 +78,8 @@ import type {
  * function of how long the owner's name happens to be. Tab order follows the
  * same grouping. The previous note here that all five controls measured 36px
  * described the outline-button layout this replaced; the first row is now
- * three ghost pills and the second row is two 48px (`h-12`) controls, as
- * legacy's were. Not re-measured.
+ * three ghost pills and the second row is two 44px (`h-11` / `size-11`)
+ * controls, the guide's default button height. Not re-measured.
  */
 const { pet, canInteract } = defineProps<{
     pet: PetCard;
@@ -170,13 +177,15 @@ const viewDetailsLabel = computed(
                 appearance="icon"
             />
 
-            <Link
-                :href="showPet(pet.id)"
-                :aria-label="viewDetailsLabel"
-                class="flex h-12 flex-1 items-center justify-center rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 text-center font-semibold text-white transition hover:from-violet-600 hover:to-fuchsia-600 focus-visible:ring-[3px] focus-visible:ring-violet-500/50 focus-visible:outline-none"
+            <Button
+                as-child
+                variant="secondary"
+                class="h-11 flex-1 rounded-[14px]"
             >
-                {{ t('pets.view_details') }}
-            </Link>
+                <Link :href="showPet(pet.id)" :aria-label="viewDetailsLabel">
+                    {{ t('pets.view_details') }}
+                </Link>
+            </Button>
         </div>
     </div>
 </template>

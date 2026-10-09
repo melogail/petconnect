@@ -182,7 +182,7 @@ provideMutationSurface({
                 role="region"
                 tabindex="0"
                 :aria-label="t('comments.comments')"
-                class="focus-visible:ring-ring/50 -me-2 min-h-0 flex-1 overflow-y-auto rounded-sm py-4 pe-2 focus-visible:ring-[3px] focus-visible:outline-none"
+                class="focus-visible:ring-ring focus-visible:ring-offset-background -me-2 min-h-0 flex-1 overflow-y-auto rounded-sm py-4 pe-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
                 <CommentList
                     ref="list"
@@ -198,7 +198,7 @@ provideMutationSurface({
                 />
             </div>
 
-            <div class="border-border/50 border-t pt-4">
+            <div class="border-border border-t pt-4">
                 <CommentComposerGate>
                     <CommentComposer
                         :commentable-type="commentableType"

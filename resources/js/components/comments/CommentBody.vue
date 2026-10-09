@@ -52,8 +52,11 @@ import type {
  * ghost buttons, which is what this rendered before — because that is what
  * legacy's `web/CommentItem` and `pet/show/PetComments` both do, and because
  * three destructive-ish controls per comment on a thread of forty is a wall.
- * The bubble's flattened top corner (`rounded-ss-sm`) points at the avatar and
- * is legacy's too; it is the logical corner, so it flips in Arabic.
+ * The bubble's flattened top corner points at the avatar and is legacy's too;
+ * it is the logical corner (`rounded-ss-*`), so it flips in Arabic. The bubble
+ * is drawn at the "Aubergine & Lavender" message-bubble geometry (§5.7 —
+ * 18px with a 6px pointer corner) on a flat `bg-muted` fill, so a comment and
+ * a chat message read as the same kind of thing.
  *
  * `is_author` is what the menu's edit and delete entries are gated on —
  * `CommentResource` carries no `can_edit` / `can_delete` — so `CommentPolicy`
@@ -243,7 +246,7 @@ const likeLabel = computed(
         />
 
         <div class="min-w-0 flex-1">
-            <div class="bg-muted/40 rounded-2xl rounded-ss-sm px-4 py-3">
+            <div class="bg-muted rounded-[18px] rounded-ss-[6px] px-4 py-3">
                 <div class="mb-1 flex items-start justify-between gap-2">
                     <div class="flex min-w-0 flex-wrap items-center gap-x-2">
                         <Link
@@ -268,7 +271,7 @@ const likeLabel = computed(
                                     <span
                                         role="img"
                                         tabindex="0"
-                                        class="focus-visible:ring-ring/50 inline-flex size-6 items-center justify-center rounded-full text-amber-500 focus-visible:ring-[3px] focus-visible:outline-none"
+                                        class="focus-visible:ring-ring focus-visible:ring-offset-background inline-flex size-6 items-center justify-center rounded-full text-amber-500 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                                         :aria-label="
                                             t('comments.already_reported')
                                         "

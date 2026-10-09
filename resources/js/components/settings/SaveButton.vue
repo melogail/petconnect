@@ -18,7 +18,11 @@ const {
 
 <template>
     <div class="flex items-center gap-4">
-        <Button type="submit" :disabled="processing || disabled">
+        <Button
+            type="submit"
+            variant="default"
+            :disabled="processing || disabled"
+        >
             <Spinner v-if="processing" />
             {{ label }}
         </Button>

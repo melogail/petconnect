@@ -8,10 +8,15 @@ import { useTranslations } from '@/composables/useTranslations';
  * (`components/web/PetCard.vue`, the "Enhanced description" block; restyled
  * on the user's instruction, 2026-09-06).
  *
- * Collapsed, the paragraph is **exactly** three lines tall — `h-[4.5rem]` over
- * `leading-relaxed`, a fixed height and not a maximum — under a fade in the
- * card's own colour, with the button sitting on the fade. Fixed rather than
- * clamped because the user asked for cards of one size (2026-09-06): a
+ * Collapsed, the paragraph is **exactly** three lines tall — a fixed height
+ * and not a maximum, `h-[calc(3*1.55*13px)]` over the guide's 13px/1.55
+ * description scale (§3.2, §5.2; it was `h-[4.5rem]` over `text-sm
+ * leading-relaxed`) — under a fade in the card's own colour (`from-card`,
+ * which re-tones with the scheme), with the button sitting on the fade. The
+ * text is `--soft-foreground`, the guide's reading step one below
+ * `--foreground` (8.3:1 on `--card` light, per its token table). Fixed rather
+ * than
+ * clamped, because the user asked for cards of one size (2026-09-06): a
  * one-line description used to make its card shorter than its neighbours and
  * pull the buttons up. Now a short description simply leaves blank lines below
  * it, and every card's buttons sit on the same baseline. The reveal is offered
@@ -52,9 +57,11 @@ const text = computed(() => description || t('pets.no_description'));
     <div>
         <div class="relative overflow-hidden">
             <p
-                class="text-foreground/80 text-sm leading-relaxed break-words transition-[max-height] duration-500 ease-in-out"
+                class="text-soft-foreground text-[13px] leading-[1.55] break-words transition-[max-height] duration-500 ease-in-out"
                 :class="
-                    expanded ? 'max-h-[500px]' : 'h-[4.5rem] overflow-hidden'
+                    expanded
+                        ? 'max-h-[500px]'
+                        : 'h-[calc(3*1.55*13px)] overflow-hidden'
                 "
             >
                 {{ text }}
@@ -67,7 +74,7 @@ const text = computed(() => description || t('pets.no_description'));
                 <button
                     type="button"
                     :aria-label="`${t('pets.read_more')}: ${name}`"
-                    class="bg-card text-primary-600 hover:text-primary-700 focus-visible:ring-ring/50 dark:text-primary-400 dark:hover:text-primary-300 rounded-full border px-2 py-0.5 text-xs font-medium shadow-sm transition-all hover:shadow focus-visible:ring-[3px] focus-visible:outline-none"
+                    class="bg-card text-primary border-border hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring focus-visible:ring-offset-background rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     @click="expanded = true"
                 >
                     {{ t('pets.read_more') }}
@@ -79,7 +86,7 @@ const text = computed(() => description || t('pets.no_description'));
             v-if="expandable && expanded"
             type="button"
             :aria-label="`${t('pets.show_less')}: ${name}`"
-            class="text-primary-600 hover:text-primary-700 focus-visible:ring-ring/50 dark:text-primary-400 dark:hover:text-primary-300 mx-auto mt-2 flex items-center rounded-sm text-xs font-medium transition-colors hover:underline focus-visible:ring-[3px] focus-visible:outline-none"
+            class="text-primary focus-visible:ring-ring focus-visible:ring-offset-background mx-auto mt-2 flex items-center rounded-sm text-xs font-medium transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             @click="expanded = false"
         >
             {{ t('pets.show_less') }}

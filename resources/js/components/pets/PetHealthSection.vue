@@ -11,8 +11,12 @@ import type { PetDetail, PetHealthStatus } from '@/types';
  * The health group — legacy's `PetHealthInfo`, in two blocks.
  *
  * "Health & Veterinary" is a divided row list; "Healthcare Details" is three
- * lists with legacy's colour coding (green dot for a vaccination, blue for a
- * medication, amber pills for allergies). The first block always renders,
+ * lists with a colour coding reduced from legacy's to the guide's palette
+ * (§7): an emerald dot for a vaccination — the one semantic-success hue, where
+ * legacy had `green` — a `--primary` dot for a medication where legacy had
+ * blue, and amber pills for allergies, amber being the warning exception.
+ * The health-status pill is the same emerald/amber pair. The first block
+ * always renders,
  * because `health.status` is a non-null enum column and is therefore always one
  * row; every other row and the whole second block drop out when empty.
  *
@@ -73,7 +77,7 @@ const { tag } = useLocale();
  * Exhaustive over `PetHealthStatus`: a fourth status fails to type-check here.
  *
  * The colour beside it in the template is **not** — it is a ternary on
- * `status === 'healthy'`, green against amber, because legacy paints one
+ * `status === 'healthy'`, emerald against amber, because legacy paints one
  * positive state and one everything-else and there is no third colour to give.
  * A fourth status would take amber silently. The distinction is deliberate, so
  * do not read this map as covering that ternary: this map is the tripwire that
@@ -113,7 +117,7 @@ const hasHealthcare = computed(
                 level="h2"
             />
             <dl
-                class="divide-border/50 border-border/50 bg-muted/10 divide-y overflow-hidden rounded-xl border"
+                class="divide-border border-border bg-muted/40 divide-y overflow-hidden rounded-[14px] border"
             >
                 <div class="flex items-center justify-between gap-3 px-4 py-3">
                     <dt class="text-muted-foreground text-sm">
@@ -123,7 +127,7 @@ const hasHealthcare = computed(
                         class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                         :class="
                             pet.health.status === 'healthy'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                                 : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
                         "
                     >
@@ -192,7 +196,7 @@ const hasHealthcare = computed(
                             class="flex items-center gap-2 text-sm"
                         >
                             <span
-                                class="size-1.5 shrink-0 rounded-full bg-green-500"
+                                class="size-1.5 shrink-0 rounded-full bg-emerald-500"
                                 aria-hidden="true"
                             />
                             <span>
@@ -219,7 +223,7 @@ const hasHealthcare = computed(
                             class="flex items-center gap-2 text-sm"
                         >
                             <span
-                                class="size-1.5 shrink-0 rounded-full bg-blue-500"
+                                class="bg-primary size-1.5 shrink-0 rounded-full"
                                 aria-hidden="true"
                             />
                             <span>

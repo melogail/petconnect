@@ -43,7 +43,7 @@ const rating = computed(() =>
 
 <template>
     <header
-        class="border-border bg-card flex flex-col gap-6 rounded-xl border p-6 sm:flex-row sm:items-start"
+        class="border-border bg-card shadow-card flex flex-col gap-6 rounded-[20px] border p-6 sm:flex-row sm:items-start"
     >
         <UserAvatar
             :name="profile.name"
@@ -54,10 +54,14 @@ const rating = computed(() =>
         <div class="min-w-0 flex-1 space-y-3">
             <div class="space-y-1">
                 <div class="flex flex-wrap items-center gap-2">
-                    <h1 class="text-2xl font-semibold">{{ profile.name }}</h1>
+                    <h1
+                        class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+                    >
+                        {{ profile.name }}
+                    </h1>
                     <BadgeCheck
                         v-if="profile.is_verified"
-                        class="size-5 text-sky-500"
+                        class="text-primary size-5"
                         aria-label="Verified member"
                     />
                 </div>
@@ -84,7 +88,7 @@ const rating = computed(() =>
 
             <p
                 v-if="profile.bio"
-                class="max-w-prose text-sm leading-relaxed whitespace-pre-line"
+                class="text-soft-foreground max-w-prose text-sm leading-relaxed whitespace-pre-line"
             >
                 {{ profile.bio }}
             </p>

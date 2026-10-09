@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useId } from 'vue';
 import type { HTMLAttributes } from 'vue';
 
 defineOptions({
@@ -20,11 +19,15 @@ defineProps<Props>();
  * It is full colour and the same violet in both schemes, so a `fill-current`
  * or `text-*` class at a call site does nothing; size it and leave it.
  *
- * The gradient id comes from `useId()` because the mark can be mounted more
- * than once on a page, and two `<linearGradient>`s sharing one id is a
- * duplicate-id document however identical they are.
+ * The bubble is one flat fill, `#5A3FE0` — the "Aubergine & Lavender"
+ * `--primary-600`, the same violet the guide puts on the splash field and the
+ * header's `BrandMark` disc. It used to be a `violet-500 → violet-700`
+ * `<linearGradient>` with a `useId()`-generated id; the restyle retires every
+ * gradient, which also removed the only reason this component needed an id at
+ * all. It stays pinned rather than `fill-current` because the white face on
+ * top needs the darker light-scheme violet underneath it in both schemes —
+ * on the dark scheme's `--primary` (`#A78BFF`) white would fall under 3:1.
  */
-const gradientId = useId();
 </script>
 
 <template>
@@ -35,21 +38,8 @@ const gradientId = useId();
         :class="className"
         v-bind="$attrs"
     >
-        <defs>
-            <linearGradient
-                :id="gradientId"
-                x1="8"
-                y1="4"
-                x2="56"
-                y2="60"
-                gradientUnits="userSpaceOnUse"
-            >
-                <stop stop-color="#8B5CF6" />
-                <stop offset="1" stop-color="#6D28D9" />
-            </linearGradient>
-        </defs>
         <path
-            :fill="`url(#${gradientId})`"
+            fill="#5A3FE0"
             d="M18 4 H46 C55.9 4 60 8.1 60 18 V40 C60 49.9 55.9 54 46 54 H27 L15.2 61.4 C13.6 62.4 12 61.4 12.2 59.6 L13 53.2 C6.6 51.6 4 47.4 4 40 V18 C4 8.1 8.1 4 18 4 Z"
         />
         <circle cx="18.6" cy="19.4" r="3" fill="#fff" />

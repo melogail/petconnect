@@ -14,11 +14,15 @@ import type { PetDetail } from '@/types';
 /**
  * The listing's identity and its action bar — legacy's `PetHeader`.
  *
- * A card of its own, above the facts card, with the violet→blue accent bar
- * legacy puts on the two cards it wants read first (this one and the owner
- * panel). `--primary` is violet-600 here exactly as `primary` was violet in
- * the legacy Tailwind config, so `from-primary via-blue-500 to-primary/60`
- * ports across as written.
+ * A card of its own, above the facts card, with the accent bar legacy puts on
+ * the two cards it wants read first (this one and the owner panel). Legacy
+ * drew that bar as a violet→blue gradient; the "Aubergine & Lavender" style
+ * keeps violet as the only hue here, so it is the tonal `bg-gradient-brand`
+ * (primary-600→700, one hue) at the same `h-1.5`, and the card is the
+ * guide's frame — `rounded-[20px] border border-border shadow-card`, a
+ * hairline under a soft shadow rather than a `shadow-sm` on a half-alpha
+ * border. The name is the guide's page-title scale: Newsreader 40/1.05 at
+ * weight 500, −0.015em (`font-serif`; Readex Pro under `dir="rtl"`).
  *
  * ## What the badges say
  *
@@ -29,9 +33,12 @@ import type { PetDetail } from '@/types';
  * — the taxonomy resources ship `name` and `name_ar` on every row precisely so
  * the client can pick per locale.
  *
- * The status colours are legacy's, kept as literal green/amber/red rather than
- * moved onto `Badge`'s variants: they are a three-way traffic light and the
- * variant set has no third state. `PetStatus` is a two-value union here
+ * The status colours are legacy's traffic light, kept as literal
+ * emerald/amber rather than moved onto `Badge`'s variants: they are the
+ * guide's two semantic exceptions (§7 — emerald for success, amber for a
+ * warning; legacy's `green-*` is re-spelled as `emerald-*` so the whole app
+ * shares one success hue) and the variant set has no third state.
+ * `PetStatus` is a two-value union here
  * (`available` / `unavailable`) where legacy also had `pending` and `adopted`,
  * so only two of the branches can fire — the map is written over the union so
  * a third status added to the enum fails to type-check rather than falling
@@ -165,7 +172,7 @@ const { locale, tag } = useLocale();
 
 const statusClass: Record<PetDetail['status'], string> = {
     available:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     unavailable:
         'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
 };
@@ -252,11 +259,9 @@ const views = computed(() =>
 
 <template>
     <header
-        class="border-border/50 bg-card mb-6 overflow-hidden rounded-2xl border shadow-sm"
+        class="border-border bg-card shadow-card mb-6 overflow-hidden rounded-[20px] border"
     >
-        <div
-            class="from-primary to-primary/60 h-1.5 bg-gradient-to-r via-blue-500"
-        />
+        <div class="bg-primary bg-gradient-brand h-1.5" />
 
         <div class="p-6">
             <div
@@ -265,7 +270,7 @@ const views = computed(() =>
                 <div class="min-w-0 flex-1">
                     <div class="mb-2 flex flex-wrap items-center gap-2">
                         <h1
-                            class="text-foreground text-3xl font-bold tracking-tight"
+                            class="text-foreground font-serif text-[40px] leading-[1.05] font-medium tracking-[-0.015em] text-balance"
                         >
                             {{ pet.name }}
                         </h1>

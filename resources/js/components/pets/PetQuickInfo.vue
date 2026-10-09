@@ -14,6 +14,14 @@ import type { PetDetail } from '@/types';
  * icon in brand violet for a fact that reads as a positive; legacy used the
  * same flag and used it for exactly this.
  *
+ * Each tile is a small card in the "Aubergine & Lavender" sense (§4):
+ * `bg-card rounded-[20px] border border-border shadow-card`, lifting
+ * `-translate-y-0.5` on hover with the hairline going one ramp step violet.
+ * Legacy's hover was a violet→transparent gradient wash under the content;
+ * the guide retires gradients, so the same overlay element is a flat
+ * `bg-secondary` wash fading in instead — the tree is unchanged, the paint
+ * is.
+ *
  * ## Three of legacy's tiles are deliberately gone
  *
  * "With Kids", "With Other Pets" and "Size" were pulled out of
@@ -135,10 +143,10 @@ const tiles = computed<Tile[]>(() => {
             <div
                 v-for="tile in tiles"
                 :key="tile.key"
-                class="border-border/50 bg-card group hover:border-primary/30 relative overflow-hidden rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                class="border-border bg-card shadow-card group hover:border-primary-200 dark:hover:border-primary-800 relative overflow-hidden rounded-[20px] border p-4 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5"
             >
                 <div
-                    class="from-primary/5 absolute inset-0 rounded-xl bg-gradient-to-br to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    class="bg-secondary absolute inset-0 rounded-[20px] opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100"
                 />
                 <component
                     :is="tile.icon"

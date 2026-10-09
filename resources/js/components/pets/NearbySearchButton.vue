@@ -201,9 +201,16 @@ function clear(): void {
 
 <template>
     <div class="flex flex-wrap items-center gap-2">
+        <!--
+            Both halves are the guide's filter chip (§5.4): `h-10
+            rounded-[14px] px-3.5 text-[13px] font-medium`. The clear chip is
+            the lavender `secondary` wash because it states an applied filter;
+            "Show near me" is the `outline` chip beside the Filters trigger.
+        -->
         <Button
             v-if="nearby"
             variant="secondary"
+            class="h-10 px-3.5 text-[13px] font-medium"
             :aria-label="clearName"
             @click="clear"
         >
@@ -214,6 +221,7 @@ function clear(): void {
         <Button
             v-else
             variant="outline"
+            class="h-10 px-3.5 text-[13px] font-medium"
             :disabled="locating"
             :aria-busy="locating"
             @click="showNearMe"

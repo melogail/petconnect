@@ -18,19 +18,15 @@ defineProps<{
 
 <template>
     <div
-        class="border-border bg-card flex items-start gap-4 rounded-xl border p-4"
+        class="border-border bg-card shadow-card flex items-start gap-4 rounded-[20px] border p-4"
     >
-        <span class="bg-muted rounded-lg p-3">
-            <component
-                :is="icon"
-                class="text-muted-foreground size-6"
-                aria-hidden="true"
-            />
+        <span class="bg-secondary text-secondary-foreground rounded-xl p-3">
+            <component :is="icon" class="size-6" aria-hidden="true" />
         </span>
 
         <div class="min-w-0 flex-1">
-            <h3 class="font-medium">{{ title }}</h3>
-            <p class="text-muted-foreground mt-1 text-sm">
+            <h3 class="font-serif text-lg font-medium">{{ title }}</h3>
+            <p class="text-soft-foreground mt-1 text-sm">
                 {{ description }}
             </p>
 

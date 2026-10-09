@@ -140,7 +140,7 @@ onMounted(() => {
         <Head :title="conversation.peer?.name ?? 'Conversation'" />
 
         <div
-            class="border-border bg-background flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
+            class="border-border bg-card shadow-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border"
         >
             <ConversationHeader :conversation="conversation" />
 

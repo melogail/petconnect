@@ -36,7 +36,8 @@ const stamp = computed(() =>
 <template>
     <Link
         :href="showConversation(conversation.id)"
-        class="hover:bg-accent/50 flex items-center gap-3 rounded-lg px-3 py-3 transition-colors"
+        class="hover:bg-accent/50 focus-visible:ring-ring flex items-center gap-3 px-4 py-3 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-inset"
+        :class="{ 'bg-accent': conversation.unread }"
         prefetch
     >
         <UserAvatar

@@ -35,20 +35,20 @@ const label = computed(() =>
         :aria-checked="isDark"
         :aria-label="label"
         :title="label"
-        class="focus-visible:ring-ring/50 relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors outline-none focus-visible:ring-[3px]"
-        :class="isDark ? 'bg-primary-600' : 'bg-muted'"
+        class="focus-visible:ring-ring focus-visible:ring-offset-background relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        :class="isDark ? 'bg-primary' : 'bg-muted'"
         @click="updateAppearance(isDark ? 'light' : 'dark')"
     >
         <span
-            class="flex size-6 items-center justify-center rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out dark:bg-neutral-700"
+            class="bg-card shadow-card flex size-6 items-center justify-center rounded-full transition-transform duration-200 ease-out"
             :class="
                 isDark
                     ? 'translate-x-7 rtl:-translate-x-7'
                     : 'translate-x-1 rtl:-translate-x-1'
             "
         >
-            <Sun v-if="!isDark" class="size-4 text-neutral-800" />
-            <Moon v-else class="size-4 text-yellow-300" />
+            <Sun v-if="!isDark" class="text-foreground size-4" />
+            <Moon v-else class="text-primary size-4" />
         </span>
     </button>
 </template>

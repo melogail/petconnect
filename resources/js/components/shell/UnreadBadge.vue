@@ -3,25 +3,30 @@ import { computed } from 'vue';
 import { unreadBadgeLabel } from '@/components/shell/labels';
 
 /**
- * The red count that sits on the corner of a header control.
+ * The unread count that sits on the corner of a header control.
  *
  * Two callers — the messages menu and the notification bell — and the legacy
  * shell styled both, so this is the one place the recipe lives rather than two
  * copies drifting apart.
  *
- * ## The red is literal, on purpose
+ * ## Brand violet with a page-coloured ring, not red
  *
- * Everything else in this port translates legacy's hardcoded `bg-white` /
- * `text-gray-*` into this app's tokens so dark mode works. `bg-red-500` is the
- * exception, and it is the exception phase 3a named: a colour that carries
- * meaning rather than a surface is kept exactly, because it has to read as
- * "unread" in both schemes and against every control it lands on. White on
- * red-500 is the same pair in light and dark, so there is nothing to translate.
+ * This was `bg-red-500` through the port, kept literal as the one colour that
+ * carried meaning rather than a surface. The "Aubergine & Lavender" guide
+ * (`.claude/PETCONNECT-STYLE-GUIDE.md` §1, §5.3) retires every hue but the
+ * brand violet, and names the header's unread marker as `bg-primary` with
+ * `ring-2 ring-background`. The ring is what does the job red used to do: a
+ * 2px cut-out of page colour separates the badge from the glyph it overlaps,
+ * so it reads as "a thing on top of the control" in both schemes without a
+ * second hue. `--primary-foreground` on `--primary` measures 6.2:1 light and
+ * 9.6:1 dark.
  *
- * It is deliberately **not** `bg-primary`. That was the shipped notification
- * badge before this phase and it made the badge the same violet as the brand
- * accents around it — legibly present, but not legibly a count of things
- * needing attention. Legacy used red for both badges; so does this.
+ * The guide's §5.3 draws this as a bare 7px dot. The count is kept instead,
+ * because the restyle's scope statement — every accessibility contract stays
+ * exactly as it is — outranks one line of the component spec: the visible
+ * `9+` is what `shell/labels`' `nameContaining` exists to keep inside the
+ * triggers' accessible names (WCAG 2.5.3), and a dot would make that logic
+ * dead surface.
  *
  * ## `min-h-4 min-w-4` with `px-1`, not `h-4 w-4`
  *
@@ -71,7 +76,7 @@ const label = computed(() => unreadBadgeLabel(count));
 <template>
     <span
         v-if="count > 0"
-        class="absolute end-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-semibold text-white shadow-sm"
+        class="bg-primary text-primary-foreground ring-background absolute end-0.5 top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold ring-2"
         aria-hidden="true"
     >
         {{ label }}

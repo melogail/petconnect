@@ -36,7 +36,7 @@ const items = computed<DetailItem[]>(() =>
             :title="t('pets.additional_information')"
             level="h2"
         />
-        <div class="border-border/50 bg-muted/10 rounded-xl border p-4">
+        <div class="border-border bg-muted/40 rounded-[14px] border p-4">
             <DetailList :items="items" />
         </div>
     </section>

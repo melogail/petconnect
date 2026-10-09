@@ -3,33 +3,34 @@ import { DollarSign, Eye, Tag } from '@lucide/vue';
 import { computed } from 'vue';
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
+import { LISTING_TYPE_PILL_CLASSES } from '@/components/pets/listingTypeStyles';
 import type { PetDetail, PetListingType } from '@/types';
 
 /**
  * The listing-type strip — legacy's `PetListingInfo`.
  *
- * A gradient rail across the top of the facts card carrying what the listing
- * *is*: the kind of offer, its price whenever it has one, and the status and
- * view counter repeated from the header. The repetition is legacy's own layout,
+ * A rail across the top of the facts card carrying what the listing *is*: the
+ * kind of offer, its price whenever it has one, and the status and view
+ * counter repeated from the header. The repetition is legacy's own layout,
  * kept on purpose: this strip is what a reader scanning the facts card sees
  * without scrolling back up to the title block.
  *
- * The three type colours are legacy's — adoption blue, sale green, mating
- * purple — and the map is written over the `PetListingType` union so a fourth
- * type added to the enum fails to type-check instead of falling through to
- * grey.
+ * Legacy drew the rail as a grey gradient wash with a three-way colour code
+ * on the type pill — adoption blue, sale green, mating purple. The rail is
+ * now the lavender `bg-gradient-wash` (primary-100 into the card colour) at
+ * the card radius with a `--border` hairline, and the type pill takes its
+ * classes from `pets/listingTypeStyles.ts` — the same brand / emerald / amber
+ * tonal gradients the feed card badge wears, so a type never has two colours.
+ * The price is `--primary` at weight 600 as it is on the card. The shared map
+ * is written over the `PetListingType` union, so a fourth type added to the
+ * enum fails to type-check instead of falling through silently.
  */
 const { pet } = defineProps<{ pet: PetDetail }>();
 
 const { t } = useTranslations();
 const { tag } = useLocale();
 
-const typeClass: Record<PetListingType, string> = {
-    adoption:
-        'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-    sale: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-    mating: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-};
+const typeClass: Record<PetListingType, string> = LISTING_TYPE_PILL_CLASSES;
 
 /**
  * Neither of these inherits `typeClass`'s exhaustiveness, and they sit close
@@ -80,10 +81,10 @@ const views = computed(() =>
 
 <template>
     <div
-        class="border-border/50 from-muted/30 to-muted/10 mb-6 flex flex-wrap items-center gap-3 rounded-2xl border bg-gradient-to-r px-5 py-4"
+        class="border-border bg-secondary bg-gradient-wash mb-6 flex flex-wrap items-center gap-3 rounded-[20px] border px-5 py-4"
     >
         <span
-            class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold"
+            class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-semibold"
             :class="typeClass[pet.listing_type]"
         >
             <Tag class="size-3.5" aria-hidden="true" />
@@ -92,9 +93,9 @@ const views = computed(() =>
 
         <span
             v-if="price"
-            class="text-foreground inline-flex items-center gap-1 text-2xl font-bold"
+            class="text-primary inline-flex items-center gap-1 text-2xl font-semibold"
         >
-            <DollarSign class="size-5 text-green-500" aria-hidden="true" />
+            <DollarSign class="size-5" aria-hidden="true" />
             {{ price }}
         </span>
 

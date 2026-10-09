@@ -128,7 +128,9 @@ import type { QueryParams } from '@/wayfinder';
  * network layer (4 skeletons, 0 category rows rendered), opening
  * `/?category_ids[]=1` and pressing Apply now yields
  * `?age_max=15&age_min=0&category_ids[0]=1` and the trigger stays at
- * "Filters (1)".
+ * "Filters (1)" — the count then rendered as a parenthesised suffix; it is
+ * now the guide's solid count pill reading `1`, and the number is what the
+ * measurement was about.
  *
  * ## The two ends of the age range are always sent
  *
@@ -305,11 +307,23 @@ function clear(): void {
 <template>
     <Sheet v-model:open="open">
         <SheetTrigger as-child>
-            <Button variant="outline">
+            <!--
+                The guide's filter chip (§5.4): `h-10 rounded-[14px] border
+                border-border bg-card px-3.5 text-[13px] font-medium` — the
+                `outline` variant at the chip height — with the active count as
+                a solid `bg-primary` pill rather than a grey "(n)".
+            -->
+            <Button
+                variant="outline"
+                class="h-10 px-3.5 text-[13px] font-medium"
+            >
                 <SlidersHorizontal class="size-4" />
                 {{ t('home.filters') }}
-                <span v-if="activeCount > 0" class="text-muted-foreground">
-                    ({{ activeCount }})
+                <span
+                    v-if="activeCount > 0"
+                    class="bg-primary text-primary-foreground inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[11px] font-semibold"
+                >
+                    {{ activeCount }}
                 </span>
             </Button>
         </SheetTrigger>
@@ -344,7 +358,9 @@ function clear(): void {
             <SheetHeader
                 class="border-border flex-row items-center justify-between gap-2 border-b p-4 pr-12"
             >
-                <SheetTitle class="flex items-center gap-2 text-lg font-bold">
+                <SheetTitle
+                    class="flex items-center gap-2 font-serif text-[21px] leading-[1.2] font-medium tracking-[-0.015em]"
+                >
                     <SlidersHorizontal class="text-primary size-5" />
                     {{ t('home.filters') }}
                 </SheetTitle>
@@ -367,7 +383,7 @@ function clear(): void {
                                 <Skeleton
                                     v-for="row in 4"
                                     :key="row"
-                                    class="h-11 w-full rounded-xl"
+                                    class="h-11 w-full"
                                 />
                             </div>
                         </template>

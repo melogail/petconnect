@@ -93,13 +93,13 @@ onMounted(async () => {
                 <div v-else class="mt-3 space-y-3">
                     <div
                         ref="recoveryCodeSectionRef"
-                        class="bg-muted grid gap-1 rounded-lg p-4 font-mono text-sm"
+                        class="bg-muted grid gap-1 rounded-[14px] p-4 font-mono text-sm"
                     >
                         <div v-if="!recoveryCodesList.length" class="space-y-2">
                             <div
                                 v-for="n in 8"
                                 :key="n"
-                                class="bg-muted-foreground/20 h-4 animate-pulse rounded"
+                                class="bg-muted-foreground/20 h-4 animate-pulse rounded-[12px]"
                             ></div>
                         </div>
                         <div

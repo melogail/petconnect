@@ -3,11 +3,18 @@ import type { Component, HTMLAttributes } from 'vue';
 import { cn } from '@/lib/utils';
 
 /**
- * The small uppercase heading legacy puts above every block inside the facts
- * card — personality traits, location, health, healthcare, extras — and above
- * the Quick Info tile grid that sits outside it.
+ * The heading above every block inside the facts card — personality traits,
+ * location, health, healthcare, extras — and above the Quick Info tile grid
+ * that sits outside it.
  *
- * Extracted because the same six classes and the same violet 16px icon appear
+ * Legacy drew it as a small uppercase, letter-spaced grey label. The
+ * "Aubergine & Lavender" guide (§3.2) gives section headings a type of their
+ * own instead: Newsreader 26/1.15 at weight 500 with −0.01em tracking
+ * (`font-serif`, which the stylesheet swaps to Readex Pro under `dir="rtl"`),
+ * in `--foreground`, with the 16px icon beside it in `--primary`. The
+ * arrangement — icon, title, `mb-3` — is unchanged; only the type is.
+ *
+ * Extracted because the same classes and the same violet 16px icon appear
  * five times across those blocks in legacy, and a sixth block would otherwise
  * copy them a sixth time.
  *
@@ -75,7 +82,7 @@ const { level = 'h3', class: className = undefined } = defineProps<{
         :is="level"
         :class="
             cn(
-                'text-muted-foreground mb-3 flex items-center gap-2 text-xs font-semibold tracking-widest uppercase',
+                'text-foreground mb-3 flex items-center gap-2 font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em] text-balance',
                 className,
             )
         "

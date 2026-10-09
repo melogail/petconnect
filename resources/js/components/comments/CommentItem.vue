@@ -171,7 +171,7 @@ async function loadMore(): Promise<void> {
 
         <div
             v-if="replies.length > 0 || hasMore || replying"
-            class="border-muted/60 ms-12 space-y-3 border-s-2 ps-4"
+            class="border-border ms-12 space-y-3 border-s-2 ps-4"
         >
             <CommentBody
                 v-for="reply in replies"

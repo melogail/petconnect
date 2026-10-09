@@ -58,7 +58,7 @@ const HEADING =
         <template v-else>
             <TooltipProvider>
                 <div
-                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
+                    class="border-border bg-card shadow-card overflow-hidden rounded-[20px] border"
                 >
                     <div class="overflow-x-auto">
                         <table class="divide-border min-w-full divide-y">

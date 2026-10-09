@@ -30,7 +30,7 @@ const { t } = useTranslations();
         <span>{{ t('auth.or_you_can') }} </span>
         <button
             type="button"
-            class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+            class="text-foreground decoration-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-background underline underline-offset-4 transition-colors duration-200 ease-out hover:decoration-current! focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             @click="$emit('toggle')"
         >
             {{ label }}

@@ -57,7 +57,11 @@ const { t } = useTranslations();
         <Heading :title="t('help.title')" :description="t('help.intro')" />
 
         <section class="space-y-4">
-            <h2 class="text-lg font-semibold">{{ t('help.quick_links') }}</h2>
+            <h2
+                class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+            >
+                {{ t('help.quick_links') }}
+            </h2>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <HelpTopicLink
@@ -76,7 +80,11 @@ const { t } = useTranslations();
         </section>
 
         <section class="space-y-4">
-            <h2 class="text-lg font-semibold">{{ t('help.faqs') }}</h2>
+            <h2
+                class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+            >
+                {{ t('help.faqs') }}
+            </h2>
 
             <div class="space-y-3">
                 <HelpFaq :question="t('help.faq_add_pet')">
@@ -102,7 +110,9 @@ const { t } = useTranslations();
         </section>
 
         <section class="border-border space-y-3 border-t pt-8">
-            <h2 class="text-lg font-semibold">
+            <h2
+                class="font-serif text-[26px] leading-[1.15] font-medium tracking-[-0.01em]"
+            >
                 {{ t('help.still_need_help') }}
             </h2>
             <p class="text-muted-foreground text-sm">

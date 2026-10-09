@@ -29,7 +29,7 @@ const initials = computed(() => getInitials(name));
 <template>
     <Avatar :class="cn('size-10', className)">
         <AvatarImage v-if="avatar" :src="avatar" :alt="name" />
-        <AvatarFallback class="text-xs font-medium">
+        <AvatarFallback>
             {{ initials }}
         </AvatarFallback>
     </Avatar>

@@ -64,7 +64,7 @@ const mapsUrl = computed(() =>
         />
 
         <div
-            class="border-border/50 bg-muted/10 space-y-1 rounded-xl border p-4"
+            class="border-border bg-muted/40 space-y-1 rounded-[14px] border p-4"
         >
             <p
                 v-if="pet.location.address"

@@ -14,8 +14,11 @@ import { useTranslations } from '@/composables/useTranslations';
 import type { User } from '@/types';
 
 /**
- * The signed-in trigger in the header: avatar with a brand ring, first name
- * from `sm` up, and a chevron that turns when the menu opens.
+ * The signed-in trigger in the header: a 34px `rounded-xl` avatar (solid
+ * `--primary` with `--primary-foreground` initials when there is no photo —
+ * the style guide's §5.3 avatar, so the former brand-coloured border ring is
+ * gone), first name from `sm` up, and a chevron that turns when the menu opens.
+ * The trigger itself is the header's `rounded-[14px]` ghost treatment.
  *
  * There is no presence dot, and legacy had one:
  * `components/web/UserDropdown.vue:88-91` hangs a `bg-emerald-500` "online
@@ -83,13 +86,13 @@ const firstName = computed(() => user.name.split(' ')[0]);
 <template>
     <DropdownMenu v-model:open="open">
         <DropdownMenuTrigger
-            class="hover:bg-accent focus-visible:ring-ring/50 data-[state=open]:bg-accent flex items-center gap-2 rounded-full p-1 transition-colors outline-none focus-visible:ring-[3px]"
+            class="hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex items-center gap-2 rounded-[14px] p-1 transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             :aria-label="t('nav.user_menu_for', { name: user.name })"
         >
             <UserAvatar
                 :name="user.name"
                 :avatar="user.avatar"
-                class="border-primary-500 dark:border-primary-400 size-8 border-2"
+                class="size-[34px]"
             />
 
             <span class="text-foreground hidden text-sm font-medium sm:block">

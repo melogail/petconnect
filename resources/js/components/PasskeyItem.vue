@@ -32,19 +32,21 @@ const handleDelete = () => {
 </script>
 
 <template>
-    <div class="flex items-center justify-between border-b p-4 last:border-b-0">
+    <div
+        class="border-border flex items-center justify-between border-b p-4 last:border-b-0"
+    >
         <div class="flex items-center gap-4">
             <div
-                class="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                class="bg-secondary text-secondary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
             >
-                <KeyRound class="text-muted-foreground h-5 w-5" />
+                <KeyRound class="h-5 w-5" />
             </div>
             <div class="space-y-1">
                 <div class="flex items-center gap-2.5">
                     <p class="font-medium tracking-tight">{{ passkey.name }}</p>
                     <span
                         v-if="passkey.authenticator"
-                        class="bg-muted text-muted-foreground ring-border inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase ring-1 ring-inset"
+                        class="bg-muted text-muted-foreground ring-border inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase ring-1 ring-inset"
                     >
                         {{ passkey.authenticator }}
                     </span>

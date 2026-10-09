@@ -22,11 +22,24 @@ import type { PetGender } from '@/types';
  * names the same page with the "View details" text, which is what keeps the
  * three apart.
  *
+ * The type is the "Aubergine & Lavender" guide's card scale (§3.2, §5.2): the
+ * name in Newsreader 21/1.2 at weight 500 with −0.015em tracking (`font-serif`
+ * — Readex Pro under `dir="rtl"`, where the stylesheet swaps the family), the
+ * price 13px/600 in `--primary`, breed · age 13px in `--muted-foreground`,
+ * and the gender pill as the lavender wash (`bg-secondary
+ * text-secondary-foreground`) instead of legacy's pink/blue pair — violet is
+ * the only chromatic colour, so the glyph and the word carry the sex, not a
+ * hue. The hover colour on the name is `--primary` in both schemes; the token
+ * re-tones, so there is no `dark:` pair.
+ *
  * `truncate` is on the `<a>`, not on the `<h3>`. `truncate` sets
  * `overflow: hidden`, and on the `<h3>` that clipped the link's focus ring —
- * the ring is a 3px-spread `box-shadow` and the `<h3>` left exactly 0px of
+ * the ring is a `box-shadow` spread and the `<h3>` left exactly 0px of
  * horizontal slack on either side of the `<a>`. The computed style will not
- * show you this: it reads the same 3px `oklab(... / 0.5)` shadow either way.
+ * show you this: it reads the same shadow either way. (The ring was a 3px
+ * 50%-alpha spread when this was measured; it is now the guide's 2px solid
+ * `--ring` with a 2px page-coloured offset — 4px of paint outside the box
+ * instead of 3, so the clip the measurement caught would be wider, not gone.)
  * Only the painted pixels do. That identity is narrow, and here is the scope
  * it holds within, so it is not carried past it: what differs between the two
  * arrangements is the **ancestor's** clip box, not any property of the `<a>`
@@ -42,8 +55,8 @@ import type { PetGender } from '@/types';
  * element's own `overflow` never clips its own `box-shadow`, so moving
  * `truncate` down one level keeps the ellipsis and frees the ring. The `<h3>`
  * keeps `min-w-0` because it is a flex item and still has to be allowed to
- * shrink below its content. (Measured on the previous, `font-medium` markup;
- * the arrangement is unchanged, the type scale is not.)
+ * shrink below its content. (Measured on the previous, `font-medium` sans
+ * markup; the arrangement is unchanged, the type scale and family are not.)
  *
  * `price` arrives already formatted: the raw column is an uncast `decimal`
  * and the `Intl` coercion belongs with the locale, not here.
@@ -69,30 +82,28 @@ const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
 </script>
 
 <template>
-    <div class="space-y-2.5">
+    <div class="space-y-2">
         <div class="flex items-center justify-between gap-2">
             <h3
-                class="text-foreground group-hover:text-primary-600 dark:group-hover:text-primary-400 min-w-0 flex-1 text-xl font-extrabold transition-colors duration-300"
+                class="text-foreground group-hover:text-primary min-w-0 flex-1 font-serif text-[21px] leading-[1.2] font-medium tracking-[-0.015em] transition-colors duration-200 ease-out"
             >
                 <Link
                     :href="showPet(petId)"
-                    class="focus-visible:ring-ring/50 block truncate rounded-sm hover:underline focus-visible:ring-[3px] focus-visible:outline-none"
+                    class="focus-visible:ring-ring focus-visible:ring-offset-background block truncate rounded-sm hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                     {{ name }}
                 </Link>
             </h3>
 
-            <span v-if="price" class="shrink-0 text-sm font-bold">
+            <span
+                v-if="price"
+                class="text-primary shrink-0 text-[13px] font-semibold"
+            >
                 {{ price }}
             </span>
 
             <span
-                class="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                :class="
-                    gender === 'female'
-                        ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
-                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                "
+                class="bg-secondary text-secondary-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
             >
                 <component
                     :is="gender === 'female' ? Venus : Mars"
@@ -103,10 +114,10 @@ const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
             </span>
         </div>
 
-        <div class="text-muted-foreground flex items-center gap-3 text-sm">
+        <div class="text-muted-foreground flex items-center gap-3 text-[13px]">
             <span class="flex min-w-0 items-center gap-1.5">
                 <PawPrint class="size-4 shrink-0" aria-hidden="true" />
-                <span class="text-foreground/80 truncate font-medium">
+                <span class="truncate">
                     {{ kind }}
                 </span>
             </span>
@@ -118,7 +129,7 @@ const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
                 ></span>
                 <span class="flex shrink-0 items-center gap-1.5">
                     <Clock class="size-4" aria-hidden="true" />
-                    <span class="text-foreground/80 font-medium">
+                    <span>
                         {{ ageText }}
                     </span>
                 </span>

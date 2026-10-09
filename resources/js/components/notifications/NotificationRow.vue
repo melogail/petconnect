@@ -16,12 +16,15 @@ import type { InboxNotification } from '@/types';
  * wrapped in a `<div>`, and without this split that whole body would be written
  * out twice under a `v-if` / `v-else`.
  *
- * ## A violet disc, not the actor's avatar
+ * ## A lavender disc, not the actor's avatar
  *
  * The phase 5 parity sweep put this back to legacy's treatment: a 36px disc
- * filled `primary-100` / `primary-600` (the `violet-100` / `violet-600` legacy
- * hardcoded, through the token ramp so dark mode is `primary-900/40` /
- * `primary-300`) holding the notification's type glyph.
+ * holding the notification's type glyph. Legacy filled it `violet-100` /
+ * `violet-600`; the "Aubergine & Lavender" guide (`.claude/PETCONNECT-STYLE-GUIDE.md`
+ * §5.8) spells it `bg-secondary text-secondary-foreground rounded-xl` — the
+ * same wash-and-violet pair as a secondary button (#4A32C4 on #EEEAFB, 7.4:1
+ * light; #CDBDFF on #261D45, 9.2:1 dark), square-rounded like every avatar
+ * rather than circular. The unread dot beside the timestamp is `bg-primary`.
  *
  * It used to render `UserAvatar` with the glyph as a small badge on its corner.
  * That is a strictly richer row and it is not what the rest of this shell
@@ -92,7 +95,7 @@ const timestamp = computed(() =>
 <template>
     <div class="flex w-full items-start gap-3 text-start">
         <div
-            class="bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300 mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full"
+            class="bg-secondary text-secondary-foreground mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl"
         >
             <component :is="icon" class="size-4" aria-hidden="true" />
         </div>
@@ -114,7 +117,7 @@ const timestamp = computed(() =>
                 </time>
                 <span
                     v-if="!notification.read"
-                    class="bg-primary-500 size-2 shrink-0 rounded-full"
+                    class="bg-primary size-2 shrink-0 rounded-full"
                     aria-hidden="true"
                 />
             </div>

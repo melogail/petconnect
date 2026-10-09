@@ -22,7 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
             :key="row"
             class="border-border flex items-start gap-3 border-b px-4 py-3"
         >
-            <Skeleton class="size-10 shrink-0 rounded-full" />
+            <Skeleton class="size-10 shrink-0 rounded-xl" />
             <div class="min-w-0 flex-1 space-y-2">
                 <Skeleton class="h-3.5 w-2/5" />
                 <Skeleton class="h-3 w-4/5" />

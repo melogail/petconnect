@@ -29,6 +29,14 @@ import type { Message } from '@/types';
  * decided in Vue from `isVerified() && hasParticipant()` as the exact mistake
  * that flag exists to stop. It is `false` — not `undefined` — when the relation
  * was missing, so a bare truthiness check is safe.
+ *
+ * The bubbles are the style guide's (§5.7): own messages solid `--primary`
+ * with `--primary-foreground` text, the peer's `bg-card` on a hairline border,
+ * both `rounded-[18px]` with a 6px "tail" corner. The tail corner is spelled
+ * logically (`rounded-ee` / `rounded-es`) because the alignment it has to
+ * agree with is logical too — `self-end` puts an own bubble on the inline end,
+ * which is the left under `dir="rtl"` — so a physical `rounded-br` would have
+ * put the tail on the wrong side for an Arabic reader.
  */
 const { message } = defineProps<{ message: Message }>();
 
@@ -43,11 +51,11 @@ const alignment = computed(() =>
 <template>
     <div class="group flex max-w-[85%] flex-col gap-1" :class="alignment">
         <div
-            class="rounded-2xl px-4 py-2 text-sm leading-relaxed whitespace-pre-wrap"
+            class="rounded-[18px] px-4 py-2 text-sm leading-relaxed whitespace-pre-wrap"
             :class="
                 message.is_mine
-                    ? 'bg-primary text-primary-foreground rounded-br-sm'
-                    : 'bg-muted rounded-bl-sm'
+                    ? 'bg-primary text-primary-foreground rounded-ee-[6px]'
+                    : 'bg-card border-border rounded-es-[6px] border'
             "
         >
             {{ message.content }}
