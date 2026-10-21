@@ -2,7 +2,8 @@ export type User = {
     id: number;
     name: string;
     email: string;
-    avatar?: string;
+    /** The `thumb` crop of the uploaded photo, or null; callers fall back to initials. */
+    avatar: string | null;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
@@ -35,6 +36,20 @@ export type User = {
 export type Auth = {
     /** Null for a guest, whatever the type says. See the note above. */
     user: User;
+};
+
+/**
+ * The backing values of App\Enums\SocialProvider.
+ */
+export type SocialProvider = 'google' | 'facebook';
+
+/**
+ * One row of `SocialProvider::configuredOptions()` — only the providers the
+ * server holds credentials for reach the login and register pages.
+ */
+export type SocialProviderOption = {
+    value: SocialProvider;
+    label: string;
 };
 
 export type Passkey = {

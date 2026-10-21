@@ -1,6 +1,10 @@
 <?php
 
+use App\MediaLibrary\MediaPathGenerator;
 use App\Models\Admin;
+use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Inertia\Middleware;
 use Inertia\Testing\AssertableInertia;
@@ -15,8 +19,8 @@ use Inertia\Testing\AssertableInertia;
 function inertiaVisit(string $url, array $heldOnceProps = [], array $cookies = []): TestResponse
 {
     $test = test()->withHeaders(array_filter([
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => (string) app(Middleware::class)->version(request()),
+        'X-Inertia'                   => 'true',
+        'X-Inertia-Version'           => (string) app(Middleware::class)->version(request()),
         'X-Inertia-Except-Once-Props' => implode(',', $heldOnceProps) ?: null,
     ]));
 
@@ -144,5 +148,34 @@ test('ships the reading direction alongside the language', function (string $loc
             ->etc());
 })->with([
     'english reads left to right' => ['en', 'ltr'],
-    'arabic reads right to left' => ['ar', 'rtl'],
+    'arabic reads right to left'  => ['ar', 'rtl'],
 ]);
+
+/**
+ * The header trigger and the user menu render `auth.user.avatar` and fall back
+ * to initials when it is null, so the prop has to carry the uploaded photo —
+ * the same `thumb` crop every byline of this person shows.
+ */
+test('shares the signed-in member\'s photo as the avatar', function () {
+    Storage::fake(config('media-library.disk_name'));
+    $user = User::factory()->create();
+    $user->addMedia(UploadedFile::fake()->image('avatar.jpg'))
+        ->withCustomProperties([MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $user->media_directory_name])
+        ->toMediaCollection('users');
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('auth.user.avatar', $user->fresh()->getFirstMediaUrl('users', 'thumb'))
+            ->etc());
+});
+
+test('shares a null avatar for a member who has not uploaded a photo', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('auth.user.avatar', null)
+            ->etc());
+});

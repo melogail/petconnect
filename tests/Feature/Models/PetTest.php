@@ -71,7 +71,7 @@ test('withDistance reports one degree of latitude as its great circle distance',
 test('withDistance keeps every column of the listing', function () {
     $created = Pet::factory()->at(0.0, 0.0)->create(['name' => 'Bella', 'city' => 'Cairo']);
 
-    $pet = Pet::query()->withDistance(0.0, 0.0)->first();
+    $pet     = Pet::query()->withDistance(0.0, 0.0)->first();
 
     expect($pet->name)->toBe('Bella')
         ->and($pet->city)->toBe('Cairo')
@@ -81,10 +81,10 @@ test('withDistance keeps every column of the listing', function () {
 
 test('withDistance orders listings from nearest to furthest', function () {
     $furthest = Pet::factory()->at(1.0, 0.0)->create();
-    $nearest = Pet::factory()->at(0.0, 0.0)->create();
-    $middle = Pet::factory()->at(0.5, 0.0)->create();
+    $nearest  = Pet::factory()->at(0.0, 0.0)->create();
+    $middle   = Pet::factory()->at(0.5, 0.0)->create();
 
-    $ordered = Pet::query()->withDistance(0.0, 0.0)->pluck('id');
+    $ordered  = Pet::query()->withDistance(0.0, 0.0)->pluck('id');
 
     expect($ordered->all())->toBe([$nearest->getKey(), $middle->getKey(), $furthest->getKey()]);
 });
@@ -113,16 +113,39 @@ test('nearby can be paginated', function () {
 
 test('nearby and withDistance paginate together, nearest first', function () {
     $nearest = Pet::factory()->at(0.0, 0.0)->create();
-    $middle = Pet::factory()->at(0.1, 0.0)->create();
+    $middle  = Pet::factory()->at(0.1, 0.0)->create();
     Pet::factory()->at(1.0, 0.0)->create();
 
-    $page = Pet::query()
+    $page    = Pet::query()
         ->nearby(0.0, 0.0, 50.0)
         ->withDistance(0.0, 0.0)
         ->paginate(2);
 
     expect($page->total())->toBe(2)
         ->and($page->pluck('id')->all())->toBe([$nearest->getKey(), $middle->getKey()]);
+});
+
+test('age is the years since the birth date, to two decimals, and rides the serialised model', function () {
+    $pet = Pet::factory()->create(['birth_date' => now()->subYears(2)->subMonths(6)->toDateString()]);
+
+    expect($pet->age)->toBeGreaterThanOrEqual(2.49)->toBeLessThanOrEqual(2.51)
+        ->and($pet->toArray())->toHaveKey('age');
+});
+
+test('age is null when the birth date is unknown', function () {
+    $pet = Pet::factory()->create(['birth_date' => null]);
+
+    expect($pet->age)->toBeNull();
+});
+
+test('a litter sums its sex counts to the quantity', function () {
+    $pet = Pet::factory()->litter(2, 3)->create();
+
+    expect($pet->isLitter())->toBeTrue()
+        ->and($pet->quantity)->toBe(5)
+        ->and($pet->gender->value)->toBe('mixed')
+        ->and($pet->name)->toBeNull()
+        ->and(Pet::factory()->create()->isLitter())->toBeFalse();
 });
 
 test('rejects a mass assigned view count', function () {
@@ -136,12 +159,12 @@ test('rejects a mass assigned view count', function () {
 
 test('generates a cropped thumb and a contained display derivative for a listing photo', function () {
     Storage::fake(config('media-library.disk_name'));
-    $pet = Pet::factory()->create();
+    $pet   = Pet::factory()->create();
 
     $media = $pet->addMedia(UploadedFile::fake()->image('cover.jpg', 1600, 1200))
         ->toMediaCollection(Pet::PHOTO_COLLECTION);
 
-    $disk = Storage::disk(config('media-library.disk_name'));
+    $disk  = Storage::disk(config('media-library.disk_name'));
     $disk->assertExists($media->getPathRelativeToRoot('thumb'));
     $disk->assertExists($media->getPathRelativeToRoot('display'));
 

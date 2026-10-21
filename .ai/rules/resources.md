@@ -89,7 +89,7 @@ Cost paid knowingly: `PaginateConversationMessages` does `loadMissing('users')`,
 
 It is now `Http\Resources\User\AuthenticatedUserResource`, and the whole key list is `id, name, username, email, email_verified_at (ISO 8601 string|null), two_factor_enabled (bool)`. `resources/js/types/auth.ts` types against exactly that. Keep the null ternary in `share()`: `auth.user` is null for a guest and the resource reads properties off the model.
 
-`avatar` is deliberately absent, and always was — the model never emitted one either, so AppHeader/UserInfo have always fallen back to initials. Adding it means `getFirstMediaUrl()`, i.e. a lazy load on a model fetched by `find()` (where `Builder::hydrate()` leaves `preventLazyLoading` off), so it is a silent extra query on every authenticated request and every query-count assertion in the suite moves by one. It needs its own decision and a pass over those counts.
+`avatar` is on it since 2026-10-11, when the header avatar was asked for: the `thumb` crop via `getFirstMediaUrl('users', 'thumb') ?: null`, after an explicit `loadMissing('media')` in `toArray()`. That is a deliberate **one extra query on every authenticated request** — the viewer comes from `find()`, where `Builder::hydrate()` leaves `preventLazyLoading` off, so without the explicit load it would have been the same query, silently. Query-count assertions that render a page for a signed-in viewer moved by one in that change; if a count moves by one again, check this first.
 
 General rule: a shared prop is the one payload with no page-specific reason to carry anything, so it carries the least it can. Never hand a model to `Inertia::share()`.
 

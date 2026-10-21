@@ -41,41 +41,46 @@ class PetCardResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'age' => $this->age,
-            'gender' => $this->gender,
-            'color' => $this->color,
-            'description' => $this->description,
-            'status' => $this->status,
-            'listing_type' => $this->listing_type,
-            'price' => $this->price,
-            'vaccinated' => $this->vaccinated,
+            'id'              => $this->id,
+            'slug'            => $this->slug,
+            'name'            => $this->name,
+            'birth_date'      => $this->birth_date?->toDateString(),
+            'age'             => $this->age,
+            'gender'          => $this->gender,
+            'quantity'        => $this->quantity,
+            'male_count'      => $this->male_count,
+            'female_count'    => $this->female_count,
+            'color'           => $this->color,
+            'description'     => $this->description,
+            'status'          => $this->status,
+            'listing_type'    => $this->listing_type,
+            'price'           => $this->price,
+            'vaccinated'      => $this->vaccinated,
             'spayed_neutered' => $this->spayed_neutered,
 
-            'city' => $this->city,
-            'state' => $this->state,
-            'country' => $this->country,
+            'city'            => $this->city,
+            'state'           => $this->state,
+            'country'         => $this->country,
 
-            'category' => PetCategoryOptionResource::make($this->whenLoaded('category')),
-            'breed' => PetBreedOptionResource::make($this->whenLoaded('breed')),
-            'user' => PetOwnerResource::make($this->whenLoaded('user')),
-            'is_owner' => $request->user()?->getKey() === $this->user_id,
+            'category'        => PetCategoryOptionResource::make($this->whenLoaded('category')),
+            'breed'           => PetBreedOptionResource::make($this->whenLoaded('breed')),
+            'user'            => PetOwnerResource::make($this->whenLoaded('user')),
+            'is_owner'        => $request->user()?->getKey() === $this->user_id,
 
-            'image' => $this->featuredPhotoUrl('thumb'),
+            'image'           => $this->featuredPhotoUrl('thumb'),
 
-            'likes_count' => (int) ($this->likes_count ?? 0),
-            'comments_count' => (int) ($this->comments_count ?? 0),
-            'views' => (int) $this->views,
-            'is_liked' => (bool) ($this->is_liked ?? false),
-            'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            'likes_count'     => (int) ($this->likes_count ?? 0),
+            'comments_count'  => (int) ($this->comments_count ?? 0),
+            'views'           => (int) $this->views,
+            'is_liked'        => (bool) ($this->is_liked ?? false),
+            'comments'        => CommentResource::collection($this->whenLoaded('comments')),
 
-            'distance' => $this->when(
+            'distance'        => $this->when(
                 $this->distance !== null,
                 fn (): float => round((float) $this->distance, 2),
             ),
 
-            'created_at' => $this->created_at,
+            'created_at'      => $this->created_at,
         ];
     }
 }

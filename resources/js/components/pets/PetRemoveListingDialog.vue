@@ -32,7 +32,7 @@ import { destroy as destroyPet } from '@/routes/pets';
  * listing's own page is gone once it is retired, and the table is on the
  * profile already.
  */
-const { petId } = defineProps<{ petId: number }>();
+const { petSlug } = defineProps<{ petSlug: string }>();
 
 const open = defineModel<boolean>('open', { default: false });
 
@@ -56,7 +56,7 @@ const { t } = useTranslations();
                     {{ t('pets.cancel') }}
                 </Button>
                 <Button as-child variant="destructive">
-                    <Link :href="destroyPet(petId)" as="button">
+                    <Link :href="destroyPet(petSlug)" as="button">
                         {{ t('pets.remove_listing') }}
                     </Link>
                 </Button>

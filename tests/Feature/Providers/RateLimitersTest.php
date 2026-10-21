@@ -70,39 +70,42 @@ function limitedThread(User $sender): array
 function listingEditPayload(Category $category, string $name): array
 {
     return [
-        'name' => $name,
-        'category_id' => $category->getKey(),
-        'breed_id' => null,
-        'age' => '2',
-        'gender' => 'female',
-        'color' => 'Black',
-        'weight' => '4.2',
-        'description' => 'A calm indoor cat looking for a quiet home.',
-        'listing_type' => 'adoption',
-        'price' => null,
-        'status' => 'available',
-        'location' => [
-            'address' => '12 Nile Street',
+        'name'           => $name,
+        'category_id'    => $category->getKey(),
+        'breed_id'       => null,
+        'birth_date'     => '2024-01-15',
+        'gender'         => 'female',
+        'quantity'       => 1,
+        'male_count'     => null,
+        'female_count'   => null,
+        'color'          => 'Black',
+        'weight'         => '4.2',
+        'description'    => 'A calm indoor cat looking for a quiet home.',
+        'listing_type'   => 'adoption',
+        'price'          => null,
+        'status'         => 'available',
+        'location'       => [
+            'address'         => '12 Nile Street',
             'detailedAddress' => 'Building 3, Apartment 7',
-            'city' => 'Cairo',
-            'state' => 'Cairo',
-            'postalCode' => '11511',
-            'country' => 'Egypt',
-            'coordinates' => ['lat' => '30.0444', 'lng' => '31.2357'],
+            'city'            => 'Cairo',
+            'state'           => 'Cairo',
+            'postalCode'      => '11511',
+            'country'         => 'Egypt',
+            'coordinates'     => ['lat' => '30.0444', 'lng' => '31.2357'],
         ],
-        'health' => [
-            'status' => 'healthy',
-            'vaccinated' => true,
+        'health'         => [
+            'status'         => 'healthy',
+            'vaccinated'     => true,
             'spayedNeutered' => true,
-            'specialNeeds' => 'None',
-            'lastVetVisit' => '2024-01-15',
-            'vaccinations' => [['name' => 'Rabies', 'date' => '2024-01-15']],
-            'medications' => [['name' => 'Flea drops', 'usage' => 'Monthly']],
-            'allergies' => ['Dust'],
-            'vetName' => 'Dr. Hana',
-            'vetPhone' => '+20-100-000-0000',
+            'specialNeeds'   => 'None',
+            'lastVetVisit'   => '2024-01-15',
+            'vaccinations'   => [['name' => 'Rabies', 'date' => '2024-01-15']],
+            'medications'    => [['name' => 'Flea drops', 'usage' => 'Monthly']],
+            'allergies'      => ['Dust'],
+            'vetName'        => 'Dr. Hana',
+            'vetPhone'       => '+20-100-000-0000',
         ],
-        'traits' => ['friendly'],
+        'traits'         => ['friendly'],
         'additionalInfo' => ['house_trained' => 'yes'],
     ];
 }
@@ -122,8 +125,8 @@ describe('content-edits', function () {
      * would satisfy every assertion above it.
      */
     test('returns 429 on the thirty first edit in a minute, spent across two different routes', function () {
-        $author = User::factory()->create();
-        $comment = Comment::factory()->for($author)->create(['content' => 'Original']);
+        $author                   = User::factory()->create();
+        $comment                  = Comment::factory()->for($author)->create(['content' => 'Original']);
         [$conversation, $message] = limitedThread($author);
 
         for ($edit = 1; $edit <= 15; $edit++) {
@@ -147,7 +150,7 @@ describe('content-edits', function () {
         expect($comment->fresh()->content)->toBe('Comment edit 15')
             ->and($message->fresh()->content)->toBe('Message edit 15');
 
-        $stranger = User::factory()->create();
+        $stranger                 = User::factory()->create();
 
         $this->actingAs($stranger)
             ->from(route('home'))
@@ -271,9 +274,9 @@ describe('pet-listing-edits', function () {
      * it.
      */
     test('returns 429 on the eleventh listing edit in a minute', function () {
-        $owner = User::factory()->create();
-        $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
+        $owner      = User::factory()->create();
+        $category   = Category::factory()->create();
+        $pet        = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
 
         for ($edit = 1; $edit <= 10; $edit++) {
             $this->actingAs($owner)
@@ -288,7 +291,7 @@ describe('pet-listing-edits', function () {
         expect($pet->fresh()->name)->toBe('Edit 10');
 
         $otherOwner = User::factory()->create();
-        $otherPet = Pet::factory()->for($otherOwner)->for($category)->create(['name' => 'Untouched']);
+        $otherPet   = Pet::factory()->for($otherOwner)->for($category)->create(['name' => 'Untouched']);
 
         $this->actingAs($otherOwner)
             ->put(route('pets.update', $otherPet), listingEditPayload($category, 'Their edit'))

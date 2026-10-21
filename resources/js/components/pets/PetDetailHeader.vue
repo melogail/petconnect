@@ -2,14 +2,15 @@
 import { Clock, Eye, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
-import { countLabel } from '@/components/pets/card/labels';
+import { ageLabel, countLabel, litterLabel } from '@/components/pets/card/labels';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
 import PetOwnerActions from '@/components/pets/PetOwnerActions.vue';
 import { Badge } from '@/components/ui/badge';
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
+import { petTitle } from '@/lib/petTitle';
 import { taxonomyName } from '@/lib/taxonomy';
-import type { PetDetail } from '@/types';
+import type { PetDetail, PetGender } from '@/types';
 
 /**
  * The listing's identity and its action bar — legacy's `PetHeader`.
@@ -170,6 +171,9 @@ const { pet, canLike, canMessage } = defineProps<{
 const { t } = useTranslations();
 const { locale, tag } = useLocale();
 
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(pet, t, locale.value.current));
+
 const statusClass: Record<PetDetail['status'], string> = {
     available:
         'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
@@ -201,7 +205,7 @@ const statusLabel = computed(() =>
  * state, so the name does not change with it.
  */
 const likeLabel = computed(
-    () => `Like ${pet.name}, ${countLabel(pet.likes_count, 'like')}`,
+    () => `Like ${name.value}, ${countLabel(pet.likes_count, 'like')}`,
 );
 
 /**
@@ -214,7 +218,7 @@ const likeLabel = computed(
  * because the payload allows a listing with no owner resource.
  */
 const messageLabel = computed(() =>
-    pet.user ? `Message ${pet.user.name} about ${pet.name}` : undefined,
+    pet.user ? `Message ${pet.user.name} about ${name.value}` : undefined,
 );
 
 const breed = computed(() =>
@@ -225,8 +229,17 @@ const category = computed(() =>
     pet.category ? taxonomyName(pet.category, locale.value.current) : null,
 );
 
-const gender = computed(() =>
-    pet.gender === 'male' ? t('pets.male') : t('pets.female'),
+const GENDER_KEY: Record<PetGender, string> = {
+    male: 'pets.male',
+    female: 'pets.female',
+    mixed: 'pets.mixed',
+};
+
+const gender = computed(() => t(GENDER_KEY[pet.gender]));
+
+/** "2 males, 1 female" on a litter; null for a single animal. */
+const litter = computed(() =>
+    litterLabel(t, pet.quantity, pet.male_count, pet.female_count),
 );
 
 const place = computed(() =>
@@ -234,19 +247,17 @@ const place = computed(() =>
 );
 
 /**
- * "1 year" / "3 years" and "1 view" / "429 views".
+ * "1 year" / "3 years" / "4 months" and "1 view" / "429 views".
  *
  * `t()` interpolates and does not select a plural form — it is a flat map
  * lookup, and `lang/*.json` mixes Laravel's `|` plural syntax into a handful of
- * values that nothing on the client resolves — so the branch is here and each
- * count has both keys in both catalogues. `age` is a varchar column that reads
- * numeric, hence the `Number()`; a non-numeric age falls to the plural form,
- * which is the safer of the two to be wrong about.
+ * values that nothing on the client resolves — so the branch is in
+ * `ageLabel()` (shared with the feed card) and here, and each count has both
+ * keys in both catalogues. `age` is null when no birth date was given, and
+ * the line is simply left off.
  */
 const age = computed(() =>
-    t(Number(pet.age) === 1 ? 'pets.age_year' : 'pets.age_years', {
-        count: pet.age,
-    }),
+    pet.age === null ? null : ageLabel(t, pet.age),
 );
 
 /** `views` is a plain integer column; the grouping separator is the locale's. */
@@ -272,7 +283,7 @@ const views = computed(() =>
                         <h1
                             class="text-foreground font-serif text-[40px] leading-[1.05] font-medium tracking-[-0.015em] text-balance"
                         >
-                            {{ pet.name }}
+                            {{ name }}
                         </h1>
                         <Badge
                             v-if="breed"
@@ -299,7 +310,7 @@ const views = computed(() =>
                     <div
                         class="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
                     >
-                        <span v-if="pet.age" class="flex items-center gap-1.5">
+                        <span v-if="age" class="flex items-center gap-1.5">
                             <Clock
                                 class="text-primary/70 size-4"
                                 aria-hidden="true"
@@ -312,6 +323,13 @@ const views = computed(() =>
                                 aria-hidden="true"
                             />
                             {{ gender }}
+                        </span>
+                        <span v-if="litter" class="flex items-center gap-1.5">
+                            <span
+                                class="bg-muted-foreground/40 size-1 rounded-full"
+                                aria-hidden="true"
+                            />
+                            {{ litter }}
                         </span>
                         <span v-if="place" class="flex items-center gap-1.5">
                             <MapPin
@@ -333,11 +351,11 @@ const views = computed(() =>
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
                     <PetOwnerActions
                         v-if="pet.is_owner"
-                        :pet-id="pet.id"
+                        :pet-slug="pet.slug"
                         :status="pet.status"
                     />
                     <PetLikeButton
-                        :pet-id="pet.id"
+                        :pet-slug="pet.slug"
                         :likes-count="pet.likes_count"
                         :is-liked="pet.is_liked"
                         :can-like="canLike"

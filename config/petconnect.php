@@ -13,10 +13,10 @@ return [
     |
     */
 
-    'nearby' => [
+    'nearby'        => [
         'default_radius_km' => (float) env('NEARBY_PETS_DEFAULT_RADIUS_KM', 20),
-        'min_radius_km' => (float) env('NEARBY_PETS_MIN_RADIUS_KM', 1),
-        'max_radius_km' => (float) env('NEARBY_PETS_MAX_RADIUS_KM', 100),
+        'min_radius_km'     => (float) env('NEARBY_PETS_MIN_RADIUS_KM', 1),
+        'max_radius_km'     => (float) env('NEARBY_PETS_MAX_RADIUS_KM', 100),
     ],
 
     /*
@@ -28,8 +28,8 @@ return [
     |
     */
 
-    'filters' => [
-        'max_age_years' => (float) env('HOME_FILTERS_MAX_AGE_YEARS', 15),
+    'filters'       => [
+        'max_age_years'   => (float) env('HOME_FILTERS_MAX_AGE_YEARS', 15),
         'default_age_min' => (float) env('HOME_FILTERS_DEFAULT_AGE_MIN', 0),
         'default_age_max' => (float) env('HOME_FILTERS_DEFAULT_AGE_MAX', 15),
     ],
@@ -56,14 +56,14 @@ return [
     |
     */
 
-    'pets' => [
-        'feed_per_page' => (int) env('PETS_FEED_PER_PAGE', 12),
-        'max_gallery_images' => (int) env('PETS_MAX_GALLERY_IMAGES', 3),
-        'max_image_kilobytes' => (int) env('PETS_MAX_IMAGE_KILOBYTES', 512),
-        'feed_comment_preview' => (int) env('PETS_FEED_COMMENT_PREVIEW', 3),
+    'pets'          => [
+        'feed_per_page'            => (int) env('PETS_FEED_PER_PAGE', 12),
+        'max_gallery_images'       => (int) env('PETS_MAX_GALLERY_IMAGES', 3),
+        'max_image_kilobytes'      => (int) env('PETS_MAX_IMAGE_KILOBYTES', 512),
+        'feed_comment_preview'     => (int) env('PETS_FEED_COMMENT_PREVIEW', 3),
         'detail_comment_page_size' => (int) env('PETS_DETAIL_COMMENT_PAGE_SIZE', 20),
-        'detail_reply_preview' => (int) env('PETS_DETAIL_REPLY_PREVIEW', 3),
-        'view_dedup_minutes' => (int) env('PETS_VIEW_DEDUP_MINUTES', 60),
+        'detail_reply_preview'     => (int) env('PETS_DETAIL_REPLY_PREVIEW', 3),
+        'view_dedup_minutes'       => (int) env('PETS_VIEW_DEDUP_MINUTES', 60),
     ],
 
     /*
@@ -87,10 +87,10 @@ return [
     |
     */
 
-    'comments' => [
-        'max_length' => (int) env('COMMENTS_MAX_LENGTH', 1000),
-        'thread_per_page' => (int) env('COMMENTS_THREAD_PER_PAGE', 20),
-        'reply_preview' => (int) env('COMMENTS_REPLY_PREVIEW', 3),
+    'comments'      => [
+        'max_length'       => (int) env('COMMENTS_MAX_LENGTH', 1000),
+        'thread_per_page'  => (int) env('COMMENTS_THREAD_PER_PAGE', 20),
+        'reply_preview'    => (int) env('COMMENTS_REPLY_PREVIEW', 3),
         'replies_per_page' => (int) env('COMMENTS_REPLIES_PER_PAGE', 10),
     ],
 
@@ -132,13 +132,13 @@ return [
     |
     */
 
-    'messaging' => [
-        'max_length' => (int) env('MESSAGES_MAX_LENGTH', 5000),
-        'inbox_per_page' => (int) env('MESSAGES_INBOX_PER_PAGE', 15),
-        'preview_per_page' => (int) env('MESSAGES_PREVIEW_PER_PAGE', 5),
+    'messaging'     => [
+        'max_length'             => (int) env('MESSAGES_MAX_LENGTH', 5000),
+        'inbox_per_page'         => (int) env('MESSAGES_INBOX_PER_PAGE', 15),
+        'preview_per_page'       => (int) env('MESSAGES_PREVIEW_PER_PAGE', 5),
         'preview_snippet_length' => (int) env('MESSAGES_PREVIEW_SNIPPET_LENGTH', 120),
-        'thread_per_page' => (int) env('MESSAGES_THREAD_PER_PAGE', 30),
-        'edit_window_minutes' => (int) env('MESSAGES_EDIT_WINDOW_MINUTES', 15),
+        'thread_per_page'        => (int) env('MESSAGES_THREAD_PER_PAGE', 30),
+        'edit_window_minutes'    => (int) env('MESSAGES_EDIT_WINDOW_MINUTES', 15),
     ],
 
     /*
@@ -164,11 +164,11 @@ return [
     |
     */
 
-    'reviews' => [
-        'min_rate' => (int) env('REVIEWS_MIN_RATE', 1),
-        'max_rate' => (int) env('REVIEWS_MAX_RATE', 5),
+    'reviews'       => [
+        'min_rate'           => (int) env('REVIEWS_MIN_RATE', 1),
+        'max_rate'           => (int) env('REVIEWS_MAX_RATE', 5),
         'max_comment_length' => (int) env('REVIEWS_MAX_COMMENT_LENGTH', 1000),
-        'per_page' => (int) env('REVIEWS_PER_PAGE', 10),
+        'per_page'           => (int) env('REVIEWS_PER_PAGE', 10),
     ],
 
     /*
@@ -186,8 +186,23 @@ return [
     |
     */
 
-    'reports' => [
+    'reports'       => [
         'max_description_length' => (int) env('REPORTS_MAX_DESCRIPTION_LENGTH', 1000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support
+    |--------------------------------------------------------------------------
+    |
+    | `max_message_length` is the ceiling on the body of a message sent through
+    | the support page's contact form. The ticket type is a closed enum
+    | (TicketType) and carries no configuration.
+    |
+    */
+
+    'support'       => [
+        'max_message_length' => (int) env('SUPPORT_MAX_MESSAGE_LENGTH', 2000),
     ],
 
     /*
@@ -213,10 +228,10 @@ return [
     |
     */
 
-    'locales' => [
-        'supported' => ['en', 'ar'],
-        'rtl' => ['ar'],
-        'cookie' => 'locale',
+    'locales'       => [
+        'supported'      => ['en', 'ar'],
+        'rtl'            => ['ar'],
+        'cookie'         => 'locale',
         'cookie_minutes' => (int) env('LOCALE_COOKIE_MINUTES', 525600),
     ],
 
@@ -251,11 +266,11 @@ return [
     |
     */
 
-    'profiles' => [
-        'max_avatar_kilobytes' => (int) env('PROFILES_MAX_AVATAR_KILOBYTES', 2048),
-        'bio_max_length' => (int) env('PROFILES_BIO_MAX_LENGTH', 1000),
-        'listings_per_page' => (int) env('PROFILES_LISTINGS_PER_PAGE', 9),
-        'reviews_per_page' => (int) env('PROFILES_REVIEWS_PER_PAGE', 10),
+    'profiles'      => [
+        'max_avatar_kilobytes'     => (int) env('PROFILES_MAX_AVATAR_KILOBYTES', 2048),
+        'bio_max_length'           => (int) env('PROFILES_BIO_MAX_LENGTH', 1000),
+        'listings_per_page'        => (int) env('PROFILES_LISTINGS_PER_PAGE', 9),
+        'reviews_per_page'         => (int) env('PROFILES_REVIEWS_PER_PAGE', 10),
         'media_directory_attempts' => (int) env('PROFILES_MEDIA_DIRECTORY_ATTEMPTS', 3),
     ],
 

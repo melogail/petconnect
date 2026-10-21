@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { useTranslations } from '@/composables/useTranslations';
 import { home } from '@/routes';
 
@@ -11,15 +12,15 @@ import { home } from '@/routes';
  * painted itself with `--sidebar-primary`; it went with the sidebar shell
  * (2026-09-06).
  *
- * The mark is the "Aubergine & Lavender" one (`.claude/PETCONNECT-STYLE-GUIDE.md`
- * §5.3): a 30px `rounded-[10px]` square of `--primary` carrying a 9px dot in
- * `--primary-foreground`. It is drawn with tokens rather than pinned to a hex
- * so it re-tones with the scheme — violet with a white dot in light, lavender
- * with an aubergine dot in dark. The previous `AppLogoIcon` chat-bubble mark
- * (a hardcoded violet→indigo gradient) is retired here; the auth layouts
- * still render it. The square itself carries `bg-gradient-brand` — the tonal
- * primary-600→700 (dark 300→400) gradient from app.css — over the `bg-primary`
- * fallback, the same surface as the solid button.
+ * The mark is `AppLogoIcon` — the SniffPal chat bubble carrying the pet face
+ * with the heart nose, the same drawing as the favicon, the app icon and the
+ * mobile app (`public/brand/sniffpal-mark.svg`). Until 2026-10-11 the header
+ * drew a 30px `rounded-[10px]` square of `--primary` with a 9px dot in its
+ * place, the "Aubergine & Lavender" guide's §5.3 stand-in from before the
+ * mark existed; the auth layouts already rendered the bubble, so the site
+ * showed two marks. It is the bubble everywhere now, 30px here so it keeps
+ * the header's cluster height. The bubble is full colour and pins its own
+ * violet (see `AppLogoIcon`), so no text colour here tones it.
  *
  * The wordmark is Newsreader (`font-serif`) 21/500 with the heading tracking,
  * which under `dir="rtl"` resolves to Readex Pro through `app.css`.
@@ -29,12 +30,7 @@ const { t } = useTranslations();
 
 <template>
     <Link :href="home()" class="flex items-center gap-2.5">
-        <span
-            class="bg-primary bg-gradient-brand flex size-[30px] shrink-0 items-center justify-center rounded-[10px]"
-            aria-hidden="true"
-        >
-            <span class="bg-primary-foreground size-[9px] rounded-full" />
-        </span>
+        <AppLogoIcon class="size-[30px] shrink-0" aria-hidden="true" />
         <span
             class="text-foreground font-serif text-[21px] font-medium tracking-[-0.015em] max-sm:sr-only"
         >

@@ -8,6 +8,8 @@ import PetCardDescription from '@/components/pets/card/PetCardDescription.vue';
 import PetCardHeader from '@/components/pets/card/PetCardHeader.vue';
 import PetCardMedia from '@/components/pets/card/PetCardMedia.vue';
 import { useLocale } from '@/composables/useLocale';
+import { useTranslations } from '@/composables/useTranslations';
+import { petTitle } from '@/lib/petTitle';
 import { taxonomyName } from '@/lib/taxonomy';
 import { cn } from '@/lib/utils';
 import type {
@@ -117,6 +119,10 @@ import type {
 const { pet } = defineProps<{ pet: PetCard }>();
 
 const { locale, tag } = useLocale();
+const { t } = useTranslations();
+
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(pet, t, locale.value.current));
 
 const page = usePage();
 
@@ -228,8 +234,8 @@ const frame = cn(
 <template>
     <article :class="frame">
         <PetCardMedia
-            :pet-id="pet.id"
-            :name="pet.name"
+            :pet-slug="pet.slug"
+            :name="name"
             :image="pet.image"
             :distance="distance"
             :is-owner="pet.is_owner"
@@ -250,8 +256,8 @@ const frame = cn(
 
         <div class="flex flex-1 flex-col gap-3 px-[18px] pt-4 pb-[18px]">
             <PetCardHeader
-                :pet-id="pet.id"
-                :name="pet.name"
+                :pet-slug="pet.slug"
+                :name="name"
                 :kind="kind"
                 :price="price"
                 :gender="pet.gender"
@@ -260,7 +266,7 @@ const frame = cn(
 
             <PetCardDescription
                 :description="pet.description"
-                :name="pet.name"
+                :name="name"
             />
 
             <!-- A plain hairline; the guide retires legacy's people-glyph ornament. -->

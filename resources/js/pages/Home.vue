@@ -45,9 +45,9 @@ import type {
  * So the button in the heading row below is now the only link to `pets.create`
  * outside two on `pages/Help.vue` — `pages/pets/Create.vue:46` holds a third
  * `create()` reference, but it is that page's own breadcrumb self-link, not an
- * entry point. It gates on `email_verified_at` rather than on `auth.user`,
- * which is the correct predicate: `pets.create` sits behind
- * `['auth', 'verified']`.
+ * entry point. It gates on `auth.user` alone (user's ruling, 2026-10-11):
+ * `pets.create` sits behind `['auth', 'verified']`, so an unverified account
+ * is sent to the verification notice by the route, not hidden from the button.
  *
  * ## The feed makes itself a nearby feed, once — and offers a button after that
  *
@@ -132,7 +132,7 @@ import type {
  * `Message` on its trigger, and its dialog title, description, field label and
  * submit button with it.
  */
-const { nearby, filterBounds, categories } = defineProps<{
+const { filters, nearby, filterBounds, categories } = defineProps<{
     pets: Paginated<PetCard>;
     filters: HomeFeedFilters;
     nearby: boolean;
@@ -153,9 +153,17 @@ const { t } = useTranslations();
 
 const { requestLocation } = useGeolocation();
 
-const heading = computed(() =>
-    t(nearby ? 'home.nearby_pets' : 'home.discover_pets'),
-);
+/**
+ * A search outranks the nearby state in the heading: both can be on at once,
+ * and the term is the thing the visitor just typed.
+ */
+const heading = computed(() => {
+    if (filters.search !== null) {
+        return t('home.search_results', { term: filters.search });
+    }
+
+    return t(nearby ? 'home.nearby_pets' : 'home.discover_pets');
+});
 
 /**
  * The whole locate-then-redirect cycle is in flight, so a different feed may

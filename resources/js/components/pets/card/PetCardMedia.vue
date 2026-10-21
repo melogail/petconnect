@@ -67,8 +67,8 @@ import { show as showPet } from '@/routes/pets';
  * `<article>`, so the zoom and the wash answer a hover anywhere on the card,
  * exactly as legacy's did.
  */
-const { petId, name, image, distance, isOwner } = defineProps<{
-    petId: number;
+const { petSlug, name, image, distance, isOwner } = defineProps<{
+    petSlug: string;
     name: string;
     image: string | null;
     /** Already formatted; null when the feed query ran without a distance. */
@@ -82,7 +82,7 @@ const { t } = useTranslations();
 <template>
     <figure class="bg-muted relative h-[220px] overflow-hidden">
         <Link
-            :href="showPet(petId)"
+            :href="showPet(petSlug)"
             :aria-label="`Photo of ${name}`"
             class="focus-visible:outline-ring flex size-full items-center justify-center focus-visible:outline-2 focus-visible:-outline-offset-2"
         >

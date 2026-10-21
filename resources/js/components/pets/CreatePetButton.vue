@@ -7,7 +7,7 @@ import { useTranslations } from '@/composables/useTranslations';
 import { create as createPet } from '@/routes/pets';
 
 /**
- * "Create Post" — the feed's own publish control, ported from the legacy Home.
+ * "Add Pet" — the feed's own publish control, ported from the legacy Home.
  *
  * ## It is the only publish control in the application's chrome
  *
@@ -21,14 +21,17 @@ import { create as createPet } from '@/routes/pets';
  * link. The only other links to `pets.create` anywhere are two on
  * `pages/Help.vue`.
  *
- * ## The gate is verification, not merely a session
+ * ## The gate is a session, and the `verified` middleware does the rest
  *
- * `pets.create` is declared inside the `Route::middleware(['auth',
+ * Shown to every signed-in reader, verified or not, on the user's instruction
+ * (2026-10-11: "if the user is logged in add an Add Pet button"). It used to
+ * gate on `email_verified_at`, which hid the button from an unverified
+ * account entirely — and so hid the fact that there was anything to verify
+ * *for*. `pets.create` is declared inside the `Route::middleware(['auth',
  * 'verified'])` group in `routes/web.php`, so an unverified account following
- * this link is bounced to the verification notice rather than reaching the
- * form. `email_verified_at` is therefore the correct predicate, and it is what
- * the legacy page used. `auth.user` is null for a guest whatever
- * `types/auth.ts` says, hence the `?? null` before the property read.
+ * this link lands on the verification notice rather than the form; that
+ * notice is the nudge, and the button is what gets them to it. `auth.user` is
+ * null for a guest whatever `types/auth.ts` says, hence the `?? null`.
  *
  * The gate is derived here rather than passed in because `Home.vue` receives
  * no auth props at all — the same reasoning `PetListingCard` records for
@@ -61,10 +64,8 @@ const page = usePage();
 
 const { t } = useTranslations();
 
-/** A signed-in reader who has verified their email. `pets.create` needs both. */
-const canPublish = computed(
-    () => (page.props.auth.user ?? null)?.email_verified_at != null,
-);
+/** A signed-in reader. Verification is enforced by the route, see above. */
+const canPublish = computed(() => (page.props.auth.user ?? null) !== null);
 </script>
 
 <template>
@@ -77,7 +78,7 @@ const canPublish = computed(
               rather than fighting it.
             -->
             <Plus class="size-5" />
-            {{ t('home.create_post') }}
+            {{ t('home.add_pet') }}
         </Link>
     </Button>
 </template>

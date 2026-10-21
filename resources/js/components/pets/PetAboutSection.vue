@@ -2,7 +2,9 @@
 import { Shield } from '@lucide/vue';
 import { computed } from 'vue';
 import PetSectionHeading from '@/components/pets/PetSectionHeading.vue';
+import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
+import { petTitle } from '@/lib/petTitle';
 import type { PetDetail } from '@/types';
 
 /**
@@ -42,8 +44,12 @@ import type { PetDetail } from '@/types';
 const { pet } = defineProps<{ pet: PetDetail }>();
 
 const { t } = useTranslations();
+const { locale } = useLocale();
 
-const firstName = computed(() => pet.name.split(' ')[0]);
+/** The first word of the name; a litter's whole title, which is a phrase. */
+const firstName = computed(() =>
+    pet.name ? pet.name.split(' ')[0] : petTitle(pet, t, locale.value.current),
+);
 
 const traits = computed(() => pet.traits ?? []);
 </script>

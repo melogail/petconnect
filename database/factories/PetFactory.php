@@ -49,64 +49,67 @@ class PetFactory extends Factory
     public function definition(): array
     {
         $listingType = fake()->randomElement(ListingType::cases());
-        $location = fake()->randomElement($this->locations());
+        $location    = fake()->randomElement($this->locations());
 
         return [
-            'user_id' => User::factory(),
-            'category_id' => Category::factory(),
-            'breed_id' => fn (array $attributes): Factory => Breed::factory()->state([
+            'user_id'          => User::factory(),
+            'category_id'      => Category::factory(),
+            'breed_id'         => fn (array $attributes): Factory => Breed::factory()->state([
                 'category_id' => $attributes['category_id'],
             ]),
 
-            'name' => fake()->firstName(),
-            'age' => (string) fake()->randomElement([0.5, 1, 2, 3, 4, 5, 7, 10]),
-            'gender' => fake()->randomElement(PetGender::cases()),
-            'color' => fake()->randomElement(['Black', 'White', 'Brown', 'Golden', 'Gray', 'Mixed', 'Spotted']),
-            'weight' => fake()->randomFloat(2, 1, 50),
-            'description' => fake()->paragraph(3),
+            'name'             => fake()->firstName(),
+            'birth_date'       => fake()->dateTimeBetween('-10 years', '-2 months')->format('Y-m-d'),
+            'gender'           => fake()->randomElement([PetGender::Male, PetGender::Female]),
+            'quantity'         => 1,
+            'male_count'       => null,
+            'female_count'     => null,
+            'color'            => fake()->randomElement(['Black', 'White', 'Brown', 'Golden', 'Gray', 'Mixed', 'Spotted']),
+            'weight'           => fake()->randomFloat(2, 1, 50),
+            'description'      => fake()->paragraph(3),
 
-            'listing_type' => $listingType,
-            'price' => $listingType === ListingType::Sale ? fake()->randomFloat(2, 50, 2000) : null,
-            'status' => fake()->boolean(80) ? PetStatus::Available : PetStatus::Unavailable,
-            'views' => fake()->numberBetween(0, 500),
+            'listing_type'     => $listingType,
+            'price'            => $listingType === ListingType::Sale ? fake()->randomFloat(2, 50, 2000) : null,
+            'status'           => fake()->boolean(80) ? PetStatus::Available : PetStatus::Unavailable,
+            'views'            => fake()->numberBetween(0, 500),
 
-            'address' => $this->streetAddress(),
+            'address'          => $this->streetAddress(),
             'detailed_address' => fake()->optional(0.6)->passthrough(
                 fn (array $attributes): string => $this->buildingDetail(),
             ),
-            'city' => $location['city'],
-            'state' => $location['state'],
-            'postal_code' => $location['postal_code'],
-            'country' => $location['country'],
-            'latitude' => $this->jitter($location['latitude']),
-            'longitude' => $this->jitter($location['longitude']),
+            'city'             => $location['city'],
+            'state'            => $location['state'],
+            'postal_code'      => $location['postal_code'],
+            'country'          => $location['country'],
+            'latitude'         => $this->jitter($location['latitude']),
+            'longitude'        => $this->jitter($location['longitude']),
 
-            'health_status' => fake()->randomElement(HealthStatus::cases()),
-            'vaccinated' => fake()->boolean(80),
-            'spayed_neutered' => fake()->boolean(60),
-            'special_needs' => fake()->optional(0.2)->sentence(),
-            'last_vet_visit' => fake()->optional(0.7)->dateTimeBetween('-1 year', 'now'),
+            'health_status'    => fake()->randomElement(HealthStatus::cases()),
+            'vaccinated'       => fake()->boolean(80),
+            'spayed_neutered'  => fake()->boolean(60),
+            'special_needs'    => fake()->optional(0.2)->sentence(),
+            'last_vet_visit'   => fake()->optional(0.7)->dateTimeBetween('-1 year', 'now'),
 
-            'vaccinations' => fake()->optional(0.7)->passthrough(
+            'vaccinations'     => fake()->optional(0.7)->passthrough(
                 fn (array $attributes): array => $this->vaccinationRecords(),
             ),
-            'medications' => fake()->optional(0.3)->passthrough(
+            'medications'      => fake()->optional(0.3)->passthrough(
                 fn (array $attributes): array => $this->medicationRecords(),
             ),
-            'allergies' => fake()->optional(0.2)->randomElements(
+            'allergies'        => fake()->optional(0.2)->randomElements(
                 ['Chicken', 'Beef', 'Dust', 'Pollen'],
                 fake()->numberBetween(1, 2),
             ),
-            'vet_name' => fake()->optional(0.6)->name(),
-            'vet_phone' => fake()->optional(0.6)->numerify('+20-1##-###-####'),
+            'vet_name'         => fake()->optional(0.6)->name(),
+            'vet_phone'        => fake()->optional(0.6)->numerify('+20-1##-###-####'),
 
-            'traits' => fake()->optional(0.8)->randomElements(
+            'traits'           => fake()->optional(0.8)->randomElements(
                 ['Friendly', 'Energetic', 'Calm', 'Playful', 'Shy', 'Loyal', 'Smart', 'Gentle'],
                 fake()->numberBetween(2, 5),
             ),
-            'additional_info' => fake()->optional(0.6)->passthrough(
+            'additional_info'  => fake()->optional(0.6)->passthrough(
                 fn (array $attributes): array => [
-                    'house_trained' => fake()->boolean(),
+                    'house_trained'  => fake()->boolean(),
                     'good_with_kids' => fake()->boolean(),
                     'good_with_pets' => fake()->boolean(),
                 ],
@@ -158,7 +161,7 @@ class PetFactory extends Factory
     {
         return array_map(
             fn (string $name): array => [
-                'name' => $name,
+                'name'  => $name,
                 'usage' => fake()->optional(0.8)->randomElement(['Daily', 'Weekly', 'Monthly', 'Twice daily', 'As needed']),
             ],
             fake()->randomElements(
@@ -178,12 +181,12 @@ class PetFactory extends Factory
     public function inCity(array $location): static
     {
         return $this->state(fn (array $attributes): array => [
-            'city' => $location['city'],
-            'state' => $location['state'],
-            'country' => $location['country'],
+            'city'        => $location['city'],
+            'state'       => $location['state'],
+            'country'     => $location['country'],
             'postal_code' => $location['postal_code'],
-            'latitude' => $this->jitter($location['latitude']),
-            'longitude' => $this->jitter($location['longitude']),
+            'latitude'    => $this->jitter($location['latitude']),
+            'longitude'   => $this->jitter($location['longitude']),
         ]);
     }
 
@@ -194,7 +197,28 @@ class PetFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'listing_type' => ListingType::Adoption,
-            'price' => null,
+            'price'        => null,
+        ]);
+    }
+
+    /**
+     * Offer a whole litter for adoption: more than one animal, no single name,
+     * and a gender that summarises the sexes in it.
+     */
+    public function litter(int $maleCount, int $femaleCount): static
+    {
+        $gender = match (true) {
+            $maleCount > 0 && $femaleCount > 0 => PetGender::Mixed,
+            $maleCount > 0                     => PetGender::Male,
+            default                            => PetGender::Female,
+        };
+
+        return $this->adoption()->state(fn (array $attributes): array => [
+            'name'         => null,
+            'gender'       => $gender,
+            'quantity'     => $maleCount + $femaleCount,
+            'male_count'   => $maleCount,
+            'female_count' => $femaleCount,
         ]);
     }
 
@@ -205,7 +229,7 @@ class PetFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'listing_type' => ListingType::Sale,
-            'price' => fake()->randomFloat(2, 100, 2000),
+            'price'        => fake()->randomFloat(2, 100, 2000),
         ]);
     }
 
@@ -216,7 +240,7 @@ class PetFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'listing_type' => ListingType::Mating,
-            'price' => null,
+            'price'        => null,
         ]);
     }
 
@@ -226,7 +250,7 @@ class PetFactory extends Factory
     public function at(float $latitude, float $longitude): static
     {
         return $this->state(fn (array $attributes): array => [
-            'latitude' => $latitude,
+            'latitude'  => $latitude,
             'longitude' => $longitude,
         ]);
     }

@@ -19,6 +19,7 @@
         "laravel/nova": "^5.8",
         "laravel/reverb": "^1.11",
         "laravel/sanctum": "^4.0",
+        "laravel/socialite": "^5.31",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "spatie/laravel-medialibrary": "^11.23.5"

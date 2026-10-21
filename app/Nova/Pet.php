@@ -80,7 +80,7 @@ class Pet extends Resource
      *
      * @var class-string<PetModel>
      */
-    public static $model = PetModel::class;
+    public static $model  = PetModel::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -94,14 +94,14 @@ class Pet extends Resource
      *
      * @var string
      */
-    public static $title = 'name';
+    public static $title  = 'name';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Catalog';
+    public static $group  = 'Catalog';
 
     /**
      * The columns that should be searched.
@@ -121,7 +121,7 @@ class Pet extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['user', 'category', 'breed', 'media'];
+    public static $with   = ['user', 'category', 'breed', 'media'];
 
     /**
      * Settle the cover photo after an edit.
@@ -161,7 +161,9 @@ class Pet extends Resource
 
             Text::make('Name')
                 ->sortable()
-                ->rules('required', 'string', 'max:255'),
+                ->nullable()
+                ->rules('nullable', 'string', 'max:255')
+                ->help('Optional on a litter, which has no single name.'),
 
             BelongsTo::make('Owner', 'user', User::class)
                 ->sortable()
@@ -179,7 +181,7 @@ class Pet extends Resource
 
             Badge::make('Status', 'status')
                 ->map([
-                    PetStatus::Available->value => 'success',
+                    PetStatus::Available->value   => 'success',
                     PetStatus::Unavailable->value => 'warning',
                 ])
                 ->labels($this->enumLabels(PetStatus::cases()))
@@ -245,8 +247,32 @@ class Pet extends Resource
                 ->filterable()
                 ->rules('required'),
 
-            Text::make('Age')->rules('required', 'string', 'max:255'),
-            Text::make('Color')->rules('required', 'string', 'max:255'),
+            Date::make('Birth Date', 'birth_date')
+                ->nullable()
+                ->rules('nullable', 'date', 'before_or_equal:today'),
+
+            Number::make('Quantity')
+                ->min(1)
+                ->max(255)
+                ->default(1)
+                ->rules('required', 'integer', 'min:1', 'max:255')
+                ->help('More than one only on an adoption listing offering a litter.'),
+
+            Number::make('Male Count', 'male_count')
+                ->min(0)
+                ->max(255)
+                ->nullable()
+                ->rules('nullable', 'integer', 'min:0', 'max:255')
+                ->hideFromIndex(),
+
+            Number::make('Female Count', 'female_count')
+                ->min(0)
+                ->max(255)
+                ->nullable()
+                ->rules('nullable', 'integer', 'min:0', 'max:255')
+                ->hideFromIndex(),
+
+            Text::make('Color')->nullable()->rules('nullable', 'string', 'max:255'),
             Number::make('Weight')->step(0.01)->nullable()->rules('nullable', 'numeric', 'min:0'),
 
             Code::make('Traits')

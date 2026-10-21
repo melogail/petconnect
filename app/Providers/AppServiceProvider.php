@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Models\Breed;
 use App\Models\Category;
 use App\Models\Comment;
+use App\Models\Contact;
 use App\Models\Pet;
 use App\Models\Report;
 use App\Models\Review;
@@ -424,6 +425,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('locale-switches', fn (Request $request): Limit => Limit::perMinute(60)
             ->by((string) $request->ip()));
 
+        // The support contact form is a public write, so it is keyed by the
+        // machine rather than rateLimitKey(): a guest has no account to count
+        // against and the IP must be a decision, not a fallback. Five a minute
+        // is more than anyone writing to a support desk needs and is what stops
+        // a script filling the inbox.
+        RateLimiter::for('contact-messages', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by($this->unauthenticatedCallerKey($request)));
+
         RateLimiter::for('account-deletions', fn (Request $request): array => [
             Limit::perMinute(10)->by('minute:'.$this->rateLimitKey($request)),
             Limit::perHour(20)->by('hour:'.$this->rateLimitKey($request)),
@@ -460,6 +469,22 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('password-resets', fn (Request $request): array => [
             Limit::perMinute(5)->by('minute:'.$this->unauthenticatedCallerKey($request)),
             Limit::perHour(20)->by('hour:'.$this->unauthenticatedCallerKey($request)),
+        ]);
+
+        /*
+         * `social-logins` guards the OAuth redirect and callback
+         * (routes/web.php `social.*`) and the token exchange
+         * (routes/api.php `auth.social`). All three are `guest` routes and
+         * the callback can register an account, so it is keyed on the IP
+         * through unauthenticatedCallerKey() for the same reason
+         * `registrations` is. Wider than `registrations` because one sign-in
+         * is two requests (redirect + callback) and a declined consent
+         * screen sends the person round again; 60 an hour still stops a
+         * script from minting accounts through a provider.
+         */
+        RateLimiter::for('social-logins', fn (Request $request): array => [
+            Limit::perMinute(10)->by('minute:'.$this->unauthenticatedCallerKey($request)),
+            Limit::perHour(60)->by('hour:'.$this->unauthenticatedCallerKey($request)),
         ]);
 
         /*
@@ -508,7 +533,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function passwordConfirmationKey(Request $request): string
     {
-        $novaGuard = config('nova.guard');
+        $novaGuard  = config('nova.guard');
 
         $identifier = $request->user()?->getAuthIdentifier()
             ?? $request->user(is_string($novaGuard) ? $novaGuard : null)?->getAuthIdentifier()
@@ -611,14 +636,15 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
-            'admin' => Admin::class,
-            'breed' => Breed::class,
+            'admin'    => Admin::class,
+            'breed'    => Breed::class,
             'category' => Category::class,
-            'comment' => Comment::class,
-            'pet' => Pet::class,
-            'report' => Report::class,
-            'review' => Review::class,
-            'user' => User::class,
+            'comment'  => Comment::class,
+            'contact'  => Contact::class,
+            'pet'      => Pet::class,
+            'report'   => Report::class,
+            'review'   => Review::class,
+            'user'     => User::class,
         ]);
     }
 

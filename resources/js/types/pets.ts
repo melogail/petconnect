@@ -3,7 +3,8 @@ import type { Coordinate, DecimalColumn } from './profile';
 
 export type PetListingType = 'adoption' | 'sale' | 'mating';
 export type PetStatus = 'available' | 'unavailable';
-export type PetGender = 'male' | 'female';
+/** `mixed` is a litter with both sexes in it; see `PetCard.male_count`. */
+export type PetGender = 'male' | 'female' | 'mixed';
 export type PetHealthStatus = 'healthy' | 'minor_issues' | 'chronic_condition';
 
 /**
@@ -95,11 +96,21 @@ export type PetMedication = {
  */
 export type PetCard = {
     id: number;
-    name: string;
-    /** A varchar column on the backend, so a string even though it reads numeric. */
-    age: string;
+    /** The URL key: `pets/{slug}`. Pass this, never `id`, to the pet route helpers. */
+    slug: string;
+    /** Null on a litter, which has no single name; render through `petTitle()`. */
+    name: string | null;
+    /** `Y-m-d`, or null when the owner did not give one. */
+    birth_date: string | null;
+    /** Years since `birth_date` to two decimals, derived on the backend; null without a date. */
+    age: number | null;
     gender: PetGender;
-    color: string;
+    /** How many animals the listing offers: 1 unless it is an adoption litter. */
+    quantity: number;
+    /** Only set on a litter (`quantity > 1`); the two add up to `quantity`. */
+    male_count: number | null;
+    female_count: number | null;
+    color: string | null;
     description: string;
     status: PetStatus;
     listing_type: PetListingType;
@@ -152,11 +163,21 @@ export type PetCard = {
  */
 export type PetDetail = {
     id: number;
-    name: string;
-    /** A varchar column on the backend, so a string even though it reads numeric. */
-    age: string;
+    /** The URL key: `pets/{slug}`. Pass this, never `id`, to the pet route helpers. */
+    slug: string;
+    /** Null on a litter, which has no single name; render through `petTitle()`. */
+    name: string | null;
+    /** `Y-m-d`, or null when the owner did not give one. The form posts it back as-is. */
+    birth_date: string | null;
+    /** Years since `birth_date` to two decimals, derived on the backend; null without a date. */
+    age: number | null;
     gender: PetGender;
-    color: string;
+    /** How many animals the listing offers: 1 unless it is an adoption litter. */
+    quantity: number;
+    /** Only set on a litter (`quantity > 1`); the two add up to `quantity`. */
+    male_count: number | null;
+    female_count: number | null;
+    color: string | null;
     /** An uncast `decimal` column: a float on SQLite, a string on MySQL. */
     weight: DecimalColumn | null;
     description: string;
@@ -230,6 +251,8 @@ export type HomeFeedFilters = {
     age_max: number | null;
     listing_types: string[];
     vaccinated: boolean | null;
+    /** The header search box's text, trimmed; null when it was blank. */
+    search: string | null;
 };
 
 export type HomeFeedBounds = {

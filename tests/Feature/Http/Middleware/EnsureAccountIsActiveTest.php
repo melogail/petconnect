@@ -100,13 +100,16 @@ test('lets a guest through to a public page', function () {
  * has the row, `is_active` is a column already on it, so the check is free.
  * Measured against the same request with the middleware removed rather than
  * against a fixed number, which would drift with whatever else the page loads.
+ * Each measurement acts as a freshly read user, because the shared `auth.user`
+ * prop loads `media` onto the instance and a reused one would hand the second
+ * request that query for free.
  */
 test('costs no query', function () {
-    $user = User::factory()->create();
+    $user              = User::factory()->create();
 
-    $withMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user)->get(route('appearance.edit'))->assertOk());
+    $withMiddleware    = countActiveGuardQueries(fn () => $this->actingAs($user->fresh())->get(route('appearance.edit'))->assertOk());
 
-    $withoutMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user)
+    $withoutMiddleware = countActiveGuardQueries(fn () => $this->actingAs($user->fresh())
         ->withoutMiddleware(EnsureAccountIsActive::class)
         ->get(route('appearance.edit'))
         ->assertOk());

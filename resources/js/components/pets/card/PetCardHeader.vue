@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Clock, Mars, PawPrint, Venus } from '@lucide/vue';
-import { computed } from 'vue';
+import { Clock, Mars, PawPrint, Venus, VenusAndMars } from '@lucide/vue';
+import { type Component, computed } from 'vue';
 import { ageLabel } from '@/components/pets/card/labels';
 import { useTranslations } from '@/composables/useTranslations';
 import { show as showPet } from '@/routes/pets';
@@ -62,23 +62,34 @@ import type { PetGender } from '@/types';
  * and the `Intl` coercion belongs with the locale, not here.
  */
 const { gender, age } = defineProps<{
-    petId: number;
+    petSlug: string;
+    /** Already resolved through `petTitle()`, so a litter has a title too. */
     name: string;
     /** Breed, falling back to category, falling back to "Pet". */
     kind: string;
     price: string | null;
     gender: PetGender;
-    /** A varchar column, so a string even though it reads numeric. */
-    age: string;
+    /** Years, derived from the birth date; null when it was not given. */
+    age: number | null;
 }>();
 
 const { t } = useTranslations();
 
-const genderLabel = computed(() =>
-    t(gender === 'female' ? 'pets.female' : 'pets.male'),
-);
+const GENDER_KEY: Record<PetGender, string> = {
+    male: 'pets.male',
+    female: 'pets.female',
+    mixed: 'pets.mixed',
+};
 
-const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
+const GENDER_ICON: Record<PetGender, Component> = {
+    male: Mars,
+    female: Venus,
+    mixed: VenusAndMars,
+};
+
+const genderLabel = computed(() => t(GENDER_KEY[gender]));
+
+const ageText = computed(() => (age === null ? null : ageLabel(t, age)));
 </script>
 
 <template>
@@ -88,7 +99,7 @@ const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
                 class="text-foreground group-hover:text-primary min-w-0 flex-1 font-serif text-[21px] leading-[1.2] font-medium tracking-[-0.015em] transition-colors duration-200 ease-out"
             >
                 <Link
-                    :href="showPet(petId)"
+                    :href="showPet(petSlug)"
                     class="focus-visible:ring-ring focus-visible:ring-offset-background block truncate rounded-sm hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                     {{ name }}
@@ -106,7 +117,7 @@ const ageText = computed(() => (age === '' ? null : ageLabel(t, age)));
                 class="bg-secondary text-secondary-foreground inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
             >
                 <component
-                    :is="gender === 'female' ? Venus : Mars"
+                    :is="GENDER_ICON[gender]"
                     class="size-3"
                     aria-hidden="true"
                 />

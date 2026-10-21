@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\CommentController;
+use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\ConversationController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LocaleController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Web\PetController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\ReportController;
 use App\Http\Controllers\Web\ReviewController;
+use App\Http\Controllers\Web\SocialAuthController;
+use App\Models\Pet;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,8 +33,38 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+/*
+|--------------------------------------------------------------------------
+| Social sign-in
+|--------------------------------------------------------------------------
+|
+| "Continue with Google" / "Continue with Facebook". Two GETs because OAuth
+| 2.0 fixes the method: the provider sends the browser back with a top-level
+| redirect, not an Inertia visit, so the "a GET never writes" rule
+| (.ai/rules/controllers.md) is argued and bounded in
+| Web\SocialAuthController's docblock rather than broken by accident. The
+| buttons are plain anchors (SocialLoginButtons.vue), never `<Link>`, so
+| nothing prefetches either URL.
+|
+| `{provider}` binds to App\Enums\SocialProvider: an unknown name is a 404
+| before the controller runs. Both routes are `guest`, like Fortify's login
+| and register, and both spend `social-logins`
+| (AppServiceProvider::configureRateLimiters) — IP-keyed through
+| unauthenticatedCallerKey(), because the callback can create an account and
+| the redirect is where a script would start.
+|
+*/
+
+Route::middleware(['guest', 'throttle:social-logins'])
+    ->prefix('auth')
+    ->name('social.')
+    ->group(function (): void {
+        Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('redirect');
+        Route::get('{provider}/callback', [SocialAuthController::class, 'callback'])->name('callback');
+    });
+
 Route::get('pets/{pet}', [PetController::class, 'show'])
-    ->whereNumber('pet')
+    ->where('pet', Pet::ROUTE_KEY_PATTERN)
     ->name('pets.show');
 
 /*
@@ -44,10 +77,11 @@ Route::get('pets/{pet}', [PetController::class, 'show'])
 | `Inertia::render('Help/Index')` / `Inertia::render('Support/Index')` with
 | no props, and both templates are static: every string comes from the
 | translation files (the `help.*` and `support.*` keys are already in
-| lang/en.json and lang/ar.json), the FAQ rows and the "Start chat" button
-| carry no handler, and the only address on the page is a `mailto:` in the
-| markup. There is nothing for a controller to do, so there is no
-| controller — `Route::inertia()` is the whole of it, the same as
+| lang/en.json and lang/ar.json), the FAQ rows carry no handler, and the
+| only address on the page is a `mailto:` in the markup. The contact form
+| the support page opens in a dialog posts to `contact.store` below and
+| needs nothing from the page, so there is nothing for a controller to do
+| on the GET — `Route::inertia()` is the whole of it, the same as
 | `settings/appearance`.
 |
 | Public, and deliberately so: "how does this work" and "how do I reach a
@@ -68,6 +102,17 @@ Route::get('pets/{pet}', [PetController::class, 'show'])
 
 Route::inertia('help', 'Help')->name('help');
 Route::inertia('support', 'Support')->name('support');
+
+/*
+| The support page's contact form posts here. Public, like the page: a guest
+| sends their name and address with the message, a member's come off the
+| account (StoreContactRequest decides which form it is validating from
+| `$request->user()`). A public write is keyed by IP — `contact-messages`
+| in AppServiceProvider::configureRateLimiters() — never by rateLimitKey().
+*/
+Route::post('contact', [ContactController::class, 'store'])
+    ->middleware('throttle:contact-messages')
+    ->name('contact.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -270,7 +315,8 @@ Route::get('reviews/{reviewable_type}/{reviewable_id}', [ReviewController::class
 |
 | Publishing, editing and liking need a verified account; ownership on top of
 | that is decided by PetPolicy, which every action calls with
-| $this->authorize(). The pet parameter is constrained to digits so
+| $this->authorize(). The pet parameter is a slug, constrained to
+| Pet::ROUTE_KEY_PATTERN, whose one excluded literal is `create` so that
 | `pets/create` can never be swallowed by `pets/{pet}`.
 |
 | The like route is throttled: it is a POST that writes a like, which fires
@@ -318,7 +364,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->middleware('throttle:pet-listings')
         ->name('pets.store');
 
-    Route::whereNumber('pet')->group(function (): void {
+    Route::where(['pet' => Pet::ROUTE_KEY_PATTERN])->group(function (): void {
         Route::get('pets/{pet}/edit', [PetController::class, 'edit'])->name('pets.edit');
 
         Route::put('pets/{pet}', [PetController::class, 'update'])

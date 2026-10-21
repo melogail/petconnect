@@ -23,6 +23,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
+import {
+    BASIC_STEP_FIELDS,
+    validateBasicStep,
+} from '@/lib/petFormValidation';
 import type { PetFormOptions, PetMedia, PetPhotoBounds } from '@/types';
 
 /**
@@ -31,11 +35,21 @@ import type { PetFormOptions, PetMedia, PetPhotoBounds } from '@/types';
  * It is **one form and one request**, not eight: the whole listing is posted at
  * once, because `pets.update` is a full replacement and every scalar key is
  * `present`. The steps are pagination over a long form, so navigation is free
- * in both directions and validation happens once, on submit.
+ * backwards and the server validates once, on submit.
  *
- * That is also why a rejected save re-opens the earliest step that owns a bad
- * field: the message would otherwise land on a screen the user is not looking
- * at. `STEP_KEYS` is the mapping, matched by prefix so `health.vaccinations.0`
+ * Moving **forward** off the basics step is the one exception: it runs
+ * `validateBasicStep()` first and stays put with the messages on screen if
+ * anything fails. That step holds the fields every later one hangs off — the
+ * listing type decides whether there is a price, the quantity whether there
+ * are sex counts — and being bounced back to it from the review step is the
+ * worst outcome the form has. The check is a client mirror of the server
+ * rules, not a replacement; the same keys light up either way. Both the Next
+ * button and a forward jump on the stepper go through `goTo()`, so neither
+ * can skip it.
+ *
+ * A rejected save still re-opens the earliest step that owns a bad field: the
+ * message would otherwise land on a screen the user is not looking at.
+ * `STEP_KEYS` is the mapping, matched by prefix so `health.vaccinations.0`
  * lands on the healthcare step.
  *
  * The wizard owns navigation and nothing else. The form object belongs to the
@@ -108,8 +122,11 @@ const STEP_KEYS: Record<number, string[]> = {
         'name',
         'category_id',
         'breed_id',
-        'age',
+        'birth_date',
         'gender',
+        'quantity',
+        'male_count',
+        'female_count',
         'color',
         'weight',
         'listing_type',
@@ -161,8 +178,40 @@ const invalidSteps = computed(() =>
 
 const isLast = computed(() => current.value === steps.length);
 
+/**
+ * Whether the step on screen may be left in the forward direction.
+ *
+ * Only the basics step has a client check today. Stale messages from an
+ * earlier pass are cleared first, so a field that was fixed stops showing
+ * the old complaint, and the fresh set is handed to the form under the same
+ * keys the server uses.
+ */
+function mayLeaveForward(step: number): boolean {
+    if (step !== 1) {
+        return true;
+    }
+
+    form.clearErrors(...BASIC_STEP_FIELDS);
+
+    const errors = validateBasicStep(form);
+
+    if (Object.keys(errors).length === 0) {
+        return true;
+    }
+
+    form.setError(errors);
+
+    return false;
+}
+
 function goTo(step: number): void {
-    current.value = Math.min(Math.max(step, 1), steps.length);
+    const target = Math.min(Math.max(step, 1), steps.length);
+
+    if (target > current.value && !mayLeaveForward(current.value)) {
+        return;
+    }
+
+    current.value = target;
 
     if (!visited.value.includes(current.value)) {
         visited.value = [...visited.value, current.value];

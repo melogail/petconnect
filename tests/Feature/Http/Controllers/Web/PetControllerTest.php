@@ -40,39 +40,42 @@ const OPTIONAL_COLLECTION_KEYS = [
 function petFormPayload(Category $category, array $overrides = []): array
 {
     return array_replace_recursive([
-        'name' => 'Luna',
-        'category_id' => $category->getKey(),
-        'breed_id' => null,
-        'age' => '2',
-        'gender' => 'female',
-        'color' => 'Black',
-        'weight' => '4.2',
-        'description' => 'A calm indoor cat looking for a quiet home.',
-        'listing_type' => 'adoption',
-        'price' => null,
-        'status' => 'available',
-        'location' => [
-            'address' => '12 Nile Street',
+        'name'           => 'Luna',
+        'category_id'    => $category->getKey(),
+        'breed_id'       => null,
+        'birth_date'     => '2024-01-15',
+        'gender'         => 'female',
+        'quantity'       => 1,
+        'male_count'     => null,
+        'female_count'   => null,
+        'color'          => 'Black',
+        'weight'         => '4.2',
+        'description'    => 'A calm indoor cat looking for a quiet home.',
+        'listing_type'   => 'adoption',
+        'price'          => null,
+        'status'         => 'available',
+        'location'       => [
+            'address'         => '12 Nile Street',
             'detailedAddress' => 'Building 3, Apartment 7',
-            'city' => 'Cairo',
-            'state' => 'Cairo',
-            'postalCode' => '11511',
-            'country' => 'Egypt',
-            'coordinates' => ['lat' => '30.0444', 'lng' => '31.2357'],
+            'city'            => 'Cairo',
+            'state'           => 'Cairo',
+            'postalCode'      => '11511',
+            'country'         => 'Egypt',
+            'coordinates'     => ['lat' => '30.0444', 'lng' => '31.2357'],
         ],
-        'health' => [
-            'status' => 'healthy',
-            'vaccinated' => true,
+        'health'         => [
+            'status'         => 'healthy',
+            'vaccinated'     => true,
             'spayedNeutered' => true,
-            'specialNeeds' => 'None',
-            'lastVetVisit' => '2024-01-15',
-            'vaccinations' => [['name' => 'Rabies', 'date' => '2024-01-15']],
-            'medications' => [['name' => 'Flea drops', 'usage' => 'Monthly']],
-            'allergies' => ['Dust'],
-            'vetName' => 'Dr. Hana',
-            'vetPhone' => '+20-100-000-0000',
+            'specialNeeds'   => 'None',
+            'lastVetVisit'   => '2024-01-15',
+            'vaccinations'   => [['name' => 'Rabies', 'date' => '2024-01-15']],
+            'medications'    => [['name' => 'Flea drops', 'usage' => 'Monthly']],
+            'allergies'      => ['Dust'],
+            'vetName'        => 'Dr. Hana',
+            'vetPhone'       => '+20-100-000-0000',
         ],
-        'traits' => ['friendly'],
+        'traits'         => ['friendly'],
         'additionalInfo' => ['house_trained' => 'yes'],
     ], $overrides);
 }
@@ -94,7 +97,26 @@ describe('show', function () {
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('pets/Show')
-                ->where('pet.id', $pet->getKey()));
+                ->where('pet.id', $pet->getKey())
+                ->where('pet.slug', $pet->slug));
+    });
+
+    /**
+     * The route key is the slug, so `pets/{id}` is not a listing URL and must
+     * 404 rather than quietly resolve: an enumerable id was the whole point of
+     * moving off it.
+     */
+    test('a listing is addressed by its slug, not its id', function () {
+        $pet = Pet::factory()->create(['slug' => 'golden-retriever-k3m9x2qa']);
+
+        expect(route('pets.show', $pet))->toEndWith('/pets/golden-retriever-k3m9x2qa');
+
+        $this->get('/pets/golden-retriever-k3m9x2qa')->assertOk();
+        $this->get('/pets/'.$pet->getKey())->assertNotFound();
+    });
+
+    test('an unknown slug is 404', function () {
+        $this->get('/pets/no-such-listing-00000000')->assertNotFound();
     });
 
     test('a visit counts a view on the listing', function () {
@@ -127,7 +149,7 @@ describe('show', function () {
      */
     test('ships the comment bounds the composer and the thread are drawn from', function () {
         config([
-            'petconnect.comments.max_length' => 140,
+            'petconnect.comments.max_length'      => 140,
             'petconnect.comments.thread_per_page' => 3,
         ]);
         $pet = Pet::factory()->create();
@@ -182,7 +204,7 @@ describe('create', function () {
      */
     test('ships the photo ceilings the picker enforces, and enforces the same ones', function () {
         config([
-            'petconnect.pets.max_gallery_images' => 5,
+            'petconnect.pets.max_gallery_images'  => 5,
             'petconnect.pets.max_image_kilobytes' => 256,
         ]);
 
@@ -226,33 +248,33 @@ describe('store', function () {
 
     test('publishes a listing owned by the acting user', function () {
         Storage::fake(config('media-library.disk_name'));
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
 
         $response = $this->actingAs($owner)->post(route('pets.store'), petFormPayload($category, [
             'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]));
 
-        $pet = Pet::query()->sole();
+        $pet      = Pet::query()->sole();
 
         $response->assertRedirect(route('pets.show', $pet));
         $this->assertDatabaseHas('pets', [
-            'id' => $pet->getKey(),
-            'user_id' => $owner->getKey(),
+            'id'          => $pet->getKey(),
+            'user_id'     => $owner->getKey(),
             'category_id' => $category->getKey(),
-            'name' => 'Luna',
-            'city' => 'Cairo',
-            'vet_phone' => '+20-100-000-0000',
+            'name'        => 'Luna',
+            'city'        => 'Cairo',
+            'vet_phone'   => '+20-100-000-0000',
         ]);
         expect($pet->featuredPhoto())->not->toBeNull();
     });
 
     test('publishes a listing that carries no traits, no repeaters and no map pin', function () {
         Storage::fake(config('media-library.disk_name'));
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
 
-        $payload = petFormPayload($category, [
+        $payload  = petFormPayload($category, [
             'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]);
 
@@ -262,28 +284,28 @@ describe('store', function () {
 
         $response = $this->actingAs($owner)->post(route('pets.store'), $payload)->assertValid();
 
-        $pet = Pet::query()->sole();
+        $pet      = Pet::query()->sole();
 
         $response->assertRedirect(route('pets.show', $pet));
         $this->assertDatabaseHas('pets', [
-            'id' => $pet->getKey(),
-            'user_id' => $owner->getKey(),
-            'name' => 'Luna',
-            'traits' => null,
+            'id'              => $pet->getKey(),
+            'user_id'         => $owner->getKey(),
+            'name'            => 'Luna',
+            'traits'          => null,
             'additional_info' => null,
-            'vaccinations' => null,
-            'medications' => null,
-            'allergies' => null,
-            'latitude' => null,
-            'longitude' => null,
+            'vaccinations'    => null,
+            'medications'     => null,
+            'allergies'       => null,
+            'latitude'        => null,
+            'longitude'       => null,
         ]);
     });
 
     test('rejects a payload that omits a key the write bag owns, and publishes nothing', function (string $omitted) {
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
 
-        $payload = petFormPayload($category, [
+        $payload  = petFormPayload($category, [
             'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
         ]);
         Arr::forget($payload, $omitted);
@@ -295,12 +317,141 @@ describe('store', function () {
         expect(Pet::query()->count())->toBe(0);
     })->with([
         "the veterinarian's phone number" => ['health.vetPhone'],
-        'the whole health group' => ['health'],
+        'the whole health group'          => ['health'],
+        'the birth date'                  => ['birth_date'],
+        'the male count'                  => ['male_count'],
+        'the female count'                => ['female_count'],
     ]);
 
-    test('rejects a breed that belongs to another category', function () {
-        $owner = User::factory()->create();
+    test('publishes an adoption litter with no name and both sex counts', function () {
+        Storage::fake(config('media-library.disk_name'));
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
+
+        $this->actingAs($owner)->post(route('pets.store'), petFormPayload($category, [
+            'featuredImage' => UploadedFile::fake()->image('cover.jpg'),
+            'name'          => null,
+            'gender'        => 'mixed',
+            'quantity'      => 4,
+            'male_count'    => 3,
+            'female_count'  => 1,
+        ]))->assertValid();
+
+        $this->assertDatabaseHas('pets', [
+            'name'         => null,
+            'gender'       => 'mixed',
+            'quantity'     => 4,
+            'male_count'   => 3,
+            'female_count' => 1,
+        ]);
+    });
+
+    test('requires a name for a single animal', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, ['name' => null]))
+            ->assertInvalid(['name' => 'required']);
+
+        expect(Pet::query()->count())->toBe(0);
+    });
+
+    test('rejects a litter whose sex counts do not add up to the quantity', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, [
+                'gender'       => 'mixed',
+                'quantity'     => 4,
+                'male_count'   => 1,
+                'female_count' => 1,
+            ]))
+            ->assertInvalid(['quantity' => 'The male and female counts must add up to the quantity.']);
+
+        expect(Pet::query()->count())->toBe(0);
+    });
+
+    test('requires both sex counts on a litter', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, [
+                'gender'       => 'mixed',
+                'quantity'     => 2,
+                'male_count'   => null,
+                'female_count' => null,
+            ]))
+            ->assertInvalid(['male_count' => 'required', 'female_count' => 'required']);
+
+        expect(Pet::query()->count())->toBe(0);
+    });
+
+    test('rejects more than one animal on anything but an adoption listing', function (string $listingType) {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, [
+                'listing_type' => $listingType,
+                'price'        => '100',
+                'gender'       => 'mixed',
+                'quantity'     => 2,
+                'male_count'   => 1,
+                'female_count' => 1,
+            ]))
+            ->assertInvalid(['quantity' => 'Only an adoption listing can offer more than one animal.']);
+
+        expect(Pet::query()->count())->toBe(0);
+    })->with(['sale', 'mating']);
+
+    test('rejects a gender that disagrees with the sex counts', function (string $gender, int $maleCount, int $femaleCount, string $message) {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, [
+                'gender'       => $gender,
+                'quantity'     => $maleCount + $femaleCount,
+                'male_count'   => $maleCount,
+                'female_count' => $femaleCount,
+            ]))
+            ->assertInvalid(['gender' => $message]);
+
+        expect(Pet::query()->count())->toBe(0);
+    })->with([
+        'a male litter with a female in it' => ['male', 2, 1, 'A male listing cannot include females.'],
+        'a female litter with a male in it' => ['female', 1, 2, 'A female listing cannot include males.'],
+        'a mixed litter of one sex'         => ['mixed', 3, 0, 'A mixed listing needs at least one male and one female.'],
+    ]);
+
+    test('rejects a mixed gender on a single animal', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, ['gender' => 'mixed']))
+            ->assertInvalid(['gender' => 'A mixed listing must offer more than one animal.']);
+
+        expect(Pet::query()->count())->toBe(0);
+    });
+
+    test('rejects a birth date in the future', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->actingAs($owner)
+            ->post(route('pets.store'), petFormPayload($category, ['birth_date' => now()->addDay()->toDateString()]))
+            ->assertInvalid(['birth_date']);
+
+        expect(Pet::query()->count())->toBe(0);
+    });
+
+    test('rejects a breed that belongs to another category', function () {
+        $owner      = User::factory()->create();
+        $category   = Category::factory()->create();
         $otherBreed = Breed::factory()->for(Category::factory())->create();
 
         $this->actingAs($owner)
@@ -311,10 +462,10 @@ describe('store', function () {
     });
 
     test('rejects a value longer than the column it is written to', function (string $field, int $limit) {
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
 
-        $payload = petFormPayload($category);
+        $payload  = petFormPayload($category);
         data_set($payload, $field, str_repeat('a', $limit + 1));
 
         $this->actingAs($owner)
@@ -323,10 +474,10 @@ describe('store', function () {
 
         expect(Pet::query()->count())->toBe(0);
     })->with([
-        'name' => ['name', 255],
-        'street address' => ['location.address', 255],
-        'city' => ['location.city', 255],
-        'postal code' => ['location.postalCode', 255],
+        'name'                        => ['name', 255],
+        'street address'              => ['location.address', 255],
+        'city'                        => ['location.city', 255],
+        'postal code'                 => ['location.postalCode', 255],
         "veterinarian's phone number" => ['health.vetPhone', 20],
     ]);
 });
@@ -342,7 +493,7 @@ describe('edit', function () {
 
     test('renders the form for the owner', function () {
         $owner = User::factory()->create();
-        $pet = Pet::factory()->for($owner)->create();
+        $pet   = Pet::factory()->for($owner)->create();
 
         $this->actingAs($owner)
             ->get(route('pets.edit', $pet))
@@ -361,11 +512,11 @@ describe('edit', function () {
      */
     test('ships the same photo ceilings to the edit form', function () {
         config([
-            'petconnect.pets.max_gallery_images' => 5,
+            'petconnect.pets.max_gallery_images'  => 5,
             'petconnect.pets.max_image_kilobytes' => 256,
         ]);
         $owner = User::factory()->create();
-        $pet = Pet::factory()->for($owner)->create();
+        $pet   = Pet::factory()->for($owner)->create();
 
         $this->actingAs($owner)
             ->get(route('pets.edit', $pet))
@@ -378,7 +529,7 @@ describe('edit', function () {
 describe('update', function () {
     test('returns 403 for a user who does not own the listing and leaves it unchanged', function () {
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($category)->create(['name' => 'Original']);
+        $pet      = Pet::factory()->for($category)->create(['name' => 'Original']);
 
         $this->actingAs(User::factory()->create())
             ->put(route('pets.update', $pet), petFormPayload($category))
@@ -388,30 +539,30 @@ describe('update', function () {
     });
 
     test('applies the edit for the owner', function () {
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
+        $pet      = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
 
         $this->actingAs($owner)
             ->put(route('pets.update', $pet), petFormPayload($category, ['name' => 'Renamed']))
             ->assertRedirect(route('pets.show', $pet));
 
         $this->assertDatabaseHas('pets', [
-            'id' => $pet->getKey(),
-            'name' => 'Renamed',
+            'id'      => $pet->getKey(),
+            'name'    => 'Renamed',
             'user_id' => $owner->getKey(),
         ]);
     });
 
     test('returns 422 for a payload that omits a key the write bag owns, and leaves the listing unchanged', function (string $omitted) {
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create([
-            'vet_phone' => '+20-100-000-0000',
+        $pet      = Pet::factory()->for($owner)->for($category)->create([
+            'vet_phone'     => '+20-100-000-0000',
             'special_needs' => 'Needs daily insulin',
         ]);
 
-        $payload = petFormPayload($category, ['name' => 'Renamed']);
+        $payload  = petFormPayload($category, ['name' => 'Renamed']);
         Arr::forget($payload, $omitted);
 
         $this->actingAs($owner)
@@ -420,22 +571,44 @@ describe('update', function () {
             ->assertInvalid([$omitted => 'must be present']);
 
         $this->assertDatabaseHas('pets', [
-            'id' => $pet->getKey(),
-            'name' => $pet->name,
-            'vet_phone' => '+20-100-000-0000',
+            'id'            => $pet->getKey(),
+            'name'          => $pet->name,
+            'vet_phone'     => '+20-100-000-0000',
             'special_needs' => 'Needs daily insulin',
         ]);
     })->with([
         "the veterinarian's phone number" => ['health.vetPhone'],
-        'the whole health group' => ['health'],
+        'the whole health group'          => ['health'],
     ]);
 
-    test('clears a field sent as null, because a PUT replaces the listing', function () {
-        $owner = User::factory()->create();
+    test('turning a litter back into a single animal clears the sex counts', function () {
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create([
-            'vet_name' => 'Dr. Hana',
-            'vet_phone' => '+20-100-000-0000',
+        $pet      = Pet::factory()->for($owner)->for($category)->litter(2, 2)->create();
+
+        $this->actingAs($owner)
+            ->put(route('pets.update', $pet), petFormPayload($category, [
+                'quantity'     => 1,
+                'male_count'   => 2,
+                'female_count' => 2,
+            ]))
+            ->assertRedirect(route('pets.show', $pet));
+
+        $this->assertDatabaseHas('pets', [
+            'id'           => $pet->getKey(),
+            'name'         => 'Luna',
+            'quantity'     => 1,
+            'male_count'   => null,
+            'female_count' => null,
+        ]);
+    });
+
+    test('clears a field sent as null, because a PUT replaces the listing', function () {
+        $owner    = User::factory()->create();
+        $category = Category::factory()->create();
+        $pet      = Pet::factory()->for($owner)->for($category)->create([
+            'vet_name'      => 'Dr. Hana',
+            'vet_phone'     => '+20-100-000-0000',
             'special_needs' => 'Needs daily insulin',
         ]);
 
@@ -446,19 +619,19 @@ describe('update', function () {
             ->assertRedirect(route('pets.show', $pet));
 
         $this->assertDatabaseHas('pets', [
-            'id' => $pet->getKey(),
-            'vet_name' => null,
-            'vet_phone' => null,
+            'id'            => $pet->getKey(),
+            'vet_name'      => null,
+            'vet_phone'     => null,
             'special_needs' => null,
         ]);
     });
 
     test('ignores a media id that belongs to another listing', function () {
         Storage::fake(config('media-library.disk_name'));
-        $owner = User::factory()->create();
-        $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create();
-        $ownPhoto = attachGalleryPhoto($pet);
+        $owner      = User::factory()->create();
+        $category   = Category::factory()->create();
+        $pet        = Pet::factory()->for($owner)->for($category)->create();
+        $ownPhoto   = attachGalleryPhoto($pet);
         $otherPhoto = attachGalleryPhoto(Pet::factory()->create(), 'stranger.jpg');
 
         $this->actingAs($owner)
@@ -473,10 +646,10 @@ describe('update', function () {
 
     test('removes a media id that belongs to the listing', function () {
         Storage::fake(config('media-library.disk_name'));
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create();
-        $photo = attachGalleryPhoto($pet);
+        $pet      = Pet::factory()->for($owner)->for($category)->create();
+        $photo    = attachGalleryPhoto($pet);
 
         $this->actingAs($owner)
             ->put(route('pets.update', $pet), petFormPayload($category, [
@@ -490,9 +663,9 @@ describe('update', function () {
     test('rejects an edit that would push the gallery past its cap, before anything is written', function () {
         Storage::fake(config('media-library.disk_name'));
         config(['petconnect.pets.max_gallery_images' => 3]);
-        $owner = User::factory()->create();
+        $owner    = User::factory()->create();
         $category = Category::factory()->create();
-        $pet = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
+        $pet      = Pet::factory()->for($owner)->for($category)->create(['name' => 'Original']);
 
         foreach (['a.jpg', 'b.jpg', 'c.jpg'] as $name) {
             attachGalleryPhoto($pet, $name);
@@ -500,7 +673,7 @@ describe('update', function () {
 
         $this->actingAs($owner)
             ->put(route('pets.update', $pet), petFormPayload($category, [
-                'name' => 'Renamed',
+                'name'   => 'Renamed',
                 'images' => [UploadedFile::fake()->image('d.jpg')],
             ]))
             ->assertInvalid(['images' => 'This listing can hold 3 additional images; the edit would leave it with 4.']);
@@ -528,7 +701,7 @@ describe('destroy', function () {
      */
     test('soft deletes the listing for the owner and lands on their profile', function () {
         $owner = User::factory()->create();
-        $pet = Pet::factory()->for($owner)->create();
+        $pet   = Pet::factory()->for($owner)->create();
 
         $this->actingAs($owner)
             ->delete(route('pets.destroy', $pet))
@@ -551,7 +724,7 @@ describe('status toggle', function () {
 
     test('flips the listing to unavailable for the owner', function () {
         $owner = User::factory()->create();
-        $pet = Pet::factory()->for($owner)->available()->create();
+        $pet   = Pet::factory()->for($owner)->available()->create();
 
         $this->actingAs($owner)
             ->from(route('pets.show', $pet))
@@ -565,7 +738,7 @@ describe('status toggle', function () {
 describe('like', function () {
     test('records a like for a verified user', function () {
         $liker = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet   = Pet::factory()->create();
 
         $this->actingAs($liker)
             ->from(route('pets.show', $pet))
@@ -573,14 +746,14 @@ describe('like', function () {
             ->assertRedirect(route('pets.show', $pet));
 
         $this->assertDatabaseHas('likes', [
-            'user_id' => $liker->getKey(),
+            'user_id'     => $liker->getKey(),
             'likeable_id' => $pet->getKey(),
         ]);
     });
 
     test('returns 429 once the acting user passes 30 likes in a minute', function () {
         $liker = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet   = Pet::factory()->create();
 
         for ($attempt = 0; $attempt < 30; $attempt++) {
             $this->actingAs($liker)->post(route('pets.like', $pet))->assertRedirect();

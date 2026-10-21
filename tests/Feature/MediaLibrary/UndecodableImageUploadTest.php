@@ -55,41 +55,44 @@ function mediaTemporaryDirectoryCount(): int
 function undecodablePetPayload(Category $category): array
 {
     return [
-        'name' => 'Luna',
-        'category_id' => $category->getKey(),
-        'breed_id' => null,
-        'age' => '2',
-        'gender' => 'female',
-        'color' => 'Black',
-        'weight' => '4.2',
-        'description' => 'A calm indoor cat looking for a quiet home.',
-        'listing_type' => 'adoption',
-        'price' => null,
-        'status' => 'available',
-        'location' => [
-            'address' => '12 Nile Street',
+        'name'           => 'Luna',
+        'category_id'    => $category->getKey(),
+        'breed_id'       => null,
+        'birth_date'     => '2024-01-15',
+        'gender'         => 'female',
+        'quantity'       => 1,
+        'male_count'     => null,
+        'female_count'   => null,
+        'color'          => 'Black',
+        'weight'         => '4.2',
+        'description'    => 'A calm indoor cat looking for a quiet home.',
+        'listing_type'   => 'adoption',
+        'price'          => null,
+        'status'         => 'available',
+        'location'       => [
+            'address'         => '12 Nile Street',
             'detailedAddress' => 'Building 3, Apartment 7',
-            'city' => 'Cairo',
-            'state' => 'Cairo',
-            'postalCode' => '11511',
-            'country' => 'Egypt',
-            'coordinates' => ['lat' => '30.0444', 'lng' => '31.2357'],
+            'city'            => 'Cairo',
+            'state'           => 'Cairo',
+            'postalCode'      => '11511',
+            'country'         => 'Egypt',
+            'coordinates'     => ['lat' => '30.0444', 'lng' => '31.2357'],
         ],
-        'health' => [
-            'status' => 'healthy',
-            'vaccinated' => true,
+        'health'         => [
+            'status'         => 'healthy',
+            'vaccinated'     => true,
             'spayedNeutered' => true,
-            'specialNeeds' => 'None',
-            'lastVetVisit' => '2024-01-15',
-            'vaccinations' => [['name' => 'Rabies', 'date' => '2024-01-15']],
-            'medications' => [['name' => 'Flea drops', 'usage' => 'Monthly']],
-            'allergies' => ['Dust'],
-            'vetName' => 'Dr. Hana',
-            'vetPhone' => '+20-100-000-0000',
+            'specialNeeds'   => 'None',
+            'lastVetVisit'   => '2024-01-15',
+            'vaccinations'   => [['name' => 'Rabies', 'date' => '2024-01-15']],
+            'medications'    => [['name' => 'Flea drops', 'usage' => 'Monthly']],
+            'allergies'      => ['Dust'],
+            'vetName'        => 'Dr. Hana',
+            'vetPhone'       => '+20-100-000-0000',
         ],
-        'traits' => ['friendly'],
+        'traits'         => ['friendly'],
         'additionalInfo' => ['house_trained' => 'yes'],
-        'featuredImage' => undecodableJpegUpload('cover.jpg'),
+        'featuredImage'  => undecodableJpegUpload('cover.jpg'),
     ];
 }
 
@@ -105,10 +108,10 @@ function undecodablePetPayload(Category $category): array
  */
 test('a conversion that throws leaves no temporary directory behind', function () {
     Storage::fake(config('media-library.disk_name'));
-    $pet = Pet::factory()->create();
+    $pet                        = Pet::factory()->create();
     $temporaryDirectoriesBefore = mediaTemporaryDirectoryCount();
 
-    $thrown = null;
+    $thrown                     = null;
 
     try {
         $pet->addMedia(undecodableJpegUpload())->toMediaCollection(Pet::PHOTO_COLLECTION);
@@ -129,7 +132,7 @@ test('a conversion that throws leaves no temporary directory behind', function (
  */
 test('rejects an undecodable cover photo with a 422 and stores no media', function () {
     Storage::fake(config('media-library.disk_name'));
-    $owner = User::factory()->create();
+    $owner    = User::factory()->create();
     $category = Category::factory()->create();
 
     $this->actingAs($owner)

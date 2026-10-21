@@ -30,19 +30,19 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             BreedSeeder::class,
 
-            UserSeeder::class,
+            // UserSeeder::class,
             AdminSeeder::class,
 
-            PetSeeder::class,
+            // PetSeeder::class,
 
-            CommentSeeder::class,
-            LikeSeeder::class,
-            SaveSeeder::class,
-            ReviewSeeder::class,
-            ReportSeeder::class,
+            // CommentSeeder::class,
+            // LikeSeeder::class,
+            // SaveSeeder::class,
+            // ReviewSeeder::class,
+            // ReportSeeder::class,
 
-            ConversationSeeder::class,
-            MessageSeeder::class,
+            // ConversationSeeder::class,
+            // MessageSeeder::class,
         ]);
     }
 }

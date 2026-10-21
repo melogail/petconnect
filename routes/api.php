@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\Auth\SocialLoginController;
 use App\Http\Controllers\Api\V1\BadgeController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CommentController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\V1\PetController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ReviewController;
+use App\Models\Pet;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,7 +72,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
 
     Route::get('pets', [PetController::class, 'index'])->name('pets.index');
-    Route::get('pets/{pet}', [PetController::class, 'show'])->whereNumber('pet')->name('pets.show');
+    Route::get('pets/{pet}', [PetController::class, 'show'])->where('pet', Pet::ROUTE_KEY_PATTERN)->name('pets.show');
 
     Route::whereNumber('user')->prefix('profiles')->name('profiles.')->group(function (): void {
         Route::get('{user}', [ProfileController::class, 'show'])->name('show');
@@ -112,6 +114,15 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('login', [LoginController::class, 'store'])
             ->middleware('throttle:login')
             ->name('login');
+
+        /*
+         * The token half of the browser's `social.*` routes: the app runs the
+         * provider SDK itself and posts the access token. Same enum binding,
+         * same `social-logins` bucket, same Action behind it.
+         */
+        Route::post('social/{provider}', [SocialLoginController::class, 'store'])
+            ->middleware('throttle:social-logins')
+            ->name('social');
 
         Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
             ->middleware('throttle:password-reset-links')
@@ -180,7 +191,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             ->middleware('throttle:pet-listings')
             ->name('pets.store');
 
-        Route::whereNumber('pet')->group(function (): void {
+        Route::where(['pet' => Pet::ROUTE_KEY_PATTERN])->group(function (): void {
             Route::put('pets/{pet}', [PetController::class, 'update'])
                 ->middleware('throttle:pet-listing-edits')
                 ->name('pets.update');

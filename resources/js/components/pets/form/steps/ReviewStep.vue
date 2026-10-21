@@ -38,9 +38,9 @@ function label<T extends string>(
 /**
  * A numeric-ish box read back, with its unit, or null when it is blank.
  *
- * `age`, `weight` and `price` are `InputValue` — a `v-model` is free to write a
- * `number` into any of them — so they are coerced here rather than compared
- * against `''` and interpolated raw.
+ * `quantity`, the sex counts, `weight` and `price` are `InputValue` — a
+ * `v-model` is free to write a `number` into any of them — so they are coerced
+ * here rather than compared against `''` and interpolated raw.
  */
 function unit(value: InputValue, suffix?: string): string | null {
     const text = trimmedInput(value);
@@ -98,8 +98,16 @@ const basics = computed<DetailItem[]>(() => [
                 .flatMap((category) => category.breeds ?? [])
                 .find((breed) => breed.id === form.breed_id)?.name ?? null,
     },
-    { label: 'Age', value: unit(form.age, 'years') },
+    { label: 'Birth date', value: unit(form.birth_date) },
     { label: 'Gender', value: label(options.genders, form.gender) },
+    { label: 'Quantity', value: unit(form.quantity) },
+    {
+        label: 'Males / females',
+        value:
+            Number(form.quantity) > 1
+                ? `${unit(form.male_count) ?? '0'} / ${unit(form.female_count) ?? '0'}`
+                : null,
+    },
     { label: 'Colour', value: form.color },
     { label: 'Weight', value: unit(form.weight, 'kg') },
     {

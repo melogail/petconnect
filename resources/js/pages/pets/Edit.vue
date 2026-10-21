@@ -4,11 +4,14 @@ import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import PetFormWizard from '@/components/pets/form/PetFormWizard.vue';
 import { Button } from '@/components/ui/button';
+import { useLocale } from '@/composables/useLocale';
+import { useTranslations } from '@/composables/useTranslations';
 import {
     petFormFromDetail,
     toPetPayload,
     type PetFormState,
 } from '@/lib/petForm';
+import { petTitle } from '@/lib/petTitle';
 import { show as showPet, update as updatePet } from '@/routes/pets';
 import type {
     PetCategoryOption,
@@ -69,10 +72,16 @@ const options = computed<PetFormOptions>(() => ({
     healthStatuses: props.healthStatuses,
 }));
 
+const { t } = useTranslations();
+const { locale } = useLocale();
+
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(props.pet, t, locale.value.current));
+
 const form = useForm<PetFormState>(petFormFromDetail(props.pet));
 
 function submit(): void {
-    form.transform(toPetPayload).post(updatePet.form(props.pet.id).action, {
+    form.transform(toPetPayload).post(updatePet.form(props.pet.slug).action, {
         preserveScroll: true,
     });
 }
@@ -80,18 +89,18 @@ function submit(): void {
 
 <template>
     <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-        <Head :title="`Edit ${pet.name}`" />
+        <Head :title="`Edit ${name}`" />
 
         <!-- `Heading` renders an h2, so the page still owes the document an h1. -->
-        <h1 class="sr-only">Edit {{ pet.name }}</h1>
+        <h1 class="sr-only">Edit {{ name }}</h1>
 
         <div class="flex flex-wrap items-end justify-between gap-3">
             <Heading
-                :title="`Edit ${pet.name}`"
+                :title="`Edit ${name}`"
                 description="Saving replaces the whole listing, so every field is posted."
             />
             <Button as-child variant="outline">
-                <Link :href="showPet(pet.id)">Back to listing</Link>
+                <Link :href="showPet(pet.slug)">Back to listing</Link>
             </Button>
         </div>
 

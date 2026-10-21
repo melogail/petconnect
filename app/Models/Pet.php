@@ -12,10 +12,14 @@ use App\Enums\ListingType;
 use App\Enums\PetGender;
 use App\Enums\PetStatus;
 use App\MediaLibrary\ConvertibleImageTypes;
+use App\Observers\PetObserver;
 use Database\Factories\PetFactory;
+use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,10 +39,14 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property int $user_id
  * @property int $category_id
  * @property int|null $breed_id
- * @property string $name
- * @property string $age
+ * @property string|null $name Null on a multi-animal listing, which has no single name.
+ * @property string $slug The URL key, assigned by PetObserver::creating(); see ROUTE_KEY_PATTERN.
+ * @property Carbon|null $birth_date
  * @property PetGender $gender
- * @property string $color
+ * @property int $quantity How many animals the listing offers; 1 unless it is an adoption litter.
+ * @property int|null $male_count Only set when $quantity > 1; sums with $female_count to $quantity.
+ * @property int|null $female_count Only set when $quantity > 1; sums with $male_count to $quantity.
+ * @property string|null $color
  * @property string|null $weight
  * @property string $description
  * @property ListingType $listing_type
@@ -68,15 +76,22 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read float|null $age Years since $birth_date, to two decimals; null when the date is unknown.
  * @property-read float|null $distance Only present when the withDistance() scope is applied.
  */
+#[Appends(['age'])]
+#[ObservedBy(PetObserver::class)]
 #[Fillable([
     'user_id',
     'category_id',
     'breed_id',
     'name',
-    'age',
+    'slug',
+    'birth_date',
     'gender',
+    'quantity',
+    'male_count',
+    'female_count',
     'color',
     'weight',
     'description',
@@ -113,7 +128,19 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
      * The single photo collection; the cover photo is the member carrying the
      * `featured` custom property.
      */
-    public const PHOTO_COLLECTION = 'pets';
+    /**
+     * What a `{pet}` route parameter may look like.
+     *
+     * Listings are addressed by `slug`, never by id (see getRouteKeyName()),
+     * so a listing URL cannot be enumerated and reads as the breed it offers.
+     * The pattern is what Str::slug() emits plus the observer's random suffix,
+     * and it is the constraint both route files put on `{pet}`. The one
+     * literal it must never match is `create`: `pets/create` is registered
+     * after the public `pets/{pet}` and would otherwise be swallowed by it.
+     */
+    public const ROUTE_KEY_PATTERN = '(?!create$)[a-z0-9]+(?:-[a-z0-9]+)*';
+
+    public const PHOTO_COLLECTION  = 'pets';
 
     /**
      * Custom property marking the cover photo inside the photo collection.
@@ -123,7 +150,7 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
     /**
      * Earth's mean radius in kilometres, used by the Haversine distance.
      */
-    private const EARTH_RADIUS_KM = 6371.0;
+    private const EARTH_RADIUS_KM  = 6371.0;
 
     /**
      * Get the attributes that should be cast.
@@ -133,22 +160,40 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
     protected function casts(): array
     {
         return [
-            'category_id' => 'integer',
-            'breed_id' => 'integer',
-            'views' => 'integer',
-            'gender' => PetGender::class,
-            'listing_type' => ListingType::class,
-            'status' => PetStatus::class,
-            'health_status' => HealthStatus::class,
-            'vaccinated' => 'boolean',
+            'category_id'     => 'integer',
+            'breed_id'        => 'integer',
+            'birth_date'      => 'date',
+            'quantity'        => 'integer',
+            'male_count'      => 'integer',
+            'female_count'    => 'integer',
+            'views'           => 'integer',
+            'gender'          => PetGender::class,
+            'listing_type'    => ListingType::class,
+            'status'          => PetStatus::class,
+            'health_status'   => HealthStatus::class,
+            'vaccinated'      => 'boolean',
             'spayed_neutered' => 'boolean',
-            'last_vet_visit' => 'date',
-            'vaccinations' => 'array',
-            'medications' => 'array',
-            'allergies' => 'array',
-            'traits' => 'array',
+            'last_vet_visit'  => 'date',
+            'vaccinations'    => 'array',
+            'medications'     => 'array',
+            'allergies'       => 'array',
+            'traits'          => 'array',
             'additional_info' => 'array',
         ];
+    }
+
+    /**
+     * Listings are addressed by slug: `pets/{slug}`, never `pets/{id}`.
+     *
+     * Not an override of getRouteKey(): that returns the key's *value*, and a
+     * method there returning the string `slug` makes every listing URL
+     * `/pets/slug`. PetObserver::creating() assigns the slug, so it exists
+     * from the first insert, and ROUTE_KEY_PATTERN is the matching route
+     * constraint.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 
     /**
@@ -282,7 +327,7 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
     #[Scope]
     protected function nearby(Builder $query, float $latitude, float $longitude, float $radiusKm): Builder
     {
-        $latitudeDelta = $radiusKm / 111.045;
+        $latitudeDelta  = $radiusKm / 111.045;
         $longitudeDelta = $radiusKm / (111.045 * max(cos(deg2rad($latitude)), 0.00001));
 
         $query
@@ -382,6 +427,35 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
                 ->where('longitude', '>=', $west)
                 ->orWhere('longitude', '<=', $east);
         });
+    }
+
+    /**
+     * Age in years, derived from the birth date.
+     *
+     * Fractional so a puppy reads as 0.25 rather than 0, which is what the
+     * feed's age filter compares against and what the client turns into
+     * "3 months". Null when the owner left the birth date blank; the previous
+     * `pets.age` varchar is gone and nothing stores an age any more.
+     *
+     * @return Attribute<float|null, never>
+     */
+    protected function age(): Attribute
+    {
+        return Attribute::get(function (): ?float {
+            if ($this->birth_date === null) {
+                return null;
+            }
+
+            return round($this->birth_date->diffInYears(Carbon::now()), 2);
+        });
+    }
+
+    /**
+     * Whether the listing offers more than one animal.
+     */
+    public function isLitter(): bool
+    {
+        return $this->quantity > 1;
     }
 
     /**

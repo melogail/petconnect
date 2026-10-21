@@ -13,6 +13,10 @@ namespace App\Pipelines\Pets\BuildHomeFeed;
  * `$ageCeiling` is the configured upper bound an open-ended age filter falls
  * back to. It lives here, resolved once by the Action, so ApplyAgeRangeFilter
  * reads a property like every other step instead of reaching for config().
+ *
+ * `$search` is the header search box's free text, already trimmed by the
+ * request and null when blank; ApplySearchFilter matches it against the
+ * listing's name and its breed's and category's names.
  */
 class HomeFeedFilters
 {
@@ -29,6 +33,7 @@ class HomeFeedFilters
         public readonly array $listingTypes = [],
         public readonly ?bool $vaccinated = null,
         public readonly float $ageCeiling = 15.0,
+        public readonly ?string $search = null,
     ) {}
 
     /**
@@ -38,7 +43,8 @@ class HomeFeedFilters
      *     age_min?: float|null,
      *     age_max?: float|null,
      *     listing_types?: list<string>|null,
-     *     vaccinated?: bool|null
+     *     vaccinated?: bool|null,
+     *     search?: string|null
      * }  $filters
      */
     public static function fromArray(array $filters, float $ageCeiling = 15.0): self
@@ -51,7 +57,23 @@ class HomeFeedFilters
             listingTypes: self::stringList($filters['listing_types'] ?? []),
             vaccinated: isset($filters['vaccinated']) ? (bool) $filters['vaccinated'] : null,
             ageCeiling: $ageCeiling,
+            search: self::searchTerm($filters['search'] ?? null),
         );
+    }
+
+    /**
+     * Whether the visitor typed anything into the search box.
+     */
+    public function hasSearch(): bool
+    {
+        return $this->search !== null;
+    }
+
+    private static function searchTerm(mixed $value): ?string
+    {
+        $term = trim((string) (is_scalar($value) ? $value : ''));
+
+        return $term === '' ? null : $term;
     }
 
     /**

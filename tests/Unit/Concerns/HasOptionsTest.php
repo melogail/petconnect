@@ -16,7 +16,7 @@ function enumsWithOptions(): array
 
     foreach (glob(dirname(__DIR__, 3).'/app/Enums/*.php') ?: [] as $file) {
         $shortName = basename($file, '.php');
-        $enum = 'App\\Enums\\'.$shortName;
+        $enum      = 'App\\Enums\\'.$shortName;
 
         if (in_array(HasOptions::class, class_uses($enum), true)) {
             $enums[$shortName] = $enum;
@@ -44,5 +44,6 @@ test('an option pairs the backing value with the human label', function () {
     expect(PetGender::options())->toBe([
         ['value' => 'male', 'label' => 'Male'],
         ['value' => 'female', 'label' => 'Female'],
+        ['value' => 'mixed', 'label' => 'Mixed'],
     ]);
 });

@@ -42,11 +42,11 @@ export type PetExtraRow = {
  * repeater renders. `toPetPayload()` is the single boundary where this becomes
  * what `App\Concerns\PetValidationRules` accepts.
  *
- * The numeric-ish boxes — `age`, `weight`, `price` and the two coordinates —
- * are `InputValue`, not `string`, because `v-model` on an `<input>` is free to
- * write a `number` into them and did: a `type="number"` on those three fields
- * made `age.trim()` throw before the POST ever fired, and no listing could be
- * published or edited. `InputValue` is what makes `vue-tsc` refuse a bare
+ * The numeric-ish boxes — `quantity`, the two sex counts, `weight`, `price`
+ * and the two coordinates — are `InputValue`, not `string`, because `v-model`
+ * on an `<input>` is free to write a `number` into them and did: a
+ * `type="number"` on the old age field made `age.trim()` throw before the
+ * POST ever fired, and no listing could be published or edited. `InputValue` is what makes `vue-tsc` refuse a bare
  * string method here instead of leaving it to the browser. Nothing below
  * touches form state without going through `trimmedInput()`.
  *
@@ -60,8 +60,13 @@ export type PetFormState = {
     name: string;
     category_id: number | null;
     breed_id: number | null;
-    age: InputValue;
+    /** `Y-m-d` from a date input, or blank. */
+    birth_date: string;
     gender: PetGender | '';
+    /** Opens above 1 only on an adoption listing; see `BasicStep`. */
+    quantity: InputValue;
+    male_count: InputValue;
+    female_count: InputValue;
     color: string;
     weight: InputValue;
     description: string;
@@ -103,8 +108,11 @@ export function blankPetForm(defaultStatus: PetStatus | '' = ''): PetFormState {
         name: '',
         category_id: null,
         breed_id: null,
-        age: '',
+        birth_date: '',
         gender: '',
+        quantity: 1,
+        male_count: '',
+        female_count: '',
         color: '',
         weight: '',
         description: '',
@@ -152,11 +160,14 @@ export function blankPetForm(defaultStatus: PetStatus | '' = ''): PetFormState {
  */
 export function petFormFromDetail(pet: PetDetail): PetFormState {
     return {
-        name: pet.name,
+        name: pet.name ?? '',
         category_id: pet.category?.id ?? null,
         breed_id: pet.breed?.id ?? null,
-        age: pet.age ?? '',
+        birth_date: pet.birth_date ?? '',
         gender: pet.gender,
+        quantity: pet.quantity,
+        male_count: pet.male_count === null ? '' : String(pet.male_count),
+        female_count: pet.female_count === null ? '' : String(pet.female_count),
         color: pet.color ?? '',
         weight: pet.weight === null ? '' : String(pet.weight),
         description: pet.description ?? '',
@@ -277,13 +288,19 @@ function collection<T>(rows: T[]): T[] | null {
  * which allows null and rejects absence — and this function honours that by
  * always emitting all of them, null-valued when empty:
  *
- * - top level: `breed_id`, `weight`, `price`
+ * - top level: `name`, `breed_id`, `birth_date`, `male_count`,
+ *   `female_count`, `color`, `weight`, `price`
  * - `location`: `address`, `detailedAddress`, `postalCode`
  * - `health`: `status`, `vaccinated`, `spayedNeutered`, `specialNeeds`,
  *   `lastVetVisit`, `vetName`, `vetPhone`
  *
  * `health` itself is `present|array` and is never null, which is expressible
  * only because its seven scalar leaves are always on the wire.
+ *
+ * `quantity` is always a number — 1 unless the owner opened it up on an
+ * adoption listing — and the two sex counts go out as null whenever it is 1,
+ * whatever the boxes hold, so a litter that was turned back into a single
+ * animal does not post stale counts.
  *
  * The **collection** keys — `traits`, `additionalInfo`, `health.vaccinations`,
  * `health.medications`, `health.allergies`, `location.coordinates` — carry no
@@ -334,13 +351,19 @@ export function toPetPayload(state: PetFormState): Record<string, unknown> {
         }
     }
 
+    const quantity = numeric(state.quantity) ?? 1;
+    const isLitter = quantity > 1;
+
     const payload: Record<string, unknown> = {
-        name: trimmedInput(state.name),
+        name: text(state.name),
         category_id: state.category_id,
         breed_id: state.breed_id,
-        age: trimmedInput(state.age),
+        birth_date: text(state.birth_date),
         gender: state.gender,
-        color: trimmedInput(state.color),
+        quantity,
+        male_count: isLitter ? numeric(state.male_count) : null,
+        female_count: isLitter ? numeric(state.female_count) : null,
+        color: text(state.color),
         weight: numeric(state.weight),
         description: trimmedInput(state.description),
         listing_type: state.listing_type,

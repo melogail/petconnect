@@ -33,17 +33,17 @@ class ListHomeFeedRequest extends FormRequest
         $hasLocation = $this->filled('latitude') || $this->filled('longitude');
 
         return [
-            'latitude' => [$hasLocation ? 'required' : 'nullable', 'numeric', 'between:-90,90'],
-            'longitude' => [$hasLocation ? 'required' : 'nullable', 'numeric', 'between:-180,180'],
-            'radius' => ['nullable', 'numeric', 'min:'.$this->minRadiusKm(), 'max:'.$this->maxRadiusKm()],
+            'latitude'        => [$hasLocation ? 'required' : 'nullable', 'numeric', 'between:-90,90'],
+            'longitude'       => [$hasLocation ? 'required' : 'nullable', 'numeric', 'between:-180,180'],
+            'radius'          => ['nullable', 'numeric', 'min:'.$this->minRadiusKm(), 'max:'.$this->maxRadiusKm()],
 
-            'category_ids' => ['nullable', 'array', 'max:50'],
-            'category_ids.*' => ['integer', 'distinct', Rule::exists(Category::class, 'id')],
-            'breed_ids' => ['nullable', 'array', 'max:50'],
-            'breed_ids.*' => ['integer', 'distinct', Rule::exists(Breed::class, 'id')],
+            'category_ids'    => ['nullable', 'array', 'max:50'],
+            'category_ids.*'  => ['integer', 'distinct', Rule::exists(Category::class, 'id')],
+            'breed_ids'       => ['nullable', 'array', 'max:50'],
+            'breed_ids.*'     => ['integer', 'distinct', Rule::exists(Breed::class, 'id')],
 
-            'age_min' => ['nullable', 'numeric', 'min:0', 'max:'.$this->maxAgeYears()],
-            'age_max' => [
+            'age_min'         => ['nullable', 'numeric', 'min:0', 'max:'.$this->maxAgeYears()],
+            'age_max'         => [
                 'nullable',
                 'numeric',
                 'min:0',
@@ -51,10 +51,12 @@ class ListHomeFeedRequest extends FormRequest
                 Rule::when($this->filled('age_min'), ['gte:age_min']),
             ],
 
-            'listing_types' => ['nullable', 'array', 'max:'.count(ListingType::cases())],
+            'listing_types'   => ['nullable', 'array', 'max:'.count(ListingType::cases())],
             'listing_types.*' => ['distinct', Rule::enum(ListingType::class)],
 
-            'vaccinated' => ['nullable', 'boolean'],
+            'vaccinated'      => ['nullable', 'boolean'],
+
+            'search'          => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -116,7 +118,8 @@ class ListHomeFeedRequest extends FormRequest
      *     age_min: float|null,
      *     age_max: float|null,
      *     listing_types: list<string>,
-     *     vaccinated: bool|null
+     *     vaccinated: bool|null,
+     *     search: string|null
      * }
      */
     public function filters(): array
@@ -124,13 +127,16 @@ class ListHomeFeedRequest extends FormRequest
         /** @var array<string, mixed> $validated */
         $validated = $this->validated();
 
+        $search    = trim((string) ($validated['search'] ?? ''));
+
         return [
-            'category_ids' => array_map('intval', $validated['category_ids'] ?? []),
-            'breed_ids' => array_map('intval', $validated['breed_ids'] ?? []),
-            'age_min' => isset($validated['age_min']) ? (float) $validated['age_min'] : null,
-            'age_max' => isset($validated['age_max']) ? (float) $validated['age_max'] : null,
+            'category_ids'  => array_map('intval', $validated['category_ids'] ?? []),
+            'breed_ids'     => array_map('intval', $validated['breed_ids'] ?? []),
+            'age_min'       => isset($validated['age_min']) ? (float) $validated['age_min'] : null,
+            'age_max'       => isset($validated['age_max']) ? (float) $validated['age_max'] : null,
             'listing_types' => array_map('strval', $validated['listing_types'] ?? []),
-            'vaccinated' => isset($validated['vaccinated']) ? (bool) $validated['vaccinated'] : null,
+            'vaccinated'    => isset($validated['vaccinated']) ? (bool) $validated['vaccinated'] : null,
+            'search'        => $search === '' ? null : $search,
         ];
     }
 

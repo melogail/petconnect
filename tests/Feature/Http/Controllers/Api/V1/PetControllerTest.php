@@ -17,33 +17,36 @@ use Laravel\Sanctum\Sanctum;
 function apiPetPayload(Category $category, array $overrides = []): array
 {
     return array_replace_recursive([
-        'name' => 'Luna',
-        'category_id' => $category->getKey(),
-        'breed_id' => null,
-        'age' => '2',
-        'gender' => 'female',
-        'color' => 'Black',
-        'weight' => '4.2',
-        'description' => 'A calm indoor cat looking for a quiet home.',
+        'name'         => 'Luna',
+        'category_id'  => $category->getKey(),
+        'breed_id'     => null,
+        'birth_date'   => '2024-01-15',
+        'gender'       => 'female',
+        'quantity'     => 1,
+        'male_count'   => null,
+        'female_count' => null,
+        'color'        => 'Black',
+        'weight'       => '4.2',
+        'description'  => 'A calm indoor cat looking for a quiet home.',
         'listing_type' => 'adoption',
-        'price' => null,
-        'status' => 'available',
-        'location' => [
-            'address' => '12 Nile Street',
+        'price'        => null,
+        'status'       => 'available',
+        'location'     => [
+            'address'         => '12 Nile Street',
             'detailedAddress' => null,
-            'city' => 'Cairo',
-            'state' => 'Cairo',
-            'postalCode' => null,
-            'country' => 'Egypt',
+            'city'            => 'Cairo',
+            'state'           => 'Cairo',
+            'postalCode'      => null,
+            'country'         => 'Egypt',
         ],
-        'health' => [
-            'status' => 'healthy',
-            'vaccinated' => true,
+        'health'       => [
+            'status'         => 'healthy',
+            'vaccinated'     => true,
             'spayedNeutered' => false,
-            'specialNeeds' => null,
-            'lastVetVisit' => null,
-            'vetName' => null,
-            'vetPhone' => null,
+            'specialNeeds'   => null,
+            'lastVetVisit'   => null,
+            'vetName'        => null,
+            'vetPhone'       => null,
         ],
     ], $overrides);
 }
@@ -60,15 +63,15 @@ describe('index', function () {
     });
 
     test('a token bearer sees their own likes on the cards', function () {
-        $user = User::factory()->create();
-        $pet = Pet::factory()->available()->create();
+        $user     = User::factory()->create();
+        $pet      = Pet::factory()->available()->create();
         Pet::factory()->available()->create();
         $pet->like($user);
         Sanctum::actingAs($user);
 
         $response = $this->getJson(route('api.v1.pets.index'))->assertOk();
 
-        $liked = collect($response->json('data'))->firstWhere('id', $pet->getKey());
+        $liked    = collect($response->json('data'))->firstWhere('id', $pet->getKey());
 
         expect($liked['is_liked'])->toBeTrue()->and($liked['likes_count'])->toBe(1);
     });
@@ -91,6 +94,15 @@ describe('index', function () {
 });
 
 describe('show', function () {
+    test('a listing is addressed by its slug, not its id', function () {
+        $pet = Pet::factory()->create(['slug' => 'golden-retriever-k3m9x2qa']);
+
+        $this->getJson('/api/v1/pets/golden-retriever-k3m9x2qa')
+            ->assertOk()
+            ->assertJsonPath('slug', 'golden-retriever-k3m9x2qa');
+        $this->getJson('/api/v1/pets/'.$pet->getKey())->assertNotFound();
+    });
+
     test('a guest can read a listing and it counts a view', function () {
         $pet = Pet::factory()->create(['views' => 4]);
 
@@ -134,7 +146,7 @@ describe('store', function () {
 
     test('publishes a listing with its featured image', function () {
         Storage::fake(config('media-library.disk_name'));
-        $user = User::factory()->create();
+        $user     = User::factory()->create();
         $category = Category::factory()->create();
         Sanctum::actingAs($user);
 

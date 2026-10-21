@@ -36,7 +36,8 @@ import { like as likePet } from '@/routes/pets';
  * sign in.
  *
  * Established by SSR-rendering both branches through `vue/server-renderer` and
- * reading the emitted markup, at `petId: 3, likesCount: 10`, **on the outline
+ * reading the emitted markup, at `petId: 3, likesCount: 10` (the prop is
+ * `petSlug` now; the measurement predates the slug route key), **on the outline
  * heart markup this replaced** — the byte counts below are that layout's and
  * are kept as a record of the mechanism, not of today's output. Guest
  * (`canLike: false`): 1133 bytes at 87e21ff, 1112 after, the 21-byte
@@ -60,8 +61,8 @@ import { like as likePet } from '@/routes/pets';
  * passed from outside reaches both the guest `<a>` and the signed-in
  * `<button>`, and moving `aria-pressed` did not disturb it.
  */
-const { petId, likesCount, isLiked, canLike } = defineProps<{
-    petId: number;
+const { petSlug, likesCount, isLiked, canLike } = defineProps<{
+    petSlug: string;
     likesCount: number;
     isLiked: boolean;
     /** A signed-in viewer. `false` sends the control to `login` instead. */
@@ -82,7 +83,7 @@ const { petId, likesCount, isLiked, canLike } = defineProps<{
     >
         <Link
             v-if="canLike"
-            :href="likePet(petId)"
+            :href="likePet(petSlug)"
             as="button"
             preserve-scroll
             preserve-state

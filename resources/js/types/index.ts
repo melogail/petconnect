@@ -7,6 +7,7 @@ export * from './pagination';
 export * from './pets';
 export * from './profile';
 export * from './reviews';
+export * from './support';
 export * from './translations';
 export * from './ui';
 export * from './users';

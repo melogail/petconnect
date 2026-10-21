@@ -12,6 +12,7 @@ import {
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
 import { formatDate } from '@/lib/datetime';
+import { petTitle } from '@/lib/petTitle';
 import { taxonomyName } from '@/lib/taxonomy';
 import { edit as editPet, show as showPet } from '@/routes/pets';
 import { toggle as toggleStatus } from '@/routes/pets/status';
@@ -64,6 +65,9 @@ const confirming = ref(false);
 
 const isAvailable = computed(() => pet.status === 'available');
 
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(pet, t, locale.value.current));
+
 /** Breed names the listing best; category is the fallback. */
 const kind = computed(() => {
     const taxon = pet.breed ?? pet.category;
@@ -86,17 +90,17 @@ function count(value: number): string {
 }
 
 const editLabel = computed(() =>
-    t('pets.edit_listing_named', { name: pet.name }),
+    t('pets.edit_listing_named', { name: name.value }),
 );
 
 const toggleLabel = computed(() =>
     isAvailable.value
-        ? t('pets.mark_unavailable_named', { name: pet.name })
-        : t('pets.mark_available_named', { name: pet.name }),
+        ? t('pets.mark_unavailable_named', { name: name.value })
+        : t('pets.mark_available_named', { name: name.value }),
 );
 
 const removeLabel = computed(() =>
-    t('pets.remove_listing_named', { name: pet.name }),
+    t('pets.remove_listing_named', { name: name.value }),
 );
 </script>
 
@@ -124,10 +128,10 @@ const removeLabel = computed(() =>
 
                 <div class="min-w-0">
                     <Link
-                        :href="showPet(pet.id)"
+                        :href="showPet(pet.slug)"
                         class="text-foreground hover:text-primary focus-visible:ring-ring focus-visible:ring-offset-background block truncate rounded-sm text-sm font-semibold transition-colors duration-200 ease-out hover:underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                     >
-                        {{ pet.name }}
+                        {{ name }}
                     </Link>
                     <p
                         v-if="kind"
@@ -201,7 +205,7 @@ const removeLabel = computed(() =>
                             size="icon-sm"
                             :aria-label="editLabel"
                         >
-                            <Link :href="editPet(pet.id)">
+                            <Link :href="editPet(pet.slug)">
                                 <Pencil class="size-4" aria-hidden="true" />
                             </Link>
                         </Button>
@@ -218,7 +222,7 @@ const removeLabel = computed(() =>
                             :aria-label="toggleLabel"
                         >
                             <Link
-                                :href="toggleStatus(pet.id)"
+                                :href="toggleStatus(pet.slug)"
                                 as="button"
                                 preserve-scroll
                             >
@@ -251,7 +255,7 @@ const removeLabel = computed(() =>
 
                 <PetRemoveListingDialog
                     v-model:open="confirming"
-                    :pet-id="pet.id"
+                    :pet-slug="pet.slug"
                 />
             </div>
         </td>

@@ -37,12 +37,12 @@ class BreedSeeder extends Seeder
                     Breed::query()->updateOrCreate(
                         [
                             'category_id' => $category->getKey(),
-                            'slug' => $breed['slug'],
+                            'slug'        => $breed['slug'],
                         ],
                         [
-                            'name' => $breed['name'],
-                            'name_ar' => $breed['name_ar'],
-                            'description' => $breed['description'] ?? null,
+                            'name'           => $breed['name'],
+                            'name_ar'        => $breed['name_ar'],
+                            'description'    => $breed['description'] ?? null,
                             'description_ar' => $breed['description_ar'] ?? null,
                         ],
                     );

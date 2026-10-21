@@ -194,7 +194,7 @@ Sizes: `default` h-11, `lg` h-12, `sm` h-9, `icon` size-10. All `rounded-[14px]`
 
 ### 5.3 Header (`PublicHeader`, `BrandMark`, `ShellSearchField`)
 
-- Brand mark: 30px, `rounded-[10px] bg-primary`, 9px dot in `--primary-foreground`. Wordmark Newsreader 21/500.
+- Brand mark: `AppLogoIcon` at 30px — the SniffPal chat-bubble pet face (`public/brand/sniffpal-mark.svg`), the same mark as the favicon and the mobile app. Wordmark Newsreader 21/500.
 - Search: `bg-card border border-border rounded-[14px] h-11`, placeholder `text-muted-foreground`.
 - Icon buttons 38px, `rounded-[14px]`, ghost hover. Unread dot: 7px `bg-primary` with `ring-2 ring-background`.
 - Avatar: 34px `rounded-xl bg-primary text-primary-foreground` initials, 12/600.
@@ -264,7 +264,7 @@ Same tokens, same families. Platform adjustments:
 | Body / UI | Manrope 15 / 14 ; Arabic Readex Pro |
 | Status bar | light content on dark scheme, dark content on light; header `bg-background/90` blur |
 | Minimum hit target | 44 × 44 |
-| Splash / app icon | `#5A3FE0` field, white dot mark (10px radius square on icon grid) |
+| Splash / app icon | `#5A3FE0` field, white pet-face mark (`public/brand/sniffpal-icon.svg`, 116/512 corner radius) |
 
 Dark mode on mobile uses the same `.dark` tokens; do not introduce an OLED pure-black variant.
 

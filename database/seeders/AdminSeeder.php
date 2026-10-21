@@ -11,7 +11,7 @@ class AdminSeeder extends Seeder
     /**
      * The fixed back-office login for Nova; password "password".
      */
-    public const DEMO_EMAIL = 'admin@petconnect.com';
+    public const DEMO_EMAIL   = 'admin@sniffpal.com';
 
     /**
      * How many admins the demo dataset should end up with.
@@ -30,8 +30,8 @@ class AdminSeeder extends Seeder
             Admin::query()->updateOrCreate(
                 ['email' => self::DEMO_EMAIL],
                 [
-                    'name' => 'Admin User',
-                    'password' => 'password',
+                    'name'              => 'Admin User',
+                    'password'          => 'password',
                     'email_verified_at' => now(),
                 ],
             );

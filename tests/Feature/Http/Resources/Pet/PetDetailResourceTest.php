@@ -32,19 +32,19 @@ function petWithEveryField(?User $owner = null): Pet
         ->at(30.0444, 31.2357)
         ->forSale()
         ->create([
-            'weight' => '4.20',
-            'address' => '12 Nile Street',
+            'weight'           => '4.20',
+            'address'          => '12 Nile Street',
             'detailed_address' => 'Building 3, Apartment 7',
-            'postal_code' => '11511',
-            'special_needs' => 'Needs a quiet home',
-            'last_vet_visit' => '2024-01-15',
-            'vaccinations' => [['name' => 'Rabies', 'date' => '2024-01-15']],
-            'medications' => [['name' => 'Flea drops', 'usage' => 'Monthly']],
-            'allergies' => ['Dust'],
-            'vet_name' => 'Dr. Hana',
-            'vet_phone' => '+20-100-000-0000',
-            'traits' => ['Friendly'],
-            'additional_info' => ['house_trained' => 'yes'],
+            'postal_code'      => '11511',
+            'special_needs'    => 'Needs a quiet home',
+            'last_vet_visit'   => '2024-01-15',
+            'vaccinations'     => [['name' => 'Rabies', 'date' => '2024-01-15']],
+            'medications'      => [['name' => 'Flea drops', 'usage' => 'Monthly']],
+            'allergies'        => ['Dust'],
+            'vet_name'         => 'Dr. Hana',
+            'vet_phone'        => '+20-100-000-0000',
+            'traits'           => ['Friendly'],
+            'additional_info'  => ['house_trained' => 'yes'],
         ]);
 }
 
@@ -69,7 +69,7 @@ test('a user who does not own the listing never receives the owner-only fields',
 
 test('the owner receives the owner-only fields', function () {
     $owner = User::factory()->create();
-    $pet = petWithEveryField($owner);
+    $pet   = petWithEveryField($owner);
 
     $this->actingAs($owner)
         ->get(route('pets.show', $pet))
@@ -86,8 +86,8 @@ test('the owner receives the owner-only fields', function () {
 });
 
 test('every nested key the resource emits has a rule of the same name on the edit request', function () {
-    $owner = User::factory()->create();
-    $pet = petWithEveryField($owner);
+    $owner   = User::factory()->create();
+    $pet     = petWithEveryField($owner);
     $payload = null;
 
     $this->actingAs($owner)
@@ -96,7 +96,7 @@ test('every nested key the resource emits has a rule of the same name on the edi
             $payload = $page->toArray()['props']['pet'];
         });
 
-    $rules = (new UpdatePetRequest)->rules();
+    $rules   = (new UpdatePetRequest)->rules();
 
     $emitted = collect(Arr::dot(Arr::only($payload, ['location', 'health'])))
         ->keys()
@@ -149,12 +149,13 @@ test('counts roots separately from the whole thread', function () {
  * as `comments_count` or `root_comments_count`, that means no rule of that name
  * on UpdatePetRequest and no mention in `resources/js/lib/petForm.ts`. If the
  * form does send the key, the mismatch is on the request's side and this test
- * failing is the point.
+ * failing is the point. `age` is on it because it is derived from `birth_date`
+ * on the model (`Pet::age()`) and the form posts the date back, never the age.
  */
 test('every top level key the resource emits is either a rule on the edit request or a declared read shape', function () {
-    $owner = User::factory()->create();
-    $pet = petWithEveryField($owner);
-    $payload = null;
+    $owner      = User::factory()->create();
+    $pet        = petWithEveryField($owner);
+    $payload    = null;
 
     $this->actingAs($owner)
         ->get(route('pets.show', $pet))
@@ -163,14 +164,14 @@ test('every top level key the resource emits is either a rule on the edit reques
         });
 
     $readShapes = [
-        'id', 'views', 'category', 'breed', 'user', 'is_owner',
+        'id', 'slug', 'age', 'views', 'category', 'breed', 'user', 'is_owner',
         'featured_image', 'photos', 'likes_count', 'comments_count',
         'root_comments_count', 'is_liked',
         'comments', 'created_at', 'updated_at',
     ];
 
-    $rules = (new UpdatePetRequest)->rules();
-    $unmatched = array_values(array_diff(array_keys($payload), array_keys($rules), $readShapes));
+    $rules      = (new UpdatePetRequest)->rules();
+    $unmatched  = array_values(array_diff(array_keys($payload), array_keys($rules), $readShapes));
 
     expect($unmatched)->toBe([]);
 });

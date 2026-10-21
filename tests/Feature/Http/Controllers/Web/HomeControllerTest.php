@@ -28,7 +28,7 @@ use Tests\TestCase;
  * this replaces read 12 while the page measured 11, so it had already absorbed
  * one query's worth of drift in exactly that way.
  */
-const FEED_QUERY_COST = 11;
+const FEED_QUERY_COST             = 11;
 
 /**
  * The keys PetCardResource emits behind `whenLoaded()`, which are the reason a
@@ -97,7 +97,7 @@ test('the feed omits listings that are no longer available', function () {
 
 test('a category filter in the query string narrows the feed', function () {
     $category = Category::factory()->create();
-    $wanted = Pet::factory()->available()->for($category)->create();
+    $wanted   = Pet::factory()->available()->for($category)->create();
     Pet::factory()->available()->create();
 
     $this->get(route('home', ['category_ids' => [$category->getKey()]]))
@@ -128,13 +128,13 @@ test('the feed costs the same number of queries whatever the page size', functio
 
     Pet::factory()->available()->count(24)->create(['created_at' => now()->subDay()]);
 
-    $commented = Pet::factory()->available()->count(6)->create(['created_at' => now()]);
+    $commented    = Pet::factory()->available()->count(6)->create(['created_at' => now()]);
 
     foreach ($commented as $pet) {
         Comment::factory()->for($pet, 'commentable')->create();
     }
 
-    $atTwelve = countFeedQueries($this, 12);
+    $atTwelve     = countFeedQueries($this, 12);
     $atTwentyFour = countFeedQueries($this, 24);
 
     expect($atTwelve)->toBe($atTwentyFour)
@@ -172,11 +172,11 @@ function commentOnEveryListing(Collection $pets): void
 
 test('the feed costs the same number of queries however many comments its cards carry', function () {
     Storage::fake(config('media-library.disk_name'));
-    $pets = Pet::factory()->available()->count(3)->create();
+    $pets                = Pet::factory()->available()->count(3)->create();
 
     commentOnEveryListing($pets);
 
-    $atOneCommentEach = countFeedQueries($this, 12);
+    $atOneCommentEach    = countFeedQueries($this, 12);
 
     commentOnEveryListing($pets);
     commentOnEveryListing($pets);
@@ -199,11 +199,11 @@ test('the feed costs the same number of queries however many comments its cards 
 test('ships the filter bounds the sheet draws its sliders from', function () {
     config([
         'petconnect.nearby.default_radius_km' => 25.5,
-        'petconnect.nearby.min_radius_km' => 3.5,
-        'petconnect.nearby.max_radius_km' => 80.5,
-        'petconnect.filters.max_age_years' => 18.5,
-        'petconnect.filters.default_age_min' => 1.5,
-        'petconnect.filters.default_age_max' => 9.5,
+        'petconnect.nearby.min_radius_km'     => 3.5,
+        'petconnect.nearby.max_radius_km'     => 80.5,
+        'petconnect.filters.max_age_years'    => 18.5,
+        'petconnect.filters.default_age_min'  => 1.5,
+        'petconnect.filters.default_age_max'  => 9.5,
     ]);
 
     $this->get(route('home'))
@@ -211,11 +211,11 @@ test('ships the filter bounds the sheet draws its sliders from', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('filterBounds', [
                 'default_radius_km' => 25.5,
-                'min_radius_km' => 3.5,
-                'max_radius_km' => 80.5,
-                'max_age_years' => 18.5,
-                'default_age_min' => 1.5,
-                'default_age_max' => 9.5,
+                'min_radius_km'     => 3.5,
+                'max_radius_km'     => 80.5,
+                'max_age_years'     => 18.5,
+                'default_age_min'   => 1.5,
+                'default_age_max'   => 9.5,
             ])
             ->etc());
 });
@@ -230,25 +230,47 @@ test('echoes the applied filters back so the sheet reopens with them selected', 
     $category = Category::factory()->create();
 
     $this->get(route('home', [
-        'category_ids' => [$category->getKey()],
+        'category_ids'  => [$category->getKey()],
         'listing_types' => [ListingType::Sale->value],
-        'age_min' => 1.5,
-        'age_max' => 4.5,
-        'vaccinated' => '1',
+        'age_min'       => 1.5,
+        'age_max'       => 4.5,
+        'vaccinated'    => '1',
     ]))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('filters', [
-                'category_ids' => [$category->getKey()],
-                'breed_ids' => [],
-                'age_min' => 1.5,
-                'age_max' => 4.5,
+                'category_ids'  => [$category->getKey()],
+                'breed_ids'     => [],
+                'age_min'       => 1.5,
+                'age_max'       => 4.5,
                 'listing_types' => [ListingType::Sale->value],
-                'vaccinated' => true,
+                'vaccinated'    => true,
+                'search'        => null,
             ])
             ->where('nearby', false)
             ->where('radius', null)
             ->etc());
+});
+
+/**
+ * The header box reads `filters.search` back to show what the feed is
+ * narrowed by, so the term has to come back trimmed and a blank one as null —
+ * a box seeded with `"  "` would look like an applied search that is not one.
+ */
+test('echoes the search term back trimmed, and a blank one as null', function (string $sent, ?string $echoed) {
+    $this->get(route('home', ['search' => $sent]))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('filters.search', $echoed)
+            ->etc());
+})->with([
+    'a term with surrounding spaces' => ['  golden  ', 'golden'],
+    'only spaces'                    => ['   ', null],
+]);
+
+test('rejects a search term longer than the box allows', function () {
+    $this->get(route('home', ['search' => str_repeat('a', 101)]))
+        ->assertSessionHasErrors('search');
 });
 
 /**
@@ -259,7 +281,7 @@ test('echoes the applied filters back so the sheet reopens with them selected', 
  */
 test('accepts a single filter value where a list is expected', function () {
     $category = Category::factory()->create();
-    $wanted = Pet::factory()->available()->for($category)->create();
+    $wanted   = Pet::factory()->available()->for($category)->create();
     Pet::factory()->available()->create();
 
     $this->get(route('home', ['category_ids' => $category->getKey()]))
@@ -290,7 +312,7 @@ test('rejects a coordinate outside the world', function (array $query, string $f
         ->get(route('home', $query))
         ->assertInvalid([$field]);
 })->with([
-    'latitude past the pole' => [['latitude' => 91, 'longitude' => 31.2357], 'latitude'],
+    'latitude past the pole'          => [['latitude' => 91, 'longitude' => 31.2357], 'latitude'],
     'longitude past the antimeridian' => [['latitude' => 30.0444, 'longitude' => 181], 'longitude'],
 ]);
 
@@ -310,7 +332,7 @@ test('rejects a radius outside the configured window', function (float $radius) 
         ->get(route('home', ['latitude' => 30.0444, 'longitude' => 31.2357, 'radius' => $radius]))
         ->assertInvalid(['radius']);
 })->with([
-    'under the floor' => [4.0],
+    'under the floor'  => [4.0],
     'over the ceiling' => [51.0],
 ]);
 
@@ -326,7 +348,7 @@ test('rejects a taxonomy id that names no row', function (string $key) {
         ->assertInvalid(["{$key}.0"]);
 })->with([
     'category' => ['category_ids'],
-    'breed' => ['breed_ids'],
+    'breed'    => ['breed_ids'],
 ]);
 
 test('rejects a listing type that is not one of the offered ones', function () {
@@ -361,7 +383,7 @@ test('rejects an age range that ends before it starts', function () {
 function visitFeedAsInertia(TestCase $test, array $headers = [], array $query = []): TestResponse
 {
     return $test->withHeaders([
-        'X-Inertia' => 'true',
+        'X-Inertia'         => 'true',
         'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(Request::create('/')) ?? '',
         ...$headers,
     ])->get(route('home', $query));
@@ -393,8 +415,8 @@ function feedPartialHeaders(array $only, array $reset): array
 {
     return [
         'X-Inertia-Partial-Component' => 'Home',
-        'X-Inertia-Partial-Data' => implode(',', [...$only, ...$reset]),
-        'X-Inertia-Reset' => implode(',', $reset),
+        'X-Inertia-Partial-Data'      => implode(',', [...$only, ...$reset]),
+        'X-Inertia-Reset'             => implode(',', $reset),
     ];
 }
 
@@ -506,9 +528,9 @@ test('a partial feed visit naming pets alone comes back without filters, nearby 
  * about. Left to the factory's geography, the nearby case would return however
  * many rows happened to land inside 25.5 km.
  */
-const CAIRO_LATITUDE = 30.0444;
+const CAIRO_LATITUDE              = 30.0444;
 
-const CAIRO_LONGITUDE = 31.2357;
+const CAIRO_LONGITUDE             = 31.2357;
 
 /**
  * NearbySearchButton's chip and Home.vue's geolocation redirect, which send the
@@ -533,7 +555,7 @@ test('a partial feed visit from the nearby chip comes back with the nearby and r
     expect(array_keys($response->json('props')))
         ->toEqualCanonicalizing(['errors', 'pets', 'nearby', 'radius']);
 })->with([
-    'the chip clearing the coordinates' => [[], false, null],
+    'the chip clearing the coordinates'       => [[], false, null],
     'the geolocation redirect supplying them' => [
         ['latitude' => CAIRO_LATITUDE, 'longitude' => CAIRO_LONGITUDE, 'radius' => 25.5],
         true,
@@ -556,7 +578,7 @@ test('a partial feed visit from the nearby chip comes back with the nearby and r
  */
 test('a partial feed visit from the filter sheet comes back with the filters it reopens from', function () {
     $category = Category::factory()->create();
-    $wanted = Pet::factory()->available()->for($category)->create(['vaccinated' => true]);
+    $wanted   = Pet::factory()->available()->for($category)->create(['vaccinated' => true]);
     Pet::factory()->available()->count(2)->create(['vaccinated' => false]);
 
     $response = visitFeedAsInertia(
@@ -568,12 +590,13 @@ test('a partial feed visit from the filter sheet comes back with the filters it 
         ->assertJsonCount(1, 'props.pets.data')
         ->assertJsonPath('props.pets.data.0.id', $wanted->getKey())
         ->assertJsonPath('props.filters', [
-            'category_ids' => [$category->getKey()],
-            'breed_ids' => [],
-            'age_min' => null,
-            'age_max' => null,
+            'category_ids'  => [$category->getKey()],
+            'breed_ids'     => [],
+            'age_min'       => null,
+            'age_max'       => null,
             'listing_types' => [],
-            'vaccinated' => true,
+            'vaccinated'    => true,
+            'search'        => null,
         ]);
 
     expect(array_keys($response->json('props')))->toEqualCanonicalizing(['errors', 'pets', 'filters']);

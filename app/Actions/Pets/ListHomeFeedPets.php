@@ -8,6 +8,7 @@ use App\Pipelines\Pets\BuildHomeFeed\ApplyAgeRangeFilter;
 use App\Pipelines\Pets\BuildHomeFeed\ApplyCategoryAndBreedFilter;
 use App\Pipelines\Pets\BuildHomeFeed\ApplyListingTypeFilter;
 use App\Pipelines\Pets\BuildHomeFeed\ApplyNearbyOrRecency;
+use App\Pipelines\Pets\BuildHomeFeed\ApplySearchFilter;
 use App\Pipelines\Pets\BuildHomeFeed\ApplyVaccinatedFilter;
 use App\Pipelines\Pets\BuildHomeFeed\EagerLoadFeedRelations;
 use App\Pipelines\Pets\BuildHomeFeed\HomeFeedContext;
@@ -41,7 +42,8 @@ class ListHomeFeedPets
      *     age_min?: float|null,
      *     age_max?: float|null,
      *     listing_types?: list<string>|null,
-     *     vaccinated?: bool|null
+     *     vaccinated?: bool|null,
+     *     search?: string|null
      * }  $filters
      * @return LengthAwarePaginator<int, Pet>
      */
@@ -73,6 +75,7 @@ class ListHomeFeedPets
                 ScopeToAvailablePets::class,
                 EagerLoadFeedRelations::class,
                 ApplyCategoryAndBreedFilter::class,
+                ApplySearchFilter::class,
                 ApplyAgeRangeFilter::class,
                 ApplyListingTypeFilter::class,
                 ApplyVaccinatedFilter::class,

@@ -86,6 +86,24 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     use HasApiTokens, HasFactory, HasLikes, HasReviews, InteractsWithMedia, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
+     * The DB defaults the model declares non-nullable, restated here so a
+     * freshly `create()`d instance carries them before any refresh().
+     *
+     * `is_active` is deliberately not fillable, so a column default was the
+     * only thing setting it — and a column default lands in the row, never on
+     * the instance. Actions\Auth\ResolveSocialUser asks `isActive()` of the
+     * account it just registered, and `bool` returning null is a TypeError.
+     * See .ai/rules/factories.md, "A DB default the model declares
+     * non-nullable belongs in $attributes".
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_active' => true,
+        'locale'    => 'en',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -93,10 +111,10 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'last_seen_at' => 'datetime',
-            'is_active' => 'boolean',
-            'password' => 'hashed',
+            'email_verified_at'       => 'datetime',
+            'last_seen_at'            => 'datetime',
+            'is_active'               => 'boolean',
+            'password'                => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
@@ -329,8 +347,8 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      */
     public function preferredLocale(): string
     {
-        $fallback = (string) config('app.locale', 'en');
-        $locale = (string) ($this->locale ?: $fallback);
+        $fallback  = (string) config('app.locale', 'en');
+        $locale    = (string) ($this->locale ?: $fallback);
 
         /** @var list<string> $supported */
         $supported = config('petconnect.locales.supported', ['en']);
@@ -364,6 +382,16 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
                 ->filter()
                 ->implode(', '),
         );
+    }
+
+    /**
+     * The Google / Facebook identities this account signs in with.
+     *
+     * @return HasMany<SocialAccount, $this>
+     */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
     }
 
     /**

@@ -96,26 +96,51 @@ trait PetValidationRules
      * a hand-edited payload cannot file a Siamese under Dogs; the pipeline
      * re-checks the pair and aborts if the row disappeared in between.
      *
+     * ## Litters: `quantity`, `male_count`, `female_count`
+     *
+     * A listing normally offers one animal, and then `quantity` is 1 and the
+     * two counts are null — the sex is `gender`. An **adoption** listing may
+     * offer a whole litter: `quantity` opens up to more than one, both counts
+     * become required and have to add up to it, and `gender` describes the
+     * litter (`mixed` when both sexes are present). The three cross-field
+     * closures below are what hold that together; `sometimes` is never used
+     * on any of them, per the trait's standing rule, so each one fires on an
+     * absent key as well as on a wrong value.
+     *
+     * `name` is required for a single animal and optional for a litter, which
+     * has no one name. `birth_date` replaces the old free-text age column and
+     * is optional either way — the model derives `age` from it.
+     *
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
     protected function basicRules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'category_id' => ['required', 'integer', Rule::exists(Category::class, 'id')],
-            'breed_id' => [
+            'name'         => ['present', Rule::requiredIf(fn (): bool => ! $this->isLitterPayload()), 'nullable', 'string', 'max:255'],
+            'category_id'  => ['required', 'integer', Rule::exists(Category::class, 'id')],
+            'breed_id'     => [
                 'present',
                 'nullable',
                 'integer',
                 Rule::exists(Breed::class, 'id')->where('category_id', $this->input('category_id')),
             ],
-            'age' => ['required', 'numeric', 'min:0', 'max:99'],
-            'gender' => ['required', Rule::enum(PetGender::class)],
-            'color' => ['required', 'string', 'max:255'],
-            'weight' => ['present', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
-            'description' => ['required', 'string', 'max:5000'],
+            'birth_date'   => ['present', 'nullable', 'date', 'before_or_equal:today'],
+            'gender'       => ['required', Rule::enum(PetGender::class), $this->genderMatchesCounts()],
+            'quantity'     => [
+                'required',
+                'integer',
+                'min:1',
+                'max:255',
+                $this->litterOnlyOnAdoption(),
+                $this->countsAddUpToQuantity(),
+            ],
+            'male_count'   => ['present', Rule::requiredIf(fn (): bool => $this->isLitterPayload()), 'nullable', 'integer', 'min:0', 'max:255'],
+            'female_count' => ['present', Rule::requiredIf(fn (): bool => $this->isLitterPayload()), 'nullable', 'integer', 'min:0', 'max:255'],
+            'color'        => ['present', 'nullable', 'string', 'max:255'],
+            'weight'       => ['present', 'nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'description'  => ['required', 'string', 'max:5000'],
             'listing_type' => ['required', Rule::enum(ListingType::class)],
-            'price' => [
+            'price'        => [
                 'present',
                 'required_if:listing_type,'.ListingType::Sale->value,
                 'nullable',
@@ -123,8 +148,107 @@ trait PetValidationRules
                 'min:0',
                 'max:99999999.99',
             ],
-            'status' => ['required', Rule::enum(PetStatus::class)],
+            'status'       => ['required', Rule::enum(PetStatus::class)],
         ];
+    }
+
+    /**
+     * Whether the payload offers more than one animal.
+     *
+     * Read off the raw input because the rules that depend on it run before
+     * `quantity` has been validated; a non-numeric quantity counts as a single
+     * animal here and is rejected by its own `integer` rule.
+     */
+    protected function isLitterPayload(): bool
+    {
+        $quantity = $this->input('quantity', 1);
+
+        return is_numeric($quantity) && (int) $quantity > 1;
+    }
+
+    /**
+     * Only an adoption listing may offer more than one animal.
+     */
+    protected function litterOnlyOnAdoption(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_numeric($value) || (int) $value <= 1) {
+                return;
+            }
+
+            if ($this->input('listing_type') !== ListingType::Adoption->value) {
+                $fail(__('Only an adoption listing can offer more than one animal.'));
+            }
+        };
+    }
+
+    /**
+     * On a litter, the male and female counts have to add up to the quantity.
+     *
+     * Stays silent while either count is missing or non-numeric: those are
+     * reported by the counts' own rules, and a second message on `quantity`
+     * would only repeat them.
+     */
+    protected function countsAddUpToQuantity(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_numeric($value) || (int) $value <= 1) {
+                return;
+            }
+
+            $male   = $this->input('male_count');
+            $female = $this->input('female_count');
+
+            if (! is_numeric($male) || ! is_numeric($female)) {
+                return;
+            }
+
+            if ((int) $male + (int) $female !== (int) $value) {
+                $fail(__('The male and female counts must add up to the quantity.'));
+            }
+        };
+    }
+
+    /**
+     * `gender` has to agree with the counts on a litter, and `mixed` is only
+     * meaningful on a litter at all.
+     */
+    protected function genderMatchesCounts(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            $gender  = PetGender::tryFrom((string) $value);
+
+            if ($gender === null) {
+                return;
+            }
+
+            if (! $this->isLitterPayload()) {
+                if ($gender === PetGender::Mixed) {
+                    $fail(__('A mixed listing must offer more than one animal.'));
+                }
+
+                return;
+            }
+
+            $male    = $this->input('male_count');
+            $female  = $this->input('female_count');
+
+            if (! is_numeric($male) || ! is_numeric($female)) {
+                return;
+            }
+
+            $message = match ($gender) {
+                PetGender::Male   => (int) $female > 0 ? __('A male listing cannot include females.') : null,
+                PetGender::Female => (int) $male > 0 ? __('A female listing cannot include males.') : null,
+                PetGender::Mixed  => (int) $male < 1 || (int) $female < 1
+                    ? __('A mixed listing needs at least one male and one female.')
+                    : null,
+            };
+
+            if ($message !== null) {
+                $fail($message);
+            }
+        };
     }
 
     /**
@@ -150,14 +274,14 @@ trait PetValidationRules
     protected function locationRules(): array
     {
         return [
-            'location' => ['required', 'array'],
-            'location.address' => ['present', 'nullable', 'string', 'max:255'],
+            'location'                 => ['required', 'array'],
+            'location.address'         => ['present', 'nullable', 'string', 'max:255'],
             'location.detailedAddress' => ['present', 'nullable', 'string', 'max:1000'],
-            'location.city' => ['required', 'string', 'max:255'],
-            'location.state' => ['required', 'string', 'max:255'],
-            'location.postalCode' => ['present', 'nullable', 'string', 'max:255'],
-            'location.country' => ['required', 'string', 'max:255'],
-            'location.coordinates' => ['nullable', 'array'],
+            'location.city'            => ['required', 'string', 'max:255'],
+            'location.state'           => ['required', 'string', 'max:255'],
+            'location.postalCode'      => ['present', 'nullable', 'string', 'max:255'],
+            'location.country'         => ['required', 'string', 'max:255'],
+            'location.coordinates'     => ['nullable', 'array'],
             'location.coordinates.lat' => [
                 'nullable',
                 'required_with:location.coordinates.lng',
@@ -187,8 +311,8 @@ trait PetValidationRules
 
         return [
             'featuredImage' => [$requiresFeaturedImage ? 'required' : 'nullable', ...$image],
-            'images' => ['nullable', 'array', 'max:'.$this->maxGalleryImages()],
-            'images.*' => ['required', ...$image],
+            'images'        => ['nullable', 'array', 'max:'.$this->maxGalleryImages()],
+            'images.*'      => ['required', ...$image],
         ];
     }
 
@@ -217,28 +341,28 @@ trait PetValidationRules
     protected function healthRules(): array
     {
         return [
-            'health' => ['present', 'array'],
-            'health.status' => ['present', 'nullable', Rule::enum(HealthStatus::class)],
-            'health.vaccinated' => ['present', 'nullable', 'boolean'],
-            'health.spayedNeutered' => ['present', 'nullable', 'boolean'],
-            'health.specialNeeds' => ['present', 'nullable', 'string', 'max:1000'],
-            'health.lastVetVisit' => ['present', 'nullable', 'date', 'before_or_equal:today'],
+            'health'                     => ['present', 'array'],
+            'health.status'              => ['present', 'nullable', Rule::enum(HealthStatus::class)],
+            'health.vaccinated'          => ['present', 'nullable', 'boolean'],
+            'health.spayedNeutered'      => ['present', 'nullable', 'boolean'],
+            'health.specialNeeds'        => ['present', 'nullable', 'string', 'max:1000'],
+            'health.lastVetVisit'        => ['present', 'nullable', 'date', 'before_or_equal:today'],
 
-            'health.vaccinations' => ['nullable', 'array', 'max:50'],
-            'health.vaccinations.*' => ['array'],
+            'health.vaccinations'        => ['nullable', 'array', 'max:50'],
+            'health.vaccinations.*'      => ['array'],
             'health.vaccinations.*.name' => ['present', 'nullable', 'string', 'max:255'],
             'health.vaccinations.*.date' => ['present', 'nullable', 'date', 'before_or_equal:today'],
 
-            'health.medications' => ['nullable', 'array', 'max:50'],
-            'health.medications.*' => ['array'],
-            'health.medications.*.name' => ['present', 'nullable', 'string', 'max:255'],
+            'health.medications'         => ['nullable', 'array', 'max:50'],
+            'health.medications.*'       => ['array'],
+            'health.medications.*.name'  => ['present', 'nullable', 'string', 'max:255'],
             'health.medications.*.usage' => ['present', 'nullable', 'string', 'max:255'],
 
-            'health.allergies' => ['nullable', 'array', 'max:50'],
-            'health.allergies.*' => ['nullable', 'string', 'max:255'],
+            'health.allergies'           => ['nullable', 'array', 'max:50'],
+            'health.allergies.*'         => ['nullable', 'string', 'max:255'],
 
-            'health.vetName' => ['present', 'nullable', 'string', 'max:255'],
-            'health.vetPhone' => ['present', 'nullable', 'string', 'max:20'],
+            'health.vetName'             => ['present', 'nullable', 'string', 'max:255'],
+            'health.vetPhone'            => ['present', 'nullable', 'string', 'max:20'],
         ];
     }
 
@@ -257,9 +381,9 @@ trait PetValidationRules
     protected function traitRules(): array
     {
         return [
-            'traits' => ['nullable', 'array', 'max:20'],
-            'traits.*' => ['nullable', 'string', 'max:255'],
-            'additionalInfo' => ['nullable', 'array', 'max:20', $this->boundedKeys(255)],
+            'traits'           => ['nullable', 'array', 'max:20'],
+            'traits.*'         => ['nullable', 'string', 'max:255'],
+            'additionalInfo'   => ['nullable', 'array', 'max:20', $this->boundedKeys(255)],
             'additionalInfo.*' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -321,16 +445,16 @@ trait PetValidationRules
     protected function petMessages(): array
     {
         return [
-            'images.max' => __('You can upload a maximum of :count additional images.', [
+            'images.max'        => __('You can upload a maximum of :count additional images.', [
                 'count' => $this->maxGalleryImages(),
             ]),
-            'images.*.max' => __('Each image must not exceed :size KB.', [
+            'images.*.max'      => __('Each image must not exceed :size KB.', [
                 'size' => $this->maxImageKilobytes(),
             ]),
             'featuredImage.max' => __('The featured image must not exceed :size KB.', [
                 'size' => $this->maxImageKilobytes(),
             ]),
-            'breed_id.exists' => __('The selected breed is not available for that category.'),
+            'breed_id.exists'   => __('The selected breed is not available for that category.'),
         ];
     }
 }

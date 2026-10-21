@@ -17,8 +17,8 @@ import type { PetStatus } from '@/types';
  * renders the same three controls as icons); what retiring means — a soft
  * delete kept for moderation, never a purge — is recorded there.
  */
-const { petId, status } = defineProps<{
-    petId: number;
+const { petSlug, status } = defineProps<{
+    petSlug: string;
     status: PetStatus;
 }>();
 
@@ -30,14 +30,14 @@ const confirming = ref(false);
 <template>
     <div class="flex flex-wrap gap-2">
         <Button as-child variant="outline">
-            <Link :href="editPet(petId)">
+            <Link :href="editPet(petSlug)">
                 <Pencil class="size-4" aria-hidden="true" />
                 {{ t('common.edit') }}
             </Link>
         </Button>
 
         <Button as-child variant="outline">
-            <Link :href="toggleStatus(petId)" as="button" preserve-scroll>
+            <Link :href="toggleStatus(petSlug)" as="button" preserve-scroll>
                 <EyeOff
                     v-if="status === 'available'"
                     class="size-4"
@@ -61,6 +61,6 @@ const confirming = ref(false);
             {{ t('common.remove') }}
         </Button>
 
-        <PetRemoveListingDialog v-model:open="confirming" :pet-id="petId" />
+        <PetRemoveListingDialog v-model:open="confirming" :pet-slug="petSlug" />
     </div>
 </template>

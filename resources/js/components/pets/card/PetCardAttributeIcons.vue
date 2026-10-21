@@ -52,8 +52,8 @@ type Attribute = {
  * circular. The black scrim under the bar stays — it is not brand chroma.
  */
 const { age, gender, vaccinated, spayedNeutered, place } = defineProps<{
-    /** A varchar column, so a string even though it reads numeric. */
-    age: string;
+    /** Years, derived from the birth date; null when it was not given. */
+    age: number | null;
     gender: PetGender;
     vaccinated: boolean;
     spayedNeutered: boolean;
@@ -83,7 +83,7 @@ const attributes = computed<Attribute[]>(() => {
                   color: 'text-primary',
               }
             : null,
-        age === ''
+        age === null
             ? null
             : {
                   key: 'age',

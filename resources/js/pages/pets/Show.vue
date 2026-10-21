@@ -8,7 +8,9 @@ import PetFactsCard from '@/components/pets/PetFactsCard.vue';
 import PetGallery from '@/components/pets/PetGallery.vue';
 import PetOwnerCard from '@/components/pets/PetOwnerCard.vue';
 import PetSafetyTips from '@/components/pets/PetSafetyTips.vue';
+import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
+import { petTitle } from '@/lib/petTitle';
 import { home } from '@/routes';
 import type {
     CommentBounds,
@@ -73,8 +75,12 @@ const { pet } = defineProps<{
 }>();
 
 const { t } = useTranslations();
+const { locale } = useLocale();
 
 const page = usePage();
+
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(pet, t, locale.value.current));
 
 /** Every write on this page needs an account; the backend needs it verified. */
 const isSignedIn = computed(() => Boolean(page.props.auth.user));
@@ -84,7 +90,7 @@ const canMessageOwner = computed(() => isSignedIn.value && !pet.is_owner);
 
 <template>
     <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-        <Head :title="pet.name" />
+        <Head :title="name" />
 
         <div class="mb-6">
             <Link
@@ -102,7 +108,7 @@ const canMessageOwner = computed(() => isSignedIn.value && !pet.is_owner);
                     <PetGallery
                         :photos="pet.photos"
                         :featured-image="pet.featured_image"
-                        :name="pet.name"
+                        :name="name"
                     />
                 </div>
 

@@ -7,7 +7,9 @@ import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vu
 import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
 import { Button } from '@/components/ui/button';
+import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
+import { petTitle } from '@/lib/petTitle';
 import { show as showPet } from '@/routes/pets';
 import type {
     PetCard,
@@ -105,6 +107,10 @@ const { pet, canInteract } = defineProps<{
 }>();
 
 const { t } = useTranslations();
+const { locale } = useLocale();
+
+/** The name, or a litter title when the listing has none. */
+const name = computed(() => petTitle(pet, t, locale.value.current));
 
 /** The owner, only when there is somebody signed in who is not them. */
 const owner = computed(() =>
@@ -119,7 +125,7 @@ const owner = computed(() =>
  * state, so the label stays the same in both.
  */
 const likeLabel = computed(
-    () => `Like ${pet.name}, ${countLabel(pet.likes_count, 'like')}`,
+    () => `Like ${name.value}, ${countLabel(pet.likes_count, 'like')}`,
 );
 
 /**
@@ -135,11 +141,11 @@ const likeLabel = computed(
  * still-nameless button here. See its docblock, which records the measurement.
  */
 const messageLabel = computed(() =>
-    owner.value ? `Message ${owner.value.name} about ${pet.name}` : undefined,
+    owner.value ? `Message ${owner.value.name} about ${name.value}` : undefined,
 );
 
 const viewDetailsLabel = computed(
-    () => `${t('pets.view_details')}: ${pet.name}`,
+    () => `${t('pets.view_details')}: ${name.value}`,
 );
 </script>
 
@@ -147,7 +153,7 @@ const viewDetailsLabel = computed(
     <div class="space-y-4">
         <div class="text-muted-foreground flex items-center justify-between">
             <PetLikeButton
-                :pet-id="pet.id"
+                :pet-slug="pet.slug"
                 :likes-count="pet.likes_count"
                 :is-liked="pet.is_liked"
                 :can-like="canInteract"
@@ -156,7 +162,7 @@ const viewDetailsLabel = computed(
 
             <PetCardCommentButton
                 :pet-id="pet.id"
-                :name="pet.name"
+                :name="name"
                 :comments-count="pet.comments_count"
                 :comments="pet.comments"
                 :can-interact="canInteract"
@@ -165,7 +171,7 @@ const viewDetailsLabel = computed(
                 :report-reasons="reportReasons"
             />
 
-            <PetCardShareMenu :pet-id="pet.id" :name="pet.name" />
+            <PetCardShareMenu :pet-slug="pet.slug" :name="name" />
         </div>
 
         <div class="flex items-center gap-2">
@@ -182,7 +188,7 @@ const viewDetailsLabel = computed(
                 variant="secondary"
                 class="h-11 flex-1 rounded-[14px]"
             >
-                <Link :href="showPet(pet.id)" :aria-label="viewDetailsLabel">
+                <Link :href="showPet(pet.slug)" :aria-label="viewDetailsLabel">
                     {{ t('pets.view_details') }}
                 </Link>
             </Button>

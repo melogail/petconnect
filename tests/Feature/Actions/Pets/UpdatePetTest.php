@@ -20,15 +20,15 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 function updatePetData(Category $category, array $overrides = []): array
 {
     return [
-        'name' => 'Renamed',
-        'category_id' => $category->getKey(),
-        'age' => '2',
-        'gender' => 'female',
-        'color' => 'Black',
-        'description' => 'A calm indoor cat.',
+        'name'         => 'Renamed',
+        'category_id'  => $category->getKey(),
+        'birth_date'   => '2024-01-15',
+        'gender'       => 'female',
+        'color'        => 'Black',
+        'description'  => 'A calm indoor cat.',
         'listing_type' => ListingType::Adoption->value,
-        'status' => 'available',
-        'location' => ['city' => 'Cairo', 'state' => 'Cairo', 'country' => 'Egypt'],
+        'status'       => 'available',
+        'location'     => ['city' => 'Cairo', 'state' => 'Cairo', 'country' => 'Egypt'],
         ...$overrides,
     ];
 }
@@ -69,8 +69,8 @@ beforeEach(function () {
 
 describe('gallery capacity', function () {
     test('accepts an edit that fills the gallery to the cap, because the cover photo does not count against it', function () {
-        $pet = listingUnderEdit();
-        $cover = attachUpdateFeaturedPhoto($pet);
+        $pet     = listingUnderEdit();
+        $cover   = attachUpdateFeaturedPhoto($pet);
         attachUpdateGalleryPhoto($pet, 'a.jpg');
         attachUpdateGalleryPhoto($pet, 'b.jpg');
 
@@ -85,12 +85,12 @@ describe('gallery capacity', function () {
     });
 
     test('rejects an edit one photo past the cap and writes nothing', function () {
-        $pet = listingUnderEdit();
+        $pet         = listingUnderEdit();
         $existingIds = collect(['a.jpg', 'b.jpg', 'c.jpg'])
             ->map(fn (string $name): int => attachUpdateGalleryPhoto($pet, $name)->getKey())
             ->all();
 
-        $edit = fn () => app(UpdatePet::class)->handle(
+        $edit        = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             galleryImages: [UploadedFile::fake()->image('d.jpg')],
@@ -102,10 +102,10 @@ describe('gallery capacity', function () {
     });
 
     test('frees capacity for a gallery photo the edit deletes', function () {
-        $pet = listingUnderEdit();
+        $pet     = listingUnderEdit();
         attachUpdateGalleryPhoto($pet, 'a.jpg');
         attachUpdateGalleryPhoto($pet, 'b.jpg');
-        $doomed = attachUpdateGalleryPhoto($pet, 'c.jpg');
+        $doomed  = attachUpdateGalleryPhoto($pet, 'c.jpg');
 
         $updated = app(UpdatePet::class)->handle(
             $pet,
@@ -119,11 +119,11 @@ describe('gallery capacity', function () {
     });
 
     test('rejects an edit whose deletion credit is a media id belonging to another listing', function () {
-        $pet = listingUnderEdit();
+        $pet           = listingUnderEdit();
         collect(['a.jpg', 'b.jpg', 'c.jpg'])->each(fn (string $name) => attachUpdateGalleryPhoto($pet, $name));
         $strangerPhoto = attachUpdateGalleryPhoto(listingUnderEdit('Stranger'), 'stranger.jpg');
 
-        $edit = fn () => app(UpdatePet::class)->handle(
+        $edit          = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             galleryImages: [UploadedFile::fake()->image('d.jpg')],
@@ -136,11 +136,11 @@ describe('gallery capacity', function () {
     });
 
     test('rejects an edit whose deletion credit is the cover photo, which is not a gallery photo', function () {
-        $pet = listingUnderEdit();
+        $pet   = listingUnderEdit();
         $cover = attachUpdateFeaturedPhoto($pet);
         collect(['a.jpg', 'b.jpg', 'c.jpg'])->each(fn (string $name) => attachUpdateGalleryPhoto($pet, $name));
 
-        $edit = fn () => app(UpdatePet::class)->handle(
+        $edit  = fn () => app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             galleryImages: [UploadedFile::fake()->image('d.jpg')],
@@ -154,9 +154,9 @@ describe('gallery capacity', function () {
 
 describe('deleted media', function () {
     test('ignores a media id from another listing and removes only this listing\'s own photo', function () {
-        $pet = listingUnderEdit();
-        $ownPhoto = attachUpdateGalleryPhoto($pet, 'own.jpg');
-        $strangerPet = listingUnderEdit('Stranger');
+        $pet           = listingUnderEdit();
+        $ownPhoto      = attachUpdateGalleryPhoto($pet, 'own.jpg');
+        $strangerPet   = listingUnderEdit('Stranger');
         $strangerPhoto = attachUpdateGalleryPhoto($strangerPet, 'stranger.jpg');
 
         app(UpdatePet::class)->handle(
@@ -171,11 +171,11 @@ describe('deleted media', function () {
     });
 
     test('keeps the cover photo, which is replaced rather than deleted through this key', function () {
-        $pet = listingUnderEdit();
-        $cover = attachUpdateFeaturedPhoto($pet);
+        $pet          = listingUnderEdit();
+        $cover        = attachUpdateFeaturedPhoto($pet);
         $galleryPhoto = attachUpdateGalleryPhoto($pet, 'a.jpg');
 
-        $updated = app(UpdatePet::class)->handle(
+        $updated      = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             deletedMediaIds: [$cover->getKey(), $galleryPhoto->getKey()],
@@ -187,12 +187,12 @@ describe('deleted media', function () {
     });
 
     test('removes a gallery photo in the same edit that replaces the cover photo', function () {
-        $pet = listingUnderEdit();
+        $pet      = listingUnderEdit();
         $oldCover = attachUpdateFeaturedPhoto($pet, 'old-cover.jpg');
-        $doomed = attachUpdateGalleryPhoto($pet, 'a.jpg');
-        $kept = attachUpdateGalleryPhoto($pet, 'b.jpg');
+        $doomed   = attachUpdateGalleryPhoto($pet, 'a.jpg');
+        $kept     = attachUpdateGalleryPhoto($pet, 'b.jpg');
 
-        $updated = app(UpdatePet::class)->handle(
+        $updated  = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             featuredImage: UploadedFile::fake()->image('new-cover.jpg'),
@@ -207,11 +207,11 @@ describe('deleted media', function () {
 
 describe('cover photo', function () {
     test('replaces the cover photo and leaves the gallery alone', function () {
-        $pet = listingUnderEdit();
-        $oldCover = attachUpdateFeaturedPhoto($pet, 'old-cover.jpg');
+        $pet          = listingUnderEdit();
+        $oldCover     = attachUpdateFeaturedPhoto($pet, 'old-cover.jpg');
         $galleryPhoto = attachUpdateGalleryPhoto($pet, 'a.jpg');
 
-        $updated = app(UpdatePet::class)->handle(
+        $updated      = app(UpdatePet::class)->handle(
             $pet,
             updatePetData($pet->category),
             featuredImage: UploadedFile::fake()->image('new-cover.jpg'),
@@ -224,8 +224,8 @@ describe('cover photo', function () {
     });
 
     test('keeps the existing cover photo when the edit uploads none', function () {
-        $pet = listingUnderEdit();
-        $cover = attachUpdateFeaturedPhoto($pet);
+        $pet     = listingUnderEdit();
+        $cover   = attachUpdateFeaturedPhoto($pet);
 
         $updated = app(UpdatePet::class)->handle($pet, updatePetData($pet->category));
 

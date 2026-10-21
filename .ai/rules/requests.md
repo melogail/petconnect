@@ -46,3 +46,10 @@ Standing rule for new code: `sometimes` may never sit on an attribute that also 
 Still-safe uses, after a full sweep of app/ (only two files use it): `ProfileValidationRules` phone/bio/addressLine/timezone/username/locale/avatar carry value rules only, and `MessageValidationRules::messageTypeRules()` is `['sometimes', Rule::enum]`.
 
 (Mirrored from .ai/rules/concerns.md, because the rules that carry this trap live in `App\Concerns\*ValidationRules` but the person who reintroduces it is editing a Form Request. Edit both copies together.)
+
+## A pet listing is one animal unless it is an adoption litter: `quantity`, `male_count`, `female_count`, `PetGender::Mixed`
+`pets.age` (free-text years) is gone; `pets.birth_date` is stored and `Pet::age()` derives fractional years from it (`#[Appends(['age'])]`, null without a date). The home feed's age filter is therefore a `birth_date BETWEEN` window built in `BuildHomeFeed\ApplyAgeRangeFilter`, and a listing with no birth date is left out whenever a bound is set.
+
+`quantity` defaults to 1. It may exceed 1 **only on an adoption listing** (`PetValidationRules::litterOnlyOnAdoption()`), and then `male_count` and `female_count` are required and must add up to it (`countsAddUpToQuantity()`), while `gender` must agree with them (`genderMatchesCounts()`: `male` ⇒ no females, `female` ⇒ no males, `mixed` ⇒ at least one of each; `mixed` is rejected outright on a single animal). `name` is required for a single animal and optional for a litter. `Shared\NormalizeBasicAttributes` mirrors the first rule by writing `quantity = 1` and null counts for anything that is not an adoption, so a stale pair of counts cannot ride along on a sale. `PetFactory::litter($male, $female)` builds one.
+
+On the client, `pets.name` is `string | null`, so nothing renders `pet.name` directly: `lib/petTitle.ts` returns the name or a translated "Litter of :count :kind" (`pets.litter_title`), and every heading, `<title>` and accessible name goes through it. `age` is `number | null`; `card/labels.ts::ageLabel()` shows months under a year.

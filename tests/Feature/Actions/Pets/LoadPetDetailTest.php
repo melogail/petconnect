@@ -47,8 +47,12 @@ const DETAIL_ACTION_QUERY_COST = 13;
  * Measured through the route so the number means "the detail page", which the
  * Action's cost above does not: read as the page's cost it is two queries
  * short and any regression baseline drawn from it starts out wrong.
+ *
+ * 16 since the shared `auth.user` prop started carrying the viewer's avatar:
+ * AuthenticatedUserResource loads the viewer's `media`, one query on every
+ * authenticated page.
  */
-const DETAIL_ROUTE_QUERY_COST = 15;
+const DETAIL_ROUTE_QUERY_COST  = 16;
 
 /**
  * Give a user the avatar PetOwnerResource reads with getFirstMediaUrl().
@@ -77,7 +81,7 @@ function listingUnderDetail(User $owner): Pet
     $category->addMedia(UploadedFile::fake()->image('icon.jpg'))
         ->toMediaCollection('categories');
 
-    $pet = Pet::factory()
+    $pet      = Pet::factory()
         ->for($owner)
         ->for($category)
         ->for(Breed::factory()->for($category))
@@ -85,7 +89,7 @@ function listingUnderDetail(User $owner): Pet
 
     $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->withCustomProperties([
-            Pet::FEATURED_PROPERTY => true,
+            Pet::FEATURED_PROPERTY                       => true,
             MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $owner->media_directory_name,
         ])
         ->toMediaCollection(Pet::PHOTO_COLLECTION);
@@ -147,12 +151,17 @@ function countPetDetailQueries(Pet $pet, ?User $viewer): int
  * and come back one query short of the first for a reason that has nothing to
  * do with what is being measured. The visitor is not the owner, for the same
  * reason — an owner's visit is never counted.
+ *
+ * The visitor is re-read for every measurement, the way a real request reads
+ * it: the shared `auth.user` prop loads `media` onto the instance it is handed,
+ * so reusing one instance would let the second measurement skip that query and
+ * read one short of the first.
  */
 function countPetDetailRouteQueries(Pet $pet, User $visitor): int
 {
     Cache::flush();
 
-    test()->actingAs($visitor);
+    test()->actingAs($visitor->fresh());
 
     DB::flushQueryLog();
     DB::enableQueryLog();
@@ -167,13 +176,13 @@ function countPetDetailRouteQueries(Pet $pet, User $visitor): int
 
 test('serialises the detail payload in a constant number of queries however long the comment thread is', function () {
     Storage::fake(config('media-library.disk_name'));
-    $owner = User::factory()->create();
-    $pet = listingUnderDetail($owner);
+    $owner          = User::factory()->create();
+    $pet            = listingUnderDetail($owner);
     $this->actingAs($owner);
 
     seedCommentThread($pet, comments: 2, repliesEach: 2);
 
-    $atTwoComments = countPetDetailQueries($pet, $owner);
+    $atTwoComments  = countPetDetailQueries($pet, $owner);
 
     seedCommentThread($pet, comments: 3, repliesEach: 2);
 
@@ -185,13 +194,13 @@ test('serialises the detail payload in a constant number of queries however long
 
 test('renders the listing page in a constant number of queries however long the comment thread is', function () {
     Storage::fake(config('media-library.disk_name'));
-    $owner = User::factory()->create();
-    $pet = listingUnderDetail($owner);
-    $visitor = User::factory()->create();
+    $owner          = User::factory()->create();
+    $pet            = listingUnderDetail($owner);
+    $visitor        = User::factory()->create();
 
     seedCommentThread($pet, comments: 2, repliesEach: 2);
 
-    $atTwoComments = countPetDetailRouteQueries($pet, $visitor);
+    $atTwoComments  = countPetDetailRouteQueries($pet, $visitor);
 
     seedCommentThread($pet, comments: 3, repliesEach: 2);
 
@@ -203,11 +212,11 @@ test('renders the listing page in a constant number of queries however long the 
 
 test('serialises the detail payload without a further query, because every relation it walks is eager loaded', function () {
     Storage::fake(config('media-library.disk_name'));
-    $owner = User::factory()->create();
-    $pet = listingUnderDetail($owner);
+    $owner   = User::factory()->create();
+    $pet     = listingUnderDetail($owner);
     $this->actingAs($owner);
     seedCommentThread($pet, comments: 2, repliesEach: 2);
-    $loaded = app(LoadPetDetail::class)->handle($pet, $owner);
+    $loaded  = app(LoadPetDetail::class)->handle($pet, $owner);
 
     DB::flushQueryLog();
     DB::enableQueryLog();

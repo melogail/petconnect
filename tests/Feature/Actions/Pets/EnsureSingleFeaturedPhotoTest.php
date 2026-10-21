@@ -36,20 +36,21 @@ function attachPhotos(Pet $pet, array $names, array $featured): Collection
 function novaPetPayload(Pet $pet): array
 {
     return [
-        'name' => $pet->name,
-        'user' => $pet->user_id,
-        'category' => $pet->category_id,
-        'breed' => $pet->breed_id,
-        'status' => $pet->status->value,
-        'listing_type' => $pet->listing_type->value,
-        'gender' => $pet->gender->value,
-        'age' => $pet->age,
-        'color' => $pet->color,
-        'city' => $pet->city,
-        'state' => $pet->state,
-        'country' => $pet->country,
+        'name'          => $pet->name,
+        'user'          => $pet->user_id,
+        'category'      => $pet->category_id,
+        'breed'         => $pet->breed_id,
+        'status'        => $pet->status->value,
+        'listing_type'  => $pet->listing_type->value,
+        'gender'        => $pet->gender->value,
+        'birth_date'    => $pet->birth_date?->toDateString(),
+        'quantity'      => $pet->quantity,
+        'color'         => $pet->color,
+        'city'          => $pet->city,
+        'state'         => $pet->state,
+        'country'       => $pet->country,
         'health_status' => $pet->health_status->value,
-        'description' => $pet->description,
+        'description'   => $pet->description,
     ];
 }
 
@@ -69,12 +70,12 @@ beforeEach(function () {
  * data to agree with what the page rendered rather than choosing a new cover.
  */
 test('demotes every flagged photo but the one the cover already rendered', function () {
-    $pet = Pet::factory()->create();
-    $photos = attachPhotos($pet, ['first.jpg', 'second.jpg', 'third.jpg'], ['first.jpg', 'second.jpg', 'third.jpg']);
+    $pet           = Pet::factory()->create();
+    $photos        = attachPhotos($pet, ['first.jpg', 'second.jpg', 'third.jpg'], ['first.jpg', 'second.jpg', 'third.jpg']);
 
     $renderedCover = $pet->featuredPhoto();
 
-    $demoted = app(EnsureSingleFeaturedPhoto::class)->handle($pet);
+    $demoted       = app(EnsureSingleFeaturedPhoto::class)->handle($pet);
 
     $stillFeatured = $pet->fresh()->getMedia(Pet::PHOTO_COLLECTION, [Pet::FEATURED_PROPERTY => true]);
 
@@ -100,8 +101,8 @@ test('returns the over-flagged photos to the gallery', function () {
 });
 
 test('leaves a listing with one flagged photo untouched', function () {
-    $pet = Pet::factory()->create();
-    $photos = attachPhotos($pet, ['cover.jpg', 'gallery.jpg'], ['cover.jpg']);
+    $pet     = Pet::factory()->create();
+    $photos  = attachPhotos($pet, ['cover.jpg', 'gallery.jpg'], ['cover.jpg']);
 
     $demoted = app(EnsureSingleFeaturedPhoto::class)->handle($pet);
 
@@ -110,7 +111,7 @@ test('leaves a listing with one flagged photo untouched', function () {
 });
 
 test('leaves a listing with no flagged photo without inventing a cover', function () {
-    $pet = Pet::factory()->create();
+    $pet     = Pet::factory()->create();
     attachPhotos($pet, ['one.jpg', 'two.jpg'], []);
 
     $demoted = app(EnsureSingleFeaturedPhoto::class)->handle($pet);
@@ -128,14 +129,14 @@ test('leaves a listing with no flagged photo without inventing a cover', functio
  * replacing and settle nothing.
  */
 test('settles the cover when an admin ticks featured on several photos in Nova', function () {
-    $admin = Admin::factory()->create();
-    $pet = Pet::factory()->create();
+    $admin  = Admin::factory()->create();
+    $pet    = Pet::factory()->create();
     $photos = attachPhotos($pet, ['first.jpg', 'second.jpg', 'third.jpg'], []);
 
     $this->actingAs($admin, 'admin')
         ->putJson("/nova-api/pets/{$pet->getKey()}", [
             ...novaPetPayload($pet),
-            '__media__' => [Pet::PHOTO_COLLECTION => $photos->map->getKey()->values()->all()],
+            '__media__'                   => [Pet::PHOTO_COLLECTION => $photos->map->getKey()->values()->all()],
             '__media-custom-properties__' => [Pet::PHOTO_COLLECTION => [
                 [Pet::FEATURED_PROPERTY => true],
                 [Pet::FEATURED_PROPERTY => true],

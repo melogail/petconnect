@@ -30,9 +30,9 @@ class CategorySeeder extends Seeder
                 Category::query()->updateOrCreate(
                     ['slug' => $category['slug']],
                     [
-                        'name' => $category['name'],
-                        'name_ar' => $category['name_ar'],
-                        'description' => $category['description'] ?? null,
+                        'name'           => $category['name'],
+                        'name_ar'        => $category['name_ar'],
+                        'description'    => $category['description'] ?? null,
                         'description_ar' => $category['description_ar'] ?? null,
                     ],
                 );
