@@ -28,7 +28,7 @@ trait ReadsSeedData
      *
      * @var list<string>|null
      */
-    protected static ?array $seedStreets = null;
+    protected static ?array $seedStreets   = null;
 
     /**
      * Decode a JSON file from database/data.
@@ -60,10 +60,14 @@ trait ReadsSeedData
      */
     protected function locations(): array
     {
-        /** @var list<array{city: string, state: string, country: string, postal_code: string, latitude: float, longitude: float, timezone: string}> $locations */
-        $locations = static::$seedLocations ??= $this->readSeedData('locations.json');
+        if (static::$seedLocations === null) {
+            /** @var list<array{city: string, state: string, country: string, postal_code: string, latitude: float, longitude: float, timezone: string}> $locations */
+            $locations             = $this->readSeedData('locations.json');
 
-        return $locations;
+            static::$seedLocations = $locations;
+        }
+
+        return static::$seedLocations;
     }
 
     /**
@@ -75,10 +79,14 @@ trait ReadsSeedData
      */
     protected function streets(): array
     {
-        /** @var list<string> $streets */
-        $streets = static::$seedStreets ??= $this->readSeedData('streets.json');
+        if (static::$seedStreets === null) {
+            /** @var list<string> $streets */
+            $streets             = $this->readSeedData('streets.json');
 
-        return $streets;
+            static::$seedStreets = $streets;
+        }
+
+        return static::$seedStreets;
     }
 
     /**

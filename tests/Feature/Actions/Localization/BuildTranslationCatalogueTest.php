@@ -23,7 +23,7 @@ test('ships the application catalogue for a locale without the nova vendor one',
         ->and($catalogue)->not->toHaveKey('Sorry! You are not authorized to perform this action.');
 })->with([
     'english' => ['en', 'SniffPal'],
-    'arabic' => ['ar', 'سنيف بال'],
+    'arabic'  => ['ar', 'سنيف بال'],
 ]);
 
 /**
@@ -54,10 +54,10 @@ test('falls back to the application language rather than reading a path the whit
 
     expect($catalogue['nav.brand'])->toBe('SniffPal');
 })->with([
-    'an unsupported language' => ['fr'],
-    'a traversal out of lang' => ['../../composer'],
+    'an unsupported language'    => ['fr'],
+    'a traversal out of lang'    => ['../../composer'],
     'a traversal back into lang' => ['ar/../en'],
-    'a nested vendor catalogue' => ['vendor/nova/en'],
+    'a nested vendor catalogue'  => ['vendor/nova/en'],
 ]);
 
 test('reads the language the application is currently in when it is given none', function () {

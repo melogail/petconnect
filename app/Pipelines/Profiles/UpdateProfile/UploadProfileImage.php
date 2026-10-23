@@ -42,7 +42,7 @@ class UploadProfileImage
             return $next($context);
         }
 
-        $user = $context->user;
+        $user        = $context->user;
 
         /** @var list<int> $previousIds */
         $previousIds = $user->getMedia('users')
@@ -52,7 +52,7 @@ class UploadProfileImage
 
         $context->setPreviousMediaIds($previousIds);
 
-        $image = $context->image;
+        $image       = $context->image;
 
         $context->setUploadedMedia(
             $user->addMedia($image)

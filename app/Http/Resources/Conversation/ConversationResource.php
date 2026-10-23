@@ -82,38 +82,38 @@ class ConversationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $viewer = $this->viewer($request);
+        $viewer          = $this->viewer($request);
         $hasParticipants = $this->relationLoaded('users');
 
         return [
-            'id' => $this->id,
-            'type' => $this->type,
+            'id'              => $this->id,
+            'type'            => $this->type,
             'last_message_at' => $this->last_message_at,
 
-            'participants' => UserSummaryResource::collection($this->whenLoaded('users')),
-            'peer' => $this->when(
+            'participants'    => UserSummaryResource::collection($this->whenLoaded('users')),
+            'peer'            => $this->when(
                 $hasParticipants && $viewer !== null,
                 fn (): ?UserSummaryResource => $this->peerResource($viewer),
                 null,
             ),
 
-            'last_message' => $this->whenLoaded(
+            'last_message'    => $this->whenLoaded(
                 'lastMessage',
                 fn (): MessageResource => MessageResource::make($this->lastMessage),
                 null,
             ),
-            'unread' => $this->when(
+            'unread'          => $this->when(
                 $hasParticipants && $this->relationLoaded('lastMessage') && $viewer !== null,
                 fn (): bool => $this->isUnreadFor($viewer),
                 false,
             ),
 
-            'can_send' => $hasParticipants
+            'can_send'        => $hasParticipants
                 && $viewer !== null
                 && $viewer->can('create', [Message::class, $this->resource]),
 
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at'      => $this->created_at,
+            'updated_at'      => $this->updated_at,
         ];
     }
 

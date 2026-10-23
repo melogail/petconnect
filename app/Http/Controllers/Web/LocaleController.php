@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Profiles\ApplyUserLocale;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\UpdateLocaleRequest;
 use Illuminate\Http\RedirectResponse;
@@ -30,9 +31,11 @@ use Inertia\Inertia;
  */
 class LocaleController extends Controller
 {
+    use ResolvesRequestUser;
+
     public function update(UpdateLocaleRequest $request, ApplyUserLocale $applyUserLocale): RedirectResponse
     {
-        $applyUserLocale->handle($request->locale(), $request->user());
+        $applyUserLocale->handle($request->locale(), $this->viewer($request));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Language updated.')]);
 

@@ -49,7 +49,7 @@ class SubmitReportContext
     /**
      * The filed report, once PersistReport has run.
      */
-    protected ?Report $report = null;
+    protected ?Report $report    = null;
 
     public function __construct(
         public readonly User $reporter,

@@ -14,8 +14,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Notification;
 
 test('opens a direct thread holding exactly the two users', function () {
-    $initiator = User::factory()->create();
-    $recipient = User::factory()->create();
+    $initiator    = User::factory()->create();
+    $recipient    = User::factory()->create();
 
     $conversation = app(StartConversation::class)->handle($initiator, $recipient->getKey());
 
@@ -34,8 +34,8 @@ test('reopens the same thread when the same initiator asks a second time', funct
     $initiator = User::factory()->create();
     $recipient = User::factory()->create();
 
-    $first = app(StartConversation::class)->handle($initiator, $recipient->getKey());
-    $second = app(StartConversation::class)->handle($initiator, $recipient->getKey());
+    $first     = app(StartConversation::class)->handle($initiator, $recipient->getKey());
+    $second    = app(StartConversation::class)->handle($initiator, $recipient->getKey());
 
     expect($second->getKey())->toBe($first->getKey())
         ->and(Conversation::query()->count())->toBe(1);
@@ -45,8 +45,8 @@ test('reopens the same thread when the other side asks from their end', function
     $initiator = User::factory()->create();
     $recipient = User::factory()->create();
 
-    $opened = app(StartConversation::class)->handle($initiator, $recipient->getKey());
-    $reopened = app(StartConversation::class)->handle($recipient, $initiator->getKey());
+    $opened    = app(StartConversation::class)->handle($initiator, $recipient->getKey());
+    $reopened  = app(StartConversation::class)->handle($recipient, $initiator->getKey());
 
     expect($reopened->getKey())->toBe($opened->getKey())
         ->and(Conversation::query()->count())->toBe(1)
@@ -56,9 +56,9 @@ test('reopens the same thread when the other side asks from their end', function
 test('adds a later opening message to the thread that already exists rather than forking it', function () {
     $initiator = User::factory()->create();
     $recipient = User::factory()->create();
-    $opened = app(StartConversation::class)->handle($initiator, $recipient->getKey(), 'Is she still available?');
+    $opened    = app(StartConversation::class)->handle($initiator, $recipient->getKey(), 'Is she still available?');
 
-    $reopened = app(StartConversation::class)->handle($recipient, $initiator->getKey(), 'She is, message me.');
+    $reopened  = app(StartConversation::class)->handle($recipient, $initiator->getKey(), 'She is, message me.');
 
     expect($reopened->getKey())->toBe($opened->getKey())
         ->and(Conversation::query()->count())->toBe(1)
@@ -94,10 +94,10 @@ test('rejects opening a thread with yourself and writes nothing', function () {
  * reasons that have nothing to do with the oracle.
  */
 test('refuses a deactivated recipient exactly as it refuses an id that was never issued', function () {
-    $initiator = User::factory()->create();
-    $deactivated = User::factory()->inactive()->create();
+    $initiator                         = User::factory()->create();
+    $deactivated                       = User::factory()->inactive()->create();
 
-    $refusals = [];
+    $refusals                          = [];
 
     foreach ([$deactivated->getKey(), 9999] as $recipientId) {
         try {
@@ -132,10 +132,10 @@ test('refuses a deactivated recipient exactly as it refuses an id that was never
  */
 test('rejects a recipient who does not accept messages from the initiator and writes nothing', function () {
     $initiator = User::factory()->create();
-    $refusing = Mockery::mock(User::class)->makePartial();
+    $refusing  = Mockery::mock(User::class)->makePartial();
     $refusing->shouldReceive('acceptsMessagesFrom')->with($initiator)->andReturnFalse();
 
-    $context = new StartDirectConversationContext(initiator: $initiator, recipient: $refusing);
+    $context   = new StartDirectConversationContext(initiator: $initiator, recipient: $refusing);
 
     expect(fn () => (new EnsureRecipientAccepts)->handle($context, fn (): null => null))
         ->toThrow(ConversationNotPermitted::class);
@@ -160,13 +160,13 @@ test('opens a thread with no message when none was written', function () {
 
 test('sends the opening message through the same flow every later message takes', function () {
     Notification::fake();
-    $initiator = User::factory()->create();
-    $recipient = User::factory()->create();
+    $initiator    = User::factory()->create();
+    $recipient    = User::factory()->create();
 
     $conversation = app(StartConversation::class)
         ->handle($initiator, $recipient->getKey(), '  What a   bitch  ');
 
-    $message = Message::query()->sole();
+    $message      = Message::query()->sole();
 
     expect($message->content)->toBe('What a ****')
         ->and($message->sender_id)->toBe($initiator->getKey())
@@ -185,11 +185,11 @@ test('sends the opening message through the same flow every later message takes'
 test('leaves the thread read for the initiator', function () {
     $initiator = User::factory()->create();
     $recipient = User::factory()->create();
-    $opened = app(StartConversation::class)->handle($recipient, $initiator->getKey(), 'Is she still available?');
+    $opened    = app(StartConversation::class)->handle($recipient, $initiator->getKey(), 'Is she still available?');
 
     expect($opened->fresh()->isUnreadFor($initiator))->toBeTrue();
 
-    $reopened = app(StartConversation::class)->handle($initiator, $recipient->getKey());
+    $reopened  = app(StartConversation::class)->handle($initiator, $recipient->getKey());
 
     expect($reopened->fresh()->isUnreadFor($initiator))->toBeFalse();
 });

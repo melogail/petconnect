@@ -5,6 +5,7 @@ import FormField from '@/components/pets/form/FormField.vue';
 import TagInput from '@/components/pets/form/TagInput.vue';
 import { Textarea } from '@/components/ui/textarea';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The description and the personality traits.
@@ -16,6 +17,8 @@ import { petFormErrors, type PetFormState } from '@/lib/petForm';
 const { form } = defineProps<{ form: InertiaForm<PetFormState> }>();
 
 const errors = computed(() => petFormErrors(form.errors));
+
+const { t } = useTranslations();
 
 const traitError = computed(
     () =>
@@ -29,10 +32,10 @@ const traitError = computed(
 <template>
     <div class="space-y-5">
         <FormField
-            label="Description"
+            :label="t('wizard.description')"
             field-id="pet-description"
             :error="errors.description"
-            hint="Up to 5000 characters."
+            :hint="t('wizard.description_hint')"
             required
         >
             <Textarea
@@ -45,15 +48,15 @@ const traitError = computed(
         </FormField>
 
         <FormField
-            label="Personality traits"
+            :label="t('wizard.personality_traits')"
             field-id="pet-traits"
             :error="traitError"
-            hint="Up to 20. Type whatever fits — there is no fixed list."
+            :hint="t('wizard.traits_hint')"
         >
             <TagInput
                 v-model="form.traits"
                 input-id="pet-traits"
-                placeholder="Playful, quiet, good on a lead…"
+                :placeholder="t('wizard.traits_placeholder')"
             />
         </FormField>
     </div>

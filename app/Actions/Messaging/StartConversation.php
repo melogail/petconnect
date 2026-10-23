@@ -73,7 +73,7 @@ class StartConversation
     {
         $recipient = $this->resolveRecipient($recipientId);
 
-        $context = new StartDirectConversationContext(
+        $context   = new StartDirectConversationContext(
             initiator: $initiator,
             recipient: $recipient,
             initialMessageContent: $initialMessage,

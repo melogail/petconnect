@@ -24,9 +24,9 @@ test('removes the review and the reports filed against it', function () {
 });
 
 test('leaves the reports filed against another review in place', function () {
-    $review = Review::factory()->create();
+    $review   = Review::factory()->create();
     $survivor = Review::factory()->create();
-    $report = Report::factory()->forReportable($survivor)->create();
+    $report   = Report::factory()->forReportable($survivor)->create();
 
     app(DeleteReview::class)->handle($review);
 

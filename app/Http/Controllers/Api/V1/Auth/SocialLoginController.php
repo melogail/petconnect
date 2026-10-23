@@ -13,6 +13,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 
 /**
  * Token login with a Google or Facebook access token.
@@ -37,15 +38,18 @@ class SocialLoginController extends Controller
     ): JsonResponse {
         abort_unless($provider->isConfigured(), 404);
 
+        /** @var AbstractProvider $driver Every SocialProvider case is an OAuth 2 driver; the facade only promises the Provider contract, which has no stateless(). */
+        $driver = Socialite::driver($provider->value);
+
         try {
-            $identity = Socialite::driver($provider->value)->stateless()->userFromToken($request->token());
+            $identity = $driver->stateless()->userFromToken($request->token());
         } catch (TransferException) {
             throw ValidationException::withMessages([
                 'token' => __('The :provider token could not be verified.', ['provider' => $provider->label()]),
             ]);
         }
 
-        $user = $resolveSocialUser->handle($provider, $identity);
+        $user   = $resolveSocialUser->handle($provider, $identity);
 
         if ($user->wasRecentlyCreated) {
             event(new Registered($user));

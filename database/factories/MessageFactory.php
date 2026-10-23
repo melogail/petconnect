@@ -36,10 +36,10 @@ class MessageFactory extends Factory
     {
         return [
             'conversation_id' => Conversation::factory(),
-            'sender_id' => User::factory(),
-            'content' => fake()->sentence(fake()->numberBetween(3, 18)),
-            'type' => MessageType::Text,
-            'status' => MessageStatus::Sent,
+            'sender_id'       => User::factory(),
+            'content'         => fake()->sentence(fake()->numberBetween(3, 18)),
+            'type'            => MessageType::Text,
+            'status'          => MessageStatus::Sent,
         ];
     }
 

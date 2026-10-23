@@ -66,7 +66,7 @@ function measureReviewsPage(User $subject, ?User $viewer = null): array
     DB::flushQueryLog();
     DB::enableQueryLog();
 
-    $json = ReviewResource::collection(app(ListReviews::class)->handle(
+    $json    = ReviewResource::collection(app(ListReviews::class)->handle(
         reviewableType: Reviewable::User,
         reviewableId: $subject->getKey(),
         viewer: $viewer,
@@ -80,10 +80,10 @@ function measureReviewsPage(User $subject, ?User $viewer = null): array
 
 test('returns the reviews written about the target, newest first', function () {
     $subject = User::factory()->create();
-    $older = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
-    $newer = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-02 10:00:00']);
+    $older   = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
+    $newer   = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-02 10:00:00']);
 
-    $page = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
+    $page    = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
 
     expect($page->pluck('id')->all())->toBe([$newer->getKey(), $older->getKey()]);
 });
@@ -95,20 +95,20 @@ test('returns the reviews written about the target, newest first', function () {
  */
 test('breaks a tie on the created timestamp with the newest id first', function () {
     $subject = User::factory()->create();
-    $first = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
-    $second = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
+    $first   = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
+    $second  = Review::factory()->forUser($subject)->create(['created_at' => '2026-01-01 10:00:00']);
 
-    $page = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
+    $page    = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
 
     expect($page->pluck('id')->all())->toBe([$second->getKey(), $first->getKey()]);
 });
 
 test('excludes reviews written about somebody else', function () {
     $subject = User::factory()->create();
-    $mine = Review::factory()->forUser($subject)->create();
+    $mine    = Review::factory()->forUser($subject)->create();
     Review::factory()->forUser(User::factory()->create())->create();
 
-    $page = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
+    $page    = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
 
     expect($page->pluck('id')->all())->toBe([$mine->getKey()]);
 });
@@ -118,20 +118,20 @@ test('pages at the configured size', function () {
     $subject = User::factory()->create();
     seedReviewsAbout($subject, 3);
 
-    $page = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
+    $page    = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey());
 
     expect($page->count())->toBe(2)
         ->and($page->total())->toBe(3);
 });
 
 test('marks the reviews the viewer has already reported', function () {
-    $viewer = User::factory()->create();
-    $subject = User::factory()->create();
-    $reported = Review::factory()->forUser($subject)->create();
+    $viewer    = User::factory()->create();
+    $subject   = User::factory()->create();
+    $reported  = Review::factory()->forUser($subject)->create();
     $untouched = Review::factory()->forUser($subject)->create();
     Report::factory()->for($viewer)->forReportable($reported)->create();
 
-    $page = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey(), $viewer);
+    $page      = app(ListReviews::class)->handle(Reviewable::User, $subject->getKey(), $viewer);
 
     expect($page->firstWhere('id', $reported->getKey())->has_reported)->toBeTrue()
         ->and($page->firstWhere('id', $untouched->getKey())->has_reported)->toBeFalse();
@@ -141,7 +141,7 @@ test('leaves has_reported off the page for a guest, and the payload reads it as 
     $subject = User::factory()->create();
     seedReviewsAbout($subject, 2);
 
-    $page = measureReviewsPage($subject);
+    $page    = measureReviewsPage($subject);
 
     expect($page['payload']['data'][0]['has_reported'])->toBeFalse();
 });
@@ -161,11 +161,11 @@ test('costs the same number of queries however many reviews are on the page', fu
     seedReviewsAbout($subject, $reviews);
     config(['petconnect.reviews.per_page' => $reviews]);
 
-    $page = measureReviewsPage($subject, User::factory()->create());
+    $page    = measureReviewsPage($subject, User::factory()->create());
 
     expect($page['queries'])->toBe(REVIEWS_PAGE_QUERY_COST);
 })->with([
-    '2 reviews' => 2,
+    '2 reviews'  => 2,
     '10 reviews' => 10,
     '25 reviews' => 25,
 ]);
@@ -183,7 +183,7 @@ test('serialises every review with its author, so a dropped eager load cannot pa
     $subject = User::factory()->create();
     seedReviewsAbout($subject, 2);
 
-    $page = measureReviewsPage($subject);
+    $page    = measureReviewsPage($subject);
 
     expect($page['payload']['data'])->toHaveCount(2)
         ->and($page['payload']['data'][0])->toHaveKey('author')

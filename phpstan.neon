@@ -29,12 +29,12 @@ parameters:
             message: '#^Class Spatie\\MediaLibraryPro\\Models\\TemporaryUpload not found\.$#'
             path: config/media-library.php
 
-        # Nova's Resource stub declares scoutQuery() unconditionally, even
-        # though laravel/scout is not installed. The type genuinely cannot be
-        # resolved and the method is dead without Scout.
+        # Laravel's where() accepts a queryable on its $column side at runtime
+        # but declares array|Closure|Expression|string. The correlated subquery
+        # in CountUnreadConversations needs the Eloquent builder there to keep
+        # the SoftDeletes scope; the class docblock records every alternative
+        # that was tried. One occurrence, pinned by count.
         -
-            message: '#^Method App\\Nova\\Resource\:\:scoutQuery\(\) has invalid return type Laravel\\Scout\\Builder\.$#'
-            path: app/Nova/Resource.php
-        -
-            message: '#^Parameter \$query of method App\\Nova\\Resource\:\:scoutQuery\(\) has invalid type Laravel\\Scout\\Builder\.$#'
-            path: app/Nova/Resource.php
+            message: '#^Parameter \#1 \$column of method Illuminate\\Database\\Eloquent\\Builder<App\\Models\\Conversation>\:\:where\(\) expects .*, Illuminate\\Database\\Eloquent\\Builder<App\\Models\\Message> given\.$#'
+            path: app/Actions/Messaging/CountUnreadConversations.php
+            count: 1

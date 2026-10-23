@@ -30,7 +30,7 @@ abstract class PetAttributeContext
     /**
      * The listing, once a Persist step has produced it.
      */
-    protected ?Pet $pet = null;
+    protected ?Pet $pet         = null;
 
     /**
      * @param  array<string, mixed>  $data  The validated payload.

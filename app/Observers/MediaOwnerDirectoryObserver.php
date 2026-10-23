@@ -49,7 +49,7 @@ class MediaOwnerDirectoryObserver
      */
     public function creating(Media $media): void
     {
-        $stored = $media->getCustomProperty(MediaPathGenerator::OWNER_DIRECTORY_PROPERTY);
+        $stored    = $media->getCustomProperty(MediaPathGenerator::OWNER_DIRECTORY_PROPERTY);
 
         if (is_string($stored) && $stored !== '') {
             return;

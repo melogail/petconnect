@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { update as updateMessage } from '@/routes/messages';
 import type { Message } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * Rewrite a message inside the edit window.
@@ -28,21 +29,27 @@ import type { Message } from '@/types';
 const { message } = defineProps<{ message: Message }>();
 
 const open = ref(false);
+
+const { t } = useTranslations();
 </script>
 
 <template>
     <Dialog v-model:open="open">
         <DialogTrigger as-child>
-            <Button variant="ghost" size="icon-sm" aria-label="Edit message">
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                :aria-label="t('messaging.edit_message')"
+            >
                 <Pencil class="size-3.5" />
             </Button>
         </DialogTrigger>
 
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Edit message</DialogTitle>
+                <DialogTitle>{{ t('messaging.edit_message') }}</DialogTitle>
                 <DialogDescription>
-                    The thread will show that this message was edited.
+                    {{ t('messaging.edited_hint') }}
                 </DialogDescription>
             </DialogHeader>
 
@@ -54,7 +61,9 @@ const open = ref(false);
                 @success="open = false"
             >
                 <div class="grid gap-2">
-                    <Label for="message-content-edit">Message</Label>
+                    <Label for="message-content-edit">{{
+                        t('messaging.message')
+                    }}</Label>
                     <Textarea
                         id="message-content-edit"
                         name="content"
@@ -68,7 +77,7 @@ const open = ref(false);
                 <DialogFooter>
                     <Button type="submit" :disabled="processing">
                         <Spinner v-if="processing" />
-                        Save
+                        {{ t('common.save') }}
                     </Button>
                 </DialogFooter>
             </Form>

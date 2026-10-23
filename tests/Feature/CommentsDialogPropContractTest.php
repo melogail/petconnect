@@ -109,8 +109,8 @@ const COMMENTS_DIALOG_HOST_COMPONENTS = ['Home', 'pets/Show', 'profile/Show'];
 function commentsDialogHostUrl(string $component): string
 {
     return match ($component) {
-        'Home' => route('home'),
-        'pets/Show' => route('pets.show', Pet::factory()->create()),
+        'Home'         => route('home'),
+        'pets/Show'    => route('pets.show', Pet::factory()->create()),
         'profile/Show' => route('profile.show', User::factory()->create()),
     };
 }
@@ -128,7 +128,7 @@ function commentsDialogThreadParameters(Pet $pet): array
 
 test('ships the report vocabulary and the comment ceiling the dialog reads', function (string $component) {
     config([
-        'petconnect.comments.max_length' => 140,
+        'petconnect.comments.max_length'      => 140,
         'petconnect.comments.thread_per_page' => 3,
     ]);
 
@@ -161,8 +161,8 @@ test('ships the report vocabulary and the comment ceiling the dialog reads', fun
  */
 test('ships a composer ceiling that is the one comments.store enforces', function () {
     config(['petconnect.comments.max_length' => 140]);
-    $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $author    = User::factory()->create();
+    $pet       = Pet::factory()->create();
 
     $maxLength = $this->get(route('home'))
         ->assertOk()

@@ -91,31 +91,31 @@ function serialiseThreadPage(Conversation $conversation, User $reader): array
 {
     $routeBound = Conversation::query()->findOrFail($conversation->getKey());
 
-    $request = Request::create(route('conversations.messages.index', $conversation));
+    $request    = Request::create(route('conversations.messages.index', $conversation));
     $request->setUserResolver(fn (): User => $reader);
 
     DB::flushQueryLog();
     DB::enableQueryLog();
 
-    $content = MessageResource::collection(app(PaginateConversationMessages::class)->handle($routeBound, perPage: 100))
+    $content    = MessageResource::collection(app(PaginateConversationMessages::class)->handle($routeBound, perPage: 100))
         ->toResponse($request)
         ->getContent();
 
-    $queries = count(DB::getQueryLog());
+    $queries    = count(DB::getQueryLog());
     DB::disableQueryLog();
 
     return [
-        'queries' => $queries,
+        'queries'  => $queries,
         'messages' => json_decode((string) $content, true)['data'],
     ];
 }
 
 test('pages the thread newest first', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $older = Message::factory()->for($conversation)->create(['created_at' => now()->subHour()]);
-    $newer = Message::factory()->for($conversation)->create(['created_at' => now()]);
+    $older        = Message::factory()->for($conversation)->create(['created_at' => now()->subHour()]);
+    $newer        = Message::factory()->for($conversation)->create(['created_at' => now()]);
 
-    $page = app(PaginateConversationMessages::class)->handle($conversation);
+    $page         = app(PaginateConversationMessages::class)->handle($conversation);
 
     expect($page->pluck('id')->all())->toBe([$newer->getKey(), $older->getKey()]);
 });
@@ -128,11 +128,11 @@ test('pages the thread newest first', function () {
 test('breaks a tie on the send time with the newest id first', function () {
     $conversation = Conversation::factory()->direct()->create();
     $sentTogether = now();
-    $first = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
-    $second = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
-    $third = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
+    $first        = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
+    $second       = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
+    $third        = Message::factory()->for($conversation)->create(['created_at' => $sentTogether]);
 
-    $page = app(PaginateConversationMessages::class)->handle($conversation);
+    $page         = app(PaginateConversationMessages::class)->handle($conversation);
 
     expect($page->pluck('id')->all())
         ->toBe([$third->getKey(), $second->getKey(), $first->getKey()]);
@@ -140,31 +140,31 @@ test('breaks a tie on the send time with the newest id first', function () {
 
 test('leaves out the messages of another thread', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $wanted = Message::factory()->for($conversation)->create();
+    $wanted       = Message::factory()->for($conversation)->create();
     Message::factory()->for(Conversation::factory()->direct()->create())->create();
 
-    $page = app(PaginateConversationMessages::class)->handle($conversation);
+    $page         = app(PaginateConversationMessages::class)->handle($conversation);
 
     expect($page->pluck('id')->all())->toBe([$wanted->getKey()]);
 });
 
 test('leaves out a withdrawn message', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $kept = Message::factory()->for($conversation)->create(['created_at' => now()->subHour()]);
+    $kept         = Message::factory()->for($conversation)->create(['created_at' => now()->subHour()]);
     Message::factory()->for($conversation)->create(['created_at' => now()])->delete();
 
-    $page = app(PaginateConversationMessages::class)->handle($conversation);
+    $page         = app(PaginateConversationMessages::class)->handle($conversation);
 
     expect($page->pluck('id')->all())->toBe([$kept->getKey()]);
 });
 
 test('puts the end of the thread on page one and walks backwards from there', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $messages = collect(range(1, 5))->map(fn (int $minute): Message => Message::factory()
+    $messages     = collect(range(1, 5))->map(fn (int $minute): Message => Message::factory()
         ->for($conversation)
         ->create(['created_at' => now()->subMinutes(6 - $minute)]));
 
-    $firstPage = app(PaginateConversationMessages::class)->handle($conversation, perPage: 2);
+    $firstPage    = app(PaginateConversationMessages::class)->handle($conversation, perPage: 2);
 
     expect($firstPage->total())->toBe(5)
         ->and($firstPage->pluck('id')->all())
@@ -173,12 +173,12 @@ test('puts the end of the thread on page one and walks backwards from there', fu
 
 test('serialises a page of the thread in a constant number of queries however many messages it holds', function () {
     Storage::fake(config('media-library.disk_name'));
-    $reader = User::factory()->create();
-    $conversation = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $reader           = User::factory()->create();
+    $conversation     = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
 
     seedThreadPage($conversation, messages: 3);
 
-    $atThreeMessages = serialiseThreadPage($conversation, $reader);
+    $atThreeMessages  = serialiseThreadPage($conversation, $reader);
 
     seedThreadPage($conversation, messages: 27);
 
@@ -186,7 +186,7 @@ test('serialises a page of the thread in a constant number of queries however ma
 
     seedThreadPage($conversation, messages: 30);
 
-    $atSixtyMessages = serialiseThreadPage($conversation, $reader);
+    $atSixtyMessages  = serialiseThreadPage($conversation, $reader);
 
     expect($atThreeMessages['queries'])->toBe(THREAD_PAGE_QUERIES)
         ->and($atThirtyMessages['queries'])->toBe(THREAD_PAGE_QUERIES)
@@ -202,12 +202,12 @@ test('serialises a page of the thread in a constant number of queries however ma
  */
 test('carries the sender byline and the pin right onto every message of the page', function () {
     Storage::fake(config('media-library.disk_name'));
-    $reader = User::factory()->create();
+    $reader       = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
 
     seedThreadPage($conversation, messages: 3);
 
-    $messages = serialiseThreadPage($conversation, $reader)['messages'];
+    $messages     = serialiseThreadPage($conversation, $reader)['messages'];
 
     expect($messages)->toHaveCount(3);
 

@@ -20,10 +20,10 @@ use App\Models\Pet;
  * selection cannot half-succeed.
  */
 test('refuses a category whose only listings are retired, without a driver error', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create(['name' => 'Reptiles']);
-    $breed = Breed::factory()->for($category)->create();
-    $retired = Pet::factory()->for($category)->create();
+    $breed    = Breed::factory()->for($category)->create();
+    $retired  = Pet::factory()->for($category)->create();
     $retired->delete();
 
     $this->actingAs($admin, 'admin')
@@ -39,9 +39,9 @@ test('refuses a category whose only listings are retired, without a driver error
 });
 
 test('refuses a category with a live listing', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create(['name' => 'Birds']);
-    $listing = Pet::factory()->for($category)->create();
+    $listing  = Pet::factory()->for($category)->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/categories/action?action=delete-category', [
@@ -59,9 +59,9 @@ test('refuses a category with a live listing', function () {
  * category selected alongside a blocked one survives too.
  */
 test('deletes nothing at all when one category of a selection is blocked', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $blocked = Category::factory()->create(['name' => 'Cats']);
-    $empty = Category::factory()->create();
+    $empty   = Category::factory()->create();
     Pet::factory()->for($blocked)->create();
 
     $this->actingAs($admin, 'admin')
@@ -81,9 +81,9 @@ test('deletes nothing at all when one category of a selection is blocked', funct
  * has no meaning without its category.
  */
 test('deletes an empty category along with its breeds', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create();
-    $breed = Breed::factory()->for($category)->create();
+    $breed    = Breed::factory()->for($category)->create();
     $survivor = Breed::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -99,9 +99,9 @@ test('deletes an empty category along with its breeds', function () {
 });
 
 test('deletes several empty categories at once', function () {
-    $admin = Admin::factory()->create();
+    $admin      = Admin::factory()->create();
     $categories = Category::factory()->count(2)->create();
-    $survivor = Category::factory()->create();
+    $survivor   = Category::factory()->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/categories/action?action=delete-category', [

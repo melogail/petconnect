@@ -53,8 +53,8 @@ test('returns 401 to a guest from a nova api endpoint', function () {
  * would go unnoticed if the guard were ever cleared.
  */
 test('does not treat a member as the admin sharing their id', function () {
-    $admin = Admin::factory()->create();
-    $member = User::factory()->create();
+    $admin  = Admin::factory()->create();
+    $member = User::factory()->create(['id' => $admin->getKey()]);
 
     expect($member->getKey())->toBe($admin->getKey());
 
@@ -162,7 +162,7 @@ test('leaves the reports item unbadged when nothing is awaiting a decision', fun
  */
 test('counts the pending reports once per menu build, not once per badge callback', function () {
     Report::factory()->count(3)->pending()->create();
-    $admin = Admin::factory()->create();
+    $admin         = Admin::factory()->create();
 
     DB::flushQueryLog();
     DB::enableQueryLog();
@@ -170,7 +170,7 @@ test('counts the pending reports once per menu build, not once per badge callbac
     $this->actingAs($admin, 'admin')->get('/nova/dashboards/main')->assertOk();
 
     $pendingCounts = collect(DB::getQueryLog())
-        ->filter(fn (array $query): bool => str_contains($query['query'], 'from "reports"')
+        ->filter(fn (array $query): bool => preg_match('/from [`"]reports[`"]/', $query['query']) === 1
             && str_contains($query['query'], 'count(*)'))
         ->count();
 

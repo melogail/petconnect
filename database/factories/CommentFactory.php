@@ -31,11 +31,11 @@ class CommentFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'content' => fake()->sentence(fake()->numberBetween(5, 20)),
-            'parent_id' => null,
+            'user_id'          => User::factory(),
+            'content'          => fake()->sentence(fake()->numberBetween(5, 20)),
+            'parent_id'        => null,
             'commentable_type' => Relation::getMorphAlias(Pet::class),
-            'commentable_id' => Pet::factory(),
+            'commentable_id'   => Pet::factory(),
         ];
     }
 
@@ -51,7 +51,7 @@ class CommentFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'commentable_type' => Relation::getMorphAlias(Pet::class),
-            'commentable_id' => $pet?->getKey() ?? Pet::factory(),
+            'commentable_id'   => $pet?->getKey() ?? Pet::factory(),
         ]);
     }
 
@@ -62,9 +62,9 @@ class CommentFactory extends Factory
     public function reply(Comment $parent): static
     {
         return $this->state(fn (array $attributes): array => [
-            'parent_id' => $parent->getKey(),
+            'parent_id'        => $parent->getKey(),
             'commentable_type' => $parent->commentable_type,
-            'commentable_id' => $parent->commentable_id,
+            'commentable_id'   => $parent->commentable_id,
         ]);
     }
 }

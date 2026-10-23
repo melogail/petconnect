@@ -83,7 +83,7 @@ class UpdateProfileContext
     /**
      * The avatar this run attached, once UploadProfileImage has run.
      */
-    protected ?Media $uploadedMedia = null;
+    protected ?Media $uploadedMedia   = null;
 
     /**
      * @param  User  $user  The account being edited; always the acting user.

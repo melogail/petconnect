@@ -31,7 +31,7 @@ function passwordBroker(): PasswordBroker
  * bump, a hash change) cannot pass this.
  */
 test('deletes an outstanding password reset token', function () {
-    $user = User::factory()->create();
+    $user  = User::factory()->create();
     $token = passwordBroker()->createToken($user);
 
     app(UpdatePassword::class)->handle($user, 'new-password');
@@ -41,8 +41,8 @@ test('deletes an outstanding password reset token', function () {
 });
 
 test('leaves another account reset token alone', function () {
-    $user = User::factory()->create();
-    $other = User::factory()->create();
+    $user       = User::factory()->create();
+    $other      = User::factory()->create();
     $otherToken = passwordBroker()->createToken($other);
 
     app(UpdatePassword::class)->handle($user, 'new-password');
@@ -57,7 +57,7 @@ test('leaves another account reset token alone', function () {
  * is what separates "hashed once" from "not hashed at all".
  */
 test('stores the new password hashed', function () {
-    $user = User::factory()->create();
+    $user   = User::factory()->create();
 
     app(UpdatePassword::class)->handle($user, 'new-password');
 

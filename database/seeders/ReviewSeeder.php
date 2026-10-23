@@ -19,9 +19,9 @@ class ReviewSeeder extends Seeder
     /**
      * How many reviews a reviewed user receives.
      */
-    public const MIN_PER_USER = 1;
+    public const MIN_PER_USER   = 1;
 
-    public const MAX_PER_USER = 5;
+    public const MAX_PER_USER   = 5;
 
     /**
      * Review roughly a third of the members, the demo account included.
@@ -64,8 +64,8 @@ class ReviewSeeder extends Seeder
      */
     protected function reviewedUsers(int $userCount): Collection
     {
-        $target = (int) ceil($userCount * self::REVIEWED_SHARE);
-        $missing = max(0, $target - User::query()->has('reviews')->count());
+        $target   = (int) ceil($userCount * self::REVIEWED_SHARE);
+        $missing  = max(0, $target - User::query()->has('reviews')->count());
 
         /** @var Collection<int, User> $reviewed */
         $reviewed = User::query()
@@ -74,7 +74,7 @@ class ReviewSeeder extends Seeder
             ->limit($missing)
             ->get();
 
-        $demo = User::query()
+        $demo     = User::query()
             ->where('email', UserSeeder::DEMO_EMAIL)
             ->doesntHave('reviews')
             ->first();

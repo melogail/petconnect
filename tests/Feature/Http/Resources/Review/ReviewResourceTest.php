@@ -42,10 +42,10 @@ function reviewPayload(User $subject): array
 }
 
 test('every key the resource emits is either a rule on the store request or a declared read shape', function () {
-    $subject = User::factory()->create();
+    $subject   = User::factory()->create();
     Review::factory()->forUser($subject)->create();
 
-    $payload = reviewPayload($subject);
+    $payload   = reviewPayload($subject);
 
     $unmatched = array_values(array_diff(
         array_keys($payload),
@@ -57,11 +57,11 @@ test('every key the resource emits is either a rule on the store request or a de
 });
 
 test('every writable key the resource emits carries the name the store request accepts', function () {
-    $subject = User::factory()->create();
+    $subject  = User::factory()->create();
     Review::factory()->forUser($subject)->create();
 
-    $payload = reviewPayload($subject);
-    $rules = (new StoreReviewRequest)->rules();
+    $payload  = reviewPayload($subject);
+    $rules    = (new StoreReviewRequest)->rules();
 
     $writable = array_values(array_diff(array_keys($payload), REVIEW_READ_SHAPES));
 
@@ -77,7 +77,7 @@ test('every key an edit posts back is a rule on the update request', function ()
     Review::factory()->forUser($subject)->create();
 
     $payload = reviewPayload($subject);
-    $rules = (new UpdateReviewRequest)->rules();
+    $rules   = (new UpdateReviewRequest)->rules();
 
     foreach (array_diff(array_keys($payload), REVIEW_READ_SHAPES) as $key) {
         expect($rules)->toHaveKey($key)
@@ -86,7 +86,7 @@ test('every key an edit posts back is a rule on the update request', function ()
 });
 
 test('describes the author with a byline and nothing that belongs to their account', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Review::factory()->for($author)->forUser($subject)->create();
 
@@ -98,7 +98,7 @@ test('describes the author with a byline and nothing that belongs to their accou
 });
 
 test('marks a review as the viewer own only for its author', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Review::factory()->for($author)->forUser($subject)->create();
 
@@ -110,7 +110,7 @@ test('marks a review as the viewer own only for its author', function () {
 });
 
 test('offers the edit and delete controls to the author alone', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Review::factory()->for($author)->forUser($subject)->create();
 
@@ -138,9 +138,9 @@ test('offers a guest neither control', function () {
 });
 
 test('marks a review the viewer has already reported', function () {
-    $viewer = User::factory()->create();
+    $viewer  = User::factory()->create();
     $subject = User::factory()->create();
-    $review = Review::factory()->forUser($subject)->create();
+    $review  = Review::factory()->forUser($subject)->create();
     Report::factory()->for($viewer)->forReportable($review)->create();
 
     $this->actingAs($viewer);

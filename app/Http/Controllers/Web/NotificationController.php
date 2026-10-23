@@ -6,6 +6,7 @@ use App\Actions\Notifications\BuildNotificationInbox;
 use App\Actions\Notifications\DeleteAllNotifications;
 use App\Actions\Notifications\MarkAllNotificationsAsRead;
 use App\Actions\Notifications\MarkNotificationAsRead;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Notification\NotificationResource;
 use Illuminate\Http\RedirectResponse;
@@ -49,6 +50,8 @@ use Inertia\Inertia;
  */
 class NotificationController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * A page of the viewer's notifications, newest first, with the unread total.
      */
@@ -56,7 +59,7 @@ class NotificationController extends Controller
         Request $request,
         BuildNotificationInbox $buildNotificationInbox,
     ): AnonymousResourceCollection {
-        $inbox = $buildNotificationInbox->handle($request->user());
+        $inbox = $buildNotificationInbox->handle($this->actor($request));
 
         return NotificationResource::collection($inbox['notifications'])
             ->additional(['meta' => ['unread_count' => $inbox['unread_count']]]);
@@ -74,7 +77,7 @@ class NotificationController extends Controller
         string $notification,
         MarkNotificationAsRead $markNotificationAsRead,
     ): RedirectResponse {
-        $markNotificationAsRead->handle($request->user(), $notification);
+        $markNotificationAsRead->handle($this->actor($request), $notification);
 
         return back();
     }
@@ -86,7 +89,7 @@ class NotificationController extends Controller
         Request $request,
         MarkAllNotificationsAsRead $markAllNotificationsAsRead,
     ): RedirectResponse {
-        $markAllNotificationsAsRead->handle($request->user());
+        $markAllNotificationsAsRead->handle($this->actor($request));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Notifications marked as read.')]);
 
@@ -104,7 +107,7 @@ class NotificationController extends Controller
         Request $request,
         DeleteAllNotifications $deleteAllNotifications,
     ): RedirectResponse {
-        $deleteAllNotifications->handle($request->user());
+        $deleteAllNotifications->handle($this->actor($request));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Notifications cleared.')]);
 

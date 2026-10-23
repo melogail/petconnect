@@ -73,7 +73,7 @@ class ListHomeFeedRequest extends FormRequest
         foreach (['category_ids', 'breed_ids', 'listing_types'] as $key) {
             if ($this->has($key) && ! is_array($this->input($key))) {
                 $this->merge([
-                    $key => array_values(array_filter([$this->input($key)], filled(...))),
+                    $key => array_filter([$this->input($key)], filled(...)),
                 ]);
             }
         }
@@ -124,7 +124,20 @@ class ListHomeFeedRequest extends FormRequest
      */
     public function filters(): array
     {
-        /** @var array<string, mixed> $validated */
+        /**
+         * The shape rules() admits: the list keys are `array` rules with
+         * `integer` / enum children, the scalars arrive as strings.
+         *
+         * @var array{
+         *     category_ids?: list<int|string>,
+         *     breed_ids?: list<int|string>,
+         *     age_min?: float|int|string|null,
+         *     age_max?: float|int|string|null,
+         *     listing_types?: list<string>,
+         *     vaccinated?: bool|null,
+         *     search?: string|null
+         * } $validated
+         */
         $validated = $this->validated();
 
         $search    = trim((string) ($validated['search'] ?? ''));

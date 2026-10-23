@@ -35,13 +35,13 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->words(2, true);
+        $name = implode(' ', (array) fake()->unique()->words(2));
 
         return [
-            'name' => Str::title($name),
-            'name_ar' => null,
-            'slug' => Str::slug($name).'-'.Str::lower(Str::random(6)),
-            'description' => fake()->optional(0.8)->sentence(),
+            'name'           => Str::title($name),
+            'name_ar'        => null,
+            'slug'           => Str::slug($name).'-'.Str::lower(Str::random(6)),
+            'description'    => fake()->optional(0.8)->sentence(),
             'description_ar' => null,
         ];
     }

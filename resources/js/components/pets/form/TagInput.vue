@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * A free-text list of short strings — the personality traits and the allergies.
@@ -19,7 +20,7 @@ import { Input } from '@/components/ui/input';
 const {
     modelValue,
     inputId,
-    placeholder = 'Add one and press Enter',
+    placeholder = undefined,
 } = defineProps<{
     modelValue: string[];
     inputId: string;
@@ -51,6 +52,8 @@ function remove(value: string): void {
         modelValue.filter((entry) => entry !== value),
     );
 }
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -59,12 +62,12 @@ function remove(value: string): void {
             <Input
                 :id="inputId"
                 v-model="draft"
-                :placeholder="placeholder"
+                :placeholder="placeholder ?? t('wizard.tag_placeholder')"
                 @keydown.enter.prevent="add"
             />
             <Button type="button" variant="outline" size="icon" @click="add">
                 <Plus class="size-4" />
-                <span class="sr-only">Add</span>
+                <span class="sr-only">{{ t('wizard.add') }}</span>
             </Button>
         </div>
 
@@ -79,7 +82,7 @@ function remove(value: string): void {
                 <button
                     type="button"
                     class="hover:text-destructive"
-                    :aria-label="`Remove ${value}`"
+                    :aria-label="t('wizard.remove_named', { name: value })"
                     @click="remove(value)"
                 >
                     <X class="size-3" />

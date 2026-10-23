@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Notification;
  */
 test('records a like for a pet and notifies its owner', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
     $liker = User::factory()->create();
     Notification::fake();
 
@@ -26,43 +26,43 @@ test('records a like for a pet and notifies its owner', function () {
 
     expect($liked)->toBeTrue();
     $this->assertDatabaseHas('likes', [
-        'user_id' => $liker->getKey(),
+        'user_id'       => $liker->getKey(),
         'likeable_type' => 'pet',
-        'likeable_id' => $pet->getKey(),
+        'likeable_id'   => $pet->getKey(),
     ]);
     Notification::assertSentTo($owner, ModelLikedNotification::class);
 });
 
 test('records a like for a comment and notifies its author', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $comment = Comment::factory()->for($author)->create();
-    $liker = User::factory()->create();
+    $liker   = User::factory()->create();
     Notification::fake();
 
-    $liked = app(ToggleLike::class)->handle($comment, $liker);
+    $liked   = app(ToggleLike::class)->handle($comment, $liker);
 
     expect($liked)->toBeTrue();
     $this->assertDatabaseHas('likes', [
-        'user_id' => $liker->getKey(),
+        'user_id'       => $liker->getKey(),
         'likeable_type' => 'comment',
-        'likeable_id' => $comment->getKey(),
+        'likeable_id'   => $comment->getKey(),
     ]);
     Notification::assertSentTo($author, ModelLikedNotification::class);
 });
 
 test('removes the like when the same user toggles a second time', function () {
     $comment = Comment::factory()->create();
-    $liker = User::factory()->create();
+    $liker   = User::factory()->create();
     app(ToggleLike::class)->handle($comment, $liker);
 
-    $liked = app(ToggleLike::class)->handle($comment, $liker);
+    $liked   = app(ToggleLike::class)->handle($comment, $liker);
 
     expect($liked)->toBeFalse();
     $this->assertDatabaseEmpty('likes');
 });
 
 test('sends no notification when an author likes their own comment', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $comment = Comment::factory()->for($author)->create();
     Notification::fake();
 
@@ -70,7 +70,7 @@ test('sends no notification when an author likes their own comment', function ()
 
     Notification::assertNothingSent();
     $this->assertDatabaseHas('likes', [
-        'user_id' => $author->getKey(),
+        'user_id'     => $author->getKey(),
         'likeable_id' => $comment->getKey(),
     ]);
 });

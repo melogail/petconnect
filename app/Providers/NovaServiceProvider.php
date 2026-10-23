@@ -82,7 +82,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                 MenuItem::dashboard(Moderation::class),
                 MenuItem::resource(ReportResource::class)
                     ->withBadgeIf(
-                        fn (): int => $pendingReports,
+                        fn (): string => (string) $pendingReports,
                         'danger',
                         fn (): bool => $pendingReports > 0,
                     ),

@@ -29,11 +29,11 @@ class ReviewFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'rate' => fake()->numberBetween(1, 5),
-            'comment' => fake()->optional(0.8)->paragraph(),
+            'user_id'         => User::factory(),
+            'rate'            => fake()->numberBetween(1, 5),
+            'comment'         => fake()->optional(0.8)->paragraph(),
             'reviewable_type' => Relation::getMorphAlias(User::class),
-            'reviewable_id' => User::factory(),
+            'reviewable_id'   => User::factory(),
         ];
     }
 
@@ -44,7 +44,7 @@ class ReviewFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'reviewable_type' => Relation::getMorphAlias(User::class),
-            'reviewable_id' => $user->getKey(),
+            'reviewable_id'   => $user->getKey(),
         ]);
     }
 

@@ -12,6 +12,7 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
+use Stringable;
 
 /**
  * The pet listing form — its validation rules and its uploaded files — which
@@ -76,7 +77,7 @@ trait PetValidationRules
     use PetPhotoRules;
 
     /**
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function petRules(bool $requiresFeaturedImage): array
     {
@@ -111,7 +112,7 @@ trait PetValidationRules
      * has no one name. `birth_date` replaces the old free-text age column and
      * is optional either way — the model derives `age` from it.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function basicRules(): array
     {
@@ -269,7 +270,7 @@ trait PetValidationRules
      * because `required_with` only fires when one of the pair survives. The
      * resource↔Form-Request parity test is what catches that.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function locationRules(): array
     {
@@ -303,7 +304,7 @@ trait PetValidationRules
      * No `present` here: the media steps own these, they never reach the
      * attribute bag, and an omitted `images` leaves the existing gallery alone.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function imageRules(bool $requiresFeaturedImage): array
     {
@@ -336,7 +337,7 @@ trait PetValidationRules
      * nothing for it. Their row leaves keep `present`, which costs nothing —
      * wildcard rules generate no attributes at all when the collection is empty.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function healthRules(): array
     {
@@ -376,7 +377,7 @@ trait PetValidationRules
      * traits and no extras sends `[]` / `{}`, which a multipart create puts on
      * the wire as nothing at all.
      *
-     * @return array<string, array<int, ValidationRule|array<mixed>|string>>
+     * @return array<string, list<Closure|Stringable|ValidationRule|string>>
      */
     protected function traitRules(): array
     {
@@ -431,11 +432,14 @@ trait PetValidationRules
      */
     public function galleryImages(): array
     {
-        $images = $this->file('images', []);
+        $uploaded = $this->file('images', []);
+
+        /** @var array<int, UploadedFile|null> $images An empty file input converts to null in allFiles(), which Laravel's own type omits; the filter below is for that. */
+        $images   = is_array($uploaded) ? $uploaded : [$uploaded];
 
         return array_values(array_filter(
-            is_array($images) ? $images : [$images],
-            fn (mixed $image): bool => $image instanceof UploadedFile,
+            $images,
+            fn (?UploadedFile $image): bool => $image instanceof UploadedFile,
         ));
     }
 

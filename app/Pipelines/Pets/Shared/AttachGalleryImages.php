@@ -34,7 +34,7 @@ class AttachGalleryImages
             return $next($context);
         }
 
-        $pet = $context->pet();
+        $pet            = $context->pet();
         $ownerDirectory = $this->resolveOwnerDirectory->handle($pet);
 
         foreach ($context->galleryImages as $image) {

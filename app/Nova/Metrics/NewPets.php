@@ -43,11 +43,11 @@ class NewPets extends Value
     {
         return [
             'TODAY' => Nova::__('Today'),
-            7 => Nova::__('7 Days'),
-            30 => Nova::__('30 Days'),
-            365 => Nova::__('365 Days'),
-            'MTD' => Nova::__('Month To Date'),
-            'YTD' => Nova::__('Year To Date'),
+            7       => Nova::__('7 Days'),
+            30      => Nova::__('30 Days'),
+            365     => Nova::__('365 Days'),
+            'MTD'   => Nova::__('Month To Date'),
+            'YTD'   => Nova::__('Year To Date'),
         ];
     }
 

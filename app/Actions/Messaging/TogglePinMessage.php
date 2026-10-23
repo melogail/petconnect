@@ -41,7 +41,7 @@ class TogglePinMessage
 {
     public function handle(Message $message, User $pinnedBy): Message
     {
-        $isPinned = $message->pinned_at !== null;
+        $isPinned           = $message->pinned_at !== null;
 
         $message->pinned_at = $isPinned ? null : now();
         $message->pinned_by = $isPinned ? null : $pinnedBy->getKey();

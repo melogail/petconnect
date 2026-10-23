@@ -73,7 +73,7 @@ class BuildTranslationCatalogue
      */
     public function handle(?string $locale = null): array
     {
-        $path = lang_path($this->supported($locale ?? App::getLocale()).'.json');
+        $path    = lang_path($this->supported($locale ?? App::getLocale()).'.json');
 
         if (! $this->files->isFile($path)) {
             return [];

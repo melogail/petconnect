@@ -72,17 +72,17 @@ class NotificationResource extends JsonResource
         $data = $this->data ?? [];
 
         return [
-            'id' => (string) $this->id,
-            'type' => is_string($data['type'] ?? null) ? $data['type'] : class_basename((string) $this->type),
-            'message_key' => is_string($data['message_key'] ?? null)
+            'id'              => (string) $this->id,
+            'type'            => is_string($data['type'] ?? null) ? $data['type'] : class_basename((string) $this->type),
+            'message_key'     => is_string($data['message_key'] ?? null)
                 ? $data['message_key']
                 : 'notifications.default',
             'message_replace' => is_array($data['message_replace'] ?? null) ? $data['message_replace'] : [],
-            'url' => is_string($data['url'] ?? null) ? $data['url'] : null,
-            'data' => $data,
-            'read' => $this->read_at !== null,
-            'read_at' => $this->read_at,
-            'created_at' => $this->created_at,
+            'url'             => is_string($data['url'] ?? null) ? $data['url'] : null,
+            'data'            => $data,
+            'read'            => $this->read_at !== null,
+            'read_at'         => $this->read_at,
+            'created_at'      => $this->created_at,
         ];
     }
 }

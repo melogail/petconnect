@@ -5,6 +5,7 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { compressListingPhoto, formatBytes } from '@/lib/imageCompression';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The cover photo.
@@ -86,6 +87,8 @@ function clear(): void {
         input.value.value = '';
     }
 }
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -96,7 +99,7 @@ function clear(): void {
             <img
                 v-if="shown"
                 :src="shown"
-                alt="Cover photo"
+                :alt="t('wizard.cover_photo')"
                 class="size-full object-cover"
             />
             <div
@@ -104,7 +107,7 @@ function clear(): void {
                 class="text-muted-foreground flex flex-col items-center gap-2 text-sm"
             >
                 <Camera class="size-8" />
-                No cover photo yet
+                {{ t('wizard.no_cover_photo_yet') }}
             </div>
 
             <Button
@@ -113,7 +116,7 @@ function clear(): void {
                 variant="secondary"
                 size="icon"
                 class="absolute top-2 right-2"
-                aria-label="Remove cover photo"
+                :aria-label="t('wizard.remove_cover_photo')"
                 @click="clear"
             >
                 <X class="size-4" />
@@ -126,7 +129,7 @@ function clear(): void {
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 class="text-muted-foreground file:text-foreground text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm"
-                aria-label="Cover photo"
+                :aria-label="t('wizard.cover_photo')"
                 @change="pick"
             />
             <span
@@ -134,7 +137,7 @@ function clear(): void {
                 class="text-muted-foreground flex items-center gap-1.5 text-xs"
             >
                 <Spinner status class="size-3" />
-                Compressing…
+                {{ t('wizard.compressing') }}
             </span>
             <span v-else-if="file" class="text-muted-foreground text-xs">
                 {{ formatBytes(file.size) }}
@@ -142,9 +145,7 @@ function clear(): void {
         </div>
 
         <p class="text-muted-foreground text-xs">
-            JPEG, PNG, GIF or WebP, up to {{ maxKilobytes }} KB. A large JPEG,
-            PNG or WebP is shrunk automatically; a GIF is kept as it is, so an
-            oversized one has to be shrunk before it is picked.
+            {{ t('wizard.cover_photo_help', { kb: maxKilobytes }) }}
         </p>
 
         <InputError :message="error" />

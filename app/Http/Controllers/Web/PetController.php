@@ -12,6 +12,7 @@ use App\Actions\Pets\TogglePetStatus;
 use App\Actions\Pets\UpdatePet;
 use App\Concerns\CommentValidationRules;
 use App\Concerns\PetPhotoRules;
+use App\Concerns\ResolvesRequestUser;
 use App\Enums\HealthStatus;
 use App\Enums\ListingType;
 use App\Enums\PetGender;
@@ -70,6 +71,7 @@ class PetController extends Controller
 {
     use CommentValidationRules;
     use PetPhotoRules;
+    use ResolvesRequestUser;
 
     /**
      * Show the form for publishing a listing.
@@ -79,12 +81,12 @@ class PetController extends Controller
         $this->authorize('create', Pet::class);
 
         return Inertia::render('pets/Create', [
-            'categories' => PetCategoryOptionResource::collection($listPetCategories->handle()),
-            'listingTypes' => ListingType::options(),
-            'statuses' => PetStatus::options(),
-            'genders' => PetGender::options(),
+            'categories'     => PetCategoryOptionResource::collection($listPetCategories->handle()),
+            'listingTypes'   => ListingType::options(),
+            'statuses'       => PetStatus::options(),
+            'genders'        => PetGender::options(),
             'healthStatuses' => HealthStatus::options(),
-            'photoBounds' => $this->photoBounds(),
+            'photoBounds'    => $this->photoBounds(),
         ]);
     }
 
@@ -96,7 +98,7 @@ class PetController extends Controller
         $this->authorize('create', Pet::class);
 
         $pet = $createPet->handle(
-            owner: $request->user(),
+            owner: $this->actor($request),
             data: $request->validated(),
             featuredImage: $request->featuredImage(),
             galleryImages: $request->galleryImages(),
@@ -125,13 +127,13 @@ class PetController extends Controller
     ): Response {
         $this->authorize('view', $pet);
 
-        $recordPetView->handle($pet, $request->user(), $this->visitorKey($request));
+        $recordPetView->handle($pet, $this->viewer($request), $this->visitorKey($request));
 
         return Inertia::render('pets/Show', [
-            'pet' => PetDetailResource::make($loadPetDetail->handle($pet, $request->user())),
+            'pet'              => PetDetailResource::make($loadPetDetail->handle($pet, $this->viewer($request))),
             'reportCategories' => ReportCategory::options(),
-            'reportReasons' => ReportReason::options(),
-            'commentBounds' => $this->commentBounds(),
+            'reportReasons'    => ReportReason::options(),
+            'commentBounds'    => $this->commentBounds(),
         ]);
     }
 
@@ -151,13 +153,13 @@ class PetController extends Controller
         $this->authorize('update', $pet);
 
         return Inertia::render('pets/Edit', [
-            'pet' => PetDetailResource::make($loadPetDetail->handle($pet, $request->user())),
-            'categories' => PetCategoryOptionResource::collection($listPetCategories->handle()),
-            'listingTypes' => ListingType::options(),
-            'statuses' => PetStatus::options(),
-            'genders' => PetGender::options(),
+            'pet'            => PetDetailResource::make($loadPetDetail->handle($pet, $this->actor($request))),
+            'categories'     => PetCategoryOptionResource::collection($listPetCategories->handle()),
+            'listingTypes'   => ListingType::options(),
+            'statuses'       => PetStatus::options(),
+            'genders'        => PetGender::options(),
             'healthStatuses' => HealthStatus::options(),
-            'photoBounds' => $this->photoBounds(),
+            'photoBounds'    => $this->photoBounds(),
         ]);
     }
 
@@ -211,7 +213,7 @@ class PetController extends Controller
         $status = $togglePetStatus->handle($pet);
 
         Inertia::flash('toast', [
-            'type' => 'success',
+            'type'    => 'success',
             'message' => __('Listing marked as :status.', ['status' => $status->label()]),
         ]);
 
@@ -229,7 +231,7 @@ class PetController extends Controller
     {
         $this->authorize('like', $pet);
 
-        $toggleLike->handle($pet, $request->user());
+        $toggleLike->handle($pet, $this->actor($request));
 
         return back();
     }

@@ -42,6 +42,6 @@ test('a guest reads the page and gets no props beyond the shared ones', function
     expect(array_keys($response->inertiaProps()))
         ->toEqualCanonicalizing(['errors', 'name', 'auth', 'locale', 'translations']);
 })->with([
-    'help' => ['help', 'Help'],
+    'help'    => ['help', 'Help'],
     'support' => ['support', 'Support'],
 ]);

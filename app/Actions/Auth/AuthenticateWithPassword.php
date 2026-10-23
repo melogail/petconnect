@@ -27,7 +27,7 @@ class AuthenticateWithPassword
     {
         $provider = $this->provider();
 
-        $user = $provider->retrieveByCredentials(['email' => $email]);
+        $user     = $provider->retrieveByCredentials(['email' => $email]);
 
         if (! $user instanceof User || ! $provider->validateCredentials($user, ['password' => $password])) {
             throw ValidationException::withMessages(['email' => __('auth.failed')]);

@@ -40,7 +40,7 @@ class SubmitReviewContext extends ReviewContentContext
     /**
      * The written review, once PersistReview has run.
      */
-    protected ?Review $review = null;
+    protected ?Review $review    = null;
 
     /**
      * @param  list<string>  $bannedWords

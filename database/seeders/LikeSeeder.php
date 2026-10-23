@@ -15,17 +15,17 @@ class LikeSeeder extends Seeder
     /**
      * How many likes a listing gets.
      */
-    public const MIN_PER_PET = 2;
+    public const MIN_PER_PET         = 2;
 
-    public const MAX_PER_PET = 12;
+    public const MAX_PER_PET         = 12;
 
     /**
      * How many likes a liked comment gets, and the share of comments that are
      * liked at all; the rest stay on zero.
      */
-    public const MIN_PER_COMMENT = 1;
+    public const MIN_PER_COMMENT     = 1;
 
-    public const MAX_PER_COMMENT = 6;
+    public const MAX_PER_COMMENT     = 6;
 
     public const LIKED_COMMENT_SHARE = 0.6;
 
@@ -80,7 +80,7 @@ class LikeSeeder extends Seeder
      */
     protected function likeComments(Collection $users): void
     {
-        $target = (int) ceil(Comment::query()->count() * self::LIKED_COMMENT_SHARE);
+        $target  = (int) ceil(Comment::query()->count() * self::LIKED_COMMENT_SHARE);
         $missing = max(0, $target - Comment::query()->has('likes')->count());
 
         Comment::query()

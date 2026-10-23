@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Event;
  * the same decision.
  */
 test('deactivates a member account', function () {
-    $admin = Admin::factory()->create();
-    $member = User::factory()->create();
+    $admin     = Admin::factory()->create();
+    $member    = User::factory()->create();
     $bystander = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -46,7 +46,7 @@ test('deactivates a member account', function () {
  * `Inertia::flushShared()` is needed here any more.
  */
 test('leaves the deactivated account unable to use its existing session', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -69,8 +69,8 @@ test('leaves the deactivated account unable to use its existing session', functi
  * decision with its own action and its own audit trail.
  */
 test('leaves the account listings published', function () {
-    $admin = Admin::factory()->create();
-    $member = User::factory()->create();
+    $admin   = Admin::factory()->create();
+    $member  = User::factory()->create();
     $listing = Pet::factory()->for($member)->create();
 
     $this->actingAs($admin, 'admin')
@@ -84,8 +84,8 @@ test('leaves the account listings published', function () {
 });
 
 test('counts only the accounts it actually changed in a mixed selection', function () {
-    $admin = Admin::factory()->create();
-    $active = User::factory()->count(2)->create();
+    $admin      = Admin::factory()->create();
+    $active     = User::factory()->count(2)->create();
     $alreadyOff = User::factory()->inactive()->create();
 
     $this->actingAs($admin, 'admin')
@@ -99,7 +99,7 @@ test('counts only the accounts it actually changed in a mixed selection', functi
 });
 
 test('reports that there was nothing to do when every selected account is already deactivated', function () {
-    $admin = Admin::factory()->create();
+    $admin      = Admin::factory()->create();
     $alreadyOff = User::factory()->inactive()->create();
 
     $this->actingAs($admin, 'admin')
@@ -128,10 +128,10 @@ test('reports that there was nothing to do when every selected account is alread
  * is what `$deactivatedMidFlight` records.
  */
 test('leaves every selected account active when one of them cannot be saved', function () {
-    $admin = Admin::factory()->create();
-    $first = User::factory()->create();
-    $second = User::factory()->create();
-    $attempts = 0;
+    $admin                = Admin::factory()->create();
+    $first                = User::factory()->create();
+    $second               = User::factory()->create();
+    $attempts             = 0;
     $deactivatedMidFlight = null;
 
     Event::listen('eloquent.saving: '.User::class, function () use (&$attempts, &$deactivatedMidFlight): void {

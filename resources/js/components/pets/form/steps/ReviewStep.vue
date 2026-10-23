@@ -5,8 +5,11 @@ import DetailList from '@/components/DetailList.vue';
 import type { DetailItem } from '@/components/DetailList.vue';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useLocale } from '@/composables/useLocale';
+import { useTranslations } from '@/composables/useTranslations';
 import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import type { PetFormState } from '@/lib/petForm';
+import { taxonomyName } from '@/lib/taxonomy';
 import type { PetFormOptions, SelectOption } from '@/types';
 
 /**
@@ -28,6 +31,9 @@ const {
     currentFeaturedUrl?: string | null;
 }>();
 
+const { t } = useTranslations();
+const { locale } = useLocale();
+
 function label<T extends string>(
     list: SelectOption<T>[],
     value: string,
@@ -36,20 +42,16 @@ function label<T extends string>(
 }
 
 /**
- * A numeric-ish box read back, with its unit, or null when it is blank.
+ * A numeric-ish box read back, or null when it is blank.
  *
  * `quantity`, the sex counts, `weight` and `price` are `InputValue` — a
  * `v-model` is free to write a `number` into any of them — so they are coerced
  * here rather than compared against `''` and interpolated raw.
  */
-function unit(value: InputValue, suffix?: string): string | null {
+function unit(value: InputValue): string | null {
     const text = trimmedInput(value);
 
-    if (text === '') {
-        return null;
-    }
-
-    return suffix === undefined ? text : `${text} ${suffix}`;
+    return text === '' ? null : text;
 }
 
 const coverPreview = ref<string | null>(null);
@@ -82,71 +84,92 @@ const pin = computed(() => {
     return lat === '' || lng === '' ? null : `${lat}, ${lng}`;
 });
 
-const basics = computed<DetailItem[]>(() => [
-    { label: 'Name', value: form.name },
-    {
-        label: 'Category',
-        value:
-            options.categories.find(
-                (category) => category.id === form.category_id,
-            )?.name ?? null,
-    },
-    {
-        label: 'Breed',
-        value:
-            options.categories
-                .flatMap((category) => category.breeds ?? [])
-                .find((breed) => breed.id === form.breed_id)?.name ?? null,
-    },
-    { label: 'Birth date', value: unit(form.birth_date) },
-    { label: 'Gender', value: label(options.genders, form.gender) },
-    { label: 'Quantity', value: unit(form.quantity) },
-    {
-        label: 'Males / females',
-        value:
-            Number(form.quantity) > 1
-                ? `${unit(form.male_count) ?? '0'} / ${unit(form.female_count) ?? '0'}`
+const yesNo = (value: boolean): string => t(value ? 'common.yes' : 'common.no');
+
+const basics = computed<DetailItem[]>(() => {
+    const category = options.categories.find(
+        (entry) => entry.id === form.category_id,
+    );
+    const breed = options.categories
+        .flatMap((entry) => entry.breeds ?? [])
+        .find((entry) => entry.id === form.breed_id);
+    const weight = unit(form.weight);
+
+    return [
+        { label: t('wizard.name'), value: form.name },
+        {
+            label: t('wizard.category'),
+            value: category
+                ? taxonomyName(category, locale.value.current)
                 : null,
-    },
-    { label: 'Colour', value: form.color },
-    { label: 'Weight', value: unit(form.weight, 'kg') },
-    {
-        label: 'Listing type',
-        value: label(options.listingTypes, form.listing_type),
-    },
-    { label: 'Price', value: unit(form.price) },
-    { label: 'Status', value: label(options.statuses, form.status) },
-]);
+        },
+        {
+            label: t('wizard.breed'),
+            value: breed ? taxonomyName(breed, locale.value.current) : null,
+        },
+        { label: t('wizard.birth_date'), value: unit(form.birth_date) },
+        {
+            label: t('wizard.gender'),
+            value: label(options.genders, form.gender),
+        },
+        { label: t('wizard.quantity'), value: unit(form.quantity) },
+        {
+            label: t('wizard.males_females'),
+            value:
+                Number(form.quantity) > 1
+                    ? `${unit(form.male_count) ?? '0'} / ${unit(form.female_count) ?? '0'}`
+                    : null,
+        },
+        { label: t('wizard.colour'), value: form.color },
+        {
+            label: t('pets.weight'),
+            value:
+                weight === null ? null : t('pets.weight_kg', { value: weight }),
+        },
+        {
+            label: t('wizard.listing_type'),
+            value: label(options.listingTypes, form.listing_type),
+        },
+        { label: t('pets.price'), value: unit(form.price) },
+        {
+            label: t('wizard.status'),
+            value: label(options.statuses, form.status),
+        },
+    ];
+});
 
 const location = computed<DetailItem[]>(() => [
-    { label: 'City', value: form.location.city },
-    { label: 'State', value: form.location.state },
-    { label: 'Country', value: form.location.country },
-    { label: 'Postal code', value: form.location.postalCode },
-    { label: 'Address', value: form.location.address },
-    { label: 'Building detail', value: form.location.detailedAddress },
-    { label: 'Map pin', value: pin.value },
+    { label: t('wizard.city'), value: form.location.city },
+    { label: t('wizard.state_or_province'), value: form.location.state },
+    { label: t('wizard.country'), value: form.location.country },
+    { label: t('wizard.postal_code'), value: form.location.postalCode },
+    { label: t('wizard.street_address'), value: form.location.address },
+    {
+        label: t('wizard.building_detail'),
+        value: form.location.detailedAddress,
+    },
+    { label: t('wizard.map_pin'), value: pin.value },
 ]);
 
 const health = computed<DetailItem[]>(() => [
     {
-        label: 'Health status',
+        label: t('wizard.health_status'),
         value: label(options.healthStatuses, form.health.status),
     },
-    { label: 'Vaccinated', value: form.health.vaccinated ? 'Yes' : 'No' },
+    { label: t('wizard.vaccinated'), value: yesNo(form.health.vaccinated) },
     {
-        label: 'Spayed / neutered',
-        value: form.health.spayedNeutered ? 'Yes' : 'No',
+        label: t('wizard.spayed_neutered'),
+        value: yesNo(form.health.spayedNeutered),
     },
-    { label: 'Last vet visit', value: form.health.lastVetVisit },
-    { label: 'Special needs', value: form.health.specialNeeds },
-    { label: 'Veterinarian', value: form.health.vetName },
-    { label: 'Vet phone', value: form.health.vetPhone },
+    { label: t('wizard.last_vet_visit'), value: form.health.lastVetVisit },
+    { label: t('pets.special_needs'), value: form.health.specialNeeds },
+    { label: t('wizard.veterinarian'), value: form.health.vetName },
+    { label: t('pets.vet_phone'), value: form.health.vetPhone },
 ]);
 
 const records = computed<DetailItem[]>(() => [
     {
-        label: 'Vaccinations',
+        label: t('pets.vaccinations'),
         value:
             form.health.vaccinations
                 .filter((row) => trimmedInput(row.name) !== '')
@@ -154,14 +177,17 @@ const records = computed<DetailItem[]>(() => [
                 .join(', ') || null,
     },
     {
-        label: 'Medications',
+        label: t('pets.medications'),
         value:
             form.health.medications
                 .filter((row) => trimmedInput(row.name) !== '')
                 .map((row) => row.name)
                 .join(', ') || null,
     },
-    { label: 'Allergies', value: form.health.allergies.join(', ') || null },
+    {
+        label: t('wizard.allergies'),
+        value: form.health.allergies.join(', ') || null,
+    },
 ]);
 
 const extras = computed<DetailItem[]>(() =>
@@ -178,22 +204,30 @@ const extras = computed<DetailItem[]>(() =>
 <template>
     <div class="space-y-6">
         <section class="space-y-3">
-            <h3 class="font-medium">Photos</h3>
+            <h3 class="font-medium">{{ t('wizard.step_photos') }}</h3>
             <div class="flex flex-wrap items-center gap-4">
                 <img
                     v-if="cover"
                     :src="cover"
-                    alt="Cover photo"
+                    :alt="t('wizard.cover_photo')"
                     class="bg-muted size-28 rounded-lg object-cover"
                 />
                 <p v-else class="text-muted-foreground text-sm">
-                    No cover photo picked yet.
+                    {{ t('wizard.no_cover_picked') }}
                 </p>
                 <Badge variant="secondary">
-                    {{ form.images.length }} new gallery photo(s)
+                    {{
+                        t('wizard.new_gallery_photos', {
+                            count: form.images.length,
+                        })
+                    }}
                 </Badge>
                 <Badge v-if="form.deletedMediaIds.length > 0" variant="outline">
-                    {{ form.deletedMediaIds.length }} to remove
+                    {{
+                        t('wizard.photos_to_remove', {
+                            count: form.deletedMediaIds.length,
+                        })
+                    }}
                 </Badge>
             </div>
         </section>
@@ -201,21 +235,21 @@ const extras = computed<DetailItem[]>(() =>
         <Separator />
 
         <section class="space-y-3">
-            <h3 class="font-medium">Basics</h3>
+            <h3 class="font-medium">{{ t('wizard.step_basics') }}</h3>
             <DetailList :items="basics" />
         </section>
 
         <Separator />
 
         <section class="space-y-3">
-            <h3 class="font-medium">Location</h3>
+            <h3 class="font-medium">{{ t('wizard.step_location') }}</h3>
             <DetailList :items="location" />
         </section>
 
         <Separator />
 
         <section class="space-y-3">
-            <h3 class="font-medium">Description</h3>
+            <h3 class="font-medium">{{ t('wizard.description') }}</h3>
             <p
                 v-if="form.description"
                 class="text-sm leading-relaxed whitespace-pre-line"
@@ -223,7 +257,7 @@ const extras = computed<DetailItem[]>(() =>
                 {{ form.description }}
             </p>
             <p v-else class="text-muted-foreground text-sm">
-                Nothing written yet.
+                {{ t('wizard.nothing_written_yet') }}
             </p>
             <div v-if="form.traits.length > 0" class="flex flex-wrap gap-2">
                 <Badge
@@ -239,7 +273,7 @@ const extras = computed<DetailItem[]>(() =>
         <Separator />
 
         <section class="space-y-3">
-            <h3 class="font-medium">Health</h3>
+            <h3 class="font-medium">{{ t('wizard.step_health') }}</h3>
             <DetailList :items="health" />
             <DetailList :items="records" />
         </section>
@@ -247,7 +281,7 @@ const extras = computed<DetailItem[]>(() =>
         <template v-if="extras.length > 0">
             <Separator />
             <section class="space-y-3">
-                <h3 class="font-medium">Anything else</h3>
+                <h3 class="font-medium">{{ t('wizard.anything_else') }}</h3>
                 <DetailList :items="extras" />
             </section>
         </template>

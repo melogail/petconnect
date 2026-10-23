@@ -45,11 +45,12 @@ test('normalizes the health repeaters to their documented shapes', function () {
         ],
     ]));
 
-    expect($pet->vaccinations)->toBe([
+    // toEqual, not toBe: MySQL stores JSON object keys in its own order.
+    expect($pet->vaccinations)->toEqual([
         ['name' => 'Rabies', 'date' => '2024-01-15'],
         ['name' => 'Distemper', 'date' => null],
     ])
-        ->and($pet->medications)->toBe([['name' => 'Flea drops', 'usage' => 'Monthly']])
+        ->and($pet->medications)->toEqual([['name' => 'Flea drops', 'usage' => 'Monthly']])
         ->and($pet->allergies)->toBe(['Dust', 'Pollen']);
 });
 

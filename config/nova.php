@@ -20,7 +20,7 @@ return [
     |
     */
 
-    'license_key' => env('NOVA_LICENSE_KEY'),
+    'license_key'      => env('NOVA_LICENSE_KEY'),
 
     /*
     |--------------------------------------------------------------------------
@@ -33,7 +33,7 @@ return [
     |
     */
 
-    'name' => env('NOVA_APP_NAME', env('APP_NAME')),
+    'name'             => env('NOVA_APP_NAME', env('APP_NAME')),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,7 +46,7 @@ return [
     |
     */
 
-    'domain' => env('NOVA_DOMAIN', env('NOVA_DOMAIN_NAME')),
+    'domain'           => env('NOVA_DOMAIN', env('NOVA_DOMAIN_NAME')),
 
     /*
     |--------------------------------------------------------------------------
@@ -59,7 +59,7 @@ return [
     |
     */
 
-    'path' => env('NOVA_PATH', '/nova'),
+    'path'             => env('NOVA_PATH', '/nova'),
 
     /*
     |--------------------------------------------------------------------------
@@ -79,7 +79,7 @@ return [
     |
     */
 
-    'guard' => env('NOVA_GUARD', 'admin'),
+    'guard'            => env('NOVA_GUARD', 'admin'),
 
     /*
     |--------------------------------------------------------------------------
@@ -96,7 +96,7 @@ return [
     |
     */
 
-    'passwords' => env('NOVA_PASSWORDS', 'admins'),
+    'passwords'        => env('NOVA_PASSWORDS', 'admins'),
 
     /*
     |--------------------------------------------------------------------------
@@ -138,14 +138,14 @@ return [
      * It no-ops on every route name that is not in its map, so the rest of Nova
      * pays one array lookup for it.
      */
-    'middleware' => [
+    'middleware'       => [
         'web',
         ThrottleAuthRoutes::class,
         HandleInertiaRequests::class,
         'nova:serving',
     ],
 
-    'api_middleware' => [
+    'api_middleware'   => [
         'nova',
         Authenticate::class,
         // \Laravel\Nova\Http\Middleware\AuthenticateSession::class,
@@ -169,7 +169,7 @@ return [
     |
     */
 
-    'pagination' => 'simple',
+    'pagination'       => 'simple',
 
     /*
     |--------------------------------------------------------------------------
@@ -182,7 +182,7 @@ return [
     |
      */
 
-    'storage_disk' => env('NOVA_STORAGE_DISK', 'public'),
+    'storage_disk'     => env('NOVA_STORAGE_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -195,7 +195,7 @@ return [
     |
     */
 
-    'currency' => 'USD',
+    'currency'         => 'USD',
 
     /*
     |--------------------------------------------------------------------------
@@ -230,7 +230,7 @@ return [
     |
     */
 
-    'actions' => [
+    'actions'          => [
         'resource' => ActionResource::class,
     ],
 
@@ -245,7 +245,7 @@ return [
     |
     */
 
-    'impersonation' => [
+    'impersonation'    => [
         'started' => '/',
         'stopped' => '/',
     ],

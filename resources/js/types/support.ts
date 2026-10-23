@@ -6,4 +6,7 @@
  * `Rule::enum` is what rejects a value the two ever disagree on.
  */
 export type TicketType =
-    'technical_issue' | 'missing_category' | 'missing_breed' | 'other';
+    | 'technical_issue'
+    | 'missing_category'
+    | 'missing_breed'
+    | 'other';

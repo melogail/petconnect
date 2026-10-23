@@ -35,7 +35,7 @@ function reportableAuthoredBy(Reportable $type, User $author): Model
 {
     return match ($type) {
         Reportable::Comment => Comment::factory()->for($author)->create(),
-        Reportable::Review => Review::factory()->for($author)->create(),
+        Reportable::Review  => Review::factory()->for($author)->create(),
     };
 }
 
@@ -53,19 +53,19 @@ function fileReport(User $reporter, Reportable $type, int $id): Report
 
 test('writes the report against the resolved target with the pending status', function (Reportable $type) {
     $reporter = User::factory()->create();
-    $target = reportableAuthoredBy($type, User::factory()->create());
+    $target   = reportableAuthoredBy($type, User::factory()->create());
 
-    $report = fileReport($reporter, $type, $target->getKey());
+    $report   = fileReport($reporter, $type, $target->getKey());
 
     $this->assertDatabaseHas('reports', [
-        'id' => $report->getKey(),
-        'user_id' => $reporter->getKey(),
+        'id'              => $report->getKey(),
+        'user_id'         => $reporter->getKey(),
         'reportable_type' => Relation::getMorphAlias($target::class),
-        'reportable_id' => $target->getKey(),
-        'category' => ReportCategory::Abuse->value,
-        'reason' => ReportReason::HateSpeech->value,
-        'status' => 'pending',
-        'description' => 'Abusive towards the seller.',
+        'reportable_id'   => $target->getKey(),
+        'category'        => ReportCategory::Abuse->value,
+        'reason'          => ReportReason::HateSpeech->value,
+        'status'          => 'pending',
+        'description'     => 'Abusive towards the seller.',
     ]);
 })->with(Reportable::cases());
 
@@ -93,7 +93,7 @@ test('refuses a report of the reporter own content and writes nothing', function
 
 test('refuses a second report of the same target by the same reporter and leaves one row', function (Reportable $type) {
     $reporter = User::factory()->create();
-    $target = reportableAuthoredBy($type, User::factory()->create());
+    $target   = reportableAuthoredBy($type, User::factory()->create());
     Report::factory()->for($reporter)->forReportable($target)->create();
 
     expect(fn () => fileReport($reporter, $type, $target->getKey()))
@@ -119,10 +119,10 @@ test('lets a second reporter file against the same target', function (Reportable
  */
 test('turns the unique index violation into the same refusal when the guard step is bypassed', function () {
     $reporter = User::factory()->create();
-    $target = Review::factory()->create();
+    $target   = Review::factory()->create();
     Report::factory()->for($reporter)->forReportable($target)->create();
 
-    $context = new SubmitReportContext(
+    $context  = new SubmitReportContext(
         reporter: $reporter,
         reportableType: Reportable::Review,
         reportableId: $target->getKey(),
@@ -178,9 +178,9 @@ describe('notifying the moderators', function () {
 
         foreach ($admins as $admin) {
             $this->assertDatabaseHas('notifications', [
-                'type' => ReportFiledNotification::class,
+                'type'            => ReportFiledNotification::class,
                 'notifiable_type' => Relation::getMorphAlias(Admin::class),
-                'notifiable_id' => $admin->getKey(),
+                'notifiable_id'   => $admin->getKey(),
             ]);
         }
         expect($report->getKey())->not->toBeNull();
@@ -191,20 +191,20 @@ describe('notifying the moderators', function () {
      * moderator's own locale decides the wording at read time.
      */
     test('carries the report identifiers and the message key rather than rendered text', function () {
-        $admin = Admin::factory()->create();
+        $admin    = Admin::factory()->create();
         $reporter = User::factory()->create();
-        $target = Review::factory()->create();
+        $target   = Review::factory()->create();
 
-        $report = fileReport($reporter, Reportable::Review, $target->getKey());
+        $report   = fileReport($reporter, Reportable::Review, $target->getKey());
 
         expect($admin->notifications()->sole()->data)->toMatchArray([
-            'report_id' => $report->getKey(),
-            'reporter_id' => $reporter->getKey(),
+            'report_id'       => $report->getKey(),
+            'reporter_id'     => $reporter->getKey(),
             'reportable_type' => 'review',
-            'reportable_id' => $target->getKey(),
-            'status' => 'pending',
-            'message_key' => 'notifications.report_filed',
-            'type' => 'report',
+            'reportable_id'   => $target->getKey(),
+            'status'          => 'pending',
+            'message_key'     => 'notifications.report_filed',
+            'type'            => 'report',
         ]);
     });
 

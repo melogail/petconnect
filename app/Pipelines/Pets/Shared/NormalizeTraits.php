@@ -15,7 +15,7 @@ class NormalizeTraits
 {
     public function handle(PetAttributeContext $context, Closure $next): mixed
     {
-        $traits = $context->input('traits');
+        $traits     = $context->input('traits');
 
         if (! is_array($traits)) {
             $context->set('traits', null);

@@ -34,10 +34,10 @@ function reviewRouteParameters(User $subject): array
  * @var array<string, list<string>>
  */
 const REVIEWABLE_TYPES_OFF_THE_WHITELIST = [
-    'a url encoded class name' => ['App%5CModels%5CUser'],
-    'a morph alias for a listing' => ['pet'],
-    'a morph alias for a moderator' => ['admin'],
-    'a morph alias for a comment' => ['comment'],
+    'a url encoded class name'       => ['App%5CModels%5CUser'],
+    'a morph alias for a listing'    => ['pet'],
+    'a morph alias for a moderator'  => ['admin'],
+    'a morph alias for a comment'    => ['comment'],
     'a value on no whitelist at all' => ['dragon'],
 ];
 
@@ -57,17 +57,17 @@ const REVIEWABLE_TYPES_OFF_THE_WHITELIST = [
 function existingTargetIdFor(string $segment): int
 {
     return match ($segment) {
-        'pet' => Pet::factory()->create()->getKey(),
-        'admin' => Admin::factory()->create()->getKey(),
+        'pet'     => Pet::factory()->create()->getKey(),
+        'admin'   => Admin::factory()->create()->getKey(),
         'comment' => Comment::factory()->create()->getKey(),
-        default => User::factory()->create()->getKey(),
+        default   => User::factory()->create()->getKey(),
     };
 }
 
 describe('index', function () {
     test('a guest reads the reviews written about a profile', function () {
         $subject = User::factory()->create();
-        $review = Review::factory()->forUser($subject)->create(['rate' => 4, 'comment' => 'Very helpful.']);
+        $review  = Review::factory()->forUser($subject)->create(['rate' => 4, 'comment' => 'Very helpful.']);
 
         $this->get(route('reviews.index', reviewRouteParameters($subject)))
             ->assertOk()
@@ -114,24 +114,24 @@ describe('store', function () {
     });
 
     test('writes the review and notifies the person it is about', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $subject = User::factory()->create();
         Notification::fake();
 
         $this->actingAs($author)
             ->from(route('home'))
             ->post(route('reviews.store', reviewRouteParameters($subject)), [
-                'rate' => 5,
+                'rate'    => 5,
                 'comment' => 'Answered every question about the puppy.',
             ])
             ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('reviews', [
-            'user_id' => $author->getKey(),
+            'user_id'         => $author->getKey(),
             'reviewable_type' => 'user',
-            'reviewable_id' => $subject->getKey(),
-            'rate' => 5,
-            'comment' => 'Answered every question about the puppy.',
+            'reviewable_id'   => $subject->getKey(),
+            'rate'            => 5,
+            'comment'         => 'Answered every question about the puppy.',
         ]);
         Notification::assertSentTo($subject, ModelReviewedNotification::class);
     });
@@ -178,7 +178,7 @@ describe('store', function () {
      * would make the submission legal.
      */
     test('refuses a second review of the same profile on the flow level key and leaves one row', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $subject = User::factory()->create();
         Review::factory()->for($author)->forUser($subject)->create();
 
@@ -211,7 +211,7 @@ describe('store', function () {
 
         $this->assertDatabaseEmpty('reviews');
     })->with([
-        'below the floor' => 0,
+        'below the floor'   => 0,
         'above the ceiling' => 6,
         'a negative rating' => -1,
     ]);
@@ -226,7 +226,7 @@ describe('store', function () {
 
         $this->assertDatabaseHas('reviews', ['reviewable_id' => $subject->getKey(), 'rate' => $rate]);
     })->with([
-        'the floor' => 1,
+        'the floor'   => 1,
         'the ceiling' => 5,
     ]);
 
@@ -235,18 +235,18 @@ describe('store', function () {
 
         $this->actingAs(User::factory()->create())
             ->post(route('reviews.store', reviewRouteParameters($subject)), [])
-            ->assertInvalid(['rate' => 'The rate field is required.']);
+            ->assertInvalid(['rate' => 'The rating field is required.']);
 
         $this->assertDatabaseEmpty('reviews');
     });
 
     test('rejects a comment longer than the configured ceiling and writes nothing', function () {
-        $subject = User::factory()->create();
+        $subject   = User::factory()->create();
         $maxLength = config('petconnect.reviews.max_comment_length');
 
         $this->actingAs(User::factory()->create())
             ->post(route('reviews.store', reviewRouteParameters($subject)), [
-                'rate' => 5,
+                'rate'    => 5,
                 'comment' => Str::repeat('a', $maxLength + 1),
             ])
             ->assertInvalid(['comment' => 'must not be greater than '.$maxLength]);
@@ -276,7 +276,7 @@ describe('store', function () {
         $this->actingAs(User::factory()->create())
             ->from(route('home'))
             ->post(route('reviews.store', reviewRouteParameters($subject)), [
-                'rate' => 2,
+                'rate'    => 2,
                 'comment' => '  What a   bitch  ',
             ])
             ->assertValid();
@@ -322,8 +322,8 @@ describe('update', function () {
             ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('reviews', [
-            'id' => $review->getKey(),
-            'rate' => 1,
+            'id'      => $review->getKey(),
+            'rate'    => 1,
             'comment' => 'Edited',
         ]);
     });
@@ -388,7 +388,7 @@ describe('update', function () {
 
         expect($review->fresh()->rate)->toBe(3);
     })->with([
-        'below the floor' => 0,
+        'below the floor'   => 0,
         'above the ceiling' => 6,
     ]);
 
@@ -399,9 +399,9 @@ describe('update', function () {
      * only thing that can speak for a target the URL never names.
      */
     test('returns 404 for a review whose target has vanished, and leaves it unchanged', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $subject = User::factory()->create();
-        $review = Review::factory()->for($author)->forUser($subject)->create(['comment' => 'Original']);
+        $review  = Review::factory()->for($author)->forUser($subject)->create(['comment' => 'Original']);
         $subject->delete();
 
         $this->actingAs($author)
@@ -448,7 +448,7 @@ describe('destroy', function () {
      */
     test('returns 403 for the person the review is about and leaves it in place', function () {
         $subject = User::factory()->create();
-        $review = Review::factory()->forUser($subject)->create();
+        $review  = Review::factory()->forUser($subject)->create();
 
         $this->actingAs($subject)
             ->delete(route('reviews.destroy', $review))
@@ -468,9 +468,9 @@ describe('destroy', function () {
     });
 
     test('returns 404 for a review whose target has vanished, and leaves it in place', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $subject = User::factory()->create();
-        $review = Review::factory()->for($author)->forUser($subject)->create();
+        $review  = Review::factory()->for($author)->forUser($subject)->create();
         $subject->delete();
 
         $this->actingAs($author)

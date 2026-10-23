@@ -25,28 +25,30 @@ class NormalizeHealthData
     public function handle(PetAttributeContext $context, Closure $next): mixed
     {
         $context->merge([
-            'health_status' => HealthStatus::tryFrom((string) $context->input('health.status'))
+            'health_status'   => HealthStatus::tryFrom((string) $context->input('health.status'))
                 ?? HealthStatus::Healthy,
-            'vaccinated' => (bool) $context->input('health.vaccinated', false),
+            'vaccinated'      => (bool) $context->input('health.vaccinated', false),
             'spayed_neutered' => (bool) $context->input('health.spayedNeutered', false),
-            'special_needs' => $context->input('health.specialNeeds'),
-            'last_vet_visit' => filled($context->input('health.lastVetVisit'))
+            'special_needs'   => $context->input('health.specialNeeds'),
+            'last_vet_visit'  => filled($context->input('health.lastVetVisit'))
                 ? $context->input('health.lastVetVisit')
                 : null,
-            'vaccinations' => $this->records($context->input('health.vaccinations'), 'date'),
-            'medications' => $this->records($context->input('health.medications'), 'usage'),
-            'allergies' => $this->allergies($context->input('health.allergies')),
-            'vet_name' => $context->input('health.vetName'),
-            'vet_phone' => $context->input('health.vetPhone'),
+            'vaccinations'    => $this->records($context->input('health.vaccinations'), 'date'),
+            'medications'     => $this->records($context->input('health.medications'), 'usage'),
+            'allergies'       => $this->allergies($context->input('health.allergies')),
+            'vet_name'        => $context->input('health.vetName'),
+            'vet_phone'       => $context->input('health.vetPhone'),
         ]);
 
         return $next($context);
     }
 
     /**
-     * Named clinical records, each reduced to its name plus one detail column.
+     * Named clinical records, each reduced to its name plus one detail column
+     * — `date` for vaccinations, `usage` for medications — so every row is
+     * `['name' => string, $detailKey => string|null]`.
      *
-     * @return list<array{name: string, date?: string|null, usage?: string|null}>|null
+     * @return list<non-empty-array<string, string|null>>|null
      */
     private function records(mixed $records, string $detailKey): ?array
     {
@@ -61,10 +63,10 @@ class NormalizeHealthData
                 continue;
             }
 
-            $detail = $record[$detailKey] ?? null;
+            $detail       = $record[$detailKey] ?? null;
 
             $normalized[] = [
-                'name' => (string) $record['name'],
+                'name'     => (string) $record['name'],
                 $detailKey => blank($detail) ? null : (string) $detail,
             ];
         }

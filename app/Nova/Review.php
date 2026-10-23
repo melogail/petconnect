@@ -37,6 +37,8 @@ use Laravel\Nova\ResourceTool;
  * plain delete leaves every report filed against this review sitting in the
  * queue with a target that resolves to null. ReviewPolicy::delete returns
  * false to close the shortcut.
+ *
+ * @extends \App\Nova\Resource<ReviewModel>
  */
 class Review extends Resource
 {
@@ -45,7 +47,7 @@ class Review extends Resource
      *
      * @var class-string<ReviewModel>
      */
-    public static $model = ReviewModel::class;
+    public static $model  = ReviewModel::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -59,7 +61,7 @@ class Review extends Resource
      *
      * @var string
      */
-    public static $title = 'id';
+    public static $title  = 'id';
 
     /**
      * The label a review is referred to by elsewhere in Nova.
@@ -83,7 +85,7 @@ class Review extends Resource
      *
      * @var string
      */
-    public static $group = 'Moderation';
+    public static $group  = 'Moderation';
 
     /**
      * The columns that should be searched.
@@ -99,7 +101,7 @@ class Review extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['user', 'reviewable'];
+    public static $with   = ['user', 'reviewable'];
 
     /**
      * Get the fields displayed by the resource.
@@ -146,9 +148,6 @@ class Review extends Resource
 
     /**
      * Build an "index" query for the given resource.
-     *
-     * @param  Builder<ReviewModel>  $query
-     * @return Builder<ReviewModel>
      */
     public static function indexQuery(NovaRequest $request, Builder $query): Builder
     {

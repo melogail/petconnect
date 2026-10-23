@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  *
  * @var list<string>
  */
-const PROFILE_FORM_READ_ONLY_KEYS = ['id', 'avatar', 'is_verified'];
+const PROFILE_FORM_READ_ONLY_KEYS  = ['id', 'avatar', 'is_verified'];
 
 /**
  * Rules for fields that are written but never read back.
@@ -105,15 +105,15 @@ test('names the avatar read side avatar and the write side image', function () {
  */
 test('carries the private fields the owner own form needs', function () {
     $user = User::factory()->create([
-        'email' => 'nadia@example.com',
-        'phone' => '+20-100-000-0000',
+        'email'   => 'nadia@example.com',
+        'phone'   => '+20-100-000-0000',
         'address' => '12 Nile Street',
     ]);
 
     expect(ProfileFormResource::make($user)->toArray(Request::create('/')))
         ->toMatchArray([
-            'email' => 'nadia@example.com',
-            'phone' => '+20-100-000-0000',
+            'email'   => 'nadia@example.com',
+            'phone'   => '+20-100-000-0000',
             'address' => '12 Nile Street',
         ]);
 });
@@ -127,7 +127,7 @@ test('carries the private fields the owner own form needs', function () {
  * production or the reverse.
  */
 test('round-trips the coordinates through the form without changing them', function () {
-    $user = User::factory()->create(['lat' => 30.0444, 'lng' => 31.2357]);
+    $user    = User::factory()->create(['lat' => 30.0444, 'lng' => 31.2357]);
 
     $payload = ProfileFormResource::make($user->fresh())->toArray(Request::create('/'));
 

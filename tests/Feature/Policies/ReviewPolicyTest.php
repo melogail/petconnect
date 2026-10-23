@@ -53,7 +53,7 @@ describe('update', function () {
 
     test('the person the review is about may not edit it', function () {
         $subject = User::factory()->create();
-        $review = Review::factory()->forUser($subject)->create();
+        $review  = Review::factory()->forUser($subject)->create();
 
         expect($subject->can('update', $review))->toBeFalse();
     });
@@ -81,7 +81,7 @@ describe('delete', function () {
      */
     test('the person the review is about may not delete it', function () {
         $subject = User::factory()->create();
-        $review = Review::factory()->forUser($subject)->create();
+        $review  = Review::factory()->forUser($subject)->create();
 
         expect($subject->can('delete', $review))->toBeFalse();
     });
@@ -108,9 +108,9 @@ describe('delete', function () {
  * .ai/rules/policies.md.
  */
 test('deciding whether a review may be edited or deleted costs no query', function (string $ability) {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     Review::factory()->for($author)->create();
-    $review = Review::query()->sole();
+    $review  = Review::query()->sole();
 
     DB::flushQueryLog();
     DB::enableQueryLog();

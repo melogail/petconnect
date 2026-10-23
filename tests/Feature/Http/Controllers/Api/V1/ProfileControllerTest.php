@@ -28,7 +28,7 @@ describe('show', function () {
         Pet::factory()->count(2)->create(['user_id' => $profile->getKey()]);
         Review::factory()->count(3)->create([
             'reviewable_type' => 'user',
-            'reviewable_id' => $profile->getKey(),
+            'reviewable_id'   => $profile->getKey(),
         ]);
 
         $this->getJson(route('api.v1.profiles.pets', $profile))

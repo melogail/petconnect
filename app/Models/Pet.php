@@ -219,8 +219,8 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
     public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
-            ->fit(Fit::Crop, 400, 400)
-            ->nonQueued();
+            ->nonQueued()
+            ->fit(Fit::Crop, 400, 400);
 
         $this->addMediaConversion('display')
             ->fit(Fit::Contain, 1280, 1280);
@@ -375,6 +375,12 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
      * rounding can push it marginally outside the domain, which yields NULL on
      * SQLite and NaN on MySQL. Every value is bound, never interpolated; only
      * the constant Earth radius is inlined.
+     *
+     * `literal-string` is what lets whereRaw()/selectRaw() accept it: every
+     * part is a compile-time constant, so PHPStan can prove no runtime value
+     * reaches the SQL.
+     *
+     * @return literal-string
      */
     private static function distanceExpression(): string
     {
@@ -441,7 +447,7 @@ class Pet extends Model implements Commentable, HasMedia, Likeable
      */
     protected function age(): Attribute
     {
-        return Attribute::get(function (): ?float {
+        return Attribute::make(get: function (): ?float {
             if ($this->birth_date === null) {
                 return null;
             }

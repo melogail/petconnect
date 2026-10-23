@@ -39,12 +39,12 @@ class PersistComment
     {
         $commentable = $context->commentable();
 
-        $comment = Comment::create([
-            'user_id' => $context->author->getKey(),
-            'content' => $context->content(),
-            'parent_id' => $context->parent()?->getKey(),
+        $comment     = Comment::create([
+            'user_id'          => $context->author->getKey(),
+            'content'          => $context->content(),
+            'parent_id'        => $context->parent()?->getKey(),
             'commentable_type' => Relation::getMorphAlias($commentable::class),
-            'commentable_id' => $commentable->getKey(),
+            'commentable_id'   => $commentable->getKey(),
         ]);
 
         $comment->load('user.media');

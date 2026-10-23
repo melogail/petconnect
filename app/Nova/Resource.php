@@ -20,6 +20,15 @@ use Laravel\Nova\Resource as NovaResource;
  * apply to every resource, and every resource already names it. Add a method
  * here only when it changes behaviour; a scaffold stub that delegates straight
  * back to Nova belongs in Nova.
+ *
+ * Generic over the model so `$this->resource` is typed in every subclass —
+ * each one declares `@extends \App\Nova\Resource<\App\Models\X>` — fully
+ * qualified, because Pint's phpdoc_types fixer lowercases a bare `Resource`
+ * into the PHP `resource` keyword.
+ *
+ * @template TModel of \Illuminate\Database\Eloquent\Model
+ *
+ * @extends NovaResource<TModel>
  */
 abstract class Resource extends NovaResource
 {

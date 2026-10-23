@@ -15,9 +15,9 @@ class CommentSeeder extends Seeder
     /**
      * How many top level comments each listing gets.
      */
-    public const MIN_PER_PET = 2;
+    public const MIN_PER_PET     = 2;
 
-    public const MAX_PER_PET = 5;
+    public const MAX_PER_PET     = 5;
 
     /**
      * Percentage of top level comments that draw a reply.

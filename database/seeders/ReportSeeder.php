@@ -18,12 +18,12 @@ class ReportSeeder extends Seeder
      */
     public const REPORTED_COMMENT_COUNT = 12;
 
-    public const REPORTED_REVIEW_COUNT = 8;
+    public const REPORTED_REVIEW_COUNT  = 8;
 
     /**
      * Share of reports left awaiting a moderator decision.
      */
-    protected const PENDING_CHANCE = 60;
+    protected const PENDING_CHANCE      = 60;
 
     /**
      * File a handful of reports against comments and reviews.
@@ -37,7 +37,7 @@ class ReportSeeder extends Seeder
     {
         DB::transaction(function (): void {
             /** @var Collection<int, User> $users */
-            $users = User::query()->select(['id'])->get();
+            $users   = User::query()->select(['id'])->get();
 
             if ($users->count() < 2) {
                 throw new RuntimeException('At least two users are needed to file reports; run UserSeeder first.');
@@ -85,7 +85,7 @@ class ReportSeeder extends Seeder
             ->reject(fn (User $user): bool => $user->getKey() === $target->user_id)
             ->random();
 
-        $factory = Report::factory()
+        $factory  = Report::factory()
             ->for($reporter)
             ->forReportable($target);
 

@@ -32,6 +32,8 @@ In with(['comments' => fn (...) => ...]) the closure is handed the Relation obje
 
 Type these closures fn (Relation $r): Relation. Query methods and model scopes still work through Relation::__call. A closure passed to where() does get a Builder — that one is different.
 
+**PHPStan shape, measured 2026-10-23 on PHPStan 2.2.10:** keep the native `Relation` hint (`Builder::with()` only accepts `Closure(Relation<*,*,*>)`, so a `MorphMany`/`HasOne` native hint is rejected) and narrow inside a block closure with an inline `/** @var MorphMany<Comment, Pet> $comments */`. `@param` generics on closure parameters are silently dropped — `dumpType` showed bare `Relation` for every placement tried — so the inline `@var` is the only form that lets scopes such as `withLikedBy()` type-check. See `Actions\Pets\LoadPetDetail` for the pattern.
+
 ## preventLazyLoading is on, and it now sees medialibrary N+1s too
 `AppServiceProvider::configureDefaults()` calls `Model::preventLazyLoading(! isProduction())`. The violation callback lets a lazy load through in two cases and throws otherwise:
 

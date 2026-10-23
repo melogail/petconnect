@@ -167,11 +167,11 @@ class ThrottleAuthRoutes
      */
     private const LIMITERS = [
         'password.confirm.store' => 'password-confirmations',
-        'nova.password.confirm' => 'password-confirmations',
-        'register.store' => 'registrations',
-        'password.email' => 'password-reset-links',
-        'password.update' => 'password-resets',
-        'nova.password.reset' => 'password-resets',
+        'nova.password.confirm'  => 'password-confirmations',
+        'register.store'         => 'registrations',
+        'password.email'         => 'password-reset-links',
+        'password.update'        => 'password-resets',
+        'nova.password.reset'    => 'password-resets',
     ];
 
     public function __construct(private readonly ThrottleRequests $throttle) {}
@@ -181,8 +181,8 @@ class ThrottleAuthRoutes
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $route = $request->route();
-        $name = $route instanceof Route ? $route->getName() : null;
+        $route   = $request->route();
+        $name    = $route instanceof Route ? $route->getName() : null;
         $limiter = $name === null ? null : (self::LIMITERS[$name] ?? null);
 
         if ($limiter === null) {

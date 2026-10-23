@@ -28,13 +28,13 @@ use Illuminate\Support\Str;
  * @var array<string, array{0: string, 1: string}>
  */
 const NOVA_MORPH_TABLES = [
-    'likes' => ['likeable_type', 'likeable_id'],
-    'saves' => ['saveable_type', 'saveable_id'],
-    'reports' => ['reportable_type', 'reportable_id'],
-    'reviews' => ['reviewable_type', 'reviewable_id'],
-    'comments' => ['commentable_type', 'commentable_id'],
+    'likes'         => ['likeable_type', 'likeable_id'],
+    'saves'         => ['saveable_type', 'saveable_id'],
+    'reports'       => ['reportable_type', 'reportable_id'],
+    'reviews'       => ['reviewable_type', 'reviewable_id'],
+    'comments'      => ['commentable_type', 'commentable_id'],
     'notifications' => ['notifiable_type', 'notifiable_id'],
-    'media' => ['model_type', 'model_id'],
+    'media'         => ['model_type', 'model_id'],
 ];
 
 /**
@@ -79,17 +79,17 @@ function strandedNovaMorphRows(): array
  */
 function memberWithOneOfEverything(): array
 {
-    $member = User::factory()->create();
-    $bystander = User::factory()->create();
+    $member       = User::factory()->create();
+    $bystander    = User::factory()->create();
 
-    $listing = Pet::factory()->for($member)->create();
+    $listing      = Pet::factory()->for($member)->create();
     $theirListing = Pet::factory()->for($bystander)->create();
 
     $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
     $member->addMedia(UploadedFile::fake()->image('avatar.jpg'))->toMediaCollection('users');
     $bystander->addMedia(UploadedFile::fake()->image('their-avatar.jpg'))->toMediaCollection('users');
 
-    $comment = Comment::factory()->for($member)->forPet($theirListing)->create();
+    $comment      = Comment::factory()->for($member)->forPet($theirListing)->create();
     $theirComment = Comment::factory()->for($bystander)->forPet($theirListing)->create();
 
     Like::factory()->for($bystander)->forComment($comment)->create();
@@ -97,15 +97,15 @@ function memberWithOneOfEverything(): array
     Save::factory()->for($member)->forPet($theirListing)->create();
     Save::factory()->for($bystander)->forPet($theirListing)->create();
 
-    $review = Review::factory()->for($bystander)->forUser($member)->create();
-    $theirReview = Review::factory()->for($member)->forUser($bystander)->create();
+    $review       = Review::factory()->for($bystander)->forUser($member)->create();
+    $theirReview  = Review::factory()->for($member)->forUser($bystander)->create();
 
     Report::factory()->pending()->for($bystander)->forReportable($review)->create();
     Report::factory()->pending()->for($bystander)->forReportable($theirComment)->create();
 
     foreach ([$member, $bystander] as $notifiable) {
         $notifiable->notifications()->create([
-            'id' => (string) Str::uuid(),
+            'id'   => (string) Str::uuid(),
             'type' => 'App\\Notifications\\ModelLikedNotification',
             'data' => ['type' => 'like', 'message_key' => 'notifications.liked_pet'],
         ]);
@@ -130,7 +130,7 @@ beforeEach(function () {
  */
 test('deletes a member account through Nova and strands no polymorphic row', function () {
     ['member' => $member, 'bystander' => $bystander] = memberWithOneOfEverything();
-    $admin = Admin::factory()->create();
+    $admin                                           = Admin::factory()->create();
 
     expect(strandedNovaMorphRows())->toBe([]);
 
@@ -148,11 +148,11 @@ test('deletes a member account through Nova and strands no polymorphic row', fun
 
 test('keeps the rows belonging to the accounts it was not aimed at', function () {
     ['member' => $member, 'bystander' => $bystander] = memberWithOneOfEverything();
-    $admin = Admin::factory()->create();
+    $admin                                           = Admin::factory()->create();
 
-    $theirListings = Pet::query()->where('user_id', $bystander->getKey())->pluck('id');
-    $theirComments = Comment::query()->where('user_id', $bystander->getKey())->pluck('id');
-    $theirNotifications = $bystander->notifications()->pluck('id');
+    $theirListings                                   = Pet::query()->where('user_id', $bystander->getKey())->pluck('id');
+    $theirComments                                   = Comment::query()->where('user_id', $bystander->getKey())->pluck('id');
+    $theirNotifications                              = $bystander->notifications()->pluck('id');
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/users/action?action=delete-account-with-all-content', [
@@ -169,8 +169,8 @@ test('keeps the rows belonging to the accounts it was not aimed at', function ()
 });
 
 test('deletes every selected account when several are run at once', function () {
-    $admin = Admin::factory()->create();
-    $members = User::factory()->count(3)->create();
+    $admin     = Admin::factory()->create();
+    $members   = User::factory()->count(3)->create();
     $bystander = User::factory()->create();
 
     $this->actingAs($admin, 'admin')

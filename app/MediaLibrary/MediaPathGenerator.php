@@ -48,7 +48,7 @@ class MediaPathGenerator implements PathGenerator
 
     public function getPath(Media $media): string
     {
-        $suffix = "{$media->model_type}/{$media->model_id}/{$media->getKey()}/";
+        $suffix         = "{$media->model_type}/{$media->model_id}/{$media->getKey()}/";
 
         $ownerDirectory = $this->ownerDirectory($media);
 

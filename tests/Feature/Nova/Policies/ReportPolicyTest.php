@@ -19,7 +19,7 @@ use App\Models\Report;
  * one.
  */
 test('returns 403 to a report edited through Nova while the decision action still runs', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $report = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
@@ -31,7 +31,7 @@ test('returns 403 to a report edited through Nova while the decision action stil
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$report->getKey()],
-            'status' => ReportStatus::Resolved->value,
+            'status'    => ReportStatus::Resolved->value,
         ])
         ->assertOk();
 
@@ -39,7 +39,7 @@ test('returns 403 to a report edited through Nova while the decision action stil
 });
 
 test('returns 403 to a request for the report edit form', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $report = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
@@ -66,7 +66,7 @@ test('returns 403 to a report filed through Nova', function () {
  * tests/Feature/Nova/Actions/PurgeOrphanedReportsTest.php.
  */
 test('removes nothing when reports are deleted through the built-in delete', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $reports = Report::factory()->count(2)->pending()->create();
 
     $this->actingAs($admin, 'admin')

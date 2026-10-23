@@ -4,6 +4,7 @@ namespace App\MediaLibrary;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\Conversions\Conversion;
 use Spatie\MediaLibrary\Conversions\ConversionCollection;
 use Spatie\MediaLibrary\Conversions\FileManipulator;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -79,6 +80,8 @@ class TemporaryDirectoryCleaningFileManipulator extends FileManipulator
     /**
      * Run the package's conversions, then delete what they left behind.
      *
+     * @param  ConversionCollection<int, Conversion>  $conversions
+     *
      * @throws \Throwable Whatever the conversion loop threw, unchanged.
      */
     public function performConversions(
@@ -87,7 +90,7 @@ class TemporaryDirectoryCleaningFileManipulator extends FileManipulator
         bool $onlyMissing = false
     ): FileManipulator {
         $configuredPath = config(self::TEMPORARY_PATH_KEY);
-        $scopedPath = ($configuredPath ?? storage_path('media-library/temp'))
+        $scopedPath     = ($configuredPath ?? storage_path('media-library/temp'))
             .DIRECTORY_SEPARATOR.Str::random(32);
 
         config([self::TEMPORARY_PATH_KEY => $scopedPath]);

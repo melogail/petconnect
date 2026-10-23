@@ -30,10 +30,10 @@ beforeEach(function () {
  * back office did not have, so the category could not be removed by any route.
  */
 test('lets a category be deleted once its retired listings are purged', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create(['name' => 'Reptiles']);
-    $breed = Breed::factory()->for($category)->create();
-    $retired = Pet::factory()->for($category)->create();
+    $breed    = Breed::factory()->for($category)->create();
+    $retired  = Pet::factory()->for($category)->create();
     $retired->delete();
 
     $this->actingAs($admin, 'admin')
@@ -57,17 +57,17 @@ test('lets a category be deleted once its retired listings are purged', function
 });
 
 test('permanently deletes a listing with its thread, reactions, saves, reports and photos', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $visitor = User::factory()->create();
     $listing = Pet::factory()->create();
 
-    $photo = $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
-    $path = $photo->getPathRelativeToRoot();
+    $photo   = $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
+    $path    = $photo->getPathRelativeToRoot();
     $comment = Comment::factory()->for($visitor)->forPet($listing)->create();
-    $reply = Comment::factory()->for($visitor)->reply($comment)->create();
-    $like = Like::factory()->for($visitor)->forPet($listing)->create();
-    $save = Save::factory()->for($visitor)->forPet($listing)->create();
-    $report = Report::factory()->for($visitor)->forReportable($reply)->create();
+    $reply   = Comment::factory()->for($visitor)->reply($comment)->create();
+    $like    = Like::factory()->for($visitor)->forPet($listing)->create();
+    $save    = Save::factory()->for($visitor)->forPet($listing)->create();
+    $report  = Report::factory()->for($visitor)->forReportable($reply)->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson(PURGE_LISTING_ACTION, ['resources' => [$listing->getKey()]])
@@ -84,7 +84,7 @@ test('permanently deletes a listing with its thread, reactions, saves, reports a
 });
 
 test('permanently deletes several listings at once', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $listings = Pet::factory()->count(2)->create();
     $survivor = Pet::factory()->create();
 
@@ -111,12 +111,12 @@ test('permanently deletes several listings at once', function () {
  * assertions below would pass just as well on a run that had written nothing.
  */
 test('restores every listing and its content when one of the selection cannot be purged', function () {
-    $admin = Admin::factory()->create();
-    $first = Pet::factory()->create();
-    $second = Pet::factory()->create();
-    $comment = Comment::factory()->forPet($first)->create();
-    $like = Like::factory()->forPet($first)->create();
-    $attempts = 0;
+    $admin              = Admin::factory()->create();
+    $first              = Pet::factory()->create();
+    $second             = Pet::factory()->create();
+    $comment            = Comment::factory()->forPet($first)->create();
+    $like               = Like::factory()->forPet($first)->create();
+    $attempts           = 0;
     $remainingMidFlight = null;
 
     Event::listen('eloquent.deleting: '.Pet::class, function () use (&$attempts, &$remainingMidFlight): void {
@@ -147,7 +147,7 @@ test('restores every listing and its content when one of the selection cannot be
  * retired listing keeps its row, its photos and its thread for moderation.
  */
 test('retires rather than destroys a listing deleted with the built-in delete', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $listing = Pet::factory()->create();
     $comment = Comment::factory()->forPet($listing)->create();
 
@@ -165,7 +165,7 @@ test('retires rather than destroys a listing deleted with the built-in delete', 
  * route to the same outcome, stranding every morph row the action clears.
  */
 test('removes nothing when the built-in force delete is aimed at a retired listing', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $listing = Pet::factory()->create();
     $listing->delete();
 

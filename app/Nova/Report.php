@@ -63,6 +63,8 @@ use Laravel\Nova\ResourceTool;
  * whose target still resolves. Nova's own delete button is off for this
  * resource (ReportPolicy::delete) so that a bulk "select all" cannot empty the
  * queue.
+ *
+ * @extends \App\Nova\Resource<ReportModel>
  */
 class Report extends Resource
 {
@@ -71,7 +73,7 @@ class Report extends Resource
      *
      * @var class-string<ReportModel>
      */
-    public static $model = ReportModel::class;
+    public static $model  = ReportModel::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -85,14 +87,14 @@ class Report extends Resource
      *
      * @var string
      */
-    public static $title = 'id';
+    public static $title  = 'id';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Moderation';
+    public static $group  = 'Moderation';
 
     /**
      * The columns that should be searched.
@@ -108,7 +110,7 @@ class Report extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['user', 'reportable'];
+    public static $with   = ['user', 'reportable'];
 
     /**
      * Order the queue by what still needs deciding, then oldest first.
@@ -132,8 +134,10 @@ class Report extends Resource
      * like, and exactly what a moderator is paging through — have no defined
      * order without it, so a row can appear on two pages or on none.
      *
-     * @param  Builder<ReportModel>  $query
-     * @return Builder<ReportModel>
+     * The CASE names `reports.status` literally rather than through
+     * `qualifyColumn()`: orderByRaw() only takes a literal-string, which is the
+     * guard against a runtime value reaching the SQL. If the table is ever
+     * renamed the query fails loudly on an unknown column, not silently.
      */
     public static function defaultOrderings(Builder $query): Builder
     {
@@ -141,7 +145,7 @@ class Report extends Resource
 
         return $query
             ->orderByRaw(
-                sprintf('case when %s = ? then 0 else 1 end', $model->qualifyColumn('status')),
+                'case when reports.status = ? then 0 else 1 end',
                 [ReportStatus::Pending->value],
             )
             ->orderBy($model->getQualifiedCreatedAtColumn())
@@ -160,7 +164,7 @@ class Report extends Resource
 
             Badge::make('Status', 'status')
                 ->map([
-                    ReportStatus::Pending->value => 'warning',
+                    ReportStatus::Pending->value  => 'warning',
                     ReportStatus::Reviewed->value => 'info',
                     ReportStatus::Resolved->value => 'success',
                     ReportStatus::Rejected->value => 'danger',

@@ -75,24 +75,24 @@ function refusalToOpenThreadWith(int $recipientId, bool $asInertiaVisit = false)
 {
     $sessionIdBefore = session()->getId();
 
-    $caller = test()->actingAs(User::factory()->create());
+    $caller          = test()->actingAs(User::factory()->create());
 
     if ($asInertiaVisit) {
         $caller = $caller->withHeaders([
-            'X-Inertia' => 'true',
+            'X-Inertia'         => 'true',
             'X-Inertia-Version' => (string) app(Middleware::class)->version(request()),
         ]);
     }
 
-    $response = $caller->post(route('conversations.store'), ['recipient_id' => $recipientId]);
+    $response        = $caller->post(route('conversations.store'), ['recipient_id' => $recipientId]);
 
     return [
         'response' => $response,
         'observed' => [
-            'status' => $response->getStatusCode(),
-            'headers' => withoutPerResponseNoise($response->headers->all()),
-            'content' => (string) $response->getContent(),
-            'session' => session()->all(),
+            'status'             => $response->getStatusCode(),
+            'headers'            => withoutPerResponseNoise($response->headers->all()),
+            'content'            => (string) $response->getContent(),
+            'session'            => session()->all(),
             'session_id_changed' => session()->getId() !== $sessionIdBefore,
         ],
     ];
@@ -227,13 +227,13 @@ describe('index', function () {
      * suite.
      */
     test('serialises each inbox row with the keys the page reads', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
         Message::factory()->for($conversation)->from($peer)->create();
 
-        $response = $this->actingAs($reader)->get(route('conversations.index'))->assertOk();
+        $response              = $this->actingAs($reader)->get(route('conversations.index'))->assertOk();
 
-        $row = $response->viewData('page')['props']['conversations']['data'][0];
+        $row                   = $response->viewData('page')['props']['conversations']['data'][0];
 
         expect(array_keys($row))->toBe([
             'id',
@@ -256,7 +256,7 @@ describe('index', function () {
      * count cannot catch that — it would go *down* — so the payload has to.
      */
     test('names the other side of each thread and marks it unread until the cursor moves', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
         Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
 
@@ -291,8 +291,8 @@ describe('previews', function () {
     });
 
     test('returns the acting user own threads and none of anybody else', function () {
-        $reader = User::factory()->create();
-        [$mine, $peer] = threadWithPeer($reader);
+        $reader                    = User::factory()->create();
+        [$mine, $peer]             = threadWithPeer($reader);
         Message::factory()->for($mine)->from($peer)->create();
         [$stranger, $strangerPeer] = threadWithPeer(User::factory()->create());
         Message::factory()->for($stranger)->from($strangerPeer)->create();
@@ -314,7 +314,7 @@ describe('previews', function () {
      */
     test('counts the whole inbox in the badge rather than the rows it returns', function () {
         config(['petconnect.messaging.preview_per_page' => 5]);
-        $reader = User::factory()->create();
+        $reader   = User::factory()->create();
         seedMenuThreadsFor($reader, threads: 7);
 
         $response = $this->actingAs($reader)
@@ -327,7 +327,7 @@ describe('previews', function () {
     });
 
     test('marks a row unread until the acting user cursor passes its last message', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
         Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
 
@@ -358,10 +358,10 @@ describe('previews', function () {
      */
     test('publishes no pagination and ignores a page parameter', function () {
         config(['petconnect.messaging.preview_per_page' => 5]);
-        $reader = User::factory()->create();
+        $reader     = User::factory()->create();
         seedMenuThreadsFor($reader, threads: 7);
 
-        $firstPage = $this->actingAs($reader)->getJson(route('conversations.previews'))->assertOk();
+        $firstPage  = $this->actingAs($reader)->getJson(route('conversations.previews'))->assertOk();
         $secondPage = $this->actingAs($reader)->getJson(route('conversations.previews', ['page' => 2]))->assertOk();
 
         expect(array_keys($firstPage->json()))->toBe(['data', 'meta'])
@@ -372,9 +372,9 @@ describe('previews', function () {
 
 describe('show', function () {
     test('renders the thread and its newest messages for a participant', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
-        $message = Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
+        $message               = Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
 
         $this->actingAs($reader)
             ->get(route('conversations.show', $conversation))
@@ -398,7 +398,7 @@ describe('show', function () {
      */
     test('ships the length ceiling the composer draws its counter from', function () {
         config(['petconnect.messaging.max_length' => 140]);
-        $reader = User::factory()->create();
+        $reader         = User::factory()->create();
         [$conversation] = threadWithPeer($reader);
 
         $this->actingAs($reader)
@@ -426,7 +426,7 @@ describe('show', function () {
     });
 
     test('returns 404 for a soft deleted conversation', function () {
-        $reader = User::factory()->create();
+        $reader         = User::factory()->create();
         [$conversation] = threadWithPeer($reader);
         $conversation->delete();
 
@@ -442,18 +442,18 @@ describe('show', function () {
      * else — see .ai/rules/controllers.md.
      */
     test('issues no write of any kind, so the read cursor stays where it was', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
         Message::factory()->count(2)->for($conversation)->from($peer)->create();
 
-        $statements = [];
+        $statements            = [];
         DB::listen(function ($query) use (&$statements): void {
             $statements[] = $query->sql;
         });
 
         $this->actingAs($reader)->get(route('conversations.show', $conversation))->assertOk();
 
-        $writes = array_values(array_filter(
+        $writes                = array_values(array_filter(
             $statements,
             fn (string $sql): bool => ! Str::startsWith(Str::lower(ltrim($sql)), 'select')
         ));
@@ -484,10 +484,10 @@ describe('store', function () {
     });
 
     test('opens a direct thread with both users in it and redirects onto it', function () {
-        $initiator = User::factory()->create();
-        $recipient = User::factory()->create();
+        $initiator    = User::factory()->create();
+        $recipient    = User::factory()->create();
 
-        $response = $this->actingAs($initiator)
+        $response     = $this->actingAs($initiator)
             ->post(route('conversations.store'), ['recipient_id' => $recipient->getKey()]);
 
         $conversation = Conversation::query()->sole();
@@ -504,15 +504,15 @@ describe('store', function () {
 
         $this->actingAs($initiator)
             ->post(route('conversations.store'), [
-                'recipient_id' => $recipient->getKey(),
+                'recipient_id'    => $recipient->getKey(),
                 'initial_message' => 'Is she still available?',
             ])
             ->assertValid();
 
         $this->assertDatabaseHas('messages', [
             'conversation_id' => Conversation::query()->sole()->getKey(),
-            'sender_id' => $initiator->getKey(),
-            'content' => 'Is she still available?',
+            'sender_id'       => $initiator->getKey(),
+            'content'         => 'Is she still available?',
         ]);
     });
 
@@ -569,8 +569,8 @@ describe('store', function () {
      * between two responses and why blanking them hides nothing.
      */
     test('answers a deactivated recipient exactly as it answers an id that was never issued', function () {
-        $deactivated = User::factory()->inactive()->create();
-        $neverIssuedId = 9999;
+        $deactivated    = User::factory()->inactive()->create();
+        $neverIssuedId  = 9999;
 
         $forDeactivated = refusalToOpenThreadWith($deactivated->getKey());
         $forNeverIssued = refusalToOpenThreadWith($neverIssuedId);
@@ -578,7 +578,7 @@ describe('store', function () {
         $forDeactivated['response']->assertNotFound();
         $forNeverIssued['response']->assertNotFound();
 
-        $recipientIds = [$deactivated->getKey(), $neverIssuedId];
+        $recipientIds   = [$deactivated->getKey(), $neverIssuedId];
 
         expect(withRecipientIdsMasked($forNeverIssued['observed'], $recipientIds))
             ->toBe(withRecipientIdsMasked($forDeactivated['observed'], $recipientIds));
@@ -600,8 +600,8 @@ describe('store', function () {
      * notice.
      */
     test('answers both the same way on the Inertia visit the client actually makes', function () {
-        $deactivated = User::factory()->inactive()->create();
-        $neverIssuedId = 9999;
+        $deactivated    = User::factory()->inactive()->create();
+        $neverIssuedId  = 9999;
 
         $forDeactivated = refusalToOpenThreadWith($deactivated->getKey(), asInertiaVisit: true);
         $forNeverIssued = refusalToOpenThreadWith($neverIssuedId, asInertiaVisit: true);
@@ -609,7 +609,7 @@ describe('store', function () {
         $forDeactivated['response']->assertNotFound();
         $forNeverIssued['response']->assertNotFound();
 
-        $recipientIds = [$deactivated->getKey(), $neverIssuedId];
+        $recipientIds   = [$deactivated->getKey(), $neverIssuedId];
 
         expect(withRecipientIdsMasked($forNeverIssued['observed'], $recipientIds))
             ->toBe(withRecipientIdsMasked($forDeactivated['observed'], $recipientIds));
@@ -623,7 +623,7 @@ describe('store', function () {
 
         $this->actingAs(User::factory()->create())
             ->post(route('conversations.store'), [
-                'recipient_id' => $recipient->getKey(),
+                'recipient_id'    => $recipient->getKey(),
                 'initial_message' => Str::repeat('a', $maxLength + 1),
             ])
             ->assertInvalid(['initial_message' => 'must not be greater than '.$maxLength]);
@@ -650,7 +650,7 @@ describe('store', function () {
 
 describe('read', function () {
     test('moves the acting participant read cursor', function () {
-        $reader = User::factory()->create();
+        $reader                = User::factory()->create();
         [$conversation, $peer] = threadWithPeer($reader);
         Message::factory()->for($conversation)->from($peer)->create();
 
@@ -664,8 +664,8 @@ describe('read', function () {
         expect($conversation->fresh()->isUnreadFor($reader))->toBeFalse();
         $this->assertDatabaseHas('conversation_user', [
             'conversation_id' => $conversation->getKey(),
-            'user_id' => $reader->getKey(),
-            'last_read_at' => now()->toDateTimeString(),
+            'user_id'         => $reader->getKey(),
+            'last_read_at'    => now()->toDateTimeString(),
         ]);
     });
 
@@ -680,12 +680,12 @@ describe('read', function () {
 
         $this->assertDatabaseMissing('conversation_user', [
             'conversation_id' => $conversation->getKey(),
-            'last_read_at' => now()->toDateTimeString(),
+            'last_read_at'    => now()->toDateTimeString(),
         ]);
     });
 
     test('returns 404 for a soft deleted conversation', function () {
-        $reader = User::factory()->create();
+        $reader         = User::factory()->create();
         [$conversation] = threadWithPeer($reader);
         $conversation->delete();
 

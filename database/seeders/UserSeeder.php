@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
     /**
      * The fixed account the whole dataset is built around; password "password".
      */
-    public const DEMO_EMAIL = 'test@example.com';
+    public const DEMO_EMAIL   = 'test@example.com';
 
     /**
      * How many users the demo dataset should end up with, the demo account
@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
         DB::transaction(function (): void {
             $this->seedDemoUser();
 
-            $missing = max(0, self::TARGET_COUNT - User::query()->count());
+            $missing   = max(0, self::TARGET_COUNT - User::query()->count());
 
             if ($missing === 0) {
                 return;
@@ -69,22 +69,22 @@ class UserSeeder extends Seeder
         return User::query()->updateOrCreate(
             ['email' => self::DEMO_EMAIL],
             [
-                'name' => 'Test User',
-                'username' => 'testuser',
-                'password' => 'password',
+                'name'              => 'Test User',
+                'username'          => 'testuser',
+                'password'          => 'password',
                 'email_verified_at' => now(),
-                'bio' => 'SniffPal demo account.',
-                'phone' => '+20-100-000-0000',
-                'city' => $cairo['city'],
-                'state' => $cairo['state'],
-                'country' => $cairo['country'],
-                'address' => '1 Tahrir Square',
-                'lat' => $cairo['latitude'],
-                'lng' => $cairo['longitude'],
-                'timezone' => $cairo['timezone'],
-                'locale' => 'en',
-                'is_active' => true,
-                'last_seen_at' => now(),
+                'bio'               => 'SniffPal demo account.',
+                'phone'             => '+20-100-000-0000',
+                'city'              => $cairo['city'],
+                'state'             => $cairo['state'],
+                'country'           => $cairo['country'],
+                'address'           => '1 Tahrir Square',
+                'lat'               => $cairo['latitude'],
+                'lng'               => $cairo['longitude'],
+                'timezone'          => $cairo['timezone'],
+                'locale'            => 'en',
+                'is_active'         => true,
+                'last_seen_at'      => now(),
             ],
         );
     }
@@ -102,8 +102,8 @@ class UserSeeder extends Seeder
     protected function memberAttributes(int $index): array
     {
         return [
-            'locale' => $index % 3 === 0 ? 'ar' : 'en',
-            'is_active' => $index % 10 !== 9,
+            'locale'            => $index % 3 === 0 ? 'ar' : 'en',
+            'is_active'         => $index % 10 !== 9,
             'email_verified_at' => $index % 7 === 6 ? null : now()->subDays(fake()->numberBetween(1, 200)),
         ];
     }

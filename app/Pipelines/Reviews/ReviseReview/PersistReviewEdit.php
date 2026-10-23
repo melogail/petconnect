@@ -26,7 +26,7 @@ class PersistReviewEdit
     public function handle(ReviseReviewContext $context, Closure $next): mixed
     {
         $context->review->update([
-            'rate' => $context->rate,
+            'rate'    => $context->rate,
             'comment' => $context->comment(),
         ]);
 

@@ -6,9 +6,9 @@ use App\Enums\ListingType;
 use App\Models\Category;
 use App\Models\Pet;
 use App\Models\User;
+use Database\Factories\PetFactory;
 use Database\Seeders\Concerns\ReadsSeedData;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use JsonException;
@@ -21,9 +21,9 @@ class PetSeeder extends Seeder
     /**
      * How many listings each category should end up with.
      */
-    public const MIN_PER_CATEGORY = 8;
+    public const MIN_PER_CATEGORY     = 8;
 
-    public const MAX_PER_CATEGORY = 12;
+    public const MAX_PER_CATEGORY     = 12;
 
     /**
      * Share of listings owned by the demo account, so its own listings page
@@ -42,7 +42,7 @@ class PetSeeder extends Seeder
     {
         DB::transaction(function (): void {
             /** @var Collection<int, User> $owners */
-            $owners = User::query()->select(['id'])->get();
+            $owners    = User::query()->select(['id'])->get();
 
             if ($owners->isEmpty()) {
                 throw new RuntimeException('No users to own listings; run UserSeeder first.');
@@ -86,18 +86,18 @@ class PetSeeder extends Seeder
      */
     protected function createListing(Category $category, User $owner, array $location): void
     {
-        $breed = $category->breeds->isNotEmpty() && fake()->boolean(90)
+        $breed     = $category->breeds->isNotEmpty() && fake()->boolean(90)
             ? $category->breeds->random()
             : null;
 
         $createdAt = fake()->dateTimeBetween('-90 days', 'now');
 
-        $factory = Pet::factory()
+        $factory   = Pet::factory()
             ->for($owner)
             ->for($category)
             ->inCity($location)
             ->state([
-                'breed_id' => $breed?->getKey(),
+                'breed_id'   => $breed?->getKey(),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
@@ -105,24 +105,18 @@ class PetSeeder extends Seeder
         $this->withStatus($this->withListingType($factory))->create();
     }
 
-    /**
-     * @param  Factory<Pet>  $factory
-     * @return Factory<Pet>
-     */
-    protected function withListingType(Factory $factory): Factory
+    protected function withListingType(PetFactory $factory): PetFactory
     {
-        return match (fake()->randomElement(ListingType::cases())) {
+        $types = ListingType::cases();
+
+        return match ($types[array_rand($types)]) {
             ListingType::Adoption => $factory->adoption(),
-            ListingType::Sale => $factory->forSale(),
-            ListingType::Mating => $factory->mating(),
+            ListingType::Sale     => $factory->forSale(),
+            ListingType::Mating   => $factory->mating(),
         };
     }
 
-    /**
-     * @param  Factory<Pet>  $factory
-     * @return Factory<Pet>
-     */
-    protected function withStatus(Factory $factory): Factory
+    protected function withStatus(PetFactory $factory): PetFactory
     {
         return fake()->boolean(80) ? $factory->available() : $factory->unavailable();
     }

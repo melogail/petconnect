@@ -71,6 +71,8 @@ use Laravel\Nova\ResourceTool;
  * The Select's options and the `locale` rule now come from the same config key,
  * which is what localeOptions() below always claimed but could not enforce on
  * its own — options are a rendering concern and never reach the validator.
+ *
+ * @extends \App\Nova\Resource<\App\Models\User>
  */
 class User extends Resource
 {
@@ -81,7 +83,7 @@ class User extends Resource
      *
      * @var class-string<\App\Models\User>
      */
-    public static $model = \App\Models\User::class;
+    public static $model  = \App\Models\User::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -95,14 +97,14 @@ class User extends Resource
      *
      * @var string
      */
-    public static $title = 'name';
+    public static $title  = 'name';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Accounts';
+    public static $group  = 'Accounts';
 
     /**
      * The columns that should be searched.
@@ -123,7 +125,7 @@ class User extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['media'];
+    public static $with   = ['media'];
 
     /**
      * Get the fields displayed by the resource.

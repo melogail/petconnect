@@ -75,7 +75,7 @@ function threadMessagePayload(Conversation $conversation, User $reader): array
  */
 function threadWithOneMessage(): array
 {
-    $sender = User::factory()->create();
+    $sender       = User::factory()->create();
     $conversation = Conversation::factory()->direct()
         ->withParticipants($sender, User::factory()->create())
         ->create();
@@ -87,9 +87,9 @@ function threadWithOneMessage(): array
 test('every key the resource emits is either a rule on the store request or a declared read shape', function () {
     [$conversation, $sender] = threadWithOneMessage();
 
-    $payload = threadMessagePayload($conversation, $sender);
+    $payload                 = threadMessagePayload($conversation, $sender);
 
-    $unmatched = array_values(array_diff(
+    $unmatched               = array_values(array_diff(
         array_keys($payload),
         array_keys((new StoreMessageRequest)->rules()),
         MESSAGE_READ_SHAPES,
@@ -101,10 +101,10 @@ test('every key the resource emits is either a rule on the store request or a de
 test('every writable key the resource emits carries the name the store request accepts', function () {
     [$conversation, $sender] = threadWithOneMessage();
 
-    $payload = threadMessagePayload($conversation, $sender);
-    $rules = (new StoreMessageRequest)->rules();
+    $payload                 = threadMessagePayload($conversation, $sender);
+    $rules                   = (new StoreMessageRequest)->rules();
 
-    $writable = array_values(array_diff(array_keys($payload), MESSAGE_READ_SHAPES));
+    $writable                = array_values(array_diff(array_keys($payload), MESSAGE_READ_SHAPES));
 
     expect($writable)->toEqualCanonicalizing(['content', 'type']);
 
@@ -116,7 +116,7 @@ test('every writable key the resource emits carries the name the store request a
 test('the key an edit posts back is a rule on the update request', function () {
     [$conversation, $sender] = threadWithOneMessage();
 
-    $payload = threadMessagePayload($conversation, $sender);
+    $payload                 = threadMessagePayload($conversation, $sender);
 
     expect((new UpdateMessageRequest)->rules())->toHaveKey('content')
         ->and($payload)->toHaveKey('content');
@@ -129,7 +129,7 @@ test('the update request accepts no key beyond the text, so an edit cannot move 
 test('describes the sender with a byline and nothing that belongs to their account', function () {
     [$conversation, $sender] = threadWithOneMessage();
 
-    $payload = threadMessagePayload($conversation, $sender);
+    $payload                 = threadMessagePayload($conversation, $sender);
 
     expect(array_keys($payload['sender']))
         ->toEqualCanonicalizing(['id', 'name', 'username', 'location', 'avatar'])
@@ -138,7 +138,7 @@ test('describes the sender with a byline and nothing that belongs to their accou
 
 test('marks a message as the viewer own only for its sender', function () {
     [$conversation, $sender] = threadWithOneMessage();
-    $peer = $conversation->users->firstWhere('id', '!=', $sender->getKey());
+    $peer                    = $conversation->users->firstWhere('id', '!=', $sender->getKey());
 
     expect(threadMessagePayload($conversation, $sender)['is_mine'])->toBeTrue()
         ->and(threadMessagePayload($conversation, $peer)['is_mine'])->toBeFalse();
@@ -146,7 +146,7 @@ test('marks a message as the viewer own only for its sender', function () {
 
 test('emits the sender own editing and withdrawal rights, and refuses them to the other side', function () {
     [$conversation, $sender] = threadWithOneMessage();
-    $peer = $conversation->users->firstWhere('id', '!=', $sender->getKey());
+    $peer                    = $conversation->users->firstWhere('id', '!=', $sender->getKey());
 
     expect(threadMessagePayload($conversation, $sender))
         ->can_edit->toBeTrue()
@@ -176,7 +176,7 @@ test('closes can_edit once the window has passed while leaving can_delete open',
  */
 test('offers the pin to both participants, for a message either of them sent', function () {
     [$conversation, $sender] = threadWithOneMessage();
-    $peer = $conversation->users->firstWhere('id', '!=', $sender->getKey());
+    $peer                    = $conversation->users->firstWhere('id', '!=', $sender->getKey());
 
     expect(threadMessagePayload($conversation, $sender)['can_pin'])->toBeTrue()
         ->and(threadMessagePayload($conversation, $peer)['can_pin'])->toBeTrue();
@@ -198,18 +198,18 @@ test('refuses the pin to a user who is not in the conversation', function () {
  * a query per rendered row on the payload most likely to hold fifty of them.
  */
 test('reports no pin right when the conversation was never loaded onto the message', function () {
-    [, $sender] = threadWithOneMessage();
+    [, $sender]   = threadWithOneMessage();
     $unchaperoned = Message::query()->sole();
 
-    $payload = MessageResource::make($unchaperoned)->toArray(messageRequestFrom($sender));
+    $payload      = MessageResource::make($unchaperoned)->toArray(messageRequestFrom($sender));
 
     expect($payload)->toHaveKey('can_pin')
         ->and($payload['can_pin'])->toBeFalse();
 });
 
 test('emits the pin as an id rather than an embedded user', function () {
-    $sender = User::factory()->create();
-    $peer = User::factory()->create();
+    $sender       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($sender, $peer)->create();
     Message::factory()->for($conversation)->from($sender)->pinned($peer)->create();
 

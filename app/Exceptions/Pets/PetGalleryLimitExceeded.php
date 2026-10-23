@@ -22,7 +22,7 @@ class PetGalleryLimitExceeded extends ValidationException
     {
         return self::withMessages([
             'images' => __('This listing can hold :allowed additional images; the edit would leave it with :attempted.', [
-                'allowed' => $allowed,
+                'allowed'   => $allowed,
                 'attempted' => $attempted,
             ]),
         ]);

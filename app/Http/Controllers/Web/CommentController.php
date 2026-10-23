@@ -8,6 +8,7 @@ use App\Actions\Comments\ListCommentReplies;
 use App\Actions\Comments\ListCommentThread;
 use App\Actions\Comments\UpdateComment;
 use App\Actions\Likes\ToggleLike;
+use App\Concerns\ResolvesRequestUser;
 use App\Enums\Commentable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Comment\StoreCommentRequest;
@@ -68,6 +69,8 @@ use Inertia\Inertia;
  */
 class CommentController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * A page of a commentable's thread.
      *
@@ -85,7 +88,7 @@ class CommentController extends Controller
         return CommentResource::collection($listCommentThread->handle(
             commentableType: $commentable_type,
             commentableId: $commentable_id,
-            viewer: $request->user(),
+            viewer: $this->viewer($request),
         ));
     }
 
@@ -101,7 +104,7 @@ class CommentController extends Controller
 
         return CommentResource::collection($listCommentReplies->handle(
             comment: $comment,
-            viewer: $request->user(),
+            viewer: $this->viewer($request),
         ));
     }
 
@@ -117,7 +120,7 @@ class CommentController extends Controller
         $this->authorize('create', CommentModel::class);
 
         $createComment->handle(
-            author: $request->user(),
+            author: $this->actor($request),
             commentableType: $commentable_type,
             commentableId: $commentable_id,
             content: $request->content(),
@@ -175,7 +178,7 @@ class CommentController extends Controller
     {
         $this->authorize('like', $comment);
 
-        $toggleLike->handle($comment, $request->user());
+        $toggleLike->handle($comment, $this->actor($request));
 
         return back();
     }

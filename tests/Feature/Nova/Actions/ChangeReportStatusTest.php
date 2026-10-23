@@ -18,14 +18,14 @@ use Illuminate\Support\Facades\Event;
  * it was aimed at.
  */
 test('moves a single report to the selected status', function () {
-    $admin = Admin::factory()->create();
-    $report = Report::factory()->pending()->create();
+    $admin     = Admin::factory()->create();
+    $report    = Report::factory()->pending()->create();
     $untouched = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$report->getKey()],
-            'status' => ReportStatus::Resolved->value,
+            'status'    => ReportStatus::Resolved->value,
         ])
         ->assertOk()
         ->assertJsonPath('message', '1 report(s) marked as Resolved.');
@@ -35,14 +35,14 @@ test('moves a single report to the selected status', function () {
 });
 
 test('moves every selected report when several are run at once', function () {
-    $admin = Admin::factory()->create();
-    $queue = Report::factory()->count(3)->pending()->create();
+    $admin     = Admin::factory()->create();
+    $queue     = Report::factory()->count(3)->pending()->create();
     $untouched = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => $queue->modelKeys(),
-            'status' => ReportStatus::Reviewed->value,
+            'status'    => ReportStatus::Reviewed->value,
         ])
         ->assertOk()
         ->assertJsonPath('message', '3 report(s) marked as Reviewed.');
@@ -58,13 +58,13 @@ test('moves every selected report when several are run at once', function () {
  * decided report back to Pending — reopening is a decision too.
  */
 test('accepts every case of the report status enum', function (ReportStatus $status) {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $report = Report::factory()->create(['status' => ReportStatus::Reviewed]);
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$report->getKey()],
-            'status' => $status->value,
+            'status'    => $status->value,
         ])
         ->assertOk();
 
@@ -72,13 +72,13 @@ test('accepts every case of the report status enum', function (ReportStatus $sta
 })->with(ReportStatus::cases());
 
 test('returns 422 to a status that is not a case of the enum', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $report = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$report->getKey()],
-            'status' => 'closed-as-wontfix',
+            'status'    => 'closed-as-wontfix',
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
@@ -87,7 +87,7 @@ test('returns 422 to a status that is not a case of the enum', function () {
 });
 
 test('returns 422 when no status is chosen', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $report = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
@@ -114,10 +114,10 @@ test('returns 422 when no status is chosen', function () {
  * still-pending assertions below would pass on a run that wrote nothing.
  */
 test('leaves every selected report on its original status when one cannot be saved', function () {
-    $admin = Admin::factory()->create();
-    $first = Report::factory()->pending()->create();
-    $second = Report::factory()->pending()->create();
-    $attempts = 0;
+    $admin             = Admin::factory()->create();
+    $first             = Report::factory()->pending()->create();
+    $second            = Report::factory()->pending()->create();
+    $attempts          = 0;
     $resolvedMidFlight = null;
 
     Event::listen('eloquent.saving: '.Report::class, function () use (&$attempts, &$resolvedMidFlight): void {
@@ -133,7 +133,7 @@ test('leaves every selected report on its original status when one cannot be sav
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$first->getKey(), $second->getKey()],
-            'status' => ReportStatus::Resolved->value,
+            'status'    => ReportStatus::Resolved->value,
         ])
         ->assertOk()
         ->assertJsonPath('danger', 'Nothing was changed. One of the selected reports could not be moved to the new status, so the whole selection was rolled back. The failure has been logged.');

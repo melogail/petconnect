@@ -35,8 +35,8 @@ test('leaves a word that merely contains a listed word intact', function (string
 
     expect($sanitized)->toBe($content);
 })->with([
-    'ass inside class' => ['A class for puppies'],
-    'ass inside grass' => ['She rolls in the grass'],
+    'ass inside class'     => ['A class for puppies'],
+    'ass inside grass'     => ['She rolls in the grass'],
     'cock inside cocktail' => ['Cocktail hour at the shelter'],
     'anal inside analysis' => ['The blood analysis came back clear'],
 ]);
@@ -54,7 +54,7 @@ test('masks a listed phrase once rather than masking its prefix inside it', func
 });
 
 test('leaves text in a script the word list is not written in alone', function () {
-    $content = 'قطة جميلة جدا';
+    $content   = 'قطة جميلة جدا';
 
     $sanitized = app(SanitizeContent::class)->handle($content, ['ass', 'cock']);
 

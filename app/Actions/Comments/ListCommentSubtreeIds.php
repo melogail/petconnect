@@ -57,12 +57,12 @@ class ListCommentSubtreeIds
             return [];
         }
 
-        $comment = new Comment;
-        $connection = $comment->getConnection();
-        $comments = $connection->getQueryGrammar()->wrapTable($comment->getTable());
+        $comment      = new Comment;
+        $connection   = $comment->getConnection();
+        $comments     = $connection->getQueryGrammar()->wrapTable($comment->getTable());
         $placeholders = implode(', ', array_fill(0, count($rootIds), '?'));
 
-        $rows = $connection->select(
+        $rows         = $connection->select(
             'with recursive comment_subtree (id) as ('
             ."select id from {$comments} where id in ({$placeholders})"
             .' union '

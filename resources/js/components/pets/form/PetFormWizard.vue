@@ -22,11 +22,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { useTranslations } from '@/composables/useTranslations';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
-import {
-    BASIC_STEP_FIELDS,
-    validateBasicStep,
-} from '@/lib/petFormValidation';
+import { BASIC_STEP_FIELDS, validateBasicStep } from '@/lib/petFormValidation';
 import type { PetFormOptions, PetMedia, PetPhotoBounds } from '@/types';
 
 /**
@@ -105,16 +103,18 @@ const ExtrasStep = step(() => import('./steps/ExtrasStep.vue'));
 const HealthcareStep = step(() => import('./steps/HealthcareStep.vue'));
 const ReviewStep = step(() => import('./steps/ReviewStep.vue'));
 
-const steps: WizardStep[] = [
-    { id: 1, title: 'Basics', icon: PawPrint },
-    { id: 2, title: 'Location', icon: MapPin },
-    { id: 3, title: 'Photos', icon: Camera },
-    { id: 4, title: 'Health', icon: Stethoscope },
-    { id: 5, title: 'Personality', icon: Smile },
-    { id: 6, title: 'Extras', icon: Info },
-    { id: 7, title: 'Healthcare', icon: Heart },
-    { id: 8, title: 'Review', icon: ClipboardCheck },
-];
+const { t } = useTranslations();
+
+const steps = computed<WizardStep[]>(() => [
+    { id: 1, title: t('wizard.step_basics'), icon: PawPrint },
+    { id: 2, title: t('wizard.step_location'), icon: MapPin },
+    { id: 3, title: t('wizard.step_photos'), icon: Camera },
+    { id: 4, title: t('wizard.step_health'), icon: Stethoscope },
+    { id: 5, title: t('wizard.step_personality'), icon: Smile },
+    { id: 6, title: t('wizard.step_extras'), icon: Info },
+    { id: 7, title: t('wizard.step_healthcare'), icon: Heart },
+    { id: 8, title: t('wizard.step_review'), icon: ClipboardCheck },
+]);
 
 /** Which step owns which error keys, matched by prefix. */
 const STEP_KEYS: Record<number, string[]> = {
@@ -173,10 +173,10 @@ function ownsError(step: number): boolean {
 }
 
 const invalidSteps = computed(() =>
-    steps.map((step) => step.id).filter((id) => ownsError(id)),
+    steps.value.map((step) => step.id).filter((id) => ownsError(id)),
 );
 
-const isLast = computed(() => current.value === steps.length);
+const isLast = computed(() => current.value === steps.value.length);
 
 /**
  * Whether the step on screen may be left in the forward direction.
@@ -199,13 +199,19 @@ function mayLeaveForward(step: number): boolean {
         return true;
     }
 
-    form.setError(errors);
+    // The client check hands back catalogue keys; the server's messages
+    // arrive already translated, so only this side is resolved here.
+    form.setError(
+        Object.fromEntries(
+            Object.entries(errors).map(([field, key]) => [field, t(key)]),
+        ),
+    );
 
     return false;
 }
 
 function goTo(step: number): void {
-    const target = Math.min(Math.max(step, 1), steps.length);
+    const target = Math.min(Math.max(step, 1), steps.value.length);
 
     if (target > current.value && !mayLeaveForward(current.value)) {
         return;
@@ -242,10 +248,8 @@ watch(errorKeys, () => {
 
         <Alert v-if="form.hasErrors" variant="destructive">
             <CircleAlert class="size-4" />
-            <AlertTitle>Some fields need another look</AlertTitle>
-            <AlertDescription>
-                We have opened the first step that holds one.
-            </AlertDescription>
+            <AlertTitle>{{ t('wizard.errors_title') }}</AlertTitle>
+            <AlertDescription>{{ t('wizard.errors_desc') }}</AlertDescription>
         </Alert>
 
         <Card>
@@ -287,8 +291,8 @@ watch(errorKeys, () => {
                 :disabled="current === 1"
                 @click="goTo(current - 1)"
             >
-                <ArrowLeft class="size-4" />
-                Back
+                <ArrowLeft class="size-4 rtl:rotate-180" />
+                {{ t('wizard.back') }}
             </Button>
 
             <div class="flex items-center gap-3">
@@ -296,12 +300,16 @@ watch(errorKeys, () => {
                     v-if="form.progress"
                     class="text-muted-foreground text-sm"
                 >
-                    Uploading {{ form.progress.percentage }}%
+                    {{
+                        t('wizard.uploading', {
+                            percent: form.progress.percentage ?? 0,
+                        })
+                    }}
                 </span>
 
                 <Button v-if="!isLast" type="button" @click="goTo(current + 1)">
-                    Next
-                    <ArrowRight class="size-4" />
+                    {{ t('wizard.next') }}
+                    <ArrowRight class="size-4 rtl:rotate-180" />
                 </Button>
 
                 <Button v-else type="submit" :disabled="form.processing">

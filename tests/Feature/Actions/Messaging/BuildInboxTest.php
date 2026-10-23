@@ -51,7 +51,7 @@ function attachInboxAvatar(User $user): void
 function seedInboxFor(User $reader, int $conversations): void
 {
     for ($index = 0; $index < $conversations; $index++) {
-        $peer = User::factory()->create();
+        $peer         = User::factory()->create();
         attachInboxAvatar($peer);
 
         $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
@@ -85,33 +85,33 @@ function countInboxQueries(User $reader): int
 
 test('returns the reader own threads and none of anybody else', function () {
     $reader = User::factory()->create();
-    $mine = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $mine   = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     Conversation::factory()->direct()->withParticipants(User::factory()->create(), User::factory()->create())->create();
 
-    $page = app(BuildInbox::class)->handle($reader);
+    $page   = app(BuildInbox::class)->handle($reader);
 
     expect($page->pluck('id')->all())->toBe([$mine->getKey()]);
 });
 
 test('orders the inbox by the most recent message first', function () {
     $reader = User::factory()->create();
-    $quiet = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
-    $busy = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $quiet  = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $busy   = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     Message::factory()->for($quiet)->create(['created_at' => now()->subDay()]);
     Message::factory()->for($busy)->create(['created_at' => now()]);
 
-    $page = app(BuildInbox::class)->handle($reader);
+    $page   = app(BuildInbox::class)->handle($reader);
 
     expect($page->pluck('id')->all())->toBe([$busy->getKey(), $quiet->getKey()]);
 });
 
 test('keeps a thread that has never been written into in the list', function () {
-    $reader = User::factory()->create();
-    $empty = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $reader  = User::factory()->create();
+    $empty   = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     $written = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     Message::factory()->for($written)->create();
 
-    $page = app(BuildInbox::class)->handle($reader);
+    $page    = app(BuildInbox::class)->handle($reader);
 
     expect($page->pluck('id')->all())->toEqualCanonicalizing([$written->getKey(), $empty->getKey()])
         ->and($page->firstWhere('id', $empty->getKey())->last_message_at)->toBeNull();
@@ -123,7 +123,7 @@ test('pages the inbox at the size it is asked for', function () {
         Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     }
 
-    $page = app(BuildInbox::class)->handle($reader, perPage: 2);
+    $page   = app(BuildInbox::class)->handle($reader, perPage: 2);
 
     expect($page->total())->toBe(3)
         ->and($page->perPage())->toBe(2)
@@ -131,8 +131,8 @@ test('pages the inbox at the size it is asked for', function () {
 });
 
 test('marks a thread unread until the reader cursor passes its last message', function () {
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create();
 
@@ -145,16 +145,16 @@ test('marks a thread unread until the reader cursor passes its last message', fu
 
 test('serialises a page of the inbox in a constant number of queries however many threads it holds', function () {
     Storage::fake(config('media-library.disk_name'));
-    $reader = User::factory()->create();
+    $reader           = User::factory()->create();
     $this->actingAs($reader);
 
     seedInboxFor($reader, conversations: 2);
 
-    $atTwoThreads = countInboxQueries($reader);
+    $atTwoThreads     = countInboxQueries($reader);
 
     seedInboxFor($reader, conversations: 4);
 
-    $atSixThreads = countInboxQueries($reader);
+    $atSixThreads     = countInboxQueries($reader);
 
     seedInboxFor($reader, conversations: 9);
 

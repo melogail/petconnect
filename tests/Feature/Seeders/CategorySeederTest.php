@@ -29,9 +29,9 @@ test('writes every category the data file declares, in both languages', function
 
     foreach ($expected as $category) {
         $this->assertDatabaseHas('categories', [
-            'slug' => $category['slug'],
-            'name' => $category['name'],
-            'name_ar' => $category['name_ar'],
+            'slug'           => $category['slug'],
+            'name'           => $category['name'],
+            'name_ar'        => $category['name_ar'],
             'description_ar' => $category['description_ar'] ?? null,
         ]);
     }

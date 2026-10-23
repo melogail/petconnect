@@ -11,6 +11,7 @@ import {
     pin as pinMessage,
 } from '@/routes/messages';
 import type { Message } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * One message in a thread.
@@ -46,6 +47,8 @@ const sentAt = computed(() => formatTime(message.created_at, tag.value));
 const alignment = computed(() =>
     message.is_mine ? 'items-end self-end' : 'items-start self-start',
 );
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -66,8 +69,12 @@ const alignment = computed(() =>
             :class="message.is_mine ? 'flex-row-reverse' : ''"
         >
             <span>{{ sentAt }}</span>
-            <span v-if="message.is_edited">edited</span>
-            <Pin v-if="message.is_pinned" class="size-3" aria-label="Pinned" />
+            <span v-if="message.is_edited">{{ t('messaging.edited') }}</span>
+            <Pin
+                v-if="message.is_pinned"
+                class="size-3"
+                :aria-label="t('messaging.pinned')"
+            />
 
             <span
                 class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
@@ -85,7 +92,13 @@ const alignment = computed(() =>
                         as="button"
                         preserve-scroll
                         preserve-state
-                        :aria-label="message.is_pinned ? 'Unpin' : 'Pin'"
+                        :aria-label="
+                            t(
+                                message.is_pinned
+                                    ? 'messaging.unpin'
+                                    : 'messaging.pin',
+                            )
+                        "
                     >
                         <PinOff v-if="message.is_pinned" class="size-3.5" />
                         <Pin v-else class="size-3.5" />
@@ -103,7 +116,7 @@ const alignment = computed(() =>
                         as="button"
                         preserve-scroll
                         preserve-state
-                        aria-label="Delete message"
+                        :aria-label="t('messaging.delete_message')"
                     >
                         <Trash2 class="size-3.5" />
                     </Link>

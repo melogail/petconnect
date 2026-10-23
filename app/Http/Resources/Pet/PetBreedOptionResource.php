@@ -23,11 +23,11 @@ class PetBreedOptionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id'          => $this->id,
             'category_id' => $this->category_id,
-            'name' => $this->name,
-            'name_ar' => $this->name_ar,
-            'slug' => $this->slug,
+            'name'        => $this->name,
+            'name_ar'     => $this->name_ar,
+            'slug'        => $this->slug,
         ];
     }
 }

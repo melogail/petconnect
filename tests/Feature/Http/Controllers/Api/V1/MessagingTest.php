@@ -6,12 +6,12 @@ use Laravel\Sanctum\Sanctum;
 
 describe('conversations', function () {
     test('starting one returns it with the peer', function () {
-        $me = User::factory()->create();
+        $me   = User::factory()->create();
         $peer = User::factory()->create();
         Sanctum::actingAs($me);
 
         $this->postJson(route('api.v1.conversations.store'), [
-            'recipient_id' => $peer->getKey(),
+            'recipient_id'    => $peer->getKey(),
             'initial_message' => 'Hi, is Luna still available?',
         ])
             ->assertCreated()
@@ -22,11 +22,11 @@ describe('conversations', function () {
     });
 
     test('the inbox is paginated and marks unread threads', function () {
-        $me = User::factory()->create();
-        $peer = User::factory()->create();
+        $me           = User::factory()->create();
+        $peer         = User::factory()->create();
         Sanctum::actingAs($peer);
         $conversation = $this->postJson(route('api.v1.conversations.store'), [
-            'recipient_id' => $me->getKey(),
+            'recipient_id'    => $me->getKey(),
             'initial_message' => 'Hello',
         ])->json('id');
 
@@ -54,11 +54,11 @@ describe('conversations', function () {
 
 describe('messages', function () {
     test('sending returns the message and the thread pages newest first', function () {
-        $me = User::factory()->create();
-        $peer = User::factory()->create();
+        $me           = User::factory()->create();
+        $peer         = User::factory()->create();
         Sanctum::actingAs($me);
         $conversation = $this->postJson(route('api.v1.conversations.store'), [
-            'recipient_id' => $peer->getKey(),
+            'recipient_id'    => $peer->getKey(),
             'initial_message' => 'First',
         ])->json('id');
 

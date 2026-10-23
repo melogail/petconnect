@@ -44,7 +44,7 @@ class UpdateMessage
         /** @var list<string> $bannedWords */
         $bannedWords = config('bad-words.words', []);
 
-        $context = new ReviseMessageContext(
+        $context     = new ReviseMessageContext(
             message: $message,
             content: $content,
             bannedWords: $bannedWords,

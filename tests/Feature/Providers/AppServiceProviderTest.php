@@ -42,7 +42,7 @@ test('records a nova write against a short morph alias', function (string $alias
         ->and($event->model_type)->toBe($alias)
         ->and(Relation::getMorphedModel($alias))->not->toBeNull();
 })->with([
-    'user, deactivated by an action' => ['user', function (TestCase $test, Admin $admin): void {
+    'user, deactivated by an action'        => ['user', function (TestCase $test, Admin $admin): void {
         $user = User::factory()->create();
 
         $test->actingAs($admin, 'admin')
@@ -56,7 +56,7 @@ test('records a nova write against a short morph alias', function (string $alias
             ->deleteJson('/nova-api/admins', ['resources' => [$colleague->getKey()]])
             ->assertOk();
     }],
-    'pet, retired by the built-in delete' => ['pet', function (TestCase $test, Admin $admin): void {
+    'pet, retired by the built-in delete'   => ['pet', function (TestCase $test, Admin $admin): void {
         $pet = Pet::factory()->create();
 
         $test->actingAs($admin, 'admin')
@@ -70,34 +70,34 @@ test('records a nova write against a short morph alias', function (string $alias
             ->deleteJson('/nova-api/breeds', ['resources' => [$breed->getKey()]])
             ->assertOk();
     }],
-    'category, removed by an action' => ['category', function (TestCase $test, Admin $admin): void {
+    'category, removed by an action'        => ['category', function (TestCase $test, Admin $admin): void {
         $category = Category::factory()->create();
 
         $test->actingAs($admin, 'admin')
             ->postJson('/nova-api/categories/action?action=delete-category', ['resources' => [$category->getKey()]])
             ->assertOk();
     }],
-    'comment, removed by an action' => ['comment', function (TestCase $test, Admin $admin): void {
+    'comment, removed by an action'         => ['comment', function (TestCase $test, Admin $admin): void {
         $comment = Comment::factory()->forPet()->create();
 
         $test->actingAs($admin, 'admin')
             ->postJson('/nova-api/comments/action?action=delete-comment-with-replies', ['resources' => [$comment->getKey()]])
             ->assertOk();
     }],
-    'review, removed by an action' => ['review', function (TestCase $test, Admin $admin): void {
+    'review, removed by an action'          => ['review', function (TestCase $test, Admin $admin): void {
         $review = Review::factory()->create();
 
         $test->actingAs($admin, 'admin')
             ->postJson('/nova-api/reviews/action?action=delete-review-with-reports', ['resources' => [$review->getKey()]])
             ->assertOk();
     }],
-    'report, decided by an action' => ['report', function (TestCase $test, Admin $admin): void {
+    'report, decided by an action'          => ['report', function (TestCase $test, Admin $admin): void {
         $report = Report::factory()->pending()->create();
 
         $test->actingAs($admin, 'admin')
             ->postJson('/nova-api/reports/action?action=change-status', [
                 'resources' => [$report->getKey()],
-                'status' => 'resolved',
+                'status'    => 'resolved',
             ])
             ->assertOk();
     }],

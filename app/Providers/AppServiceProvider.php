@@ -760,8 +760,6 @@ class AppServiceProvider extends ServiceProvider
             return false;
         }
 
-        $request = $this->app->make('request');
-
-        return $request instanceof Request && Util::isNovaRequest($request);
+        return Util::isNovaRequest($this->app->make('request'));
     }
 }

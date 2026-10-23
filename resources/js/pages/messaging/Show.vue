@@ -8,6 +8,7 @@ import { useMessagingPreviews } from '@/composables/useMessagingPreviews';
 import { read } from '@/routes/conversations';
 import { index as messagesIndex } from '@/routes/conversations/messages';
 import type { Conversation, Message, MessageBounds, Paginated } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * One thread.
@@ -131,13 +132,15 @@ onMounted(() => {
 
     markConversationRead(conversation.id);
 });
+
+const { t } = useTranslations();
 </script>
 
 <template>
     <div
         class="mx-auto flex h-[calc(100vh-6rem)] w-full max-w-3xl flex-col px-4 py-4 sm:px-6"
     >
-        <Head :title="conversation.peer?.name ?? 'Conversation'" />
+        <Head :title="conversation.peer?.name ?? t('messaging.conversation')" />
 
         <div
             class="border-border bg-card shadow-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] border"

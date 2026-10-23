@@ -27,6 +27,8 @@ use Laravel\Nova\Http\Requests\NovaRequest;
  *
  * `user` is the account that sent it, when there was one; a guest's row has
  * none and shows the name and address they typed instead.
+ *
+ * @extends \App\Nova\Resource<ContactModel>
  */
 class Contact extends Resource
 {

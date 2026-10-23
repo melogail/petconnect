@@ -105,16 +105,16 @@ class HandleInertiaRequests extends Middleware
      */
     protected function localeProps(): array
     {
-        $current = App::getLocale();
+        $current   = App::getLocale();
 
         /** @var list<string> $supported */
         $supported = config('petconnect.locales.supported', ['en']);
 
         /** @var list<string> $rtl */
-        $rtl = config('petconnect.locales.rtl', []);
+        $rtl       = config('petconnect.locales.rtl', []);
 
         return [
-            'current' => $current,
+            'current'   => $current,
             'direction' => in_array($current, $rtl, true) ? 'rtl' : 'ltr',
             'supported' => $supported,
         ];
@@ -215,8 +215,8 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
-            'auth' => [
+            'name'   => config('app.name'),
+            'auth'   => [
                 'user' => $user === null ? null : AuthenticatedUserResource::make($user),
             ],
             'locale' => $this->localeProps(),

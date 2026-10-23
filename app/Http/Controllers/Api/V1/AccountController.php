@@ -37,7 +37,7 @@ class AccountController extends Controller
 
     public function update(UpdateProfileRequest $request, UpdateProfile $updateProfile): AccountResource
     {
-        $user = $this->actor($request);
+        $user    = $this->actor($request);
 
         $this->authorize('update', $user);
 

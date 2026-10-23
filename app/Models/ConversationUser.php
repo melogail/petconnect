@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  */
 class ConversationUser extends Pivot
 {
-    protected $table = 'conversation_user';
+    protected $table     = 'conversation_user';
 
     public $incrementing = true;
 

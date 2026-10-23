@@ -69,7 +69,7 @@ class StoreConversationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'recipient_id' => [
+            'recipient_id'    => [
                 'required',
                 'integer',
                 Rule::notIn(array_filter(

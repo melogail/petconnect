@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Event;
  * mixed-selection case below pins.
  */
 test('reactivates a deactivated member account', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->inactive()->create();
 
     $this->actingAs($admin, 'admin')
@@ -40,7 +40,7 @@ test('reactivates a deactivated member account', function () {
  * `Inertia::flushShared()` is needed here any more.
  */
 test('lets the reactivated account use the application again', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->inactive()->create();
 
     $this->actingAs($admin, 'admin')
@@ -55,9 +55,9 @@ test('lets the reactivated account use the application again', function () {
 });
 
 test('leaves an already active account alone in a mixed selection', function () {
-    $admin = Admin::factory()->create();
+    $admin       = Admin::factory()->create();
     $deactivated = User::factory()->inactive()->create();
-    $active = User::factory()->create();
+    $active      = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/users/action?action=reactivate-account', [
@@ -71,7 +71,7 @@ test('leaves an already active account alone in a mixed selection', function () 
 });
 
 test('reports that there was nothing to do when every selected account is already active', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $active = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -99,10 +99,10 @@ test('reports that there was nothing to do when every selected account is alread
  * is what `$reactivatedMidFlight` records.
  */
 test('leaves every selected account deactivated when one of them cannot be saved', function () {
-    $admin = Admin::factory()->create();
-    $first = User::factory()->inactive()->create();
-    $second = User::factory()->inactive()->create();
-    $attempts = 0;
+    $admin                = Admin::factory()->create();
+    $first                = User::factory()->inactive()->create();
+    $second               = User::factory()->inactive()->create();
+    $attempts             = 0;
     $reactivatedMidFlight = null;
 
     Event::listen('eloquent.saving: '.User::class, function () use (&$attempts, &$reactivatedMidFlight): void {

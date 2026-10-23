@@ -70,7 +70,7 @@ class MessageObserver
      */
     protected function refreshLastMessageAt(int $conversationId): void
     {
-        $conversation = Conversation::query()->find($conversationId);
+        $conversation  = Conversation::query()->find($conversationId);
 
         if ($conversation === null) {
             return;

@@ -25,9 +25,9 @@ describe('me', function () {
         Sanctum::actingAs($user);
 
         $this->patchJson(route('api.v1.me.update'), [
-            'name' => 'Renamed',
-            'email' => $user->email,
-            'bio' => 'Cat person.',
+            'name'   => 'Renamed',
+            'email'  => $user->email,
+            'bio'    => 'Cat person.',
             'locale' => 'ar',
         ])
             ->assertOk()
@@ -58,13 +58,13 @@ describe('me', function () {
 
 describe('password', function () {
     test('changes the password and revokes every other token', function () {
-        $user = User::factory()->create();
+        $user    = User::factory()->create();
         $current = $user->createToken('phone')->plainTextToken;
         $user->createToken('tablet');
 
         $this->withToken($current)->putJson(route('api.v1.me.password.update'), [
-            'current_password' => 'password',
-            'password' => 'new-password-123',
+            'current_password'      => 'password',
+            'password'              => 'new-password-123',
             'password_confirmation' => 'new-password-123',
         ])->assertNoContent();
 
@@ -76,8 +76,8 @@ describe('password', function () {
         Sanctum::actingAs(User::factory()->create());
 
         $this->putJson(route('api.v1.me.password.update'), [
-            'current_password' => 'wrong',
-            'password' => 'new-password-123',
+            'current_password'      => 'wrong',
+            'password'              => 'new-password-123',
             'password_confirmation' => 'new-password-123',
         ])->assertInvalid(['current_password']);
     });
@@ -85,7 +85,7 @@ describe('password', function () {
 
 describe('destroy', function () {
     test('deletes the account and its tokens after a password check', function () {
-        $user = User::factory()->create();
+        $user  = User::factory()->create();
         $token = $user->createToken('phone')->plainTextToken;
 
         $this->withToken($token)->deleteJson(route('api.v1.me.destroy'), ['password' => 'password'])
@@ -104,7 +104,7 @@ describe('destroy', function () {
 
 describe('middleware', function () {
     test('a deactivated bearer is refused and the token revoked', function () {
-        $user = User::factory()->create();
+        $user  = User::factory()->create();
         $token = $user->createToken('phone')->plainTextToken;
         $user->forceFill(['is_active' => false])->save();
 
@@ -117,7 +117,7 @@ describe('middleware', function () {
         Sanctum::actingAs(User::factory()->create());
 
         $english = $this->patchJson(route('api.v1.me.update'), ['email' => 'x@example.com'])->json('errors.name.0');
-        $arabic = $this->withHeader('X-Locale', 'ar')
+        $arabic  = $this->withHeader('X-Locale', 'ar')
             ->patchJson(route('api.v1.me.update'), ['email' => 'x@example.com'])
             ->json('errors.name.0');
 

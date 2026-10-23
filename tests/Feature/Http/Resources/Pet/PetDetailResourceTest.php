@@ -77,7 +77,8 @@ test('the owner receives the owner-only fields', function () {
             ->where('pet.is_owner', true)
             ->where('pet.location.address', '12 Nile Street')
             ->where('pet.location.detailedAddress', 'Building 3, Apartment 7')
-            ->where('pet.location.coordinates.lat', 30.0444)
+            // Driver-dependent type (string on MySQL, float on SQLite); see PetDetailResource.
+            ->where('pet.location.coordinates.lat', fn (string|float $lat): bool => (float) $lat === 30.0444)
             ->where('pet.health.medications', [['name' => 'Flea drops', 'usage' => 'Monthly']])
             ->where('pet.health.allergies', ['Dust'])
             ->where('pet.health.vetName', 'Dr. Hana')

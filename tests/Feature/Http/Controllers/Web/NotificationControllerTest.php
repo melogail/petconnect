@@ -30,15 +30,15 @@ function inboxRow(User $user, array $data = [], ?CarbonInterface $createdAt = nu
 {
     /** @var DatabaseNotification $notification */
     $notification = $user->notifications()->create([
-        'id' => (string) Str::uuid(),
-        'type' => 'App\\Notifications\\ModelLikedNotification',
-        'data' => [
-            'type' => 'like',
-            'message_key' => 'notifications.liked_pet',
+        'id'         => (string) Str::uuid(),
+        'type'       => 'App\\Notifications\\ModelLikedNotification',
+        'data'       => [
+            'type'            => 'like',
+            'message_key'     => 'notifications.liked_pet',
             'message_replace' => ['name' => 'Luna'],
             ...$data,
         ],
-        'read_at' => $read ? now() : null,
+        'read_at'    => $read ? now() : null,
         'created_at' => $createdAt ?? now(),
     ]);
 
@@ -95,7 +95,7 @@ describe('index', function () {
      */
     test('returns the viewer own notifications as a paginated json envelope', function () {
         $reader = User::factory()->create();
-        $mine = inboxRow($reader);
+        $mine   = inboxRow($reader);
         $theirs = inboxRow(User::factory()->create());
 
         $this->actingAs($reader)
@@ -129,8 +129,8 @@ describe('index', function () {
 
     test('orders the inbox newest first', function () {
         $reader = User::factory()->create();
-        $older = inboxRow($reader, createdAt: now()->subDay());
-        $newer = inboxRow($reader, createdAt: now());
+        $older  = inboxRow($reader, createdAt: now()->subDay());
+        $newer  = inboxRow($reader, createdAt: now());
 
         $this->actingAs($reader)
             ->getJson(route('notifications.index'))
@@ -157,7 +157,7 @@ describe('index', function () {
     });
 
     test('issues no write, so opening the bell does not clear the badge', function () {
-        $reader = User::factory()->create();
+        $reader     = User::factory()->create();
         inboxRow($reader);
 
         $statements = inboxStatements(fn () => $this->actingAs($reader)
@@ -169,12 +169,12 @@ describe('index', function () {
     });
 
     test('builds the inbox in a constant number of queries however full it is', function () {
-        $reader = User::factory()->create();
+        $reader      = User::factory()->create();
         foreach (range(1, 2) as $ignored) {
             inboxRow($reader);
         }
 
-        $atTwo = count(inboxStatements(fn () => $this->actingAs($reader)
+        $atTwo       = count(inboxStatements(fn () => $this->actingAs($reader)
             ->getJson(route('notifications.index'))->assertOk()));
 
         foreach (range(1, 20) as $ignored) {
@@ -192,7 +192,7 @@ describe('index', function () {
 describe('read', function () {
     test('marks the notification read and returns to the page the reader was on', function () {
         $this->freezeTime();
-        $reader = User::factory()->create();
+        $reader       = User::factory()->create();
         $notification = inboxRow($reader);
 
         $this->actingAs($reader)
@@ -201,7 +201,7 @@ describe('read', function () {
             ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('notifications', [
-            'id' => $notification->getKey(),
+            'id'      => $notification->getKey(),
             'read_at' => now()->toDateTimeString(),
         ]);
     });
@@ -232,11 +232,11 @@ describe('read', function () {
      * tap costs one SELECT and no write — and does not move the timestamp.
      */
     test('writes nothing when the notification was already read', function () {
-        $reader = User::factory()->create();
+        $reader       = User::factory()->create();
         $notification = inboxRow($reader, read: true);
-        $readAt = $notification->fresh()->read_at;
+        $readAt       = $notification->fresh()->read_at;
 
-        $statements = inboxStatements(fn () => $this->actingAs($reader)
+        $statements   = inboxStatements(fn () => $this->actingAs($reader)
             ->post(route('notifications.read', $notification->getKey()))
             ->assertRedirect());
 
@@ -253,7 +253,7 @@ describe('read-all', function () {
      * one UPDATE per row: 301 queries for 300 notifications.
      */
     test('clears the whole badge in a single update', function () {
-        $reader = User::factory()->create();
+        $reader     = User::factory()->create();
         foreach (range(1, 5) as $ignored) {
             inboxRow($reader);
         }
@@ -285,7 +285,7 @@ describe('destroy-all', function () {
      * list.
      */
     test('empties the inbox in a single delete, read and unread alike', function () {
-        $reader = User::factory()->create();
+        $reader     = User::factory()->create();
         inboxRow($reader);
         inboxRow($reader, read: true);
 

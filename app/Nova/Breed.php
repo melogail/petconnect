@@ -36,6 +36,8 @@ use Laravel\Nova\ResourceTool;
  * with App\Nova\Category, rather than being restated here: they used to be a
  * bare `['image', 'max:5120']`, which accepts formats GD cannot convert and so
  * serves the raw upload where a crop was meant to be (.ai/rules/nova.md).
+ *
+ * @extends \App\Nova\Resource<\App\Models\Breed>
  */
 class Breed extends Resource
 {
@@ -46,7 +48,7 @@ class Breed extends Resource
      *
      * @var class-string<\App\Models\Breed>
      */
-    public static $model = \App\Models\Breed::class;
+    public static $model  = \App\Models\Breed::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -60,14 +62,14 @@ class Breed extends Resource
      *
      * @var string
      */
-    public static $title = 'name';
+    public static $title  = 'name';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Catalog';
+    public static $group  = 'Catalog';
 
     /**
      * The columns that should be searched.
@@ -87,7 +89,7 @@ class Breed extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['category', 'media'];
+    public static $with   = ['category', 'media'];
 
     /**
      * Get the fields displayed by the resource.
@@ -151,7 +153,7 @@ class Breed extends Resource
      */
     protected function slugRule(NovaRequest $request): Unique
     {
-        $rule = Rule::unique('breeds', 'slug')
+        $rule       = Rule::unique('breeds', 'slug')
             ->where('category_id', $request->input('category'));
 
         $resourceId = $request->resourceId;

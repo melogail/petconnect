@@ -41,7 +41,7 @@ trait PetPhotoRules
      * that produces no derivative. See that class for what the bare `image`
      * rule lets through.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|string>
      */
     protected function photoFileRules(): array
     {
@@ -68,7 +68,7 @@ trait PetPhotoRules
     public function photoBounds(): array
     {
         return [
-            'max_gallery_images' => $this->maxGalleryImages(),
+            'max_gallery_images'  => $this->maxGalleryImages(),
             'max_image_kilobytes' => $this->maxImageKilobytes(),
         ];
     }

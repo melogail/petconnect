@@ -17,14 +17,14 @@ test('two factor challenge redirects to login when not authenticated', function 
 
 test('two factor challenge can be rendered', function () {
     Features::twoFactorAuthentication([
-        'confirm' => true,
+        'confirm'         => true,
         'confirmPassword' => true,
     ]);
 
     $user = User::factory()->withTwoFactor()->create();
 
     $this->post(route('login'), [
-        'email' => $user->email,
+        'email'    => $user->email,
         'password' => 'password',
     ]);
 
@@ -62,7 +62,7 @@ function reachTwoFactorChallenge(User $user): void
  */
 test('signs the visitor in for the current one time code', function () {
     $secret = app(Google2FA::class)->generateSecretKey();
-    $user = User::factory()->withTwoFactor($secret)->create();
+    $user   = User::factory()->withTwoFactor($secret)->create();
 
     reachTwoFactorChallenge($user);
 
@@ -75,7 +75,7 @@ test('signs the visitor in for the current one time code', function () {
 
 test('leaves the visitor signed out for a code that is not theirs', function () {
     $secret = app(Google2FA::class)->generateSecretKey();
-    $user = User::factory()->withTwoFactor($secret)->create();
+    $user   = User::factory()->withTwoFactor($secret)->create();
 
     reachTwoFactorChallenge($user);
 

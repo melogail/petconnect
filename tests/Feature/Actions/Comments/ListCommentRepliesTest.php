@@ -39,7 +39,7 @@ const REPLIES_ACTION_QUERY_COST = 4;
  * implicit so that turning the rule into something cheaper, or accidentally
  * into something per-comment, shows up as a number rather than as nothing.
  */
-const REPLIES_ROUTE_QUERY_COST = 6;
+const REPLIES_ROUTE_QUERY_COST  = 6;
 
 /**
  * Give a user the avatar CommentAuthorResource reads with getFirstMediaUrl().
@@ -115,13 +115,13 @@ function countRepliesRouteQueries(Comment $parent, User $viewer): int
 }
 
 test('returns the replies of the given comment newest first, and nothing else', function () {
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
     $parent = Comment::factory()->for($pet, 'commentable')->create();
-    $older = Comment::factory()->reply($parent)->create(['created_at' => now()->subHour()]);
-    $newer = Comment::factory()->reply($parent)->create(['created_at' => now()]);
+    $older  = Comment::factory()->reply($parent)->create(['created_at' => now()->subHour()]);
+    $newer  = Comment::factory()->reply($parent)->create(['created_at' => now()]);
     Comment::factory()->reply(Comment::factory()->for($pet, 'commentable')->create())->create();
 
-    $page = app(ListCommentReplies::class)->handle($parent);
+    $page   = app(ListCommentReplies::class)->handle($parent);
 
     expect($page->pluck('id')->all())->toBe([$newer->getKey(), $older->getKey()]);
 });
@@ -131,7 +131,7 @@ test('pages the replies by the configured page size', function () {
     $parent = Comment::factory()->create();
     Comment::factory()->count(3)->reply($parent)->create();
 
-    $page = app(ListCommentReplies::class)->handle($parent);
+    $page   = app(ListCommentReplies::class)->handle($parent);
 
     expect($page->total())->toBe(3)
         ->and($page->items())->toHaveCount(2);
@@ -139,13 +139,13 @@ test('pages the replies by the configured page size', function () {
 
 test('serialises a page of replies in a constant number of queries however many replies it holds', function () {
     Storage::fake(config('media-library.disk_name'));
-    $viewer = User::factory()->create();
-    $parent = Comment::factory()->create();
+    $viewer          = User::factory()->create();
+    $parent          = Comment::factory()->create();
     config(['petconnect.comments.replies_per_page' => 50]);
 
     seedRepliesOnComment($parent, replies: 2);
 
-    $atTwoReplies = countRepliesQueries($parent, $viewer);
+    $atTwoReplies    = countRepliesQueries($parent, $viewer);
 
     seedRepliesOnComment($parent, replies: 10);
 
@@ -157,13 +157,13 @@ test('serialises a page of replies in a constant number of queries however many 
 
 test('serves a page of replies in a constant number of queries however many replies it holds', function () {
     Storage::fake(config('media-library.disk_name'));
-    $viewer = User::factory()->create();
-    $parent = Comment::factory()->create();
+    $viewer          = User::factory()->create();
+    $parent          = Comment::factory()->create();
     config(['petconnect.comments.replies_per_page' => 50]);
 
     seedRepliesOnComment($parent, replies: 2);
 
-    $atTwoReplies = countRepliesRouteQueries($parent, $viewer);
+    $atTwoReplies    = countRepliesRouteQueries($parent, $viewer);
 
     seedRepliesOnComment($parent, replies: 10);
 

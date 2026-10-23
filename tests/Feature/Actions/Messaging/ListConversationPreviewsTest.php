@@ -56,7 +56,7 @@ function attachPreviewAvatar(User $user): void
 function seedPreviewThreadsFor(User $reader, int $conversations): void
 {
     for ($index = 0; $index < $conversations; $index++) {
-        $peer = User::factory()->create();
+        $peer         = User::factory()->create();
 
         $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
 
@@ -121,8 +121,8 @@ function measurePreviewPayload(User $reader, int $limit): array
 }
 
 test('returns the reader own threads and none of anybody else', function () {
-    $reader = User::factory()->create();
-    $mine = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $reader   = User::factory()->create();
+    $mine     = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     $alsoMine = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     Conversation::factory()->direct()
         ->withParticipants(User::factory()->create(), User::factory()->create())
@@ -134,9 +134,9 @@ test('returns the reader own threads and none of anybody else', function () {
 });
 
 test('orders the menu by the most recent message first', function () {
-    $reader = User::factory()->create();
-    $quiet = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
-    $busy = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $reader   = User::factory()->create();
+    $quiet    = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
+    $busy     = Conversation::factory()->direct()->withParticipants($reader, User::factory()->create())->create();
     Message::factory()->for($quiet)->create(['created_at' => now()->subDay()]);
     Message::factory()->for($busy)->create(['created_at' => now()]);
 
@@ -163,13 +163,13 @@ test('honours a limit it is given over the configured one', function () {
 
 test('serialises the menu in a constant number of queries however many rows it asks for', function () {
     Storage::fake(config('media-library.disk_name'));
-    $reader = User::factory()->create();
+    $reader    = User::factory()->create();
 
     seedPreviewThreadsWithAvatarsFor($reader, conversations: 15);
 
-    $atTwo = measurePreviewPayload($reader, limit: 2);
-    $atThree = measurePreviewPayload($reader, limit: 3);
-    $atFive = measurePreviewPayload($reader, limit: 5);
+    $atTwo     = measurePreviewPayload($reader, limit: 2);
+    $atThree   = measurePreviewPayload($reader, limit: 3);
+    $atFive    = measurePreviewPayload($reader, limit: 5);
     $atFifteen = measurePreviewPayload($reader, limit: 15);
 
     expect($atTwo['queries'])->toBe(PREVIEW_PAYLOAD_QUERY_COST)

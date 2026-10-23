@@ -27,14 +27,14 @@ use Illuminate\Support\Facades\Storage;
 function novaUserPayload(User $user, array $overrides = []): array
 {
     return [
-        'name' => $user->name,
+        'name'   => $user->name,
         'locale' => $user->locale,
         ...$overrides,
     ];
 }
 
 test('returns 422 to a member profile edited through Nova with an invalid value', function (array $overrides, string $field, string $message) {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create(['name' => 'Unchanged Name']);
 
     $this->actingAs($admin, 'admin')
@@ -44,7 +44,7 @@ test('returns 422 to a member profile edited through Nova with an invalid value'
 
     expect($member->fresh()->name)->toBe('Unchanged Name');
 })->with([
-    'a username no URL could carry' => [
+    'a username no URL could carry'               => [
         ['username' => 'not a valid handle!!!'],
         'username',
         'The Username field must only contain letters, numbers, dashes, and underscores.',
@@ -62,8 +62,8 @@ test('returns 422 to a member profile edited through Nova with an invalid value'
  * dataset would read as a magic number that happens to work.
  */
 test('returns 422 to a bio one character past the configured ceiling', function () {
-    $admin = Admin::factory()->create();
-    $member = User::factory()->create();
+    $admin   = Admin::factory()->create();
+    $member  = User::factory()->create();
     $ceiling = config('petconnect.profiles.bio_max_length');
 
     $this->actingAs($admin, 'admin')
@@ -90,7 +90,7 @@ test('returns 422 to a bio one character past the configured ceiling', function 
  */
 test('returns 422 to an avatar that is not an image', function () {
     Storage::fake(config('media-library.disk_name'));
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -105,7 +105,7 @@ test('returns 422 to an avatar that is not an image', function () {
 
 test('accepts an avatar that is an image', function () {
     Storage::fake(config('media-library.disk_name'));
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
@@ -118,14 +118,14 @@ test('accepts an avatar that is an image', function () {
 });
 
 test('accepts a handle, a language and a bio the application supports', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
         ->putJson("/nova-api/users/{$member->getKey()}", novaUserPayload($member, [
             'username' => 'a-valid_handle1',
-            'locale' => 'ar',
-            'bio' => 'Fosters kittens.',
+            'locale'   => 'ar',
+            'bio'      => 'Fosters kittens.',
         ]))
         ->assertOk();
 
@@ -155,7 +155,7 @@ test('accepts a handle, a language and a bio the application supports', function
  * because one rule change has to hold at both entry points.
  */
 test('returns 422 to a latitude with no longitude', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create(['lat' => null, 'lng' => null]);
 
     $this->actingAs($admin, 'admin')
@@ -174,7 +174,7 @@ test('returns 422 to a latitude with no longitude', function () {
  * pair of required-field errors.
  */
 test('saves a member edited through Nova with neither coordinate on the payload', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create(['lat' => null, 'lng' => null, 'name' => 'Original Name']);
 
     $this->actingAs($admin, 'admin')
@@ -191,7 +191,7 @@ test('saves a member edited through Nova with neither coordinate on the payload'
  * run, which is what `required_with` was always able to reach.
  */
 test('returns 422 to a longitude outside the range', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create(['lat' => null, 'lng' => null]);
 
     $this->actingAs($admin, 'admin')

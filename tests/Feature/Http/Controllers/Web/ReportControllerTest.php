@@ -24,7 +24,7 @@ function reportableTargetAuthoredBy(Reportable $type, User $author): Model
 {
     return match ($type) {
         Reportable::Comment => Comment::factory()->for($author)->create(),
-        Reportable::Review => Review::factory()->for($author)->create(),
+        Reportable::Review  => Review::factory()->for($author)->create(),
     };
 }
 
@@ -34,8 +34,8 @@ function reportableTargetAuthoredBy(Reportable $type, User $author): Model
 function reportPayload(): array
 {
     return [
-        'category' => ReportCategory::Abuse->value,
-        'reason' => ReportReason::HateSpeech->value,
+        'category'    => ReportCategory::Abuse->value,
+        'reason'      => ReportReason::HateSpeech->value,
         'description' => 'Abusive towards the seller.',
     ];
 }
@@ -53,10 +53,10 @@ function reportPayload(): array
  * @var array<string, list<string>>
  */
 const REPORTABLE_TYPES_OFF_THE_WHITELIST = [
-    'a url encoded class name' => ['App%5CModels%5CComment'],
-    'a morph alias for a profile' => ['user'],
-    'a morph alias for a listing' => ['pet'],
-    'a morph alias for a moderator' => ['admin'],
+    'a url encoded class name'       => ['App%5CModels%5CComment'],
+    'a morph alias for a profile'    => ['user'],
+    'a morph alias for a listing'    => ['pet'],
+    'a morph alias for a moderator'  => ['admin'],
     'a value on no whitelist at all' => ['dragon'],
 ];
 
@@ -74,8 +74,8 @@ const REPORTABLE_TYPES_OFF_THE_WHITELIST = [
 function existingReportableIdFor(string $segment): int
 {
     return match ($segment) {
-        'user' => User::factory()->create()->getKey(),
-        'pet' => Pet::factory()->create()->getKey(),
+        'user'  => User::factory()->create()->getKey(),
+        'pet'   => Pet::factory()->create()->getKey(),
         'admin' => Admin::factory()->create()->getKey(),
         default => Comment::factory()->create()->getKey(),
     };
@@ -102,7 +102,7 @@ test('redirects an unverified user to the verification notice and writes nothing
 
 test('files the report against a whitelisted target', function (Reportable $type) {
     $reporter = User::factory()->create();
-    $target = reportableTargetAuthoredBy($type, User::factory()->create());
+    $target   = reportableTargetAuthoredBy($type, User::factory()->create());
 
     $this->actingAs($reporter)
         ->from(route('home'))
@@ -110,12 +110,12 @@ test('files the report against a whitelisted target', function (Reportable $type
         ->assertRedirect(route('home'));
 
     $this->assertDatabaseHas('reports', [
-        'user_id' => $reporter->getKey(),
+        'user_id'         => $reporter->getKey(),
         'reportable_type' => $type->value,
-        'reportable_id' => $target->getKey(),
-        'category' => ReportCategory::Abuse->value,
-        'reason' => ReportReason::HateSpeech->value,
-        'status' => 'pending',
+        'reportable_id'   => $target->getKey(),
+        'category'        => ReportCategory::Abuse->value,
+        'reason'          => ReportReason::HateSpeech->value,
+        'status'          => 'pending',
     ]);
 })->with(Reportable::cases());
 
@@ -178,7 +178,7 @@ test('refuses a report of the reporter own content on the flow level key and wri
 
 test('refuses a second report of the same target on the flow level key and leaves one row', function (Reportable $type) {
     $reporter = User::factory()->create();
-    $target = reportableTargetAuthoredBy($type, User::factory()->create());
+    $target   = reportableTargetAuthoredBy($type, User::factory()->create());
     Report::factory()->for($reporter)->forReportable($target)->create();
 
     $this->actingAs($reporter)
@@ -222,14 +222,14 @@ test('rejects a report with no category and no reason and writes nothing', funct
         ->post(route('reports.store', ['reportable_type' => 'review', 'reportable_id' => $target->getKey()]), [])
         ->assertInvalid([
             'category' => 'The category field is required.',
-            'reason' => 'The reason field is required.',
+            'reason'   => 'The reason field is required.',
         ]);
 
     $this->assertDatabaseEmpty('reports');
 });
 
 test('rejects a description longer than the configured ceiling and writes nothing', function () {
-    $target = Review::factory()->create();
+    $target    = Review::factory()->create();
     $maxLength = config('petconnect.reports.max_description_length');
 
     $this->actingAs(User::factory()->create())
@@ -249,7 +249,7 @@ test('rejects a description longer than the configured ceiling and writes nothin
  * through exactly that binding.
  */
 test('returns 404 for a comment on a soft deleted listing and writes nothing', function () {
-    $pet = Pet::factory()->create();
+    $pet     = Pet::factory()->create();
     $comment = Comment::factory()->for($pet, 'commentable')->create();
     $pet->delete();
 
@@ -268,7 +268,7 @@ test('returns 429 once the acting user passes 5 reports in a minute', function (
             ->from(route('home'))
             ->post(route('reports.store', [
                 'reportable_type' => 'review',
-                'reportable_id' => Review::factory()->create()->getKey(),
+                'reportable_id'   => Review::factory()->create()->getKey(),
             ]), reportPayload())
             ->assertRedirect();
     }
@@ -276,7 +276,7 @@ test('returns 429 once the acting user passes 5 reports in a minute', function (
     $this->actingAs($reporter)
         ->post(route('reports.store', [
             'reportable_type' => 'review',
-            'reportable_id' => Review::factory()->create()->getKey(),
+            'reportable_id'   => Review::factory()->create()->getKey(),
         ]), reportPayload())
         ->assertTooManyRequests();
 

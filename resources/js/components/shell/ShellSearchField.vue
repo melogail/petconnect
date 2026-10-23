@@ -74,7 +74,9 @@ function submit(): void {
         return;
     }
 
-    router.get(home.url(value === null ? undefined : { query: { search: value } }));
+    router.get(
+        home.url(value === null ? undefined : { query: { search: value } }),
+    );
 }
 
 watch(term, (value) => {

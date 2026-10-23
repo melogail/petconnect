@@ -15,12 +15,12 @@ use App\Models\Report;
  * longer exists.
  */
 test('deletes a comment, its replies and everything filed against them', function () {
-    $admin = Admin::factory()->create();
-    $root = Comment::factory()->forPet()->create();
-    $reply = Comment::factory()->reply($root)->create();
-    $sibling = Comment::factory()->forPet()->create();
+    $admin         = Admin::factory()->create();
+    $root          = Comment::factory()->forPet()->create();
+    $reply         = Comment::factory()->reply($root)->create();
+    $sibling       = Comment::factory()->forPet()->create();
 
-    $likeOnReply = Like::factory()->forComment($reply)->create();
+    $likeOnReply   = Like::factory()->forComment($reply)->create();
     $reportOnReply = Report::factory()->pending()->forReportable($reply)->create();
     $likeOnSibling = Like::factory()->forComment($sibling)->create();
 
@@ -41,8 +41,8 @@ test('deletes a comment, its replies and everything filed against them', functio
 });
 
 test('deletes every selected thread when several are run at once', function () {
-    $admin = Admin::factory()->create();
-    $threads = Comment::factory()->count(3)->forPet()->create();
+    $admin     = Admin::factory()->create();
+    $threads   = Comment::factory()->count(3)->forPet()->create();
     $bystander = Comment::factory()->forPet()->create();
 
     $this->actingAs($admin, 'admin')

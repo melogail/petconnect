@@ -2,9 +2,9 @@
 
 namespace App\Nova\Filters;
 
+use App\Contracts\HasLabel;
 use BackedEnum;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Laravel\Nova\Filters\Filter;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
@@ -39,18 +39,15 @@ abstract class EnumFilter extends Filter
     /**
      * The enum whose cases are the available options.
      *
-     * Every case must expose `label()`; App\Concerns\HasOptions declares it
-     * abstract, so any enum using that trait qualifies.
+     * Every case must expose `label()`; App\Concerns\HasOptions supplies the
+     * method and App\Contracts\HasLabel is the type that says so.
      *
-     * @return class-string<BackedEnum>
+     * @return class-string<BackedEnum&HasLabel>
      */
     abstract protected function enum(): string;
 
     /**
      * Apply the filter to the given query.
-     *
-     * @param  Builder<Model>  $query
-     * @return Builder<Model>
      */
     public function apply(NovaRequest $request, Builder $query, mixed $value): Builder
     {
@@ -60,14 +57,14 @@ abstract class EnumFilter extends Filter
     /**
      * Get the filter's available options.
      *
-     * @return array<string, string>
+     * @return array<string, int|string>
      */
     public function options(NovaRequest $request): array
     {
         $enum = $this->enum();
 
         return collect($enum::cases())
-            ->mapWithKeys(fn (BackedEnum $case): array => [$case->label() => $case->value])
+            ->mapWithKeys(fn (BackedEnum&HasLabel $case): array => [$case->label() => $case->value])
             ->all();
     }
 }

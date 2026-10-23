@@ -32,7 +32,7 @@ class ReportsByStatus extends Partition
                 ? 'Unknown'
                 : ReportStatus::from($value)->label())
             ->colors([
-                ReportStatus::Pending->value => '#f59e0b',
+                ReportStatus::Pending->value  => '#f59e0b',
                 ReportStatus::Reviewed->value => '#3b82f6',
                 ReportStatus::Resolved->value => '#22c55e',
                 ReportStatus::Rejected->value => '#ef4444',

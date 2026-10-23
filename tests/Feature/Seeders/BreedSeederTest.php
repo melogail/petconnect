@@ -35,9 +35,9 @@ test('files every breed under the category the data file nests it in, in both la
         foreach ($breeds as $breed) {
             $this->assertDatabaseHas('breeds', [
                 'category_id' => $category->getKey(),
-                'slug' => $breed['slug'],
-                'name' => $breed['name'],
-                'name_ar' => $breed['name_ar'],
+                'slug'        => $breed['slug'],
+                'name'        => $breed['name'],
+                'name_ar'     => $breed['name_ar'],
             ]);
         }
     }
@@ -52,7 +52,7 @@ test('restores a breed whose translation has drifted rather than skipping it', f
     $this->seed(CategorySeeder::class);
     $this->seed(BreedSeeder::class);
 
-    $breed = Breed::query()->firstOrFail();
+    $breed    = Breed::query()->firstOrFail();
     $expected = $breed->only(['name', 'name_ar']);
 
     $breed->forceFill(['name' => 'Wrong', 'name_ar' => 'خطأ'])->save();

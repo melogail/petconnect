@@ -14,11 +14,11 @@ use App\Models\Review;
  * cannot resolve.
  */
 test('deletes a review and the reports filed against it', function () {
-    $admin = Admin::factory()->create();
-    $review = Review::factory()->create();
-    $report = Report::factory()->pending()->forReportable($review)->create();
+    $admin           = Admin::factory()->create();
+    $review          = Review::factory()->create();
+    $report          = Report::factory()->pending()->forReportable($review)->create();
 
-    $bystander = Review::factory()->create();
+    $bystander       = Review::factory()->create();
     $bystanderReport = Report::factory()->pending()->forReportable($bystander)->create();
 
     $this->actingAs($admin, 'admin')
@@ -36,8 +36,8 @@ test('deletes a review and the reports filed against it', function () {
 });
 
 test('deletes every selected review when several are run at once', function () {
-    $admin = Admin::factory()->create();
-    $reviews = Review::factory()->count(3)->create();
+    $admin     = Admin::factory()->create();
+    $reviews   = Review::factory()->count(3)->create();
     $bystander = Review::factory()->create();
 
     $this->actingAs($admin, 'admin')

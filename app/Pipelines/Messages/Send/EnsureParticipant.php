@@ -28,7 +28,7 @@ class EnsureParticipant
 {
     public function handle(SendMessageContext $context, Closure $next): mixed
     {
-        $conversation = $context->conversation;
+        $conversation  = $context->conversation;
 
         $conversation->loadMissing('users');
 

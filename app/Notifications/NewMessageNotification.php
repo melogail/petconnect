@@ -82,17 +82,17 @@ class NewMessageNotification extends Notification
         $senderName = $this->message->sender?->name;
 
         return [
-            'message_id' => $this->message->id,
+            'message_id'      => $this->message->id,
             'conversation_id' => $this->message->conversation_id,
-            'sender_id' => $this->message->sender_id,
-            'sender_name' => $senderName,
-            'excerpt' => Str::limit($this->message->content, self::EXCERPT_LENGTH),
-            'message_key' => 'notifications.new_message',
+            'sender_id'       => $this->message->sender_id,
+            'sender_name'     => $senderName,
+            'excerpt'         => Str::limit($this->message->content, self::EXCERPT_LENGTH),
+            'message_key'     => 'notifications.new_message',
             'message_replace' => [
                 'name' => (string) $senderName,
             ],
-            'url' => $this->conversationUrl(),
-            'type' => 'message',
+            'url'             => $this->conversationUrl(),
+            'type'            => 'message',
         ];
     }
 

@@ -75,11 +75,11 @@ class PersistReview
 
         try {
             $review = Review::create([
-                'user_id' => $context->author->getKey(),
-                'rate' => $context->rate,
-                'comment' => $context->comment(),
+                'user_id'         => $context->author->getKey(),
+                'rate'            => $context->rate,
+                'comment'         => $context->comment(),
                 'reviewable_type' => Relation::getMorphAlias($reviewable::class),
-                'reviewable_id' => $reviewable->getKey(),
+                'reviewable_id'   => $reviewable->getKey(),
             ]);
         } catch (UniqueConstraintViolationException) {
             throw AlreadyReviewed::make();

@@ -31,8 +31,8 @@ class SubmitContactMessage
     ): Contact {
         return Contact::create([
             'user_id'     => $sender?->getKey(),
-            'name'        => $sender?->name ?? (string) $name,
-            'email'       => $sender?->email ?? (string) $email,
+            'name'        => $sender->name ?? (string) $name,
+            'email'       => $sender->email ?? (string) $email,
             'ticket_type' => $ticketType,
             'subject'     => $subject,
             'message'     => $message,

@@ -40,13 +40,13 @@ class StartDirectConversationContext
     /**
      * Whether the conversation was already there before this flow ran.
      */
-    protected bool $wasExisting = false;
+    protected bool $wasExisting           = false;
 
     /**
      * The opening message, once SendInitialMessage has written one. Null when
      * the conversation was opened with no message attached.
      */
-    protected ?Message $initialMessage = null;
+    protected ?Message $initialMessage    = null;
 
     public function __construct(
         public readonly User $initiator,
@@ -68,7 +68,7 @@ class StartDirectConversationContext
     public function setExistingConversation(Conversation $conversation): void
     {
         $this->conversation = $conversation;
-        $this->wasExisting = true;
+        $this->wasExisting  = true;
     }
 
     /**
@@ -77,7 +77,7 @@ class StartDirectConversationContext
     public function setCreatedConversation(Conversation $conversation): void
     {
         $this->conversation = $conversation;
-        $this->wasExisting = false;
+        $this->wasExisting  = false;
     }
 
     public function wasExisting(): bool

@@ -39,14 +39,14 @@ class EnsureGalleryCapacity
 {
     public function handle(UpdatePetContext $context, Closure $next): mixed
     {
-        $allowed = $context->maxGalleryImages;
+        $allowed   = $context->maxGalleryImages;
 
-        $pet = $context->pet();
+        $pet       = $context->pet();
         $pet->loadMissing('media');
 
-        $gallery = $pet->galleryPhotos();
+        $gallery   = $pet->galleryPhotos();
 
-        $removed = $gallery
+        $removed   = $gallery
             ->filter(fn (Media $photo): bool => in_array((int) $photo->getKey(), $context->deletedMediaIds, true))
             ->count();
 

@@ -149,7 +149,7 @@ use Illuminate\Database\Eloquent\Builder;
  * version is the one to reach for if the `last_message_at` invariant is ever in
  * doubt, and it is worth re-measuring at that point rather than assumed.
  *
- * ## The one PHPStan error here is left standing, deliberately
+ * ## The one PHPStan error here is ignored in phpstan.neon, deliberately
  *
  * `where()` accepts a queryable on its `$column` side at runtime — that is what
  * makes the subquery above expressible in the builder at all — but its declared
@@ -157,16 +157,21 @@ use Illuminate\Database\Eloquent\Builder;
  * `Eloquent\Builder<Message>` is `argument.type`. It is a false positive about
  * a real gap in Laravel's own signature.
  *
- * The two ways to silence it both cost more than they save. `whereRaw()` means
- * writing the correlated subquery as a SQL string, which drops the SoftDeletes
- * global scope that `Message::query()` applies — the clause that makes "a
- * deleted last message is not the last message" true, and the one thing here
- * nothing else would notice going missing. `DB::raw()` on the `$column` side
- * has the same problem plus a binding surface that is empty today and would
- * break silently the day a clause with a binding is added. So the error stays,
- * and it is a line for whoever works the 145-error backlog
- * (.ai/rules/general.md) — not something to paper over with an ignore, a cast
- * or a baseline entry.
+ * Every way to silence it costs more than it saves, and each was tried while
+ * clearing the rest of the backlog (2026-10-23). `whereRaw()` means writing the
+ * correlated subquery as a SQL string, which drops the SoftDeletes global scope
+ * that `Message::query()` applies — the clause that makes "a deleted last
+ * message is not the last message" true, and the one thing here nothing else
+ * would notice going missing. `DB::raw()` / `new Expression()` on the `$column`
+ * side are no better: `Expression` is generic over `literal-string|int|float`
+ * in Laravel's own docblock, so `toSql()` output is rejected there too. A
+ * Closure column with an operator receives a bare `Query\Builder` at runtime
+ * while the stub promises an Eloquent one, so typing it either way is wrong.
+ * And wrapping the clause as `where([[$sub, '!=', $id]])` only passes because
+ * `array<mixed>` swallows anything — a dodge, not a type. So the call stays as
+ * written and phpstan.neon carries one path-and-count-pinned ignore for it,
+ * the same treatment the other framework-signature gaps there get; a second
+ * occurrence anywhere would fail the gate.
  *
  * @see App\Actions\Messaging\BuildInbox for the rows the badge sits above.
  */

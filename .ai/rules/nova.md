@@ -22,3 +22,6 @@ Measured on 25 rows: users 26 -> 2 queries, pets 26 -> 2, breeds 26 -> 2, catego
 It matters twice over: it also removes the lazy load that the AppServiceProvider Nova exemption was quietly absorbing. Confirmed under test — with `$with` stripped those four indexes still 200 (the exemption catches them) but the query counts jump; with the old broken exemption they 500.
 
 `$with` is index-only. Detail pages are a single `find()`, where `Builder::hydrate()` leaves `preventsLazyLoading` off anyway.
+
+## `@extends \App\Nova\Resource<Model>` — fully qualified, or Pint turns it into the `resource` keyword
+`App\Nova\Resource` is `@template TModel` / `@extends NovaResource<TModel>` since 2026-10-23, and every resource declares its model with `@extends \App\Nova\Resource<\App\Models\Pet>`. Write the FQCN with the leading backslash: Pint's `phpdoc_types` fixer lowercases a bare `Resource` in a docblock into PHP's `resource` type keyword, which PHPStan then reports as an unknown class. It happened once during the PHPStan backlog clearance and was caught by the next run.

@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useLocale } from '@/composables/useLocale';
 import { formatDayHeading, toDayKey } from '@/lib/datetime';
 import type { Message } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The scrollable thread, oldest at the top.
@@ -121,6 +122,8 @@ const rows = computed(() =>
                 : null,
     })),
 );
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -136,15 +139,15 @@ const rows = computed(() =>
                 @click="emit('load-older')"
             >
                 <Spinner v-if="loadingOlder" />
-                Load older messages
+                {{ t('messaging.load_older') }}
             </Button>
         </div>
 
         <EmptyState
             v-if="messages.length === 0"
             :icon="MessageCircle"
-            title="No messages yet"
-            description="Say something to get this started."
+            :title="t('messaging.no_messages_yet')"
+            :description="t('messaging.start_hint')"
         />
 
         <div v-else class="flex flex-col gap-3">

@@ -4,6 +4,7 @@ namespace App\Contracts;
 
 use App\Models\Review;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -32,7 +33,9 @@ use Illuminate\Support\Collection;
 interface Reviewable
 {
     /**
-     * @return MorphMany<Review, static>
+     * `covariant Model`, not `static` — see App\Contracts\Commentable::comments().
+     *
+     * @return MorphMany<Review, covariant Model>
      */
     public function reviews(): MorphMany;
 

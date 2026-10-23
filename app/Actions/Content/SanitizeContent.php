@@ -38,7 +38,7 @@ class SanitizeContent
      * comment is never mangled by a Latin word list; a word that survives
      * preg_quote() but cannot be compiled is dropped rather than throwing.
      *
-     * @param  list<string>  $bannedWords
+     * @param  array<mixed>  $bannedWords  Usually `list<string>`, but it comes from config, so pattern() drops anything that is not a non-blank string.
      * @param  string  $mask  What a match is replaced with.
      */
     public function handle(string $content, array $bannedWords = [], string $mask = '****'): string
@@ -58,7 +58,7 @@ class SanitizeContent
      * Compile the word list into one alternation, or null when there is nothing
      * to mask.
      *
-     * @param  list<string>  $bannedWords
+     * @param  array<mixed>  $bannedWords
      */
     protected function pattern(array $bannedWords): ?string
     {

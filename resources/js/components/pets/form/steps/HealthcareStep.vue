@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The clinical records and the vet's details.
@@ -24,6 +25,8 @@ import { petFormErrors, type PetFormState } from '@/lib/petForm';
 const { form } = defineProps<{ form: InertiaForm<PetFormState> }>();
 
 const errors = computed(() => petFormErrors(form.errors));
+
+const { t } = useTranslations();
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -58,22 +61,24 @@ function removeMedication(index: number): void {
     <div class="space-y-8">
         <section class="space-y-3">
             <div>
-                <h3 class="font-medium">Vaccinations</h3>
+                <h3 class="font-medium">{{ t('pets.vaccinations') }}</h3>
                 <p class="text-muted-foreground text-sm">
-                    Public. A row with no name is dropped on save.
+                    {{ t('wizard.vaccinations_desc') }}
                 </p>
             </div>
 
             <RepeaterShell
                 :rows="form.health.vaccinations"
-                add-label="Add a vaccination"
-                empty-label="No vaccination records yet."
+                :add-label="t('wizard.add_vaccination')"
+                :empty-label="t('wizard.no_vaccination_records')"
                 @add="addVaccination"
                 @remove="removeVaccination"
             >
                 <template #row="{ index }">
                     <div class="grid gap-2">
-                        <Label :for="`vaccination-name-${index}`">Name</Label>
+                        <Label :for="`vaccination-name-${index}`">
+                            {{ t('wizard.name') }}
+                        </Label>
                         <Input
                             :id="`vaccination-name-${index}`"
                             v-model="form.health.vaccinations[index].name"
@@ -81,7 +86,9 @@ function removeMedication(index: number): void {
                         />
                     </div>
                     <div class="grid gap-2">
-                        <Label :for="`vaccination-date-${index}`">Date</Label>
+                        <Label :for="`vaccination-date-${index}`">
+                            {{ t('wizard.date') }}
+                        </Label>
                         <Input
                             :id="`vaccination-date-${index}`"
                             v-model="form.health.vaccinations[index].date"
@@ -97,22 +104,24 @@ function removeMedication(index: number): void {
 
         <section class="space-y-3">
             <div>
-                <h3 class="font-medium">Medications</h3>
+                <h3 class="font-medium">{{ t('pets.medications') }}</h3>
                 <p class="text-muted-foreground text-sm">
-                    Only you ever see these.
+                    {{ t('wizard.only_you_see_these') }}
                 </p>
             </div>
 
             <RepeaterShell
                 :rows="form.health.medications"
-                add-label="Add a medication"
-                empty-label="No medications recorded."
+                :add-label="t('wizard.add_medication')"
+                :empty-label="t('wizard.no_medications')"
                 @add="addMedication"
                 @remove="removeMedication"
             >
                 <template #row="{ index }">
                     <div class="grid gap-2">
-                        <Label :for="`medication-name-${index}`">Name</Label>
+                        <Label :for="`medication-name-${index}`">
+                            {{ t('wizard.name') }}
+                        </Label>
                         <Input
                             :id="`medication-name-${index}`"
                             v-model="form.health.medications[index].name"
@@ -121,7 +130,7 @@ function removeMedication(index: number): void {
                     </div>
                     <div class="grid gap-2">
                         <Label :for="`medication-usage-${index}`">
-                            How it is given
+                            {{ t('wizard.how_given') }}
                         </Label>
                         <Input
                             :id="`medication-usage-${index}`"
@@ -137,24 +146,24 @@ function removeMedication(index: number): void {
 
         <div class="grid gap-5 sm:grid-cols-2">
             <FormField
-                label="Allergies"
+                :label="t('wizard.allergies')"
                 field-id="pet-allergies"
                 :error="errors['health.allergies']"
-                hint="Only you ever see these."
+                :hint="t('wizard.only_you_see_these')"
                 class="sm:col-span-2"
             >
                 <TagInput
                     v-model="form.health.allergies"
                     input-id="pet-allergies"
-                    placeholder="Chicken, pollen…"
+                    :placeholder="t('wizard.allergies_placeholder')"
                 />
             </FormField>
 
             <FormField
-                label="Veterinarian"
+                :label="t('wizard.veterinarian')"
                 field-id="pet-vet-name"
                 :error="errors['health.vetName']"
-                hint="Only you ever see this."
+                :hint="t('wizard.only_you_see_this')"
             >
                 <Input
                     id="pet-vet-name"
@@ -164,10 +173,10 @@ function removeMedication(index: number): void {
             </FormField>
 
             <FormField
-                label="Vet phone"
+                :label="t('pets.vet_phone')"
                 field-id="pet-vet-phone"
                 :error="errors['health.vetPhone']"
-                hint="Only you ever see this."
+                :hint="t('wizard.only_you_see_this')"
             >
                 <Input
                     id="pet-vet-phone"

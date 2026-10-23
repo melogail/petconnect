@@ -16,21 +16,21 @@ use Illuminate\Support\Facades\DB;
  */
 function commentChainBesideAnotherTree(): array
 {
-    $pet = Pet::factory()->create();
-    $root = Comment::factory()->for($pet, 'commentable')->create();
-    $reply = Comment::factory()->reply($root)->create();
-    $grandchild = Comment::factory()->reply($reply)->create();
+    $pet             = Pet::factory()->create();
+    $root            = Comment::factory()->for($pet, 'commentable')->create();
+    $reply           = Comment::factory()->reply($root)->create();
+    $grandchild      = Comment::factory()->reply($reply)->create();
     $greatGrandchild = Comment::factory()->reply($grandchild)->create();
 
-    $bystander = Comment::factory()->for($pet, 'commentable')->create();
+    $bystander       = Comment::factory()->for($pet, 'commentable')->create();
     Comment::factory()->reply($bystander)->create();
 
     return [
-        'root' => $root,
-        'reply' => $reply,
-        'grandchild' => $grandchild,
+        'root'            => $root,
+        'reply'           => $reply,
+        'grandchild'      => $grandchild,
         'greatGrandchild' => $greatGrandchild,
-        'bystander' => $bystander,
+        'bystander'       => $bystander,
     ];
 }
 
@@ -84,7 +84,7 @@ test('returns a leaf root as itself alone', function () {
 test('returns each id once when a root is also a descendant of another root', function () {
     ['root' => $root, 'reply' => $reply, 'grandchild' => $grandchild, 'greatGrandchild' => $greatGrandchild] = commentChainBesideAnotherTree();
 
-    $ids = app(ListCommentSubtreeIds::class)->handle([$root->getKey(), $grandchild->getKey()]);
+    $ids                                                                                                     = app(ListCommentSubtreeIds::class)->handle([$root->getKey(), $grandchild->getKey()]);
 
     expect($ids)->toEqualCanonicalizing([
         $root->getKey(),
@@ -97,7 +97,7 @@ test('returns each id once when a root is also a descendant of another root', fu
 test('returns each id once when the same root is passed twice', function () {
     ['root' => $root, 'reply' => $reply, 'grandchild' => $grandchild, 'greatGrandchild' => $greatGrandchild] = commentChainBesideAnotherTree();
 
-    $ids = app(ListCommentSubtreeIds::class)->handle([$root->getKey(), $root->getKey()]);
+    $ids                                                                                                     = app(ListCommentSubtreeIds::class)->handle([$root->getKey(), $root->getKey()]);
 
     expect($ids)->toEqualCanonicalizing([
         $root->getKey(),
@@ -114,7 +114,7 @@ test('returns each id once when the same root is passed twice', function () {
 test('returns the union of the subtrees when several unrelated roots are given', function () {
     ['reply' => $reply, 'grandchild' => $grandchild, 'greatGrandchild' => $greatGrandchild, 'bystander' => $bystander] = commentChainBesideAnotherTree();
 
-    $bystanderReply = Comment::query()->where('parent_id', $bystander->getKey())->sole();
+    $bystanderReply                                                                                                    = Comment::query()->where('parent_id', $bystander->getKey())->sole();
 
     expect(app(ListCommentSubtreeIds::class)->handle([$reply->getKey(), $bystander->getKey()]))
         ->toEqualCanonicalizing([

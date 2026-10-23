@@ -30,7 +30,7 @@ class ConversationFactory extends Factory
     public function definition(): array
     {
         return [
-            'type' => ConversationType::Direct,
+            'type'            => ConversationType::Direct,
             'last_message_at' => null,
         ];
     }

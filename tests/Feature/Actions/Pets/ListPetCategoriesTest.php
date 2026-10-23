@@ -66,7 +66,7 @@ test('serialises the whole tree in a constant number of queries however many cat
     Storage::fake(config('media-library.disk_name'));
     seedCategoryTree(2);
 
-    $atTwo = countCategoryTreeQueries();
+    $atTwo  = countCategoryTreeQueries();
 
     seedCategoryTree(3);
 
@@ -96,9 +96,9 @@ test('serialises the whole tree in a constant number of queries however many cat
 test('serialises each category with its icon and its breeds nested under it', function () {
     Storage::fake(config('media-library.disk_name'));
     seedCategoryTree(2);
-    $bare = Category::factory()->has(Breed::factory()->count(2))->create(['name' => 'Zebras']);
+    $bare     = Category::factory()->has(Breed::factory()->count(2))->create(['name' => 'Zebras']);
 
-    $payload = PetCategoryOptionResource::collection(app(ListPetCategories::class)->handle())
+    $payload  = PetCategoryOptionResource::collection(app(ListPetCategories::class)->handle())
         ->response()
         ->getData(true);
 
@@ -131,13 +131,13 @@ test('serialises each category with its icon and its breeds nested under it', fu
  * string columns and swapping them is a live typo that key presence cannot see.
  */
 test('serialises the Arabic name of every category and breed beside the English one', function () {
-    $translated = Category::factory()->create(['name' => 'Cats', 'name_ar' => 'قطط']);
+    $translated   = Category::factory()->create(['name' => 'Cats', 'name_ar' => 'قطط']);
     Breed::factory()->for($translated)->create(['name' => 'Persian', 'name_ar' => 'شيرازي']);
 
     $untranslated = Category::factory()->create(['name' => 'Zebras', 'name_ar' => null]);
     Breed::factory()->for($untranslated)->create(['name' => 'Grevy', 'name_ar' => null]);
 
-    $payload = collect(
+    $payload      = collect(
         PetCategoryOptionResource::collection(app(ListPetCategories::class)->handle())
             ->response()
             ->getData(true)
@@ -169,7 +169,7 @@ test('orders the categories and each category breeds by name', function () {
     Breed::factory()->for($birds)->create(['name' => 'Parrot']);
     Breed::factory()->for($birds)->create(['name' => 'Canary']);
 
-    $tree = app(ListPetCategories::class)->handle();
+    $tree  = app(ListPetCategories::class)->handle();
 
     expect($tree->pluck('name')->all())->toBe(['Birds', 'Zebras'])
         ->and($tree->firstWhere('name', 'Birds')->breeds->pluck('name')->all())->toBe(['Canary', 'Parrot']);

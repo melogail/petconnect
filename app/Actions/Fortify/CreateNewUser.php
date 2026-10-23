@@ -43,8 +43,8 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         return $this->registerUser->handle([
-            'name' => $input['name'],
-            'email' => $input['email'],
+            'name'     => $input['name'],
+            'email'    => $input['email'],
             'password' => $input['password'],
         ]);
     }

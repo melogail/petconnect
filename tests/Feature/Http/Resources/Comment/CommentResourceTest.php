@@ -44,10 +44,10 @@ function threadPayload(Pet $pet): array
 }
 
 test('every key the resource emits is either a rule on the store request or a declared read shape', function () {
-    $pet = Pet::factory()->create();
+    $pet       = Pet::factory()->create();
     Comment::factory()->for($pet, 'commentable')->create();
 
-    $payload = threadPayload($pet);
+    $payload   = threadPayload($pet);
 
     $unmatched = array_values(array_diff(
         array_keys($payload),
@@ -59,12 +59,12 @@ test('every key the resource emits is either a rule on the store request or a de
 });
 
 test('every writable key the resource emits carries the name the store request accepts', function () {
-    $pet = Pet::factory()->create();
-    $parent = Comment::factory()->for($pet, 'commentable')->create();
+    $pet      = Pet::factory()->create();
+    $parent   = Comment::factory()->for($pet, 'commentable')->create();
     Comment::factory()->reply($parent)->create();
 
-    $payload = threadPayload($pet);
-    $rules = (new StoreCommentRequest)->rules();
+    $payload  = threadPayload($pet);
+    $rules    = (new StoreCommentRequest)->rules();
 
     $writable = array_values(array_diff(array_keys($payload), COMMENT_READ_SHAPES));
 
@@ -76,7 +76,7 @@ test('every writable key the resource emits carries the name the store request a
 });
 
 test('the key an edit posts back is a rule on the update request', function () {
-    $pet = Pet::factory()->create();
+    $pet     = Pet::factory()->create();
     Comment::factory()->for($pet, 'commentable')->create();
 
     $payload = threadPayload($pet);
@@ -86,8 +86,8 @@ test('the key an edit posts back is a rule on the update request', function () {
 });
 
 test('describes the author with a byline and nothing that belongs to their account', function () {
-    $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $author  = User::factory()->create();
+    $pet     = Pet::factory()->create();
     Comment::factory()->for($author)->for($pet, 'commentable')->create();
 
     $payload = threadPayload($pet);
@@ -99,7 +99,7 @@ test('describes the author with a byline and nothing that belongs to their accou
 
 test('marks a comment as the viewer own only for its author', function () {
     $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
     Comment::factory()->for($author)->for($pet, 'commentable')->create();
 
     expect(threadPayload($pet)['is_author'])->toBeFalse();
@@ -110,7 +110,7 @@ test('marks a comment as the viewer own only for its author', function () {
 });
 
 test('omits the replies key on a comment whose replies were not loaded', function () {
-    $parent = Comment::factory()->create();
+    $parent  = Comment::factory()->create();
     Comment::factory()->reply($parent)->create();
 
     $payload = $this->get(route('comments.replies', $parent))

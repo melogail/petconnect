@@ -3,6 +3,7 @@ import RepeaterShell from '@/components/pets/form/RepeaterShell.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { PetExtraRow } from '@/lib/petForm';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The free-form extras: whatever label/value pairs the owner wants to add.
@@ -43,34 +44,40 @@ function remove(index: number): void {
         rows.filter((_, position) => position !== index),
     );
 }
+
+const { t } = useTranslations();
 </script>
 
 <template>
     <RepeaterShell
         :rows="rows"
-        add-label="Add a detail"
-        empty-label="Nothing extra yet — add anything a buyer would ask about."
+        :add-label="t('wizard.add_detail')"
+        :empty-label="t('wizard.no_extras_yet')"
         @add="add"
         @remove="remove"
     >
         <template #row="{ index }">
             <div class="grid gap-2">
-                <Label :for="`extra-label-${index}`">Label</Label>
+                <Label :for="`extra-label-${index}`">
+                    {{ t('wizard.label') }}
+                </Label>
                 <Input
                     :id="`extra-label-${index}`"
                     :model-value="rows[index].label"
-                    placeholder="Good with children"
+                    :placeholder="t('wizard.extra_label_placeholder')"
                     @update:model-value="
                         (value) => patch(index, 'label', String(value))
                     "
                 />
             </div>
             <div class="grid gap-2">
-                <Label :for="`extra-value-${index}`">Value</Label>
+                <Label :for="`extra-value-${index}`">
+                    {{ t('wizard.value') }}
+                </Label>
                 <Input
                     :id="`extra-value-${index}`"
                     :model-value="rows[index].value"
-                    placeholder="Yes"
+                    :placeholder="t('common.yes')"
                     @update:model-value="
                         (value) => patch(index, 'value', String(value))
                     "

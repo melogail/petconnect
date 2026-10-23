@@ -41,27 +41,27 @@ class UserFactory extends Factory
         $location = fake()->randomElement($this->locations());
 
         return [
-            'name' => fake()->name(),
-            'username' => $this->uniqueHandle(),
-            'bio' => fake()->optional(0.7)->paragraph(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'phone' => fake()->numerify('+20-1##-###-####'),
-            'country' => $location['country'],
-            'state' => $location['state'],
-            'city' => $location['city'],
-            'address' => $this->streetAddress(),
-            'lat' => $this->jitter($location['latitude']),
-            'lng' => $this->jitter($location['longitude']),
-            'timezone' => $location['timezone'],
-            'locale' => 'en',
-            'is_active' => true,
-            'last_seen_at' => fake()->dateTimeBetween('-7 days', 'now'),
-            'remember_token' => Str::random(10),
-            'two_factor_secret' => null,
+            'name'                      => fake()->name(),
+            'username'                  => $this->uniqueHandle(),
+            'bio'                       => fake()->optional(0.7)->paragraph(),
+            'email'                     => fake()->unique()->safeEmail(),
+            'email_verified_at'         => now(),
+            'password'                  => static::$password ??= Hash::make('password'),
+            'phone'                     => fake()->numerify('+20-1##-###-####'),
+            'country'                   => $location['country'],
+            'state'                     => $location['state'],
+            'city'                      => $location['city'],
+            'address'                   => $this->streetAddress(),
+            'lat'                       => $this->jitter($location['latitude']),
+            'lng'                       => $this->jitter($location['longitude']),
+            'timezone'                  => $location['timezone'],
+            'locale'                    => 'en',
+            'is_active'                 => true,
+            'last_seen_at'              => fake()->dateTimeBetween('-7 days', 'now'),
+            'remember_token'            => Str::random(10),
+            'two_factor_secret'         => null,
             'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
+            'two_factor_confirmed_at'   => null,
         ];
     }
 
@@ -95,11 +95,11 @@ class UserFactory extends Factory
     public function inCity(array $location): static
     {
         return $this->state(fn (array $attributes): array => [
-            'city' => $location['city'],
-            'state' => $location['state'],
-            'country' => $location['country'],
-            'lat' => $this->jitter($location['latitude']),
-            'lng' => $this->jitter($location['longitude']),
+            'city'     => $location['city'],
+            'state'    => $location['state'],
+            'country'  => $location['country'],
+            'lat'      => $this->jitter($location['latitude']),
+            'lng'      => $this->jitter($location['longitude']),
             'timezone' => $location['timezone'],
         ]);
     }
@@ -134,9 +134,9 @@ class UserFactory extends Factory
     public function withTwoFactor(?string $secret = null, ?array $recoveryCodes = null): static
     {
         return $this->state(fn (array $attributes): array => [
-            'two_factor_secret' => encrypt($secret ?? app(Google2FA::class)->generateSecretKey()),
+            'two_factor_secret'         => encrypt($secret ?? app(Google2FA::class)->generateSecretKey()),
             'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes ?? ['recovery-code-1'])),
-            'two_factor_confirmed_at' => now(),
+            'two_factor_confirmed_at'   => now(),
         ]);
     }
 
@@ -146,9 +146,9 @@ class UserFactory extends Factory
     public function withoutTwoFactor(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'two_factor_secret' => null,
+            'two_factor_secret'         => null,
             'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
+            'two_factor_confirmed_at'   => null,
         ]);
     }
 

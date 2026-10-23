@@ -2,7 +2,10 @@
 
 namespace App\Pipelines\Pets\BuildHomeFeed;
 
+use App\Models\Comment;
+use App\Models\Pet;
 use Closure;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -39,7 +42,7 @@ class EagerLoadFeedRelations
 {
     public function handle(HomeFeedContext $context, Closure $next): mixed
     {
-        $viewer = $context->viewer;
+        $viewer         = $context->viewer;
         $commentPreview = $context->commentPreview;
 
         $context->query
@@ -48,14 +51,17 @@ class EagerLoadFeedRelations
                 'breed',
                 'user.media',
                 'media',
-                'comments' => fn (Relation $comments): Relation => $comments
-                    ->whereNull('parent_id')
-                    ->with('user.media')
-                    ->withCount(['likes', 'replies'])
-                    ->withLikedBy($viewer)
-                    ->withReportedBy($viewer)
-                    ->latest()
-                    ->limit($commentPreview),
+                'comments' => function (Relation $comments) use ($viewer, $commentPreview): void {
+                    /** @var MorphMany<Comment, Pet> $comments Narrowed inline: with() only accepts a bare Relation closure, and the scopes need the related model. */
+                    $comments
+                        ->whereNull('parent_id')
+                        ->with('user.media')
+                        ->withCount(['likes', 'replies'])
+                        ->withLikedBy($viewer)
+                        ->withReportedBy($viewer)
+                        ->latest()
+                        ->limit($commentPreview);
+                },
             ])
             ->withCount(['likes', 'comments'])
             ->withLikedBy($viewer);

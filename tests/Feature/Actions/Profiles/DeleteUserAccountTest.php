@@ -31,13 +31,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @var array<string, array{0: string, 1: string}>
  */
 const MORPH_TABLES = [
-    'likes' => ['likeable_type', 'likeable_id'],
-    'saves' => ['saveable_type', 'saveable_id'],
-    'reports' => ['reportable_type', 'reportable_id'],
-    'reviews' => ['reviewable_type', 'reviewable_id'],
-    'comments' => ['commentable_type', 'commentable_id'],
+    'likes'         => ['likeable_type', 'likeable_id'],
+    'saves'         => ['saveable_type', 'saveable_id'],
+    'reports'       => ['reportable_type', 'reportable_id'],
+    'reviews'       => ['reviewable_type', 'reviewable_id'],
+    'comments'      => ['commentable_type', 'commentable_id'],
     'notifications' => ['notifiable_type', 'notifiable_id'],
-    'media' => ['model_type', 'model_id'],
+    'media'         => ['model_type', 'model_id'],
 ];
 
 /**
@@ -57,7 +57,7 @@ function orphanedMorphRows(): array
     foreach (MORPH_TABLES as $table => [$typeColumn, $idColumn]) {
         foreach (DB::table($table)->get() as $row) {
             /** @var class-string<Model>|null $class */
-            $class = Relation::getMorphedModel($row->{$typeColumn});
+            $class  = Relation::getMorphedModel($row->{$typeColumn});
 
             if ($class === null) {
                 $orphans[] = "{$table} -> unmapped morph alias [{$row->{$typeColumn}}]";
@@ -101,7 +101,7 @@ function morphTableCounts(): array
 function notifyRow(User $user, string $type = 'like'): void
 {
     $user->notifications()->create([
-        'id' => (string) Str::uuid(),
+        'id'   => (string) Str::uuid(),
         'type' => 'App\\Notifications\\ModelLikedNotification',
         'data' => ['type' => $type, 'message_key' => 'notifications.liked_pet'],
     ]);
@@ -116,13 +116,13 @@ function notifyRow(User $user, string $type = 'like'): void
  */
 function richAccount(): array
 {
-    $account = User::factory()->create();
-    $other = User::factory()->create();
-    $stranger = User::factory()->create();
+    $account            = User::factory()->create();
+    $other              = User::factory()->create();
+    $stranger           = User::factory()->create();
 
-    $listing = Pet::factory()->for($account)->create();
-    $retiredListing = Pet::factory()->for($account)->create();
-    $othersListing = Pet::factory()->for($other)->create();
+    $listing            = Pet::factory()->for($account)->create();
+    $retiredListing     = Pet::factory()->for($account)->create();
+    $othersListing      = Pet::factory()->for($other)->create();
 
     $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
     $retiredListing->addMedia(UploadedFile::fake()->image('retired.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
@@ -132,11 +132,11 @@ function richAccount(): array
 
     $retiredListing->delete();
 
-    $commentOnListing = Comment::factory()->for($other)->forPet($listing)->create();
-    $replyOnListing = Comment::factory()->for($stranger)->reply($commentOnListing)->create();
-    $ownComment = Comment::factory()->for($account)->forPet($othersListing)->create();
-    $replyToOwnComment = Comment::factory()->for($other)->reply($ownComment)->create();
-    $othersComment = Comment::factory()->for($stranger)->forPet($othersListing)->create();
+    $commentOnListing   = Comment::factory()->for($other)->forPet($listing)->create();
+    $replyOnListing     = Comment::factory()->for($stranger)->reply($commentOnListing)->create();
+    $ownComment         = Comment::factory()->for($account)->forPet($othersListing)->create();
+    $replyToOwnComment  = Comment::factory()->for($other)->reply($ownComment)->create();
+    $othersComment      = Comment::factory()->for($stranger)->forPet($othersListing)->create();
 
     Like::factory()->for($other)->forUser($account)->create();
     Like::factory()->for($other)->forPet($listing)->create();
@@ -153,8 +153,8 @@ function richAccount(): array
     Save::factory()->for($stranger)->forPet($othersListing)->create();
 
     $reviewAboutAccount = Review::factory()->for($other)->forUser($account)->create();
-    $reviewByAccount = Review::factory()->for($account)->forUser($other)->create();
-    $reviewAboutOther = Review::factory()->for($stranger)->forUser($other)->create();
+    $reviewByAccount    = Review::factory()->for($account)->forUser($other)->create();
+    $reviewAboutOther   = Review::factory()->for($stranger)->forUser($other)->create();
 
     Report::factory()->for($stranger)->forReportable($reviewAboutAccount)->create();
     Report::factory()->for($stranger)->forReportable($reviewByAccount)->create();
@@ -169,7 +169,7 @@ function richAccount(): array
     notifyRow($other);
     notifyRow($stranger, 'review');
 
-    $conversation = Conversation::factory()->direct()->withParticipants($account, $other)->create();
+    $conversation       = Conversation::factory()->direct()->withParticipants($account, $other)->create();
     Message::factory()->for($conversation)->from($account)->create();
     Message::factory()->for($conversation)->from($other)->pinned($account)->create();
 
@@ -189,7 +189,7 @@ test('leaves no orphaned polymorphic row in any morph table', function () {
     ['account' => $account] = richAccount();
 
     expect(orphanedMorphRows())->toBe([]);
-    $before = morphTableCounts();
+    $before                 = morphTableCounts();
 
     app(DeleteUserAccount::class)->handle($account);
 
@@ -201,14 +201,14 @@ test('leaves no orphaned polymorphic row in any morph table', function () {
 test('keeps every row belonging to the accounts that were not deleted', function () {
     ['account' => $account, 'other' => $other, 'stranger' => $stranger] = richAccount();
 
-    $petIds = Pet::withTrashed()->where('user_id', $other->getKey())->pluck('id');
-    $commentIds = Comment::query()->where('user_id', $stranger->getKey())
+    $petIds                                                             = Pet::withTrashed()->where('user_id', $other->getKey())->pluck('id');
+    $commentIds                                                         = Comment::query()->where('user_id', $stranger->getKey())
         ->whereIn('commentable_id', Pet::query()->where('user_id', $other->getKey())->pluck('id'))
         ->pluck('id');
-    $reviewIds = Review::query()->where('reviewable_id', $other->getKey())
+    $reviewIds                                                          = Review::query()->where('reviewable_id', $other->getKey())
         ->where('reviewable_type', Relation::getMorphAlias(User::class))
         ->where('user_id', $stranger->getKey())->pluck('id');
-    $notificationIds = $other->notifications()->pluck('id');
+    $notificationIds                                                    = $other->notifications()->pluck('id');
 
     app(DeleteUserAccount::class)->handle($account);
 
@@ -228,11 +228,11 @@ test('keeps every row belonging to the accounts that were not deleted', function
  * measured before the flow existed.
  */
 test('removes a report filed against a review the delete destroys', function () {
-    $account = User::factory()->create();
-    $subject = User::factory()->create();
+    $account           = User::factory()->create();
+    $subject           = User::factory()->create();
     $moderatorReporter = User::factory()->create();
-    $review = Review::factory()->for($account)->forUser($subject)->create();
-    $report = Report::factory()->for($moderatorReporter)->forReportable($review)->create();
+    $review            = Review::factory()->for($account)->forUser($subject)->create();
+    $report            = Report::factory()->for($moderatorReporter)->forReportable($review)->create();
 
     app(DeleteUserAccount::class)->handle($account);
 
@@ -241,7 +241,7 @@ test('removes a report filed against a review the delete destroys', function () 
 });
 
 test('removes the reviews written about the account, which no foreign key covers', function () {
-    $account = User::factory()->create();
+    $account     = User::factory()->create();
     $reviewAbout = Review::factory()->forUser($account)->create();
 
     app(DeleteUserAccount::class)->handle($account);
@@ -257,17 +257,17 @@ test('removes the reviews written about the account, which no foreign key covers
  * media.
  */
 test('removes the stored files of the account and of its listings, trashed ones included', function () {
-    $account = User::factory()->create();
-    $listing = Pet::factory()->for($account)->create();
-    $retired = Pet::factory()->for($account)->create();
+    $account      = User::factory()->create();
+    $listing      = Pet::factory()->for($account)->create();
+    $retired      = Pet::factory()->for($account)->create();
 
-    $avatar = $account->addMedia(UploadedFile::fake()->image('avatar.jpg'))->toMediaCollection('users');
-    $cover = $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
+    $avatar       = $account->addMedia(UploadedFile::fake()->image('avatar.jpg'))->toMediaCollection('users');
+    $cover        = $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
     $retiredCover = $retired->addMedia(UploadedFile::fake()->image('retired.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
     $retired->delete();
 
-    $disk = Storage::disk(config('media-library.disk_name'));
-    $paths = [
+    $disk         = Storage::disk(config('media-library.disk_name'));
+    $paths        = [
         $avatar->getPathRelativeToRoot(),
         $cover->getPathRelativeToRoot(),
         $retiredCover->getPathRelativeToRoot(),
@@ -293,11 +293,11 @@ describe('what it deliberately leaves alone', function () {
      * so their thread does not vanish out from under them.
      */
     test('keeps the conversation and the other participant messages', function () {
-        $account = User::factory()->create();
-        $other = User::factory()->create();
+        $account      = User::factory()->create();
+        $other        = User::factory()->create();
         $conversation = Conversation::factory()->direct()->withParticipants($account, $other)->create();
-        $theirs = Message::factory()->for($conversation)->from($other)->create();
-        $ours = Message::factory()->for($conversation)->from($account)->create();
+        $theirs       = Message::factory()->for($conversation)->from($other)->create();
+        $ours         = Message::factory()->for($conversation)->from($account)->create();
 
         app(DeleteUserAccount::class)->handle($account);
 
@@ -312,10 +312,10 @@ describe('what it deliberately leaves alone', function () {
      * would silently edit a conversation two other people are still having.
      */
     test('clears the pinner of a pinned message without unpinning it', function () {
-        $account = User::factory()->create();
-        $other = User::factory()->create();
+        $account      = User::factory()->create();
+        $other        = User::factory()->create();
         $conversation = Conversation::factory()->direct()->withParticipants($account, $other)->create();
-        $pinned = Message::factory()->for($conversation)->from($other)->pinned($account)->create();
+        $pinned       = Message::factory()->for($conversation)->from($other)->pinned($account)->create();
 
         app(DeleteUserAccount::class)->handle($account);
 

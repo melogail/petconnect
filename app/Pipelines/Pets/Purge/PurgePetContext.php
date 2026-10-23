@@ -76,7 +76,7 @@ class PurgePetContext
     /**
      * Whether the listing row was removed, once PurgeListingRecord has run.
      */
-    protected bool $purged = false;
+    protected bool $purged       = false;
 
     public function __construct(
         public readonly Pet $pet,

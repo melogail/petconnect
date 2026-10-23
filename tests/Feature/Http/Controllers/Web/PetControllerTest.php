@@ -119,6 +119,35 @@ describe('show', function () {
         $this->get('/pets/no-such-listing-00000000')->assertNotFound();
     });
 
+    /**
+     * The share card is decided in `app.blade.php`: `og:url` is the page's own
+     * URL and `og:image` is the listing's cover when it has one, else the brand
+     * lockup. It lives in the Blade head rather than the page's `<Head>`
+     * because crawlers take the first `og:image` they meet, and the static
+     * default would always come first.
+     */
+    test('a listing with a cover photo is the share image, and the page is the share url', function () {
+        Storage::fake('public');
+
+        $pet = Pet::factory()->create();
+        attachGalleryPhoto($pet, 'cover.jpg');
+
+        $this->get(route('pets.show', $pet))
+            ->assertOk()
+            ->assertSee('<meta property="og:url" content="'.route('pets.show', $pet).'">', escape: false)
+            ->assertSee('<meta property="og:image" content="'.$pet->fresh()->featuredPhotoUrl('display').'">', escape: false)
+            ->assertDontSee('brand/sniffpal-og.png');
+    });
+
+    test('a listing without a photo falls back to the brand share image', function () {
+        $pet = Pet::factory()->create();
+
+        $this->get(route('pets.show', $pet))
+            ->assertOk()
+            ->assertSee('<meta property="og:image" content="'.asset('brand/sniffpal-og.png').'">', escape: false)
+            ->assertSee('<meta property="og:image:width" content="1200">', escape: false);
+    });
+
     test('a visit counts a view on the listing', function () {
         $pet = Pet::factory()->create(['views' => 4]);
 

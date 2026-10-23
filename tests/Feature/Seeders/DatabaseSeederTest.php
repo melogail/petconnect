@@ -26,17 +26,17 @@ function seededRowCounts(): array
 test('seeds a dataset that holds every cross table invariant', function () {
     $this->seed();
 
-    $morphColumns = [
-        'comments' => 'commentable_type',
-        'likes' => 'likeable_type',
-        'saves' => 'saveable_type',
-        'reviews' => 'reviewable_type',
-        'reports' => 'reportable_type',
-        'media' => 'model_type',
+    $morphColumns     = [
+        'comments'      => 'commentable_type',
+        'likes'         => 'likeable_type',
+        'saves'         => 'saveable_type',
+        'reviews'       => 'reviewable_type',
+        'reports'       => 'reportable_type',
+        'media'         => 'model_type',
         'notifications' => 'notifiable_type',
     ];
 
-    $morphValues = collect($morphColumns)
+    $morphValues      = collect($morphColumns)
         ->flatMap(fn (string $column, string $table): array => DB::table($table)->distinct()->pluck($column)->all())
         ->filter()
         ->values();
@@ -53,7 +53,9 @@ test('seeds a dataset that holds every cross table invariant', function () {
 
     expect($mismatchedBreeds)->toBe(0);
 
-    $staleCursors = DB::table('conversations')
+    // Explicit select: MySQL rejects a derived table whose `select *` carries two `id` columns.
+    $staleCursors     = DB::table('conversations')
+        ->select('conversations.id')
         ->leftJoin('messages', 'messages.conversation_id', '=', 'conversations.id')
         ->groupBy('conversations.id', 'conversations.last_message_at')
         ->havingRaw('coalesce(max(messages.created_at), \'\') != coalesce(conversations.last_message_at, \'\')')
@@ -61,7 +63,7 @@ test('seeds a dataset that holds every cross table invariant', function () {
 
     expect($staleCursors)->toBe(0);
 
-    $before = seededRowCounts();
+    $before           = seededRowCounts();
 
     $this->seed();
 
@@ -71,15 +73,33 @@ test('seeds a dataset that holds every cross table invariant', function () {
 test('seeds pet statuses and listing types that rehydrate as enum cases', function () {
     $this->seed();
 
-    $statuses = DB::table('pets')->distinct()->pluck('status');
+    $statuses     = DB::table('pets')->distinct()->pluck('status');
     $listingTypes = DB::table('pets')->distinct()->pluck('listing_type');
 
     expect($statuses->all())->each->toBeIn(['available', 'unavailable'])
         ->and($listingTypes->all())->each->toBeIn(['adoption', 'sale', 'mating']);
 
-    $pets = Pet::query()->get();
+    $pets         = Pet::query()->get();
 
     expect($pets)->not->toBeEmpty()
         ->and($pets->pluck('status')->unique()->values()->all())->each->toBeInstanceOf(PetStatus::class)
         ->and($pets->pluck('listing_type')->unique()->values()->all())->each->toBeInstanceOf(ListingType::class);
+});
+
+/**
+ * The demo dataset must never land on a production database; only the
+ * taxonomy and the admin account are seeded there.
+ */
+test('seeds only taxonomy and admins in production', function () {
+    // Touch the database first so the lazy migration runs before the environment switch.
+    expect(DB::table('pets')->count())->toBe(0);
+
+    $this->app->detectEnvironment(fn (): string => 'production');
+
+    $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
+
+    expect(DB::table('categories')->count())->toBeGreaterThan(0)
+        ->and(DB::table('admins')->count())->toBeGreaterThan(0)
+        ->and(DB::table('users')->count())->toBe(0)
+        ->and(DB::table('pets')->count())->toBe(0);
 });

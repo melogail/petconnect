@@ -141,7 +141,12 @@ const likeLabel = computed(
  * still-nameless button here. See its docblock, which records the measurement.
  */
 const messageLabel = computed(() =>
-    owner.value ? `Message ${owner.value.name} about ${name.value}` : undefined,
+    owner.value
+        ? t('messaging.message_name_about', {
+              name: owner.value.name,
+              pet: name.value,
+          })
+        : undefined,
 );
 
 const viewDetailsLabel = computed(

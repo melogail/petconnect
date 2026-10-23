@@ -75,7 +75,7 @@ trait CommentValidationRules
     public function commentBounds(): array
     {
         return [
-            'max_length' => $this->maxContentLength(),
+            'max_length'      => $this->maxContentLength(),
             'thread_per_page' => $this->threadPerPage(),
         ];
     }

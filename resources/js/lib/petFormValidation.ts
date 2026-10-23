@@ -67,6 +67,10 @@ function today(): string {
  * to the first on submit has been badly served. Each message lands on the
  * same key the server would use, so the step highlights it the same way.
  *
+ * Every message is a **catalogue key** (`wizard.validation.*`), not a sentence:
+ * this module has no access to the reader's locale, so the wizard resolves them
+ * through `t()` before handing them to `form.setError()`.
+ *
  * Only this step is checked ahead of submit. The others are either optional
  * throughout or carry their own inline guards (the photo picker), and a
  * server round trip on save is what settles them.
@@ -75,19 +79,19 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
     const errors: BasicStepErrors = {};
 
     if (state.listing_type === '') {
-        errors.listing_type = 'Pick a listing type.';
+        errors.listing_type = 'wizard.validation.pick_listing_type';
     }
 
     if (state.status === '') {
-        errors.status = 'Pick a status.';
+        errors.status = 'wizard.validation.pick_status';
     }
 
     if (state.category_id === null) {
-        errors.category_id = 'Pick a category.';
+        errors.category_id = 'wizard.validation.pick_category';
     }
 
     if (state.gender === '') {
-        errors.gender = 'Pick a gender.';
+        errors.gender = 'wizard.validation.pick_gender';
     }
 
     const isAdoption = state.listing_type === 'adoption';
@@ -95,12 +99,11 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
     const quantity = integer(state.quantity);
 
     if (quantity === null || quantity < 1) {
-        errors.quantity = 'Enter a whole number of 1 or more.';
+        errors.quantity = 'wizard.validation.quantity_min';
     } else if (quantity > 255) {
-        errors.quantity = 'The quantity must not be greater than 255.';
+        errors.quantity = 'wizard.validation.quantity_max';
     } else if (quantity > 1 && !isAdoption) {
-        errors.quantity =
-            'Only an adoption listing can offer more than one animal.';
+        errors.quantity = 'wizard.validation.quantity_adoption_only';
     }
 
     const isLitter = isAdoption && quantity !== null && quantity > 1;
@@ -108,13 +111,13 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
     const name = trimmedInput(state.name);
 
     if (!isLitter && name === '') {
-        errors.name = 'Enter a name.';
+        errors.name = 'wizard.validation.name_required';
     } else if (name.length > 255) {
-        errors.name = 'The name must not be greater than 255 characters.';
+        errors.name = 'wizard.validation.name_max';
     }
 
     if (trimmedInput(state.color).length > 255) {
-        errors.color = 'The colour must not be greater than 255 characters.';
+        errors.color = 'wizard.validation.color_max';
     }
 
     const birthDate = trimmedInput(state.birth_date);
@@ -125,7 +128,7 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
             Number.isNaN(Date.parse(birthDate)) ||
             birthDate > today())
     ) {
-        errors.birth_date = 'Enter a date no later than today.';
+        errors.birth_date = 'wizard.validation.birth_date_future';
     }
 
     if (isLitter) {
@@ -133,11 +136,11 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
         const female = integer(state.female_count);
 
         if (male === null || male < 0) {
-            errors.male_count = 'Enter a whole number of 0 or more.';
+            errors.male_count = 'wizard.validation.count_min';
         }
 
         if (female === null || female < 0) {
-            errors.female_count = 'Enter a whole number of 0 or more.';
+            errors.female_count = 'wizard.validation.count_min';
         }
 
         if (
@@ -148,37 +151,35 @@ export function validateBasicStep(state: PetFormState): BasicStepErrors {
             errors.quantity === undefined
         ) {
             if (male + female !== quantity) {
-                errors.quantity =
-                    'The male and female counts must add up to the quantity.';
+                errors.quantity = 'wizard.validation.counts_sum';
             } else if (state.gender === 'male' && female > 0) {
-                errors.gender = 'A male listing cannot include females.';
+                errors.gender = 'wizard.validation.male_no_females';
             } else if (state.gender === 'female' && male > 0) {
-                errors.gender = 'A female listing cannot include males.';
+                errors.gender = 'wizard.validation.female_no_males';
             } else if (state.gender === 'mixed' && (male < 1 || female < 1)) {
-                errors.gender =
-                    'A mixed listing needs at least one male and one female.';
+                errors.gender = 'wizard.validation.mixed_needs_both';
             }
         }
     } else if (state.gender === 'mixed') {
-        errors.gender = 'A mixed listing must offer more than one animal.';
+        errors.gender = 'wizard.validation.mixed_needs_litter';
     }
 
     if (trimmedInput(state.weight) !== '') {
         const weight = decimal(state.weight);
 
         if (weight === null || weight < 0) {
-            errors.weight = 'Enter a number of 0 or more.';
+            errors.weight = 'wizard.validation.number_min';
         }
     }
 
     if (isSale) {
         if (trimmedInput(state.price) === '') {
-            errors.price = 'Enter a price.';
+            errors.price = 'wizard.validation.price_required';
         } else {
             const price = decimal(state.price);
 
             if (price === null || price < 0) {
-                errors.price = 'Enter a number of 0 or more.';
+                errors.price = 'wizard.validation.number_min';
             }
         }
     }

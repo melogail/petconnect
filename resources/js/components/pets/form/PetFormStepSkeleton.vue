@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * What a wizard step looks like while its chunk is still in flight.
@@ -14,10 +15,12 @@ import { Skeleton } from '@/components/ui/skeleton';
  * `<div>` help nobody.
  */
 defineOptions({ inheritAttrs: false });
+
+const { t } = useTranslations();
 </script>
 
 <template>
-    <div class="space-y-8" role="status" aria-label="Loading step">
+    <div class="space-y-8" role="status" :aria-label="t('wizard.loading_step')">
         <div class="space-y-3">
             <Skeleton class="h-5 w-40" />
             <Skeleton class="h-4 w-72 max-w-full" />

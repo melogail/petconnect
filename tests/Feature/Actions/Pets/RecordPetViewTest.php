@@ -5,7 +5,7 @@ use App\Models\Pet;
 use App\Models\User;
 
 test('counts a visit from a guest', function () {
-    $pet = Pet::factory()->create(['views' => 7]);
+    $pet     = Pet::factory()->create(['views' => 7]);
 
     $counted = app(RecordPetView::class)->handle($pet, null, 'session-abc');
 
@@ -14,8 +14,8 @@ test('counts a visit from a guest', function () {
 });
 
 test('does not count the owner looking at their own listing', function () {
-    $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create(['views' => 7]);
+    $owner   = User::factory()->create();
+    $pet     = Pet::factory()->for($owner)->create(['views' => 7]);
 
     $counted = app(RecordPetView::class)->handle($pet, $owner, (string) $owner->getKey());
 
@@ -25,7 +25,7 @@ test('does not count the owner looking at their own listing', function () {
 
 test('counts the same visitor only once inside the dedup window', function () {
     config(['petconnect.pets.view_dedup_minutes' => 60]);
-    $pet = Pet::factory()->create(['views' => 0]);
+    $pet    = Pet::factory()->create(['views' => 0]);
     $action = app(RecordPetView::class);
 
     $action->handle($pet, null, 'session-abc');
@@ -36,7 +36,7 @@ test('counts the same visitor only once inside the dedup window', function () {
 });
 
 test('counts a different visitor inside the same window', function () {
-    $pet = Pet::factory()->create(['views' => 0]);
+    $pet    = Pet::factory()->create(['views' => 0]);
     $action = app(RecordPetView::class);
 
     $action->handle($pet, null, 'session-abc');
@@ -47,7 +47,7 @@ test('counts a different visitor inside the same window', function () {
 
 test('counts the same visitor again once the dedup window has passed', function () {
     config(['petconnect.pets.view_dedup_minutes' => 60]);
-    $pet = Pet::factory()->create(['views' => 0]);
+    $pet    = Pet::factory()->create(['views' => 0]);
     $action = app(RecordPetView::class);
 
     $action->handle($pet, null, 'session-abc');

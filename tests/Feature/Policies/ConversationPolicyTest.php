@@ -8,7 +8,7 @@ test('reading the inbox is allowed for any signed in user', function () {
 });
 
 test('a participant may read their own thread', function () {
-    $participant = User::factory()->create();
+    $participant  = User::factory()->create();
     $conversation = Conversation::factory()
         ->direct()
         ->withParticipants($participant, User::factory()->create())
@@ -27,7 +27,7 @@ test('a user who is not in the conversation may not read it', function () {
 });
 
 test('opening a conversation is allowed for a verified user and refused for an unverified one', function () {
-    $verified = User::factory()->create();
+    $verified   = User::factory()->create();
     $unverified = User::factory()->unverified()->create();
 
     expect($verified->can('create', Conversation::class))->toBeTrue()

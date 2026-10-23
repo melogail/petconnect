@@ -43,7 +43,7 @@ describe('the avatar', function () {
      */
     test('keeps the existing avatar and its file when the upload fails', function () {
         Storage::fake(config('media-library.disk_name'));
-        $user = User::factory()->create(['name' => 'Original Name']);
+        $user     = User::factory()->create(['name' => 'Original Name']);
         $existing = attachAvatar($user);
         rejectTheNextUpload();
 
@@ -68,8 +68,8 @@ describe('the avatar', function () {
      */
     test('replaces the avatar without deleting the file the run just uploaded', function () {
         Storage::fake(config('media-library.disk_name'));
-        $user = User::factory()->create();
-        $existing = attachAvatar($user);
+        $user         = User::factory()->create();
+        $existing     = attachAvatar($user);
         $existingPath = $existing->getPathRelativeToRoot();
 
         app(UpdateProfile::class)->handle(
@@ -78,8 +78,8 @@ describe('the avatar', function () {
             image: UploadedFile::fake()->image('new-avatar.jpg'),
         );
 
-        $replacement = $user->fresh()->load('media')->getMedia('users')->sole();
-        $disk = Storage::disk(config('media-library.disk_name'));
+        $replacement  = $user->fresh()->load('media')->getMedia('users')->sole();
+        $disk         = Storage::disk(config('media-library.disk_name'));
 
         expect($replacement->getKey())->not->toBe($existing->getKey());
         $disk->assertExists($replacement->getPathRelativeToRoot());
@@ -128,9 +128,9 @@ describe('the attribute bag', function () {
         app(UpdateProfile::class)->handle($user, ['name' => 'Renamed']);
 
         $this->assertDatabaseHas('users', [
-            'id' => $user->getKey(),
+            'id'   => $user->getKey(),
             'name' => 'Renamed',
-            'bio' => 'Fosters kittens.',
+            'bio'  => 'Fosters kittens.',
             'city' => 'Cairo',
         ]);
     });

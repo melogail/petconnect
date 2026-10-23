@@ -63,7 +63,7 @@ class AverageUsers extends Value
     public function calculate(NovaRequest $request): ValueResult
     {
         /** @var object{first: string|null, last: string|null}|null $span */
-        $span = User::query()
+        $span  = User::query()
             ->selectRaw('min(created_at) as first, max(created_at) as last')
             ->first();
 
@@ -73,7 +73,7 @@ class AverageUsers extends Value
             return $this->result(0)->allowZeroResult()->format('0,0.00');
         }
 
-        $days = max(1.0, (float) Carbon::parse($span->first)->diffInDays(Carbon::parse($span->last)));
+        $days  = max(1.0, (float) Carbon::parse($span->first)->diffInDays(Carbon::parse($span->last)));
 
         return $this->result(round($total / $days, 2))
             ->allowZeroResult()

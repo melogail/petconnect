@@ -34,7 +34,7 @@ test('renders the subject and the call to action in the recipient own language',
  * config entry rather than a code change. English must not inherit it.
  */
 test('marks an arabic mail right to left and an english one left to right', function () {
-    $arabicReader = User::factory()->create(['locale' => 'ar']);
+    $arabicReader  = User::factory()->create(['locale' => 'ar']);
     $englishReader = User::factory()->create(['locale' => 'en']);
 
     expect((new VerifyEmailNotification)->toMail($arabicReader)->viewData['dir'])->toBe('rtl')
@@ -62,9 +62,9 @@ test('falls back to the application language when the stored locale is not suppo
  * attacker chooses.
  */
 test('escapes a name carrying markup in the rendered mail', function () {
-    $user = User::factory()->create([
+    $user    = User::factory()->create([
         'locale' => 'en',
-        'name' => "O'Reilly <script>alert('xss')</script>",
+        'name'   => "O'Reilly <script>alert('xss')</script>",
     ]);
 
     $content = (new VerifyEmailNotification)->toMail($user)->render();
@@ -81,7 +81,7 @@ test('escapes a name carrying markup in the rendered mail', function () {
  * every verification mail with nothing failing.
  */
 test('shows the brand mark from an absolute url to a file that exists', function () {
-    $user = User::factory()->create(['locale' => 'en']);
+    $user    = User::factory()->create(['locale' => 'en']);
 
     $content = (new VerifyEmailNotification)->toMail($user)->render();
 

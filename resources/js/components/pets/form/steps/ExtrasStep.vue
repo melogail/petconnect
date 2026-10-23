@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import ExtrasEditor from '@/components/pets/form/ExtrasEditor.vue';
 import InputError from '@/components/InputError.vue';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The free-form extras.
@@ -21,6 +22,8 @@ const { form } = defineProps<{ form: InertiaForm<PetFormState> }>();
 
 const errors = computed(() => petFormErrors(form.errors));
 
+const { t } = useTranslations();
+
 const extrasError = computed(
     () =>
         errors.value.additionalInfo ??
@@ -33,10 +36,9 @@ const extrasError = computed(
 <template>
     <div class="space-y-4">
         <div>
-            <h3 class="font-medium">Anything else</h3>
+            <h3 class="font-medium">{{ t('wizard.anything_else') }}</h3>
             <p class="text-muted-foreground text-sm">
-                Up to 20 label/value pairs, in whatever words you use. A pair
-                missing either half is dropped.
+                {{ t('wizard.extras_desc') }}
             </p>
         </div>
 

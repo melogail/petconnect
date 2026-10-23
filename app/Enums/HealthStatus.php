@@ -16,15 +16,15 @@ enum HealthStatus: string
 {
     use HasOptions;
 
-    case Healthy = 'healthy';
-    case MinorIssues = 'minor_issues';
+    case Healthy          = 'healthy';
+    case MinorIssues      = 'minor_issues';
     case ChronicCondition = 'chronic_condition';
 
     public function label(): string
     {
         return match ($this) {
-            self::Healthy => 'Healthy',
-            self::MinorIssues => 'Minor issues',
+            self::Healthy          => 'Healthy',
+            self::MinorIssues      => 'Minor issues',
             self::ChronicCondition => 'Chronic condition',
         };
     }

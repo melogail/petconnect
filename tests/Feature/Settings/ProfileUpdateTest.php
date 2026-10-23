@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 test('profile page is displayed', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
@@ -17,12 +17,12 @@ test('profile page is displayed', function () {
 });
 
 test('profile information can be updated', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'name'  => 'Test User',
             'email' => 'test@example.com',
         ]);
 
@@ -38,12 +38,12 @@ test('profile information can be updated', function () {
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
+            'name'  => 'Test User',
             'email' => $user->email,
         ]);
 
@@ -55,7 +55,7 @@ test('email verification status is unchanged when the email address is unchanged
 });
 
 test('user can delete their account', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
@@ -72,7 +72,7 @@ test('user can delete their account', function () {
 });
 
 test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
@@ -99,8 +99,8 @@ test('the public handle can be changed', function () {
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => $user->name,
-            'email' => $user->email,
+            'name'     => $user->name,
+            'email'    => $user->email,
             'username' => 'nadia-aziz',
         ])
         ->assertSessionHasNoErrors()
@@ -114,8 +114,8 @@ test('the public handle can be cleared, because the column is nullable', functio
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => $user->name,
-            'email' => $user->email,
+            'name'     => $user->name,
+            'email'    => $user->email,
             'username' => null,
         ])
         ->assertSessionHasNoErrors();
@@ -142,8 +142,8 @@ test('a handle already taken by somebody else is rejected', function () {
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
-            'email' => $user->email,
+            'name'     => $user->name,
+            'email'    => $user->email,
             'username' => 'taken',
         ])
         ->assertInvalid(['username' => 'The username has already been taken.']);
@@ -156,8 +156,8 @@ test('keeping your own handle is not a uniqueness conflict', function () {
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Renamed',
-            'email' => $user->email,
+            'name'     => 'Renamed',
+            'email'    => $user->email,
             'username' => 'mine',
         ])
         ->assertSessionHasNoErrors();
@@ -171,17 +171,17 @@ test('a handle that is not url safe is rejected', function (string $username, st
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
-            'email' => $user->email,
+            'name'     => $user->name,
+            'email'    => $user->email,
             'username' => $username,
         ])
         ->assertInvalid(['username' => $message]);
 
     expect($user->fresh()->username)->toBe('mine');
 })->with([
-    'spaces and punctuation' => ['nadia aziz!', 'The username field must only contain letters, numbers, dashes, and underscores.'],
+    'spaces and punctuation'        => ['nadia aziz!', 'The username field must only contain letters, numbers, dashes, and underscores.'],
     'shorter than three characters' => ['ab', 'The username field must be at least 3 characters.'],
-    'longer than fifty characters' => [str_repeat('a', 51), 'The username field must not be greater than 50 characters.'],
+    'longer than fifty characters'  => [str_repeat('a', 51), 'The username field must not be greater than 50 characters.'],
 ]);
 
 /**
@@ -191,11 +191,11 @@ test('a handle that is not url safe is rejected', function (string $username, st
  */
 test('the avatar is uploaded through the settings form', function () {
     Storage::fake(config('media-library.disk_name'));
-    $user = User::factory()->create();
+    $user   = User::factory()->create();
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
             'image' => UploadedFile::fake()->image('avatar.jpg'),
         ])
@@ -214,7 +214,7 @@ test('a file that is not an image is rejected and nothing is attached', function
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
             'image' => UploadedFile::fake()->createWithContent('notes.pdf', 'not an image'),
         ])
@@ -231,7 +231,7 @@ test('an avatar over the configured ceiling is rejected and nothing is attached'
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
             'image' => UploadedFile::fake()->image('huge.jpg', 2000, 2000),
         ])
@@ -260,10 +260,10 @@ test('ignores a password sent to the profile form and leaves the credential alon
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Renamed',
-            'email' => $user->email,
-            'current_password' => 'password',
-            'password' => 'a-new-secret-password',
+            'name'                  => 'Renamed',
+            'email'                 => $user->email,
+            'current_password'      => 'password',
+            'password'              => 'a-new-secret-password',
             'password_confirmation' => 'a-new-secret-password',
         ])
         ->assertSessionHasNoErrors();
@@ -290,11 +290,11 @@ test('refuses a latitude with no longitude', function () {
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
-            'lat' => 51.5,
+            'lat'   => 51.5,
         ])
-        ->assertInvalid(['lng' => 'The lng field is required when lat is present.']);
+        ->assertInvalid(['lng' => 'The longitude field is required when latitude is present.']);
 
     expect($user->fresh())->lat->toBeNull()->lng->toBeNull();
 });
@@ -305,11 +305,11 @@ test('refuses a longitude with no latitude', function () {
     $this->actingAs($user)
         ->from(route('profile.edit'))
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
-            'lng' => -0.12,
+            'lng'   => -0.12,
         ])
-        ->assertInvalid(['lat' => 'The lat field is required when lng is present.']);
+        ->assertInvalid(['lat' => 'The latitude field is required when longitude is present.']);
 
     expect($user->fresh())->lat->toBeNull()->lng->toBeNull();
 });
@@ -336,10 +336,10 @@ test('accepts a whole coordinate', function () {
 
     $this->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => $user->name,
+            'name'  => $user->name,
             'email' => $user->email,
-            'lat' => 30.0444,
-            'lng' => 31.2357,
+            'lat'   => 30.0444,
+            'lng'   => 31.2357,
         ])
         ->assertSessionHasNoErrors();
 
@@ -355,7 +355,7 @@ test('accepts a whole coordinate', function () {
  * this is the one case that proves the endpoint runs it.
  */
 test('deleting the account clears the reviews written about it', function () {
-    $user = User::factory()->create();
+    $user            = User::factory()->create();
     $reviewAboutThem = Review::factory()->forUser($user)->create();
 
     $this->actingAs($user)

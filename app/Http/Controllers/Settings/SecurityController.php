@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Actions\Profiles\UpdatePassword;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\TwoFactorAuthenticationRequest;
@@ -14,6 +15,8 @@ use Laravel\Fortify\Features;
 
 class SecurityController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * Show the user's security settings page.
      */
@@ -21,30 +24,30 @@ class SecurityController extends Controller
     {
         $props = [
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
-            'canManagePasskeys' => Features::canManagePasskeys(),
-            'passkeys' => Features::canManagePasskeys()
-                ? $request->user()
+            'canManagePasskeys'  => Features::canManagePasskeys(),
+            'passkeys'           => Features::canManagePasskeys()
+                ? $this->actor($request)
                     ->passkeys()
                     ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
                     ->latest()
                     ->get()
                     ->map(fn ($passkey) => [
-                        'id' => $passkey->id,
-                        'name' => $passkey->name,
-                        'authenticator' => $passkey->authenticator,
-                        'created_at_diff' => $passkey->created_at->diffForHumans(),
+                        'id'                => $passkey->id,
+                        'name'              => $passkey->name,
+                        'authenticator'     => $passkey->authenticator,
+                        'created_at_diff'   => $passkey->created_at->diffForHumans(),
                         'last_used_at_diff' => $passkey->last_used_at?->diffForHumans(),
                     ])
                     ->values()
                     ->all()
                 : [],
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'passwordRules'      => Password::defaults()->toPasswordRulesString(),
         ];
 
         if (Features::canManageTwoFactorAuthentication()) {
             $request->ensureStateIsValid();
 
-            $props['twoFactorEnabled'] = $request->user()->hasEnabledTwoFactorAuthentication();
+            $props['twoFactorEnabled']     = $this->actor($request)->hasEnabledTwoFactorAuthentication();
             $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
         }
 
@@ -64,7 +67,7 @@ class SecurityController extends Controller
      */
     public function update(PasswordUpdateRequest $request, UpdatePassword $updatePassword): RedirectResponse
     {
-        $updatePassword->handle($request->user(), $request->newPassword());
+        $updatePassword->handle($this->actor($request), $request->newPassword());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

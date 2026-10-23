@@ -87,19 +87,19 @@ class ReportFiledNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'report_id' => $this->report->id,
-            'reporter_id' => $this->report->user_id,
+            'report_id'       => $this->report->id,
+            'reporter_id'     => $this->report->user_id,
             'reportable_type' => $this->report->reportable_type,
-            'reportable_id' => $this->report->reportable_id,
-            'category' => $this->report->category->value,
-            'reason' => $this->report->reason->value,
-            'status' => $this->report->status->value,
-            'excerpt' => $this->report->description === null
+            'reportable_id'   => $this->report->reportable_id,
+            'category'        => $this->report->category->value,
+            'reason'          => $this->report->reason->value,
+            'status'          => $this->report->status->value,
+            'excerpt'         => $this->report->description === null
                 ? null
                 : Str::limit($this->report->description, self::EXCERPT_LENGTH),
-            'message_key' => 'notifications.report_filed',
+            'message_key'     => 'notifications.report_filed',
             'message_replace' => [],
-            'type' => 'report',
+            'type'            => 'report',
         ];
     }
 }

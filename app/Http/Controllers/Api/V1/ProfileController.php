@@ -63,7 +63,7 @@ class ProfileController extends Controller
         $liked = $toggleLike->handle($user, $this->actor($request));
 
         return response()->json([
-            'is_liked' => $liked,
+            'is_liked'    => $liked,
             'likes_count' => $countLikes->handle($user),
         ]);
     }

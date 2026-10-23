@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue';
 import { computed, type Component } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 
 /** One step of the wizard, as the stepper renders it. */
 export type WizardStep = {
@@ -38,6 +39,8 @@ const active = computed(
 );
 
 const progress = computed(() => Math.round((current / steps.length) * 100));
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -45,7 +48,8 @@ const progress = computed(() => Math.round((current / steps.length) * 100));
         <!-- Compact on small screens: eight labelled circles do not fit. -->
         <div class="sm:hidden">
             <p class="text-sm font-medium">
-                Step {{ current }} of {{ steps.length }} — {{ active.title }}
+                {{ t('wizard.step_of', { current, total: steps.length }) }} —
+                {{ active.title }}
             </p>
         </div>
 

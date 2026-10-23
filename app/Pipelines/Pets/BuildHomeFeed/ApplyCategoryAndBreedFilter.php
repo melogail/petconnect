@@ -17,7 +17,7 @@ class ApplyCategoryAndBreedFilter
     public function handle(HomeFeedContext $context, Closure $next): mixed
     {
         $categoryIds = $context->filters->categoryIds;
-        $breedIds = $context->filters->breedIds;
+        $breedIds    = $context->filters->breedIds;
 
         if ($categoryIds !== [] && $breedIds !== []) {
             $context->query->where(fn (Builder $builder): Builder => $builder

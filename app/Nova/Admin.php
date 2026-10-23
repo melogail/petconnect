@@ -4,8 +4,8 @@ namespace App\Nova;
 
 use App\Nova\Policies\AdminPolicy;
 use Illuminate\Http\Resources\MergeValue;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Laravel\Nova\Actions\Action;
-use Laravel\Nova\Auth\PasswordValidationRules;
 use Laravel\Nova\Card;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\Email;
@@ -27,17 +27,17 @@ use Laravel\Nova\ResourceTool;
  * This is the one resource whose model is the acting user: `config('nova.guard')`
  * is `admin`, whose provider is `admins`, whose model is App\Models\Admin. An
  * admin created here can sign in immediately; there is no invitation flow.
+ *
+ * @extends \App\Nova\Resource<\App\Models\Admin>
  */
 class Admin extends Resource
 {
-    use PasswordValidationRules;
-
     /**
      * The model the resource corresponds to.
      *
      * @var class-string<\App\Models\Admin>
      */
-    public static $model = \App\Models\Admin::class;
+    public static $model  = \App\Models\Admin::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -51,14 +51,14 @@ class Admin extends Resource
      *
      * @var string
      */
-    public static $title = 'name';
+    public static $title  = 'name';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Accounts';
+    public static $group  = 'Accounts';
 
     /**
      * The columns that should be searched.
@@ -95,10 +95,13 @@ class Admin extends Resource
                 ->exceptOnForms()
                 ->sortable(),
 
+            // The same two lists Laravel\Nova\Auth\PasswordValidationRules returns,
+            // inlined because that trait's docblock admits nested arrays, which
+            // Field::rules() does not accept.
             Password::make('Password')
                 ->onlyOnForms()
-                ->creationRules($this->passwordRules())
-                ->updateRules($this->optionalPasswordRules()),
+                ->creationRules(['required', 'string', PasswordRule::default()])
+                ->updateRules(['nullable', PasswordRule::default()]),
 
             PasswordConfirmation::make('Password Confirmation'),
 

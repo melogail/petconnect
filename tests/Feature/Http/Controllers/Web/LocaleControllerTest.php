@@ -69,7 +69,7 @@ test('rejects a language that is not on the whitelist and changes nothing', func
 test('rejects a submission with no language at all', function () {
     $this->from(route('home'))
         ->post(route('locale.update'), [])
-        ->assertInvalid(['locale' => 'The locale field is required.']);
+        ->assertInvalid(['locale' => 'The language field is required.']);
 });
 
 /**

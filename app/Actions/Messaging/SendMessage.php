@@ -67,7 +67,7 @@ class SendMessage
         /** @var list<string> $bannedWords */
         $bannedWords = config('bad-words.words', []);
 
-        $context = new SendMessageContext(
+        $context     = new SendMessageContext(
             conversation: $conversation,
             sender: $sender,
             content: $content,

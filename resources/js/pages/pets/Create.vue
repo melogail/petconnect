@@ -3,7 +3,13 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import PetFormWizard from '@/components/pets/form/PetFormWizard.vue';
-import { blankPetForm, toPetPayload, type PetFormState } from '@/lib/petForm';
+import { useTranslations } from '@/composables/useTranslations';
+import {
+    blankPetForm,
+    localisedPetFormOptions,
+    toPetPayload,
+    type PetFormState,
+} from '@/lib/petForm';
 import { store as storePet } from '@/routes/pets';
 import type {
     PetCategoryOption,
@@ -38,13 +44,20 @@ const props = defineProps<{
     photoBounds: PetPhotoBounds;
 }>();
 
-const options = computed<PetFormOptions>(() => ({
-    categories: props.categories,
-    listingTypes: props.listingTypes,
-    statuses: props.statuses,
-    genders: props.genders,
-    healthStatuses: props.healthStatuses,
-}));
+const { t } = useTranslations();
+
+const options = computed<PetFormOptions>(() =>
+    localisedPetFormOptions(
+        {
+            categories: props.categories,
+            listingTypes: props.listingTypes,
+            statuses: props.statuses,
+            genders: props.genders,
+            healthStatuses: props.healthStatuses,
+        },
+        t,
+    ),
+);
 
 const form = useForm<PetFormState>(
     blankPetForm(props.statuses[0]?.value ?? ''),
@@ -59,21 +72,21 @@ function submit(): void {
 
 <template>
     <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-        <Head title="Publish a listing" />
+        <Head :title="t('wizard.publish_listing')" />
 
         <!-- `Heading` renders an h2, so the page still owes the document an h1. -->
-        <h1 class="sr-only">Publish a listing</h1>
+        <h1 class="sr-only">{{ t('wizard.publish_listing') }}</h1>
 
         <Heading
-            title="Publish a listing"
-            description="Eight short steps. Nothing is saved until the last one."
+            :title="t('wizard.publish_listing')"
+            :description="t('wizard.publish_listing_desc')"
         />
 
         <PetFormWizard
             :form="form"
             :options="options"
             :photo-bounds="photoBounds"
-            submit-label="Publish listing"
+            :submit-label="t('wizard.publish_listing_button')"
             @submit="submit"
         />
     </div>

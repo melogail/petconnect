@@ -28,7 +28,7 @@ use Inertia\Testing\AssertableInertia;
  */
 test('a write flashes a toast that reaches the page it redirects to', function () {
     $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
 
     $this->actingAs($author)
         ->from(route('pets.show', $pet))
@@ -52,7 +52,7 @@ test('a write flashes a toast that reaches the page it redirects to', function (
  */
 test('the toast is gone by the following request, so a write is announced once', function () {
     $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
 
     $this->actingAs($author)
         ->from(route('pets.show', $pet))
@@ -75,7 +75,7 @@ test('the toast is gone by the following request, so a write is announced once',
  */
 test('a rejected write flashes no toast', function () {
     $author = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
 
     $this->actingAs($author)
         ->from(route('pets.show', $pet))

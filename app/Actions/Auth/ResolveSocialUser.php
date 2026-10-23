@@ -59,7 +59,7 @@ class ResolveSocialUser
             ->with('user')
             ->first();
 
-        $user       = $linked?->user ?? $this->findOrRegister($provider, $identity);
+        $user       = $linked->user ?? $this->findOrRegister($provider, $identity);
 
         if (! $user->isActive()) {
             throw ValidationException::withMessages(['email' => __('Your account has been deactivated.')]);

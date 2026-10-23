@@ -45,7 +45,7 @@ abstract class PetTaxonomyNotFound extends ValidationException
     protected static function forField(string $field, string $message, array $diagnostics): static
     {
         /** @var static $exception */
-        $exception = static::withMessages([$field => $message]);
+        $exception              = static::withMessages([$field => $message]);
 
         $exception->diagnostics = $diagnostics;
 

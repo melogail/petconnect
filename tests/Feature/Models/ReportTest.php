@@ -13,18 +13,18 @@ use Illuminate\Database\QueryException;
 test('stores the comment morph alias rather than a class name', function () {
     $comment = Comment::factory()->create();
 
-    $report = Report::factory()->forReportable($comment)->create();
+    $report  = Report::factory()->forReportable($comment)->create();
 
     $this->assertDatabaseHas('reports', [
-        'id' => $report->getKey(),
+        'id'              => $report->getKey(),
         'reportable_type' => 'comment',
-        'reportable_id' => $comment->getKey(),
+        'reportable_id'   => $comment->getKey(),
     ]);
 });
 
 test('resolves the reported comment from the stored alias', function () {
-    $comment = Comment::factory()->create();
-    $report = Report::factory()->forReportable($comment)->create();
+    $comment    = Comment::factory()->create();
+    $report     = Report::factory()->forReportable($comment)->create();
 
     $reportable = Report::query()->findOrFail($report->getKey())->reportable;
 
@@ -33,8 +33,8 @@ test('resolves the reported comment from the stored alias', function () {
 });
 
 test('resolves the reported review from the stored alias', function () {
-    $review = Review::factory()->create();
-    $report = Report::factory()->forReportable($review)->create();
+    $review     = Review::factory()->create();
+    $report     = Report::factory()->forReportable($review)->create();
 
     $reportable = Report::query()->findOrFail($report->getKey())->reportable;
 
@@ -44,7 +44,7 @@ test('resolves the reported review from the stored alias', function () {
 
 test('rejects a second report by the same user against the same target', function () {
     $reporter = User::factory()->create();
-    $comment = Comment::factory()->create();
+    $comment  = Comment::factory()->create();
     Report::factory()->for($reporter)->forReportable($comment)->create();
 
     expect(fn () => Report::factory()->for($reporter)->forReportable($comment)->create())
@@ -66,12 +66,12 @@ test('rejects a mass assigned moderation status', function () {
     $comment = Comment::factory()->create();
 
     expect(fn () => Report::create([
-        'user_id' => User::factory()->create()->getKey(),
+        'user_id'         => User::factory()->create()->getKey(),
         'reportable_type' => 'comment',
-        'reportable_id' => $comment->getKey(),
-        'category' => ReportCategory::Abuse,
-        'reason' => ReportReason::Spam,
-        'status' => ReportStatus::Resolved,
+        'reportable_id'   => $comment->getKey(),
+        'category'        => ReportCategory::Abuse,
+        'reason'          => ReportReason::Spam,
+        'status'          => ReportStatus::Resolved,
     ]))->toThrow(MassAssignmentException::class);
 
     $this->assertDatabaseEmpty('reports');
@@ -80,12 +80,12 @@ test('rejects a mass assigned moderation status', function () {
 test('files a new report as pending', function () {
     $comment = Comment::factory()->create();
 
-    $report = Report::create([
-        'user_id' => User::factory()->create()->getKey(),
+    $report  = Report::create([
+        'user_id'         => User::factory()->create()->getKey(),
         'reportable_type' => 'comment',
-        'reportable_id' => $comment->getKey(),
-        'category' => ReportCategory::Abuse,
-        'reason' => ReportReason::Spam,
+        'reportable_id'   => $comment->getKey(),
+        'category'        => ReportCategory::Abuse,
+        'reason'          => ReportReason::Spam,
     ]);
 
     expect($report->fresh()->status)->toBe(ReportStatus::Pending);

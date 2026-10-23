@@ -44,7 +44,7 @@ class Conversation extends Model
     protected function casts(): array
     {
         return [
-            'type' => ConversationType::class,
+            'type'            => ConversationType::class,
             'last_message_at' => 'datetime',
         ];
     }
@@ -207,10 +207,10 @@ class Conversation extends Model
             return false;
         }
 
+        /** @var (User&object{pivot: ConversationUser})|null $participant Rows loaded through users() carry the pivot; the relation's inferred type drops it. */
         $participant = $this->users->firstWhere('id', $user->getKey());
 
-        /** @var Carbon|null $lastReadAt */
-        $lastReadAt = $participant?->pivot?->last_read_at;
+        $lastReadAt  = $participant?->pivot->last_read_at;
 
         if ($lastReadAt === null) {
             return true;

@@ -18,11 +18,11 @@ use App\Models\Report;
  * `runDestructiveAction` is what lets it past this same refusal.
  */
 test('removes nothing when the built-in delete is aimed at a comment', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $comment = Comment::factory()->forPet()->create();
-    $reply = Comment::factory()->reply($comment)->create();
-    $like = Like::factory()->forComment($reply)->create();
-    $report = Report::factory()->forReportable($reply)->create();
+    $reply   = Comment::factory()->reply($comment)->create();
+    $like    = Like::factory()->forComment($reply)->create();
+    $report  = Report::factory()->forReportable($reply)->create();
 
     $this->actingAs($admin, 'admin')
         ->deleteJson('/nova-api/comments', ['resources' => [$comment->getKey()]])
@@ -47,7 +47,7 @@ test('reports a comment as not deletable in the index payload', function () {
 });
 
 test('returns 403 to a comment edited through Nova', function () {
-    $admin = Admin::factory()->create();
+    $admin   = Admin::factory()->create();
     $comment = Comment::factory()->forPet()->create(['content' => 'What they said']);
 
     $this->actingAs($admin, 'admin')

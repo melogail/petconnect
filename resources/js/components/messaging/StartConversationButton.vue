@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { store as storeConversation } from '@/routes/conversations';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * Open a thread with somebody.
@@ -51,7 +52,10 @@ import { store as storeConversation } from '@/routes/conversations';
  * ## Extend, never replace: the constraint on what may be passed
  *
  * **Every value passed here must contain the trigger's visible text as a
- * substring.** Speech input matches the words a user reads off the screen, so
+ * substring — in every locale.** The visible text is `messaging.message`
+ * ("Message" / "مراسلة"), so callers build the label from
+ * `messaging.message_name` / `messaging.message_name_about`, which start with
+ * that same string in both catalogues. Speech input matches the words a user reads off the screen, so
  * a name that drops them stops the control being addressable by voice at all
  * (WCAG 2.5.3, Label in Name) — silently, with nothing visibly wrong and no
  * gate that goes red. "Able to differ" is the licence that produced the defect
@@ -152,6 +156,8 @@ const {
 }>();
 
 const open = ref(false);
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -162,23 +168,31 @@ const open = ref(false);
                 type="button"
                 variant="outline"
                 size="icon-lg"
-                :aria-label="triggerLabel ?? `Message ${recipientName}`"
-                :title="triggerLabel ?? `Message ${recipientName}`"
+                :aria-label="
+                    triggerLabel ??
+                    t('messaging.message_name', { name: recipientName })
+                "
+                :title="
+                    triggerLabel ??
+                    t('messaging.message_name', { name: recipientName })
+                "
                 class="size-11 shrink-0 rounded-[14px]"
             >
                 <MessageCircle class="size-5" aria-hidden="true" />
             </Button>
             <Button v-else :aria-label="triggerLabel">
                 <MessageCircle class="size-4" />
-                Message
+                {{ t('messaging.message') }}
             </Button>
         </DialogTrigger>
 
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Message {{ recipientName }}</DialogTitle>
+                <DialogTitle>
+                    {{ t('messaging.message_name', { name: recipientName }) }}
+                </DialogTitle>
                 <DialogDescription>
-                    We will open your existing thread if you already have one.
+                    {{ t('messaging.existing_thread_hint') }}
                 </DialogDescription>
             </DialogHeader>
 
@@ -192,13 +206,13 @@ const open = ref(false);
 
                 <div class="grid gap-2">
                     <Label for="initial-message">
-                        First message (optional)
+                        {{ t('messaging.first_message_optional') }}
                     </Label>
                     <Textarea
                         id="initial-message"
                         name="initial_message"
                         rows="4"
-                        placeholder="Say hello…"
+                        :placeholder="t('messaging.say_hello')"
                     />
                     <InputError :message="errors.initial_message" />
                 </div>
@@ -206,7 +220,7 @@ const open = ref(false);
                 <DialogFooter>
                     <Button type="submit" :disabled="processing">
                         <Spinner v-if="processing" />
-                        Open thread
+                        {{ t('messaging.open_thread') }}
                     </Button>
                 </DialogFooter>
             </Form>

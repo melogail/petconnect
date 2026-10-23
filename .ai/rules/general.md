@@ -87,6 +87,10 @@ The findings are substantive Laravel-generics work, not noise: undefined `withLi
 
 So: this is a backlog item with a known, reproducible error list, and the first question when you pick it up is the error list itself — read the 145, decide which are real type bugs and which want a generics annotation, and fix or baseline deliberately. It is not a dependency-compatibility problem, and there is nothing to debug in the phar.
 
+**Closed 2026-10-23, measured: `vendor/bin/phpstan analyse --no-progress` reports 0 errors at level 7, no baseline.** The backlog (157 by then) was cleared with generics and annotations only — no runtime change, no `@phpstan-ignore`. `phpstan.neon` carries exactly one new `ignoreErrors` entry, path-and-count pinned to `CountUnreadConversations::handle()`, where Laravel's `where()` signature refuses the Eloquent builder it accepts at runtime; the class docblock lists every alternative tried. A new error from here on is a regression, not backlog.
+
+**The `Undefined constant "Larastan\Larastan\LARAVEL_VERSION"` abort IS real — but only with a stale result cache.** It is what the retracted claim above was describing, seen from a machine whose cache predated a larastan upgrade. `vendor/bin/phpstan clear-result-cache` before analysing removes it every time; `composer ci:check` on a fresh checkout never hits it.
+
 ## A rule's glob must cover where the mistake gets made, not where the fix lives
 When you record a rule, the glob decides who ever reads it. Scope it to the directories where the mistake gets *written*, not the directory the correct implementation now sits in — those are usually different, and the difference is invisible at the moment of recording, because at that moment you are looking at the fix.
 

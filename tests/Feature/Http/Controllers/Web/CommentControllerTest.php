@@ -18,7 +18,7 @@ function threadRouteParameters(Pet $pet): array
 
 describe('index', function () {
     test('a guest reads the thread of a listing', function () {
-        $pet = Pet::factory()->create();
+        $pet     = Pet::factory()->create();
         $comment = Comment::factory()->for($pet, 'commentable')->create();
 
         $this->get(route('comments.index', threadRouteParameters($pet)))
@@ -63,7 +63,7 @@ describe('index', function () {
 describe('replies', function () {
     test('a guest reads the replies of a comment', function () {
         $parent = Comment::factory()->create();
-        $reply = Comment::factory()->reply($parent)->create();
+        $reply  = Comment::factory()->reply($parent)->create();
 
         $this->get(route('comments.replies', $parent))
             ->assertOk()
@@ -94,7 +94,7 @@ describe('store', function () {
 
     test('publishes a top level comment authored by the acting user', function () {
         $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet    = Pet::factory()->create();
 
         $this->actingAs($author)
             ->from(route('pets.show', $pet))
@@ -102,18 +102,18 @@ describe('store', function () {
             ->assertRedirect(route('pets.show', $pet));
 
         $this->assertDatabaseHas('comments', [
-            'user_id' => $author->getKey(),
-            'content' => 'Is she still available?',
-            'parent_id' => null,
+            'user_id'          => $author->getKey(),
+            'content'          => 'Is she still available?',
+            'parent_id'        => null,
             'commentable_type' => 'pet',
-            'commentable_id' => $pet->getKey(),
+            'commentable_id'   => $pet->getKey(),
         ]);
     });
 
     test('stamps the author from the session rather than from the payload', function () {
-        $author = User::factory()->create();
+        $author   = User::factory()->create();
         $stranger = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet      = Pet::factory()->create();
 
         $this->actingAs($author)
             ->from(route('pets.show', $pet))
@@ -129,23 +129,23 @@ describe('store', function () {
 
     test('publishes a reply against the parent comment and its listing', function () {
         $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet    = Pet::factory()->create();
         $parent = Comment::factory()->for($pet, 'commentable')->create();
 
         $this->actingAs($author)
             ->from(route('pets.show', $pet))
             ->post(route('comments.store', threadRouteParameters($pet)), [
-                'content' => 'She is, message me.',
+                'content'   => 'She is, message me.',
                 'parent_id' => $parent->getKey(),
             ])
             ->assertRedirect(route('pets.show', $pet));
 
         $this->assertDatabaseHas('comments', [
-            'user_id' => $author->getKey(),
-            'content' => 'She is, message me.',
-            'parent_id' => $parent->getKey(),
+            'user_id'          => $author->getKey(),
+            'content'          => 'She is, message me.',
+            'parent_id'        => $parent->getKey(),
             'commentable_type' => 'pet',
-            'commentable_id' => $pet->getKey(),
+            'commentable_id'   => $pet->getKey(),
         ]);
     });
 
@@ -173,13 +173,13 @@ describe('store', function () {
 
         $this->actingAs(User::factory()->create())
             ->post(route('comments.store', threadRouteParameters($pet)), ['content' => ''])
-            ->assertInvalid(['content' => 'The content field is required.']);
+            ->assertInvalid(['content' => 'The message field is required.']);
 
         $this->assertDatabaseEmpty('comments');
     });
 
     test('rejects a comment longer than the configured ceiling and writes nothing', function () {
-        $pet = Pet::factory()->create();
+        $pet       = Pet::factory()->create();
         $maxLength = config('petconnect.comments.max_length');
 
         $this->actingAs(User::factory()->create())
@@ -192,8 +192,8 @@ describe('store', function () {
     });
 
     test('stores a comment of the full configured length intact', function () {
-        $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $author  = User::factory()->create();
+        $pet     = Pet::factory()->create();
         $content = Str::repeat('a', config('petconnect.comments.max_length'));
 
         $this->actingAs($author)
@@ -205,12 +205,12 @@ describe('store', function () {
     });
 
     test('rejects a reply whose parent belongs to another listing, and writes nothing', function () {
-        $pet = Pet::factory()->create();
+        $pet                    = Pet::factory()->create();
         $parentOnAnotherListing = Comment::factory()->for(Pet::factory()->create(), 'commentable')->create();
 
         $this->actingAs(User::factory()->create())
             ->post(route('comments.store', threadRouteParameters($pet)), [
-                'content' => 'Sneaking in under another listing.',
+                'content'   => 'Sneaking in under another listing.',
                 'parent_id' => $parentOnAnotherListing->getKey(),
             ])
             ->assertInvalid(['parent_id' => 'The comment you are replying to is no longer part of this discussion.']);
@@ -223,7 +223,7 @@ describe('store', function () {
 
         $this->actingAs(User::factory()->create())
             ->post(route('comments.store', threadRouteParameters($pet)), [
-                'content' => 'Answering a comment that is gone.',
+                'content'   => 'Answering a comment that is gone.',
                 'parent_id' => 9999,
             ])
             ->assertInvalid(['parent_id' => 'The comment you are replying to is no longer part of this discussion.']);
@@ -232,13 +232,13 @@ describe('store', function () {
     });
 
     test('rejects a reply to a reply, because threads are two levels deep', function () {
-        $pet = Pet::factory()->create();
+        $pet    = Pet::factory()->create();
         $parent = Comment::factory()->for($pet, 'commentable')->create();
-        $reply = Comment::factory()->reply($parent)->create();
+        $reply  = Comment::factory()->reply($parent)->create();
 
         $this->actingAs(User::factory()->create())
             ->post(route('comments.store', threadRouteParameters($pet)), [
-                'content' => 'A third level.',
+                'content'   => 'A third level.',
                 'parent_id' => $reply->getKey(),
             ])
             ->assertInvalid(['parent_id' => 'Replies cannot be replied to; answer the original comment instead.']);
@@ -248,7 +248,7 @@ describe('store', function () {
 
     test('returns 429 once the acting user passes 10 comments in a minute', function () {
         $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $pet    = Pet::factory()->create();
 
         for ($attempt = 0; $attempt < 10; $attempt++) {
             $this->actingAs($author)
@@ -275,7 +275,7 @@ describe('update', function () {
     });
 
     test('redirects an unverified user to the verification notice and leaves the comment unchanged', function () {
-        $author = User::factory()->unverified()->create();
+        $author  = User::factory()->unverified()->create();
         $comment = Comment::factory()->for($author)->create(['content' => 'Original']);
 
         $this->actingAs($author)
@@ -296,7 +296,7 @@ describe('update', function () {
     });
 
     test('applies the edit for the author', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $comment = Comment::factory()->for($author)->create(['content' => 'Original']);
 
         $this->actingAs($author)
@@ -305,13 +305,13 @@ describe('update', function () {
             ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('comments', [
-            'id' => $comment->getKey(),
+            'id'      => $comment->getKey(),
             'content' => 'Edited',
         ]);
     });
 
     test('cleans the edited text, so a comment cannot be edited around the filter', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $comment = Comment::factory()->for($author)->create(['content' => 'Original']);
 
         $this->actingAs($author)
@@ -323,12 +323,12 @@ describe('update', function () {
     });
 
     test('rejects an edit with no content and leaves the comment unchanged', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $comment = Comment::factory()->for($author)->create(['content' => 'Original']);
 
         $this->actingAs($author)
             ->put(route('comments.update', $comment), ['content' => ''])
-            ->assertInvalid(['content' => 'The content field is required.']);
+            ->assertInvalid(['content' => 'The message field is required.']);
 
         expect($comment->fresh()->content)->toBe('Original');
     });
@@ -344,7 +344,7 @@ describe('destroy', function () {
     });
 
     test('redirects an unverified user to the verification notice and leaves the comment in place', function () {
-        $author = User::factory()->unverified()->create();
+        $author  = User::factory()->unverified()->create();
         $comment = Comment::factory()->for($author)->create();
 
         $this->actingAs($author)
@@ -365,7 +365,7 @@ describe('destroy', function () {
     });
 
     test('removes the comment for its author', function () {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $comment = Comment::factory()->for($author)->create();
 
         $this->actingAs($author)
@@ -397,7 +397,7 @@ describe('like', function () {
     });
 
     test('records a like for a verified user', function () {
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $comment = Comment::factory()->create();
 
         $this->actingAs($liker)
@@ -406,14 +406,14 @@ describe('like', function () {
             ->assertRedirect(route('home'));
 
         $this->assertDatabaseHas('likes', [
-            'user_id' => $liker->getKey(),
+            'user_id'       => $liker->getKey(),
             'likeable_type' => 'comment',
-            'likeable_id' => $comment->getKey(),
+            'likeable_id'   => $comment->getKey(),
         ]);
     });
 
     test('returns 429 once the acting user passes 30 comment likes in a minute', function () {
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $comment = Comment::factory()->create();
 
         for ($attempt = 0; $attempt < 30; $attempt++) {
@@ -441,7 +441,7 @@ describe('like', function () {
 describe('route binding', function () {
     test('returns 404 from the replies of a comment on a soft deleted listing, and leaks neither the text nor its author', function () {
         $author = User::factory()->create(['username' => 'nadia-hidden']);
-        $pet = Pet::factory()->create();
+        $pet    = Pet::factory()->create();
         $parent = Comment::factory()->for($pet, 'commentable')->create();
         Comment::factory()->for($author)->reply($parent)->create(['content' => 'Ring me on the number in my bio.']);
         $pet->delete();
@@ -454,8 +454,8 @@ describe('route binding', function () {
     });
 
     test('returns 404 from the like of a comment on a soft deleted listing, and records no like', function () {
-        $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $author  = User::factory()->create();
+        $pet     = Pet::factory()->create();
         $comment = Comment::factory()->for($author)->for($pet, 'commentable')->create();
         $pet->delete();
 
@@ -467,8 +467,8 @@ describe('route binding', function () {
     });
 
     test('returns 404 from the update of a comment on a soft deleted listing, and leaves the text unchanged', function () {
-        $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $author  = User::factory()->create();
+        $pet     = Pet::factory()->create();
         $comment = Comment::factory()->for($author)->for($pet, 'commentable')->create(['content' => 'Original']);
         $pet->delete();
 
@@ -480,8 +480,8 @@ describe('route binding', function () {
     });
 
     test('returns 404 from the destroy of a comment on a soft deleted listing, and leaves the comment in place', function () {
-        $author = User::factory()->create();
-        $pet = Pet::factory()->create();
+        $author  = User::factory()->create();
+        $pet     = Pet::factory()->create();
         $comment = Comment::factory()->for($author)->for($pet, 'commentable')->create();
         $pet->delete();
 
@@ -493,7 +493,7 @@ describe('route binding', function () {
     });
 
     test('serves a comment on a live listing', function (string $method, string $routeName, array $payload, int $status) {
-        $author = User::factory()->create();
+        $author  = User::factory()->create();
         $comment = Comment::factory()->for($author)->create();
 
         $this->actingAs($author)
@@ -502,8 +502,8 @@ describe('route binding', function () {
             ->assertStatus($status);
     })->with([
         'replies' => ['get', 'comments.replies', [], 200],
-        'like' => ['post', 'comments.like', [], 302],
-        'update' => ['put', 'comments.update', ['content' => 'Edited'], 302],
+        'like'    => ['post', 'comments.like', [], 302],
+        'update'  => ['put', 'comments.update', ['content' => 'Edited'], 302],
         'destroy' => ['delete', 'comments.destroy', [], 302],
     ]);
 
@@ -513,8 +513,8 @@ describe('route binding', function () {
             ->assertNotFound();
     })->with([
         'replies' => ['get', 'comments.replies', []],
-        'like' => ['post', 'comments.like', []],
-        'update' => ['put', 'comments.update', ['content' => 'Edited']],
+        'like'    => ['post', 'comments.like', []],
+        'update'  => ['put', 'comments.update', ['content' => 'Edited']],
         'destroy' => ['delete', 'comments.destroy', []],
     ]);
 });

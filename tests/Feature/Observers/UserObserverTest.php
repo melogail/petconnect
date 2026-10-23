@@ -8,7 +8,7 @@ test('assigns a media directory name when the account is created', function () {
     expect($user->media_directory_name)->toBeString()->not->toBeEmpty();
 
     $this->assertDatabaseHas('users', [
-        'id' => $user->getKey(),
+        'id'                   => $user->getKey(),
         'media_directory_name' => $user->media_directory_name,
     ]);
 });

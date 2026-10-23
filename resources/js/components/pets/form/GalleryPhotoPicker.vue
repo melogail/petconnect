@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { compressListingPhoto, formatBytes } from '@/lib/imageCompression';
 import { remainingGallerySlots } from '@/lib/petForm';
 import type { PetMedia } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The gallery: the photos already attached, the ones being removed, and the
@@ -124,6 +125,8 @@ function toggleAttached(id: number): void {
             : [...deletedIds, id],
     );
 }
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -149,9 +152,11 @@ function toggleAttached(id: number): void {
                     size="icon-sm"
                     class="absolute top-1.5 right-1.5"
                     :aria-label="
-                        deletedIds.includes(photo.id)
-                            ? 'Keep this photo'
-                            : 'Remove this photo'
+                        t(
+                            deletedIds.includes(photo.id)
+                                ? 'wizard.keep_photo'
+                                : 'wizard.remove_photo',
+                        )
                     "
                     @click="toggleAttached(photo.id)"
                 >
@@ -181,7 +186,7 @@ function toggleAttached(id: number): void {
                     variant="secondary"
                     size="icon-sm"
                     class="absolute top-1.5 right-1.5"
-                    :aria-label="`Remove ${file.name}`"
+                    :aria-label="t('wizard.remove_named', { name: file.name })"
                     @click="removeFile(index)"
                 >
                     <X class="size-3.5" />
@@ -197,7 +202,7 @@ function toggleAttached(id: number): void {
                 :disabled="remaining === 0"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 class="text-muted-foreground file:text-foreground text-sm file:mr-3 file:rounded-md file:border file:bg-transparent file:px-3 file:py-1.5 file:text-sm disabled:opacity-50"
-                aria-label="Gallery photos"
+                :aria-label="t('wizard.gallery_photos')"
                 @change="pick"
             />
             <span
@@ -205,22 +210,27 @@ function toggleAttached(id: number): void {
                 class="text-muted-foreground flex items-center gap-1.5 text-xs"
             >
                 <Spinner status class="size-3" />
-                Compressing…
+                {{ t('wizard.compressing') }}
             </span>
         </div>
 
         <p class="text-muted-foreground flex items-center gap-1.5 text-xs">
             <ImagePlus class="size-3.5" />
-            {{ remaining }} of {{ cap }} slots left, cover photo excluded.
+            {{ t('wizard.slots_left', { remaining, cap }) }}
         </p>
 
         <p
             v-if="overflowed > 0"
             class="text-sm text-amber-700 dark:text-amber-500"
         >
-            {{ overflowed }}
-            {{ overflowed === 1 ? 'photo was' : 'photos were' }} left out: the
-            gallery holds {{ cap }}. Remove one to make room for another.
+            {{
+                t(
+                    overflowed === 1
+                        ? 'wizard.photos_left_out_one'
+                        : 'wizard.photos_left_out_many',
+                    { count: overflowed, cap },
+                )
+            }}
         </p>
 
         <InputError :message="error" />

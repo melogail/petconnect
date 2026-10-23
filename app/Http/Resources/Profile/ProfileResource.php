@@ -104,27 +104,27 @@ class ProfileResource extends JsonResource
         $viewer = $request->user();
 
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'username' => $this->username,
-            'bio' => $this->bio,
-            'location' => $this->location,
-            'avatar' => $this->getFirstMediaUrl('users', 'display') ?: null,
+            'id'               => $this->id,
+            'name'             => $this->name,
+            'username'         => $this->username,
+            'bio'              => $this->bio,
+            'location'         => $this->location,
+            'avatar'           => $this->getFirstMediaUrl('users', 'display') ?: null,
 
-            'is_verified' => $this->isVerified(),
-            'is_self' => $viewer?->getKey() === $this->getKey(),
-            'is_liked' => (bool) ($this->is_liked ?? false),
-            'has_reviewed' => (bool) ($this->has_reviewed ?? false),
+            'is_verified'      => $this->isVerified(),
+            'is_self'          => $viewer?->getKey() === $this->getKey(),
+            'is_liked'         => (bool) ($this->is_liked ?? false),
+            'has_reviewed'     => (bool) ($this->has_reviewed ?? false),
 
-            'pets_count' => (int) ($this->pets_count ?? 0),
-            'reviews_count' => (int) ($this->reviews_count ?? 0),
+            'pets_count'       => (int) ($this->pets_count ?? 0),
+            'reviews_count'    => (int) ($this->reviews_count ?? 0),
             'reviews_avg_rate' => $this->reviews_avg_rate === null
                 ? null
                 : round((float) $this->reviews_avg_rate, 2),
 
-            'can_update' => (bool) $viewer?->can('update', $this->resource),
+            'can_update'       => (bool) $viewer?->can('update', $this->resource),
 
-            'created_at' => $this->created_at,
+            'created_at'       => $this->created_at,
         ];
     }
 }

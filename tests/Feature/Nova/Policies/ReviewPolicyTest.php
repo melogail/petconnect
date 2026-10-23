@@ -16,7 +16,7 @@ use App\Models\Review;
  * App\Nova\Actions\DeleteReview removes both in one transaction.
  */
 test('removes nothing when the built-in delete is aimed at a review', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $review = Review::factory()->create();
     $report = Report::factory()->forReportable($review)->create();
 
@@ -40,7 +40,7 @@ test('reports a review as not deletable in the index payload', function () {
 });
 
 test('returns 403 to a review edited through Nova', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $review = Review::factory()->rating(1)->create();
 
     $this->actingAs($admin, 'admin')

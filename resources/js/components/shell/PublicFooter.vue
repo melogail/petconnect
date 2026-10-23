@@ -25,34 +25,20 @@ import { help, support } from '@/routes';
  * at the bottom of `Help` links `support` at all. They came from the target's
  * own footer, not the legacy one, and they stay first in the row.
  *
- * The five legal entries beside them (`privacy`, `terms`, `cookies`,
- * `contacts`, `report_issue`) are placeholders. They were `href="#"` anchors
- * in the legacy app and there is still no route behind any of them, so they
- * render as plain text rather than as anchors that go nowhere — a link that
- * does not navigate is worse than a label. Turn each into a `<Link>` when its
- * route exists.
+ * `nav.contacts` beside them goes to `support` too: the contact form is the
+ * only contact channel and it lives on that page (`ContactDialog`). The other
+ * four legacy footer entries (`privacy`, `terms`, `cookies`, `report_issue`)
+ * were `href="#"` anchors in the legacy app, then plain text here; there is
+ * still no route behind any of them, so they are gone rather than rendered as
+ * labels that look like links and do nothing. Restore one when its page exists.
  *
- * What tells the two apart on screen is weight first: the two real links are
- * `font-semibold` and underline on hover, the labels are `font-normal` with no
- * hover state at all. The style guide (§5.10) also gives them different text
- * tokens — links `text-foreground` (15.6:1 light), labels
- * `text-muted-foreground` — and that is allowed only because the muted token
- * itself clears AA on the bar's own surface: #756B88 on `--background` #F6F4FB
- * is 4.55:1 in light, #9C92B4 on #0F0C18 is 6.9:1 in dark. The labels
- * previously carried `/70`, which read as 2.82:1 in light mode — an AA failure
- * that also happened to be the only thing distinguishing them. Never mark a
- * non-interactive element by dimming it below the threshold; weight is what
- * carries the distinction, colour merely agrees with it.
+ * Every entry is a real link, so they all share one style: `text-foreground`
+ * (15.6:1 light), `font-semibold`, underline on hover. The copyright line is
+ * the only `text-muted-foreground` here; that token is #746986 on #F6F4FB,
+ * 4.68:1 (its previous 48% lightness, #766C89, measured 4.49:1 in the browser
+ * — under AA, which is why it moved).
  */
 const { t } = useTranslations();
-
-const legalKeys = [
-    'nav.privacy',
-    'nav.terms',
-    'nav.cookies',
-    'nav.contacts',
-    'nav.report_issue',
-];
 
 const year = new Date().getFullYear();
 </script>
@@ -85,13 +71,12 @@ const year = new Date().getFullYear();
                 >
                     {{ t('support.title') }}
                 </Link>
-                <span
-                    v-for="key in legalKeys"
-                    :key="key"
-                    class="text-muted-foreground text-xs font-normal"
+                <Link
+                    :href="support()"
+                    class="text-foreground hover:text-primary text-xs font-semibold underline-offset-4 transition-colors duration-200 ease-out hover:underline"
                 >
-                    {{ t(key) }}
-                </span>
+                    {{ t('nav.contacts') }}
+                </Link>
             </div>
         </div>
     </footer>

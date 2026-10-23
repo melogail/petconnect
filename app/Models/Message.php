@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\MessageStatus;
 use App\Enums\MessageType;
 use App\Observers\MessageObserver;
+use Carbon\CarbonImmutable;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -42,8 +43,8 @@ use Illuminate\Support\Carbon;
  * @property MessageType $type
  * @property MessageStatus $status
  * @property int|null $pinned_by
- * @property Carbon|null $pinned_at
- * @property Carbon|null $edited_at
+ * @property CarbonImmutable|null $pinned_at Written from now(), which is CarbonImmutable under Date::use().
+ * @property CarbonImmutable|null $edited_at Same writer shape as $pinned_at.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -81,8 +82,8 @@ class Message extends Model
     protected function casts(): array
     {
         return [
-            'type' => MessageType::class,
-            'status' => MessageStatus::class,
+            'type'      => MessageType::class,
+            'status'    => MessageStatus::class,
             'pinned_at' => 'datetime',
             'edited_at' => 'datetime',
         ];

@@ -8,6 +8,7 @@ use App\Nova\Policies\CategoryPolicy;
 use Ebess\AdvancedNovaMediaLibrary\Fields\Images;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\Resources\MergeValue;
 use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Card;
@@ -43,6 +44,8 @@ use Laravel\Nova\ResourceTool;
  * with App\Nova\Breed, rather than being restated here: they used to be a bare
  * `['image', 'max:5120']`, which accepts formats GD cannot convert and so
  * serves the raw upload where a crop was meant to be (.ai/rules/nova.md).
+ *
+ * @extends \App\Nova\Resource<\App\Models\Category>
  */
 class Category extends Resource
 {
@@ -53,7 +56,7 @@ class Category extends Resource
      *
      * @var class-string<\App\Models\Category>
      */
-    public static $model = \App\Models\Category::class;
+    public static $model  = \App\Models\Category::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -67,14 +70,14 @@ class Category extends Resource
      *
      * @var string
      */
-    public static $title = 'name';
+    public static $title  = 'name';
 
     /**
      * The logical group associated with the resource.
      *
      * @var string
      */
-    public static $group = 'Catalog';
+    public static $group  = 'Catalog';
 
     /**
      * The columns that should be searched.
@@ -94,7 +97,7 @@ class Category extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['media'];
+    public static $with   = ['media'];
 
     /**
      * Get the fields displayed by the resource.
@@ -173,14 +176,15 @@ class Category extends Resource
      * hands the constraint to `callScope()`. That is the opposite of an eager
      * load constraint (see .ai/rules/app.md), so the type hint is different too.
      *
-     * @param  Builder<\App\Models\Category>  $query
-     * @return Builder<\App\Models\Category>
+     * `withoutGlobalScope(SoftDeletingScope::class)` is what `withTrashed()`
+     * does; the closure's Builder is not generic over Pet here, so the scope
+     * method is not visible to static analysis while the base one is.
      */
     public static function indexQuery(NovaRequest $request, Builder $query): Builder
     {
         return $query->withCount([
             'breeds',
-            'pets' => fn (EloquentBuilder $pets): EloquentBuilder => $pets->withTrashed(),
+            'pets' => fn (EloquentBuilder $pets): EloquentBuilder => $pets->withoutGlobalScope(SoftDeletingScope::class),
         ]);
     }
 

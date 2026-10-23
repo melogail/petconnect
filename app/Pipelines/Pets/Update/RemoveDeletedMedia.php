@@ -43,7 +43,7 @@ class RemoveDeletedMedia
             return $next($context);
         }
 
-        $pet = $context->pet();
+        $pet     = $context->pet();
         $pet->loadMissing('media');
 
         $deleted = $pet->galleryPhotos()

@@ -3,9 +3,12 @@
 namespace App\Actions\Messaging;
 
 use App\Models\Conversation;
+use App\Models\ConversationUser;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * A page of a user's conversations, most recently active first.
@@ -97,7 +100,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class BuildInbox
 {
     /**
-     * @return LengthAwarePaginator<int, Conversation>
+     * Rows come through the BelongsToMany, so each carries its pivot; the
+     * paginator's TValue is invariant, so the intersection has to be spelled out.
+     *
+     * @return LengthAwarePaginator<int, Conversation&object{pivot: ConversationUser}>
      */
     public function handle(User $user, ?int $perPage = null): LengthAwarePaginator
     {
@@ -106,7 +112,10 @@ class BuildInbox
         return $user->conversations()
             ->with([
                 'users.media',
-                'lastMessage' => fn (HasOne $lastMessage): HasOne => $lastMessage->chaperone('conversation'),
+                'lastMessage' => function (Relation $lastMessage): void {
+                    /** @var HasOne<Message, Conversation> $lastMessage with() only accepts a bare Relation closure; chaperone() lives on HasOneOrMany. */
+                    $lastMessage->chaperone('conversation');
+                },
                 'lastMessage.sender.media',
             ])
             ->orderByDesc('conversations.last_message_at')

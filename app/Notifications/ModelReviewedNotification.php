@@ -75,22 +75,22 @@ class ModelReviewedNotification extends Notification
         $reviewerName = $this->review->user?->name;
 
         return [
-            'review_id' => $this->review->id,
-            'reviewer_id' => $this->review->user_id,
-            'reviewer_name' => $reviewerName,
+            'review_id'       => $this->review->id,
+            'reviewer_id'     => $this->review->user_id,
+            'reviewer_name'   => $reviewerName,
             'reviewable_type' => $this->review->reviewable_type,
-            'reviewable_id' => $this->review->reviewable_id,
-            'rate' => $this->review->rate,
-            'excerpt' => $this->review->comment === null
+            'reviewable_id'   => $this->review->reviewable_id,
+            'rate'            => $this->review->rate,
+            'excerpt'         => $this->review->comment === null
                 ? null
                 : Str::limit($this->review->comment, self::EXCERPT_LENGTH),
-            'message_key' => 'notifications.reviewed_you',
+            'message_key'     => 'notifications.reviewed_you',
             'message_replace' => [
                 'name' => (string) $reviewerName,
                 'rate' => (string) $this->review->rate,
             ],
-            'url' => $this->reviewableUrl(),
-            'type' => 'review',
+            'url'             => $this->reviewableUrl(),
+            'type'            => 'review',
         ];
     }
 
@@ -118,7 +118,7 @@ class ModelReviewedNotification extends Notification
             $reviewable instanceof User => Route::has('profile.show')
                 ? route('profile.show', $reviewable)
                 : null,
-            default => null,
+            default                     => null,
         };
     }
 }

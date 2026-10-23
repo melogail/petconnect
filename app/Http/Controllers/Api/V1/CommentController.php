@@ -111,7 +111,7 @@ class CommentController extends Controller
         $liked = $toggleLike->handle($comment, $this->actor($request));
 
         return response()->json([
-            'is_liked' => $liked,
+            'is_liked'    => $liked,
             'likes_count' => $countLikes->handle($comment),
         ]);
     }

@@ -7,6 +7,7 @@ use App\Actions\Messaging\PaginateConversationMessages;
 use App\Actions\Messaging\SendMessage;
 use App\Actions\Messaging\TogglePinMessage;
 use App\Actions\Messaging\UpdateMessage;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Message\StoreMessageRequest;
 use App\Http\Requests\Message\UpdateMessageRequest;
@@ -59,6 +60,8 @@ use Inertia\Inertia;
  */
 class MessageController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * A page of one conversation's messages, newest first.
      */
@@ -83,7 +86,7 @@ class MessageController extends Controller
 
         $sendMessage->handle(
             conversation: $conversation,
-            sender: $request->user(),
+            sender: $this->actor($request),
             content: $request->content(),
             type: $request->type(),
         );
@@ -143,7 +146,7 @@ class MessageController extends Controller
     ): RedirectResponse {
         $this->authorize('pin', $message);
 
-        $togglePinMessage->handle($message, $request->user());
+        $togglePinMessage->handle($message, $this->actor($request));
 
         return back();
     }

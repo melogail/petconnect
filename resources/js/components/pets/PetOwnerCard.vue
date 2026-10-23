@@ -144,7 +144,9 @@ const { t } = useTranslations();
                     v-if="canMessage"
                     :recipient-id="owner.id"
                     :recipient-name="owner.name"
-                    :trigger-label="t('messaging.send_message')"
+                    :trigger-label="
+                        t('messaging.message_name', { name: owner.name })
+                    "
                 />
                 <Button as-child variant="outline" class="h-11">
                     <Link :href="showProfile(owner.id)">

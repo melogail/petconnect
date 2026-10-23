@@ -2,8 +2,11 @@
 
 namespace App\Actions\Pets;
 
+use App\Models\Comment;
 use App\Models\Pet;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -52,7 +55,7 @@ class LoadPetDetail
     public function handle(Pet $pet, ?User $viewer): Pet
     {
         $commentPageSize = (int) config('petconnect.pets.detail_comment_page_size', 20);
-        $replyPreview = (int) config('petconnect.pets.detail_reply_preview', 3);
+        $replyPreview    = (int) config('petconnect.pets.detail_reply_preview', 3);
 
         return $pet->newQuery()
             ->whereKey($pet->getKey())
@@ -61,23 +64,29 @@ class LoadPetDetail
                 'category.media',
                 'breed',
                 'media',
-                'comments' => fn (Relation $comments): Relation => $comments
-                    ->whereNull('parent_id')
-                    ->with([
-                        'user.media',
-                        'replies' => fn (Relation $replies): Relation => $replies
-                            ->with('user.media')
-                            ->withCount(['likes', 'replies'])
-                            ->withLikedBy($viewer)
-                            ->withReportedBy($viewer)
-                            ->latest()
-                            ->limit($replyPreview),
-                    ])
-                    ->withCount(['likes', 'replies'])
-                    ->withLikedBy($viewer)
-                    ->withReportedBy($viewer)
-                    ->latest()
-                    ->limit($commentPageSize),
+                'comments' => function (Relation $comments) use ($viewer, $commentPageSize, $replyPreview): void {
+                    /** @var MorphMany<Comment, Pet> $comments Narrowed inline: with() only accepts a bare Relation closure, and the scopes need the related model. */
+                    $comments
+                        ->whereNull('parent_id')
+                        ->with([
+                            'user.media',
+                            'replies' => function (Relation $replies) use ($viewer, $replyPreview): void {
+                                /** @var HasMany<Comment, Comment> $replies */
+                                $replies
+                                    ->with('user.media')
+                                    ->withCount(['likes', 'replies'])
+                                    ->withLikedBy($viewer)
+                                    ->withReportedBy($viewer)
+                                    ->latest()
+                                    ->limit($replyPreview);
+                            },
+                        ])
+                        ->withCount(['likes', 'replies'])
+                        ->withLikedBy($viewer)
+                        ->withReportedBy($viewer)
+                        ->latest()
+                        ->limit($commentPageSize);
+                },
             ])
             ->withCount(['likes', 'comments', 'rootComments'])
             ->withLikedBy($viewer)

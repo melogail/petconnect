@@ -6,6 +6,7 @@ import { useLocale } from '@/composables/useLocale';
 import { formatRelative } from '@/lib/datetime';
 import { show as showConversation } from '@/routes/conversations';
 import type { Conversation } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * One inbox row.
@@ -31,6 +32,8 @@ const preview = computed(() => {
 const stamp = computed(() =>
     formatRelative(conversation.last_message_at, tag.value),
 );
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -70,7 +73,7 @@ const stamp = computed(() =>
         <span
             v-if="conversation.unread"
             class="bg-primary size-2.5 shrink-0 rounded-full"
-            aria-label="Unread"
+            :aria-label="t('messaging.unread_marker')"
         />
     </Link>
 </template>

@@ -92,9 +92,9 @@ class LoadProfileForDisplay
     public function handle(User $profile, ?User $viewer = null): array
     {
         return [
-            'user' => $this->summary($profile, $viewer),
+            'user'     => $this->summary($profile, $viewer),
             'listings' => $this->listings($profile, $viewer),
-            'reviews' => $this->reviews($profile, $viewer),
+            'reviews'  => $this->reviews($profile, $viewer),
         ];
     }
 

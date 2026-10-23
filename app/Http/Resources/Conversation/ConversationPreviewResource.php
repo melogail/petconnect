@@ -101,24 +101,24 @@ class ConversationPreviewResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $viewer = $this->viewer($request);
+        $viewer          = $this->viewer($request);
         $hasParticipants = $this->relationLoaded('users');
-        $lastMessage = $this->relationLoaded('lastMessage') ? $this->lastMessage : null;
+        $lastMessage     = $this->relationLoaded('lastMessage') ? $this->lastMessage : null;
 
         return [
-            'id' => $this->id,
+            'id'                     => $this->id,
 
-            'peer' => $hasParticipants && $viewer !== null
+            'peer'                   => $hasParticipants && $viewer !== null
                 ? $this->peerResource($viewer)
                 : null,
 
-            'last_message_at' => $this->last_message_at,
-            'last_message_snippet' => $lastMessage === null
+            'last_message_at'        => $this->last_message_at,
+            'last_message_snippet'   => $lastMessage === null
                 ? null
                 : Str::limit($lastMessage->content, $this->snippetLength()),
             'last_message_sender_id' => $lastMessage?->sender_id,
 
-            'unread' => $hasParticipants
+            'unread'                 => $hasParticipants
                 && $lastMessage !== null
                 && $viewer !== null
                 && $this->isUnreadFor($viewer),

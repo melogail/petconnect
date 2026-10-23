@@ -62,7 +62,7 @@ class NotifyModerators
 
     public function handle(SubmitReportContext $context, Closure $next): mixed
     {
-        $report = $context->report();
+        $report   = $context->report();
         $notified = 0;
 
         Admin::query()->chunkById(self::CHUNK_SIZE, function (Collection $admins) use ($report, &$notified): void {
@@ -73,9 +73,9 @@ class NotifyModerators
 
         if ($notified === 0) {
             Log::warning('A report was filed but no moderator could be notified.', [
-                'report_id' => $report->getKey(),
+                'report_id'       => $report->getKey(),
                 'reportable_type' => $report->reportable_type,
-                'reportable_id' => $report->reportable_id,
+                'reportable_id'   => $report->reportable_id,
             ]);
         }
 

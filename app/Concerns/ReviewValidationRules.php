@@ -2,8 +2,6 @@
 
 namespace App\Concerns;
 
-use Illuminate\Contracts\Validation\ValidationRule;
-
 /**
  * The rules the review Form Requests share, and the single place each review
  * key is spelled.
@@ -45,12 +43,12 @@ trait ReviewValidationRules
     /**
      * The review write bag, as a create submits it.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, list<string>>
      */
     protected function reviewRules(): array
     {
         return [
-            'rate' => ['required', 'integer', 'min:'.$this->minRate(), 'max:'.$this->maxRate()],
+            'rate'    => ['required', 'integer', 'min:'.$this->minRate(), 'max:'.$this->maxRate()],
             'comment' => ['nullable', 'string', 'max:'.$this->maxCommentLength()],
         ];
     }
@@ -59,11 +57,11 @@ trait ReviewValidationRules
      * The same bag for a PUT, where an omitted `comment` would be a silent wipe
      * rather than an omission.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, list<string>>
      */
     protected function reviewReplacementRules(): array
     {
-        $rules = $this->reviewRules();
+        $rules            = $this->reviewRules();
 
         $rules['comment'] = ['present', ...$rules['comment']];
 
@@ -90,8 +88,8 @@ trait ReviewValidationRules
     public function reviewBounds(): array
     {
         return [
-            'min_rate' => $this->minRate(),
-            'max_rate' => $this->maxRate(),
+            'min_rate'           => $this->minRate(),
+            'max_rate'           => $this->maxRate(),
             'max_comment_length' => $this->maxCommentLength(),
         ];
     }

@@ -82,9 +82,9 @@ class SetLocale
     protected function resolveLocale(Request $request): string
     {
         /** @var list<string> $supported */
-        $supported = config('petconnect.locales.supported', ['en']);
+        $supported  = config('petconnect.locales.supported', ['en']);
 
-        $user = $request->user();
+        $user       = $request->user();
 
         $candidates = [
             $request->header(self::HEADER),

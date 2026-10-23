@@ -55,8 +55,8 @@ class PersistMessage
     {
         $message = new Message([
             'sender_id' => $context->sender->getKey(),
-            'content' => $context->content(),
-            'type' => $context->type,
+            'content'   => $context->content(),
+            'type'      => $context->type,
         ]);
 
         $message->conversation()->associate($context->conversation);

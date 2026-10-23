@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Pets\ListHomeFeedPets;
 use App\Actions\Pets\ListPetCategories;
 use App\Concerns\CommentValidationRules;
+use App\Concerns\ResolvesRequestUser;
 use App\Enums\ListingType;
 use App\Enums\ReportCategory;
 use App\Enums\ReportReason;
@@ -80,6 +81,7 @@ use Inertia\Response;
 class HomeController extends Controller
 {
     use CommentValidationRules;
+    use ResolvesRequestUser;
 
     public function index(
         ListHomeFeedRequest $request,
@@ -89,29 +91,29 @@ class HomeController extends Controller
         $this->authorize('viewAny', Pet::class);
 
         return Inertia::render('Home', [
-            'pets' => Inertia::scroll(fn () => PetCardResource::collection($listHomeFeedPets->handle(
-                viewer: $request->user(),
+            'pets'             => Inertia::scroll(fn () => PetCardResource::collection($listHomeFeedPets->handle(
+                viewer: $this->viewer($request),
                 filters: $request->filters(),
                 latitude: $request->latitude(),
                 longitude: $request->longitude(),
                 radiusKm: $request->radiusKm(),
             ))),
-            'filters' => $request->filters(),
-            'nearby' => $request->hasCoordinates(),
-            'radius' => $request->radiusKm(),
-            'listingTypes' => ListingType::options(),
+            'filters'          => $request->filters(),
+            'nearby'           => $request->hasCoordinates(),
+            'radius'           => $request->radiusKm(),
+            'listingTypes'     => ListingType::options(),
             'reportCategories' => ReportCategory::options(),
-            'reportReasons' => ReportReason::options(),
-            'commentBounds' => $this->commentBounds(),
-            'filterBounds' => [
+            'reportReasons'    => ReportReason::options(),
+            'commentBounds'    => $this->commentBounds(),
+            'filterBounds'     => [
                 'default_radius_km' => $request->defaultRadiusKm(),
-                'min_radius_km' => $request->minRadiusKm(),
-                'max_radius_km' => $request->maxRadiusKm(),
-                'max_age_years' => $request->maxAgeYears(),
-                'default_age_min' => $request->defaultAgeMin(),
-                'default_age_max' => $request->defaultAgeMax(),
+                'min_radius_km'     => $request->minRadiusKm(),
+                'max_radius_km'     => $request->maxRadiusKm(),
+                'max_age_years'     => $request->maxAgeYears(),
+                'default_age_min'   => $request->defaultAgeMin(),
+                'default_age_max'   => $request->defaultAgeMax(),
             ],
-            'categories' => Inertia::defer(
+            'categories'       => Inertia::defer(
                 fn () => PetCategoryOptionResource::collection($listPetCategories->handle()),
             ),
         ]);

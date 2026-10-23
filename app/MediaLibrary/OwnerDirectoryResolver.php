@@ -58,7 +58,7 @@ class OwnerDirectoryResolver
             return null;
         }
 
-        $key = "{$modelType}:{$modelId}";
+        $key                                 = "{$modelType}:{$modelId}";
 
         if (array_key_exists($key, $this->ownerDirectories)) {
             return $this->ownerDirectories[$key];
@@ -77,7 +77,7 @@ class OwnerDirectoryResolver
     {
         $modelClass = Relation::getMorphedModel($modelType) ?? $modelType;
 
-        if (! is_string($modelClass) || ! is_a($modelClass, Model::class, true)) {
+        if (! is_a($modelClass, Model::class, true)) {
             return null;
         }
 
@@ -85,7 +85,7 @@ class OwnerDirectoryResolver
             return $this->userDirectory($modelId);
         }
 
-        $ownerId = $this->ownerIdFor($modelClass, $modelId);
+        $ownerId    = $this->ownerIdFor($modelClass, $modelId);
 
         return $ownerId === null ? null : $this->userDirectory($ownerId);
     }

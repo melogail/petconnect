@@ -123,7 +123,7 @@ class PetController extends Controller
 
         return response()->json([
             'status' => $status->value,
-            'label' => $status->label(),
+            'label'  => $status->label(),
         ]);
     }
 
@@ -138,7 +138,7 @@ class PetController extends Controller
         $liked = $toggleLike->handle($pet, $this->actor($request));
 
         return response()->json([
-            'is_liked' => $liked,
+            'is_liked'    => $liked,
             'likes_count' => $countLikes->handle($pet),
         ]);
     }

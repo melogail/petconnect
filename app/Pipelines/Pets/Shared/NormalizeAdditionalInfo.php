@@ -27,7 +27,7 @@ class NormalizeAdditionalInfo
             return $next($context);
         }
 
-        $normalized = [];
+        $normalized     = [];
 
         foreach ($additionalInfo as $key => $value) {
             if (blank($key) || blank($value)) {

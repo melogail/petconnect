@@ -91,12 +91,12 @@ function countThreadQueries(Pet $pet, ?User $viewer): int
 }
 
 test('returns the top level comments only, each carrying a bounded preview of its replies and the true count of them', function () {
-    $pet = Pet::factory()->create();
-    $root = Comment::factory()->for($pet, 'commentable')->create();
+    $pet       = Pet::factory()->create();
+    $root      = Comment::factory()->for($pet, 'commentable')->create();
     Comment::factory()->count(5)->reply($root)->create();
     $otherRoot = Comment::factory()->for($pet, 'commentable')->create();
 
-    $page = app(ListCommentThread::class)->handle(
+    $page      = app(ListCommentThread::class)->handle(
         commentableType: Commentable::Pet,
         commentableId: $pet->getKey(),
         replyPreview: 3,
@@ -108,11 +108,11 @@ test('returns the top level comments only, each carrying a bounded preview of it
 });
 
 test('orders the thread newest first', function () {
-    $pet = Pet::factory()->create();
+    $pet   = Pet::factory()->create();
     $older = Comment::factory()->for($pet, 'commentable')->create(['created_at' => now()->subHour()]);
     $newer = Comment::factory()->for($pet, 'commentable')->create(['created_at' => now()]);
 
-    $page = app(ListCommentThread::class)->handle(
+    $page  = app(ListCommentThread::class)->handle(
         commentableType: Commentable::Pet,
         commentableId: $pet->getKey(),
     );
@@ -121,11 +121,11 @@ test('orders the thread newest first', function () {
 });
 
 test('leaves out the comments of another listing', function () {
-    $pet = Pet::factory()->create();
+    $pet    = Pet::factory()->create();
     $wanted = Comment::factory()->for($pet, 'commentable')->create();
     Comment::factory()->for(Pet::factory()->create(), 'commentable')->create();
 
-    $page = app(ListCommentThread::class)->handle(
+    $page   = app(ListCommentThread::class)->handle(
         commentableType: Commentable::Pet,
         commentableId: $pet->getKey(),
     );
@@ -134,21 +134,21 @@ test('leaves out the comments of another listing', function () {
 });
 
 test('flags the comments the viewer has liked and reported, and counts the likes of the rest', function () {
-    $viewer = User::factory()->create();
-    $pet = Pet::factory()->create();
-    $liked = Comment::factory()->for($pet, 'commentable')->create();
+    $viewer    = User::factory()->create();
+    $pet       = Pet::factory()->create();
+    $liked     = Comment::factory()->for($pet, 'commentable')->create();
     $untouched = Comment::factory()->for($pet, 'commentable')->create();
     Like::factory()->forComment($liked)->for($viewer)->create();
     Like::factory()->forComment($untouched)->create();
     Report::factory()->forReportable($liked)->for($viewer)->create();
 
-    $page = app(ListCommentThread::class)->handle(
+    $page      = app(ListCommentThread::class)->handle(
         commentableType: Commentable::Pet,
         commentableId: $pet->getKey(),
         viewer: $viewer,
     );
 
-    $payload = collect(CommentResource::collection($page)->resolve())->keyBy('id');
+    $payload   = collect(CommentResource::collection($page)->resolve())->keyBy('id');
 
     expect($payload[$liked->getKey()])
         ->is_liked->toBeTrue()
@@ -162,11 +162,11 @@ test('flags the comments the viewer has liked and reported, and counts the likes
 });
 
 test('reports no like or report of its own for a guest', function () {
-    $pet = Pet::factory()->create();
+    $pet     = Pet::factory()->create();
     $comment = Comment::factory()->for($pet, 'commentable')->create();
     Like::factory()->forComment($comment)->create();
 
-    $page = app(ListCommentThread::class)->handle(
+    $page    = app(ListCommentThread::class)->handle(
         commentableType: Commentable::Pet,
         commentableId: $pet->getKey(),
     );
@@ -179,12 +179,12 @@ test('reports no like or report of its own for a guest', function () {
 
 test('serialises a page of the thread in a constant number of queries however many comments it holds', function () {
     Storage::fake(config('media-library.disk_name'));
-    $viewer = User::factory()->create();
-    $pet = Pet::factory()->create();
+    $viewer           = User::factory()->create();
+    $pet              = Pet::factory()->create();
 
     seedThreadOnListing($pet, comments: 3, repliesEach: 2);
 
-    $atNineComments = countThreadQueries($pet, $viewer);
+    $atNineComments   = countThreadQueries($pet, $viewer);
 
     seedThreadOnListing($pet, comments: 7, repliesEach: 2);
 

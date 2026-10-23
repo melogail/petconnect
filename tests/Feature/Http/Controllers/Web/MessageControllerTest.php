@@ -36,7 +36,7 @@ describe('index', function () {
     });
 
     test('returns the newest page of the thread as JSON for a participant', function () {
-        $reader = User::factory()->create();
+        $reader      = User::factory()->create();
         [, $message] = threadWithMessageFrom(User::factory()->create(), $reader, 'Is she still available?');
 
         $this->actingAs($reader)
@@ -61,7 +61,7 @@ describe('index', function () {
     });
 
     test('returns 404 for a soft deleted conversation', function () {
-        $reader = User::factory()->create();
+        $reader         = User::factory()->create();
         [$conversation] = threadWithMessageFrom($reader, User::factory()->create());
         $conversation->delete();
 
@@ -84,7 +84,7 @@ describe('store', function () {
     });
 
     test('redirects an unverified user to the verification notice and writes nothing', function () {
-        $sender = User::factory()->unverified()->create();
+        $sender       = User::factory()->unverified()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
@@ -98,8 +98,8 @@ describe('store', function () {
 
     test('writes the message and notifies the other side', function () {
         Notification::fake();
-        $sender = User::factory()->create();
-        $peer = User::factory()->create();
+        $sender       = User::factory()->create();
+        $peer         = User::factory()->create();
         $conversation = Conversation::factory()->direct()->withParticipants($sender, $peer)->create();
 
         $this->actingAs($sender)
@@ -109,37 +109,37 @@ describe('store', function () {
 
         $this->assertDatabaseHas('messages', [
             'conversation_id' => $conversation->getKey(),
-            'sender_id' => $sender->getKey(),
-            'content' => 'Is she still available?',
-            'type' => MessageType::Text->value,
+            'sender_id'       => $sender->getKey(),
+            'content'         => 'Is she still available?',
+            'type'            => MessageType::Text->value,
         ]);
         Notification::assertSentTo($peer, NewMessageNotification::class);
         Notification::assertNotSentTo($sender, NewMessageNotification::class);
     });
 
     test('stamps the sender from the session rather than from the payload', function () {
-        $sender = User::factory()->create();
-        $peer = User::factory()->create();
+        $sender       = User::factory()->create();
+        $peer         = User::factory()->create();
         $conversation = Conversation::factory()->direct()->withParticipants($sender, $peer)->create();
 
         $this->actingAs($sender)
             ->from(route('conversations.show', $conversation))
             ->post(route('conversations.messages.store', $conversation), [
-                'content' => 'Is she still available?',
-                'sender_id' => $peer->getKey(),
+                'content'         => 'Is she still available?',
+                'sender_id'       => $peer->getKey(),
                 'conversation_id' => 9999,
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('messages', [
-            'sender_id' => $sender->getKey(),
+            'sender_id'       => $sender->getKey(),
             'conversation_id' => $conversation->getKey(),
         ]);
         $this->assertDatabaseMissing('messages', ['sender_id' => $peer->getKey()]);
     });
 
     test('cleans the submitted text before storing it', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
@@ -170,7 +170,7 @@ describe('store', function () {
      * thing that asks it again on every subsequent message.
      */
     test('returns 403 when the recipient has deactivated since the thread was opened, and writes nothing', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->inactive()->create())
             ->create();
@@ -185,7 +185,7 @@ describe('store', function () {
     });
 
     test('returns 404 for a soft deleted conversation and writes nothing', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
@@ -199,24 +199,24 @@ describe('store', function () {
     });
 
     test('rejects a message with no content and writes nothing', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
 
         $this->actingAs($sender)
             ->post(route('conversations.messages.store', $conversation), ['content' => ''])
-            ->assertInvalid(['content' => 'The content field is required.']);
+            ->assertInvalid(['content' => 'The message field is required.']);
 
         $this->assertDatabaseEmpty('messages');
     });
 
     test('rejects a message longer than the configured ceiling and writes nothing', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
-        $maxLength = config('petconnect.messaging.max_length');
+        $maxLength    = config('petconnect.messaging.max_length');
 
         $this->actingAs($sender)
             ->post(route('conversations.messages.store', $conversation), [
@@ -228,7 +228,7 @@ describe('store', function () {
     });
 
     test('rejects a payload type that is not a MessageType case and writes nothing', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
@@ -236,7 +236,7 @@ describe('store', function () {
         $this->actingAs($sender)
             ->post(route('conversations.messages.store', $conversation), [
                 'content' => 'Hello',
-                'type' => 'telegram',
+                'type'    => 'telegram',
             ])
             ->assertInvalid(['type']);
 
@@ -244,7 +244,7 @@ describe('store', function () {
     });
 
     test('returns 429 once the acting user passes 30 messages in a minute', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
@@ -274,7 +274,7 @@ describe('update', function () {
     });
 
     test('applies the edit for the sender', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -283,7 +283,7 @@ describe('update', function () {
             ->assertRedirect(route('conversations.show', $conversation));
 
         $this->assertDatabaseHas('messages', [
-            'id' => $message->getKey(),
+            'id'      => $message->getKey(),
             'content' => 'Edited',
         ]);
     });
@@ -295,7 +295,7 @@ describe('update', function () {
      */
     test('stamps the edit timestamp on the revised message', function () {
         $this->freezeTime();
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -304,14 +304,14 @@ describe('update', function () {
             ->assertValid();
 
         $this->assertDatabaseHas('messages', [
-            'id' => $message->getKey(),
+            'id'        => $message->getKey(),
             'edited_at' => now()->toDateTimeString(),
         ]);
         expect($message->fresh()->is_edited)->toBeTrue();
     });
 
     test('cleans the edited text, so a message cannot be edited around the filter', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -323,7 +323,7 @@ describe('update', function () {
     });
 
     test('returns 403 for the other participant and leaves the text unchanged', function () {
-        $peer = User::factory()->create();
+        $peer        = User::factory()->create();
         [, $message] = threadWithMessageFrom(User::factory()->create(), $peer);
 
         $this->actingAs($peer)
@@ -345,7 +345,7 @@ describe('update', function () {
 
     test('returns 403 once the edit window has closed and leaves the text unchanged', function () {
         config(['petconnect.messaging.edit_window_minutes' => 15]);
-        $sender = User::factory()->create();
+        $sender      = User::factory()->create();
         [, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $message->forceFill(['created_at' => now()->subMinutes(16)])->saveQuietly();
 
@@ -357,12 +357,12 @@ describe('update', function () {
     });
 
     test('rejects an edit with no content and leaves the text unchanged', function () {
-        $sender = User::factory()->create();
+        $sender      = User::factory()->create();
         [, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
             ->put(route('messages.update', $message), ['content' => ''])
-            ->assertInvalid(['content' => 'The content field is required.']);
+            ->assertInvalid(['content' => 'The message field is required.']);
 
         expect($message->fresh()->content)->toBe('Original');
     });
@@ -370,7 +370,7 @@ describe('update', function () {
 
 describe('destroy', function () {
     test('withdraws the message for its sender', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -382,7 +382,7 @@ describe('destroy', function () {
     });
 
     test('returns 403 for the other participant and leaves the message in place', function () {
-        $peer = User::factory()->create();
+        $peer        = User::factory()->create();
         [, $message] = threadWithMessageFrom(User::factory()->create(), $peer);
 
         $this->actingAs($peer)->delete(route('messages.destroy', $message))->assertForbidden();
@@ -402,7 +402,7 @@ describe('destroy', function () {
 
     test('withdraws a message the edit window has long closed on', function () {
         config(['petconnect.messaging.edit_window_minutes' => 15]);
-        $sender = User::factory()->create();
+        $sender      = User::factory()->create();
         [, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $message->forceFill(['created_at' => now()->subYear()])->saveQuietly();
 
@@ -417,7 +417,7 @@ describe('destroy', function () {
 
 describe('pin', function () {
     test('pins a message for its sender and records who pinned it', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -431,7 +431,7 @@ describe('pin', function () {
     });
 
     test('lets the other participant pin a message they did not send', function () {
-        $peer = User::factory()->create();
+        $peer        = User::factory()->create();
         [, $message] = threadWithMessageFrom(User::factory()->create(), $peer);
 
         $this->actingAs($peer)
@@ -443,11 +443,11 @@ describe('pin', function () {
     });
 
     test('unpins a message that is already pinned and clears the attribution', function () {
-        $sender = User::factory()->create();
+        $sender       = User::factory()->create();
         $conversation = Conversation::factory()->direct()
             ->withParticipants($sender, User::factory()->create())
             ->create();
-        $message = Message::factory()->for($conversation)->from($sender)->pinned()->create();
+        $message      = Message::factory()->for($conversation)->from($sender)->pinned()->create();
 
         $this->actingAs($sender)
             ->from(route('conversations.index'))
@@ -476,7 +476,7 @@ describe('pin', function () {
      * message tells the recipient it was rewritten.
      */
     test('does not mark an hour old message as edited', function () {
-        $sender = User::factory()->create();
+        $sender      = User::factory()->create();
         [, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $message->forceFill([
             'created_at' => now()->subHour(),
@@ -499,7 +499,7 @@ describe('pin', function () {
     });
 
     test('marks a message as edited once its text is actually revised', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -530,7 +530,7 @@ describe('pin', function () {
  */
 describe('route binding', function () {
     test('returns 404 from the update of a message in a soft deleted conversation, and leaves the text unchanged', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $conversation->delete();
 
@@ -542,7 +542,7 @@ describe('route binding', function () {
     });
 
     test('returns 404 from the destroy of a message in a soft deleted conversation, and leaves it in place', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $conversation->delete();
 
@@ -554,7 +554,7 @@ describe('route binding', function () {
     });
 
     test('returns 404 from the pin of a message in a soft deleted conversation, and pins nothing', function () {
-        $sender = User::factory()->create();
+        $sender                   = User::factory()->create();
         [$conversation, $message] = threadWithMessageFrom($sender, User::factory()->create());
         $conversation->delete();
 
@@ -566,7 +566,7 @@ describe('route binding', function () {
     });
 
     test('serves a message in a live conversation', function (string $method, string $routeName, array $payload) {
-        $sender = User::factory()->create();
+        $sender      = User::factory()->create();
         [, $message] = threadWithMessageFrom($sender, User::factory()->create());
 
         $this->actingAs($sender)
@@ -574,9 +574,9 @@ describe('route binding', function () {
             ->call($method, route($routeName, $message), $payload)
             ->assertRedirect();
     })->with([
-        'update' => ['put', 'messages.update', ['content' => 'Edited']],
+        'update'  => ['put', 'messages.update', ['content' => 'Edited']],
         'destroy' => ['delete', 'messages.destroy', []],
-        'pin' => ['post', 'messages.pin', []],
+        'pin'     => ['post', 'messages.pin', []],
     ]);
 
     test('returns 404 for a message id that does not exist', function (string $method, string $routeName, array $payload) {
@@ -584,8 +584,8 @@ describe('route binding', function () {
             ->call($method, route($routeName, 9999), $payload)
             ->assertNotFound();
     })->with([
-        'update' => ['put', 'messages.update', ['content' => 'Edited']],
+        'update'  => ['put', 'messages.update', ['content' => 'Edited']],
         'destroy' => ['delete', 'messages.destroy', []],
-        'pin' => ['post', 'messages.pin', []],
+        'pin'     => ['post', 'messages.pin', []],
     ]);
 });

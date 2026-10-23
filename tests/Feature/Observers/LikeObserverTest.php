@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Notification;
 
 test('notifies the owner when their pet is liked', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
     $liker = User::factory()->create();
     Notification::fake();
 
@@ -22,9 +22,9 @@ test('notifies the owner when their pet is liked', function () {
 });
 
 test('notifies the author when their comment is liked', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $comment = Comment::factory()->for($author)->create();
-    $liker = User::factory()->create();
+    $liker   = User::factory()->create();
     Notification::fake();
 
     Like::factory()->forComment($comment)->for($liker)->create();
@@ -34,7 +34,7 @@ test('notifies the author when their comment is liked', function () {
 
 test('notifies the profile owner when their profile is liked', function () {
     $profileOwner = User::factory()->create();
-    $liker = User::factory()->create();
+    $liker        = User::factory()->create();
     Notification::fake();
 
     Like::factory()->forUser($profileOwner)->for($liker)->create();
@@ -44,7 +44,7 @@ test('notifies the profile owner when their profile is liked', function () {
 
 test('sends the like notification on the database and broadcast channels', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
     Notification::fake();
 
     Like::factory()->forPet($pet)->for(User::factory()->create())->create();
@@ -58,7 +58,7 @@ test('sends the like notification on the database and broadcast channels', funct
 
 test('sends no notification when an owner likes their own pet', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
     Notification::fake();
 
     Like::factory()->forPet($pet)->for($owner)->create();
@@ -67,7 +67,7 @@ test('sends no notification when an owner likes their own pet', function () {
 });
 
 test('sends no notification when an author likes their own comment', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $comment = Comment::factory()->for($author)->create();
     Notification::fake();
 

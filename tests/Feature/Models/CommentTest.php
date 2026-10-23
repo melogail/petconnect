@@ -5,7 +5,7 @@ use Illuminate\Support\Str;
 
 test('deleting a comment deletes its replies', function () {
     $parent = Comment::factory()->create();
-    $reply = Comment::factory()->reply($parent)->create();
+    $reply  = Comment::factory()->reply($parent)->create();
 
     $parent->delete();
 
@@ -13,8 +13,8 @@ test('deleting a comment deletes its replies', function () {
 });
 
 test('deleting a comment deletes replies nested below its replies', function () {
-    $parent = Comment::factory()->create();
-    $reply = Comment::factory()->reply($parent)->create();
+    $parent      = Comment::factory()->create();
+    $reply       = Comment::factory()->reply($parent)->create();
     $nestedReply = Comment::factory()->reply($reply)->create();
 
     $parent->delete();
@@ -25,7 +25,7 @@ test('deleting a comment deletes replies nested below its replies', function () 
 
 test('deleting a reply leaves its parent alone', function () {
     $parent = Comment::factory()->create();
-    $reply = Comment::factory()->reply($parent)->create();
+    $reply  = Comment::factory()->reply($parent)->create();
 
     $reply->delete();
 

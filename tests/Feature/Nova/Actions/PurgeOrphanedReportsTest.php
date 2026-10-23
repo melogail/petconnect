@@ -43,7 +43,7 @@ function orphanedReport(): Report
  * them, not one of them already destroyed.
  */
 test('refuses the whole selection when one report still points at a live target, naming it', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $targeted = Report::factory()->pending()->create();
     $orphaned = orphanedReport();
 
@@ -68,8 +68,8 @@ test('refuses the whole selection when one report still points at a live target,
  * would have refused had it been included.
  */
 test('purges a report whose target no longer exists', function () {
-    $admin = Admin::factory()->create();
-    $orphan = orphanedReport();
+    $admin    = Admin::factory()->create();
+    $orphan   = orphanedReport();
     $survivor = Report::factory()->pending()->create();
 
     $this->actingAs($admin, 'admin')
@@ -98,10 +98,10 @@ test('purges a report whose target no longer exists', function () {
  * nothing at all.
  */
 test('restores every report when one of the selection cannot be deleted', function () {
-    $admin = Admin::factory()->create();
-    $first = orphanedReport();
-    $second = orphanedReport();
-    $attempts = 0;
+    $admin              = Admin::factory()->create();
+    $first              = orphanedReport();
+    $second             = orphanedReport();
+    $attempts           = 0;
     $remainingMidFlight = null;
 
     Event::listen('eloquent.deleting: '.Report::class, function () use (&$attempts, &$remainingMidFlight): void {

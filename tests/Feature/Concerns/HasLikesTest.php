@@ -34,10 +34,10 @@ dataset('likeables', [
  */
 test('returns the existing like rather than a second row when the same user likes twice', function (Closure $makeLikeable) {
     $likeable = $makeLikeable();
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
-    $first = $likeable->like($user);
-    $second = $likeable->like($user);
+    $first    = $likeable->like($user);
+    $second   = $likeable->like($user);
 
     expect($second->getKey())->toBe($first->getKey())
         ->and(Like::query()->whereBelongsTo($user)->whereMorphedTo('likeable', $likeable)->count())->toBe(1);
@@ -50,9 +50,9 @@ test('returns the existing like rather than a second row when the same user like
  * the test above.
  */
 test('keeps a like per user and per target', function () {
-    $pet = Pet::factory()->create();
-    $otherPet = Pet::factory()->create();
-    $user = User::factory()->create();
+    $pet       = Pet::factory()->create();
+    $otherPet  = Pet::factory()->create();
+    $user      = User::factory()->create();
     $otherUser = User::factory()->create();
 
     $pet->like($user);
@@ -69,7 +69,7 @@ test('keeps a like per user and per target', function () {
  */
 test('reports whether unliking removed anything', function (Closure $makeLikeable) {
     $likeable = $makeLikeable();
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $likeable->like($user);
 

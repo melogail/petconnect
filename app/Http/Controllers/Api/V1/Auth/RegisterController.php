@@ -35,9 +35,9 @@ class RegisterController extends Controller
         event(new Registered($user));
 
         return response()->json([
-            'token' => $issueAccessToken->handle($user, $request->deviceName()),
+            'token'      => $issueAccessToken->handle($user, $request->deviceName()),
             'token_type' => 'Bearer',
-            'user' => AccountResource::make($user),
+            'user'       => AccountResource::make($user),
         ], 201);
     }
 }

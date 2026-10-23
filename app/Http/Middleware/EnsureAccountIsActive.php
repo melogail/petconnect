@@ -108,7 +108,7 @@ class EnsureAccountIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        $user    = $request->user();
 
         if (! $user instanceof User || $user->isActive()) {
             return $next($request);

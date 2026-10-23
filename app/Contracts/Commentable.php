@@ -4,6 +4,7 @@ namespace App\Contracts;
 
 use App\Models\Comment;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -31,7 +32,12 @@ use Illuminate\Support\Collection;
 interface Commentable
 {
     /**
-     * @return MorphMany<Comment, static>
+     * `covariant Model` rather than `static`: an interface is not a Model, so
+     * `static` fails MorphMany's `TDeclaringModel of Model` bound, and the
+     * template is invariant, so a plain `Model` would reject the trait's
+     * `MorphMany<Comment, $this>`. Call-site variance accepts every implementer.
+     *
+     * @return MorphMany<Comment, covariant Model>
      */
     public function comments(): MorphMany;
 
@@ -43,7 +49,7 @@ interface Commentable
      * by hand — a hand-built morph filter is the one shape that silently
      * matches nothing when an alias changes. See .ai/rules/app.md.
      *
-     * @return MorphMany<Comment, static>
+     * @return MorphMany<Comment, covariant Model>
      */
     public function rootComments(): MorphMany;
 

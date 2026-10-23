@@ -73,31 +73,31 @@ class ModelCommentedNotification extends Notification
         $this->comment->loadMissing(['user', 'commentable']);
 
         $commenterName = $this->comment->user?->name;
-        $commentable = $this->comment->commentable;
-        $isReply = $this->comment->parent_id !== null;
+        $commentable   = $this->comment->commentable;
+        $isReply       = $this->comment->parent_id !== null;
 
-        $messageKey = match (true) {
-            $isReply => 'notifications.replied_to_comment',
+        $messageKey    = match (true) {
+            $isReply                    => 'notifications.replied_to_comment',
             $commentable instanceof Pet => 'notifications.commented_on_pet',
-            default => 'notifications.commented_generic',
+            default                     => 'notifications.commented_generic',
         };
 
         return [
-            'comment_id' => $this->comment->id,
-            'parent_id' => $this->comment->parent_id,
-            'commenter_id' => $this->comment->user_id,
-            'commenter_name' => $commenterName,
+            'comment_id'       => $this->comment->id,
+            'parent_id'        => $this->comment->parent_id,
+            'commenter_id'     => $this->comment->user_id,
+            'commenter_name'   => $commenterName,
             'commentable_type' => $this->comment->commentable_type,
-            'commentable_id' => $this->comment->commentable_id,
+            'commentable_id'   => $this->comment->commentable_id,
             'commentable_name' => $commentable instanceof Pet ? $commentable->name : null,
-            'excerpt' => Str::limit($this->comment->content, self::EXCERPT_LENGTH),
-            'message_key' => $messageKey,
-            'message_replace' => [
-                'name' => (string) $commenterName,
+            'excerpt'          => Str::limit($this->comment->content, self::EXCERPT_LENGTH),
+            'message_key'      => $messageKey,
+            'message_replace'  => [
+                'name'    => (string) $commenterName,
                 'subject' => $commentable instanceof Pet ? $commentable->name : '',
             ],
-            'url' => $this->commentableUrl(),
-            'type' => 'comment',
+            'url'              => $this->commentableUrl(),
+            'type'             => 'comment',
         ];
     }
 
@@ -113,7 +113,7 @@ class ModelCommentedNotification extends Notification
             $commentable instanceof Pet => Route::has('pets.show')
                 ? route('pets.show', $commentable)
                 : null,
-            default => null,
+            default                     => null,
         };
     }
 }

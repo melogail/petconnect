@@ -56,7 +56,7 @@ describe('writes', function () {
     });
 
     test('cannot mark another account\'s notification as read', function () {
-        $owner = User::factory()->create();
+        $owner   = User::factory()->create();
         notifyOwnerOfLike($owner);
         $foreign = $owner->notifications()->firstOrFail()->getKey();
         Sanctum::actingAs(User::factory()->create());

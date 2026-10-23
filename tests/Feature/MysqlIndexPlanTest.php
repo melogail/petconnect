@@ -73,7 +73,7 @@ use Illuminate\Support\Str;
  * two rows naming that table.
  */
 beforeEach(function (): void {
-    $connection = DB::connection();
+    $connection    = DB::connection();
 
     if ($connection->getDriverName() !== 'mysql') {
         $this->markTestSkipped(sprintf(
@@ -128,19 +128,20 @@ beforeEach(function (): void {
  */
 function seedIndexPlanFixture(): array
 {
-    $owner = User::factory()->create();
-    $others = User::factory()->count(4)->create();
+    $owner            = User::factory()->create();
+    $others           = User::factory()->count(4)->create();
 
-    $pet = Pet::factory()->for($owner)->create();
+    $pet              = Pet::factory()->for($owner)->create();
 
-    $petTemplate = $pet->getAttributes();
+    $petTemplate      = $pet->getAttributes();
     unset($petTemplate['id']);
 
-    $petRows = [];
+    $petRows          = [];
 
     foreach (range(1, 999) as $offset) {
         $petRows[] = array_merge($petTemplate, [
-            'user_id' => $offset % 20 === 0 ? $owner->getKey() : $others[$offset % 4]->getKey(),
+            'user_id'    => $offset % 20 === 0 ? $owner->getKey() : $others[$offset % 4]->getKey(),
+            'slug'       => $pet->slug.'-'.$offset, // pets.slug is unique; the template's slug cannot be copied
             'created_at' => now()->subMinutes($offset),
             'updated_at' => now()->subMinutes($offset),
         ]);
@@ -150,23 +151,23 @@ function seedIndexPlanFixture(): array
         DB::table('pets')->insert($chunk);
     }
 
-    $petIds = Pet::query()->pluck('id')->all();
+    $petIds           = Pet::query()->pluck('id')->all();
 
-    $rootComment = Comment::factory()->forPet($pet)->for($owner)->create();
+    $rootComment      = Comment::factory()->forPet($pet)->for($owner)->create();
 
-    $commentTemplate = $rootComment->getAttributes();
+    $commentTemplate  = $rootComment->getAttributes();
     unset($commentTemplate['id']);
 
-    $commentRows = [];
+    $commentRows      = [];
 
     foreach (range(1, 999) as $offset) {
-        $onOurPet = $offset % 20 === 0;
+        $onOurPet      = $offset % 20 === 0;
 
         $commentRows[] = array_merge($commentTemplate, [
             'commentable_id' => $onOurPet ? $pet->getKey() : $petIds[$offset % count($petIds)],
-            'parent_id' => $onOurPet && $offset % 40 === 0 ? $rootComment->getKey() : null,
-            'created_at' => now()->subMinutes($offset),
-            'updated_at' => now()->subMinutes($offset),
+            'parent_id'      => $onOurPet && $offset % 40 === 0 ? $rootComment->getKey() : null,
+            'created_at'     => now()->subMinutes($offset),
+            'updated_at'     => now()->subMinutes($offset),
         ]);
     }
 
@@ -174,21 +175,21 @@ function seedIndexPlanFixture(): array
         DB::table('comments')->insert($chunk);
     }
 
-    $notifiableType = $owner->getMorphClass();
+    $notifiableType   = $owner->getMorphClass();
     $notificationRows = [];
 
     foreach (range(1, 1000) as $offset) {
-        $mine = $offset % 20 === 0;
+        $mine               = $offset % 20 === 0;
 
         $notificationRows[] = [
-            'id' => (string) Str::uuid(),
-            'type' => 'App\\Notifications\\CommentPosted',
+            'id'              => (string) Str::uuid(),
+            'type'            => 'App\\Notifications\\CommentPosted',
             'notifiable_type' => $notifiableType,
-            'notifiable_id' => $mine ? $owner->getKey() : $others[$offset % 4]->getKey(),
-            'data' => '{"message":"index plan fixture"}',
-            'read_at' => $offset % 3 === 0 ? now() : null,
-            'created_at' => now()->subMinutes($offset),
-            'updated_at' => now()->subMinutes($offset),
+            'notifiable_id'   => $mine ? $owner->getKey() : $others[$offset % 4]->getKey(),
+            'data'            => '{"message":"index plan fixture"}',
+            'read_at'         => $offset % 3 === 0 ? now() : null,
+            'created_at'      => now()->subMinutes($offset),
+            'updated_at'      => now()->subMinutes($offset),
         ];
     }
 
@@ -230,7 +231,7 @@ function assertPlanUsesIndex(string $label, Builder|Relation $query, string $tab
 {
     $acceptableIndexes = (array) $expectedIndexes;
 
-    $outerRows = $query->explain()
+    $outerRows         = $query->explain()
         ->filter(fn (object $row): bool => (int) $row->id === 1)
         ->values();
 
@@ -240,7 +241,7 @@ function assertPlanUsesIndex(string $label, Builder|Relation $query, string $tab
         $outerRows->count(),
     ));
 
-    $plan = $outerRows->first();
+    $plan              = $outerRows->first();
 
     test()->assertSame($table, $plan->table, sprintf(
         '%s: expected the outermost access path to be on `%s`, EXPLAIN reported `%s`.',
@@ -277,7 +278,7 @@ function assertPlanUsesIndex(string $label, Builder|Relation $query, string $tab
 test('the notification inbox page reads the morph and created_at composite without sorting', function () {
     ['owner' => $owner] = seedIndexPlanFixture();
 
-    $page = $owner->notifications()->limit(15);
+    $page               = $owner->notifications()->limit(15);
 
     assertPlanUsesIndex(
         'notification inbox page',
@@ -290,7 +291,7 @@ test('the notification inbox page reads the morph and created_at composite witho
 test('the unread notification badge reads one of the notifiable composites', function () {
     ['owner' => $owner] = seedIndexPlanFixture();
 
-    $badge = $owner->unreadNotifications()->reorder()->selectRaw('count(*) as aggregate');
+    $badge              = $owner->unreadNotifications()->reorder()->selectRaw('count(*) as aggregate');
 
     /**
      * Either composite is a pass here, and that is not a hedge. The two share
@@ -313,7 +314,7 @@ test('the unread notification badge reads one of the notifiable composites', fun
 test('the root comment listing reads the commentable, parent_id and created_at composite without sorting', function () {
     ['pet' => $pet] = seedIndexPlanFixture();
 
-    $thread = $pet->rootComments()->latest()->limit(10);
+    $thread         = $pet->rootComments()->latest()->limit(10);
 
     assertPlanUsesIndex(
         'root comment listing',
@@ -326,7 +327,7 @@ test('the root comment listing reads the commentable, parent_id and created_at c
 test('the profile listings read the user_id, deleted_at and created_at composite without sorting', function () {
     ['owner' => $owner] = seedIndexPlanFixture();
 
-    $listings = $owner->pets()->latest('created_at')->latest('id')->limit(12);
+    $listings           = $owner->pets()->latest('created_at')->latest('id')->limit(12);
 
     assertPlanUsesIndex(
         'profile listings page',

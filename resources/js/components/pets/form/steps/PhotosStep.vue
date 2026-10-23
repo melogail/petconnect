@@ -5,6 +5,7 @@ import FeaturedPhotoPicker from '@/components/pets/form/FeaturedPhotoPicker.vue'
 import GalleryPhotoPicker from '@/components/pets/form/GalleryPhotoPicker.vue';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
 import type { PetMedia, PetPhotoBounds } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The cover photo and the gallery.
@@ -27,6 +28,8 @@ const { form, photoBounds } = defineProps<{
 
 const errors = computed(() => petFormErrors(form.errors));
 
+const { t } = useTranslations();
+
 const galleryError = computed(
     () =>
         errors.value.images ??
@@ -41,9 +44,9 @@ const galleryError = computed(
     <div class="space-y-8">
         <section class="space-y-3">
             <div>
-                <h3 class="font-medium">Cover photo</h3>
+                <h3 class="font-medium">{{ t('wizard.cover_photo') }}</h3>
                 <p class="text-muted-foreground text-sm">
-                    The one photo that represents the listing everywhere.
+                    {{ t('wizard.cover_photo_desc') }}
                 </p>
             </div>
 
@@ -58,10 +61,13 @@ const galleryError = computed(
 
         <section class="space-y-3">
             <div>
-                <h3 class="font-medium">Gallery</h3>
+                <h3 class="font-medium">{{ t('wizard.gallery') }}</h3>
                 <p class="text-muted-foreground text-sm">
-                    Up to {{ photoBounds.max_gallery_images }} more photos,
-                    beside the cover.
+                    {{
+                        t('wizard.gallery_desc', {
+                            count: photoBounds.max_gallery_images,
+                        })
+                    }}
                 </p>
             </div>
 

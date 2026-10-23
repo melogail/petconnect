@@ -197,7 +197,9 @@
     --secondary: hsl(254 68% 95%); /* #EEEAFB */
     --secondary-foreground: var(--primary-700);
     --muted: hsl(258 42% 95%); /* #F1EEF8 */
-    --muted-foreground: hsl(262 12% 48%); /* #756B88, 4.9:1 on --card */
+    --muted-foreground: hsl(
+        262 12% 47%
+    ); /* #746986, 4.68:1 on --background, 5.1:1 on --card (48% measured 4.49:1, under AA) */
     /*
       Hover and open-menu-item surface — the same lavender as --secondary,
       so a hovered menu row and a secondary button read as one family. The

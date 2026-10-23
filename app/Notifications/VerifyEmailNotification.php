@@ -49,35 +49,35 @@ class VerifyEmailNotification extends VerifyEmail
 {
     public function toMail(mixed $notifiable): MailMessage
     {
-        $appName = (string) config('app.name', 'SniffPal');
-        $locale = $this->localeFor($notifiable);
+        $appName       = (string) config('app.name', 'SniffPal');
+        $locale        = $this->localeFor($notifiable);
         $expireMinutes = (int) config('auth.verification.expire', 60);
-        $userName = (string) ($notifiable->name ?? '');
-        $subject = __('mail.verify_email.subject', ['app' => $appName], $locale);
+        $userName      = (string) ($notifiable->name ?? '');
+        $subject       = __('mail.verify_email.subject', ['app' => $appName], $locale);
 
         return (new MailMessage)
             ->subject($subject)
             ->view('emails.verify-email', [
-                'url' => $this->verificationUrl($notifiable),
-                'userEmail' => $notifiable->getEmailForVerification(),
-                'appName' => $appName,
-                'locale' => $locale,
-                'dir' => $this->directionFor($locale),
-                'subject' => $subject,
-                'preheader' => __('mail.verify_email.preheader', ['app' => $appName], $locale),
-                'heading' => __('mail.verify_email.heading', [], $locale),
-                'intro' => __('mail.verify_email.intro', [
+                'url'               => $this->verificationUrl($notifiable),
+                'userEmail'         => $notifiable->getEmailForVerification(),
+                'appName'           => $appName,
+                'locale'            => $locale,
+                'dir'               => $this->directionFor($locale),
+                'subject'           => $subject,
+                'preheader'         => __('mail.verify_email.preheader', ['app' => $appName], $locale),
+                'heading'           => __('mail.verify_email.heading', [], $locale),
+                'intro'             => __('mail.verify_email.intro', [
                     'name' => $userName !== '' ? $userName : __('mail.verify_email.friend', [], $locale),
-                    'app' => $appName,
+                    'app'  => $appName,
                 ], $locale),
                 'accountEmailLabel' => __('mail.verify_email.account_email', [], $locale),
-                'body' => __('mail.verify_email.body', [], $locale),
-                'action' => __('mail.verify_email.action', [], $locale),
-                'tipsTitle' => __('mail.verify_email.tips_title', [], $locale),
-                'tipExpiry' => __('mail.verify_email.tip_expiry', ['minutes' => $expireMinutes], $locale),
-                'tipIgnore' => __('mail.verify_email.tip_ignore', [], $locale),
-                'linkFallback' => __('mail.verify_email.link_fallback', [], $locale),
-                'footer' => __('mail.verify_email.footer', ['app' => $appName], $locale),
+                'body'              => __('mail.verify_email.body', [], $locale),
+                'action'            => __('mail.verify_email.action', [], $locale),
+                'tipsTitle'         => __('mail.verify_email.tips_title', [], $locale),
+                'tipExpiry'         => __('mail.verify_email.tip_expiry', ['minutes' => $expireMinutes], $locale),
+                'tipIgnore'         => __('mail.verify_email.tip_ignore', [], $locale),
+                'linkFallback'      => __('mail.verify_email.link_fallback', [], $locale),
+                'footer'            => __('mail.verify_email.footer', ['app' => $appName], $locale),
             ]);
     }
 

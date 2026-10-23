@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
 import type { PetFormOptions, PetHealthStatus } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The health group's own fields. The three repeaters live in the healthcare
@@ -26,6 +27,8 @@ const { form } = defineProps<{
 
 const errors = computed(() => petFormErrors(form.errors));
 
+const { t } = useTranslations();
+
 /** `before_or_equal:today` — the picker should not offer tomorrow either. */
 const today = new Date().toISOString().slice(0, 10);
 </script>
@@ -33,7 +36,7 @@ const today = new Date().toISOString().slice(0, 10);
 <template>
     <div class="grid gap-5 sm:grid-cols-2">
         <FormField
-            label="Health status"
+            :label="t('wizard.health_status')"
             field-id="pet-health-status"
             :error="errors['health.status']"
         >
@@ -41,7 +44,7 @@ const today = new Date().toISOString().slice(0, 10);
                 id="pet-health-status"
                 :model-value="form.health.status"
                 :options="options.healthStatuses"
-                placeholder="Pick a health status"
+                :placeholder="t('wizard.select_health_status')"
                 @update:model-value="
                     (value) =>
                         (form.health.status = value as PetHealthStatus | '')
@@ -50,7 +53,7 @@ const today = new Date().toISOString().slice(0, 10);
         </FormField>
 
         <FormField
-            label="Last vet visit"
+            :label="t('wizard.last_vet_visit')"
             field-id="pet-last-vet-visit"
             :error="errors['health.lastVetVisit']"
         >
@@ -72,7 +75,7 @@ const today = new Date().toISOString().slice(0, 10);
                     "
                 />
                 <Label for="pet-vaccinated" class="cursor-pointer font-normal">
-                    Vaccinated
+                    {{ t('wizard.vaccinated') }}
                 </Label>
             </div>
 
@@ -89,16 +92,16 @@ const today = new Date().toISOString().slice(0, 10);
                     for="pet-spayed-neutered"
                     class="cursor-pointer font-normal"
                 >
-                    Spayed or neutered
+                    {{ t('wizard.spayed_neutered') }}
                 </Label>
             </div>
         </div>
 
         <FormField
-            label="Special needs"
+            :label="t('pets.special_needs')"
             field-id="pet-special-needs"
             :error="errors['health.specialNeeds']"
-            hint="Anything a new owner would have to plan around."
+            :hint="t('wizard.special_needs_hint')"
             class="sm:col-span-2"
         >
             <Textarea

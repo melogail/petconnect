@@ -63,22 +63,22 @@ class CommentResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'content' => $this->content,
-            'parent_id' => $this->parent_id,
+            'id'            => $this->id,
+            'content'       => $this->content,
+            'parent_id'     => $this->parent_id,
 
-            'author' => CommentAuthorResource::make($this->whenLoaded('user')),
-            'is_author' => $request->user()?->getKey() === $this->user_id,
+            'author'        => CommentAuthorResource::make($this->whenLoaded('user')),
+            'is_author'     => $request->user()?->getKey() === $this->user_id,
 
-            'likes_count' => (int) ($this->likes_count ?? 0),
-            'is_liked' => (bool) ($this->is_liked ?? false),
+            'likes_count'   => (int) ($this->likes_count ?? 0),
+            'is_liked'      => (bool) ($this->is_liked ?? false),
             'replies_count' => (int) ($this->replies_count ?? 0),
-            'has_reported' => (bool) ($this->has_reported ?? false),
+            'has_reported'  => (bool) ($this->has_reported ?? false),
 
-            'replies' => self::collection($this->whenLoaded('replies')),
+            'replies'       => self::collection($this->whenLoaded('replies')),
 
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at'    => $this->created_at,
+            'updated_at'    => $this->updated_at,
         ];
     }
 }

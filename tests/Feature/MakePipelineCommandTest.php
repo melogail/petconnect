@@ -10,7 +10,7 @@ test('it generates a pipeline class in the pipelines namespace', function () {
     $this->artisan('make:pipeline', ['name' => 'Testing/ChargeCustomer'])
         ->assertSuccessful();
 
-    $path = app_path('Pipelines/Testing/ChargeCustomer.php');
+    $path     = app_path('Pipelines/Testing/ChargeCustomer.php');
 
     expect($path)->toBeReadableFile();
 

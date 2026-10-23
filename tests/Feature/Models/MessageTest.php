@@ -13,24 +13,24 @@ test('rejects a mass assigned privileged column', function (string $column, mixe
     expect(fn () => $message->fill([$column => $value]))
         ->toThrow(MassAssignmentException::class);
 })->with([
-    'delivery status' => ['status', MessageStatus::Sent],
+    'delivery status'   => ['status', MessageStatus::Sent],
     'pinning moderator' => ['pinned_by', 1],
-    'pin timestamp' => ['pinned_at', '2026-01-01 00:00:00'],
-    'edit timestamp' => ['edited_at', '2026-01-01 00:00:00'],
+    'pin timestamp'     => ['pinned_at', '2026-01-01 00:00:00'],
+    'edit timestamp'    => ['edited_at', '2026-01-01 00:00:00'],
 ]);
 
 test('sends a new message as unpinned with the default delivery status', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $sender = User::factory()->create();
+    $sender       = User::factory()->create();
 
-    $message = Message::create([
+    $message      = Message::create([
         'conversation_id' => $conversation->getKey(),
-        'sender_id' => $sender->getKey(),
-        'content' => 'Is the puppy still available?',
-        'type' => MessageType::Text,
+        'sender_id'       => $sender->getKey(),
+        'content'         => 'Is the puppy still available?',
+        'type'            => MessageType::Text,
     ]);
 
-    $stored = $message->fresh();
+    $stored       = $message->fresh();
 
     expect($stored->status)->toBe(MessageStatus::Sent)
         ->and($stored->pinned_by)->toBeNull()

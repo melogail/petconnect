@@ -62,7 +62,7 @@ function profileWithListingsAndReviews(int $listings = 2, int $reviews = 2): Use
         $category = Category::factory()->create();
         $category->addMedia(UploadedFile::fake()->image('icon.jpg'))->toMediaCollection('categories');
 
-        $pet = Pet::factory()
+        $pet      = Pet::factory()
             ->for($profile)
             ->for($category)
             ->for(Breed::factory()->for($category))
@@ -71,7 +71,7 @@ function profileWithListingsAndReviews(int $listings = 2, int $reviews = 2): Use
 
         $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))
             ->withCustomProperties([
-                Pet::FEATURED_PROPERTY => true,
+                Pet::FEATURED_PROPERTY                       => true,
                 MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $profile->media_directory_name,
             ])
             ->toMediaCollection(Pet::PHOTO_COLLECTION);
@@ -89,7 +89,7 @@ function profileWithListingsAndReviews(int $listings = 2, int $reviews = 2): Use
 
 function countProfilePageQueries(User $profile, ?User $viewer): int
 {
-    $count = 0;
+    $count   = 0;
     DB::listen(function () use (&$count): void {
         $count++;
     });
@@ -302,7 +302,7 @@ describe('the payload', function () {
     test('keeps an unavailable listing on the page so its owner can reactivate it', function () {
         Storage::fake(config('media-library.disk_name'));
         $profile = User::factory()->create();
-        $pet = Pet::factory()->for($profile)->unavailable()->create();
+        $pet     = Pet::factory()->for($profile)->unavailable()->create();
 
         $this->actingAs($profile)
             ->get(route('profile.show', $profile))
@@ -333,8 +333,8 @@ describe('the payload', function () {
  */
 test('ships the rating scale the star widget draws itself from, and enforces the same one', function () {
     config([
-        'petconnect.reviews.min_rate' => 1,
-        'petconnect.reviews.max_rate' => 10,
+        'petconnect.reviews.min_rate'           => 1,
+        'petconnect.reviews.max_rate'           => 10,
         'petconnect.reviews.max_comment_length' => 300,
     ]);
     $profile = User::factory()->create();
@@ -343,15 +343,15 @@ test('ships the rating scale the star widget draws itself from, and enforces the
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('reviewBounds', [
-                'min_rate' => 1,
-                'max_rate' => 10,
+                'min_rate'           => 1,
+                'max_rate'           => 10,
                 'max_comment_length' => 300,
             ]));
 
     $this->actingAs(User::factory()->create())
         ->from(route('profile.show', $profile))
         ->post(route('reviews.store', ['reviewable_type' => 'user', 'reviewable_id' => $profile->getKey()]), [
-            'rate' => 11,
+            'rate'    => 11,
             'comment' => 'Too high for the scale this page publishes.',
         ])
         ->assertInvalid(['rate']);
@@ -369,7 +369,7 @@ test('ships the rating scale the star widget draws itself from, and enforces the
  */
 test('tells a viewer who has already reviewed this profile that they have', function () {
     $profile = User::factory()->create();
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     Review::factory()->for($author)->forUser($profile)->create();
 
     $this->actingAs($author)
@@ -435,7 +435,7 @@ describe('like', function () {
      * `comments.like` and `pets.status.toggle` all use.
      */
     test('records a like and takes it away again on a second press', function () {
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $profile = User::factory()->create();
 
         $this->actingAs($liker)
@@ -444,9 +444,9 @@ describe('like', function () {
             ->assertRedirect(route('profile.show', $profile));
 
         $this->assertDatabaseHas('likes', [
-            'user_id' => $liker->getKey(),
+            'user_id'       => $liker->getKey(),
             'likeable_type' => 'user',
-            'likeable_id' => $profile->getKey(),
+            'likeable_id'   => $profile->getKey(),
         ]);
 
         $this->actingAs($liker)->post(route('profile.like', $profile))->assertRedirect();
@@ -455,7 +455,7 @@ describe('like', function () {
     });
 
     test('shows the like back to the viewer who left it', function () {
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $profile = User::factory()->create();
 
         $this->actingAs($liker)->post(route('profile.like', $profile))->assertRedirect();
@@ -492,7 +492,7 @@ describe('like', function () {
      */
     test('notifies the profile owner that they were liked', function () {
         Notification::fake();
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $profile = User::factory()->create();
 
         $this->actingAs($liker)->post(route('profile.like', $profile))->assertRedirect();
@@ -519,7 +519,7 @@ describe('like', function () {
      * allowance in another. Same budget: 30 a minute.
      */
     test('returns 429 once the acting user passes 30 profile likes in a minute', function () {
-        $liker = User::factory()->create();
+        $liker   = User::factory()->create();
         $profile = User::factory()->create();
 
         for ($attempt = 0; $attempt < 30; $attempt++) {

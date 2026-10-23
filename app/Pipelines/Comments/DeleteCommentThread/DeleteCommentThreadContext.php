@@ -76,7 +76,7 @@ class DeleteCommentThreadContext
     /**
      * Whether the root row was removed, once DeleteCommentRoot has run.
      */
-    protected bool $deleted = false;
+    protected bool $deleted      = false;
 
     public function __construct(
         public readonly Comment $comment,

@@ -60,7 +60,7 @@ function seedProfileListings(User $profile, int $listings): void
         $category = Category::factory()->create();
         $category->addMedia(UploadedFile::fake()->image('icon.jpg'))->toMediaCollection('categories');
 
-        $pet = Pet::factory()
+        $pet      = Pet::factory()
             ->for($profile)
             ->for($category)
             ->for(Breed::factory()->for($category))
@@ -68,7 +68,7 @@ function seedProfileListings(User $profile, int $listings): void
 
         $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))
             ->withCustomProperties([
-                Pet::FEATURED_PROPERTY => true,
+                Pet::FEATURED_PROPERTY                       => true,
                 MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => $profile->media_directory_name,
             ])
             ->toMediaCollection(Pet::PHOTO_COLLECTION);
@@ -112,12 +112,12 @@ test('assembles the page in a constant number of queries however many listings a
     seedProfileListings($profile, 2);
     seedProfileReviews($profile, 2);
 
-    $atTwo = countProfileLoadQueries($profile, null);
+    $atTwo   = countProfileLoadQueries($profile, null);
 
     seedProfileListings($profile, 4);
     seedProfileReviews($profile, 4);
 
-    $atSix = countProfileLoadQueries($profile, null);
+    $atSix   = countProfileLoadQueries($profile, null);
 
     expect($atTwo)->toBe($atSix)
         ->and($atSix)->toBe(PROFILE_ACTION_QUERY_COST);
@@ -134,7 +134,7 @@ test('summarises the reputation on the profile row itself', function () {
     Review::factory()->forUser($profile)->rating(2)->create();
     Pet::factory()->count(3)->for($profile)->create();
 
-    $loaded = app(LoadProfileForDisplay::class)->handle($profile, null);
+    $loaded  = app(LoadProfileForDisplay::class)->handle($profile, null);
 
     expect($loaded['user']->reviews_count)->toBe(2)
         ->and(round((float) $loaded['user']->reviews_avg_rate, 2))->toBe(3.5)
@@ -143,12 +143,12 @@ test('summarises the reputation on the profile row itself', function () {
 
 test('lists only the listings the profile owns, newest first, and hides the retired ones', function () {
     $profile = User::factory()->create();
-    $older = Pet::factory()->for($profile)->create(['created_at' => now()->subDay()]);
-    $newer = Pet::factory()->for($profile)->create(['created_at' => now()]);
+    $older   = Pet::factory()->for($profile)->create(['created_at' => now()->subDay()]);
+    $newer   = Pet::factory()->for($profile)->create(['created_at' => now()]);
     Pet::factory()->for($profile)->create()->delete();
     Pet::factory()->create();
 
-    $loaded = app(LoadProfileForDisplay::class)->handle($profile, null);
+    $loaded  = app(LoadProfileForDisplay::class)->handle($profile, null);
 
     expect($loaded['listings']->pluck('id')->all())->toBe([$newer->getKey(), $older->getKey()]);
 });
@@ -159,25 +159,25 @@ test('lists only the listings the profile owns, newest first, and hides the reti
  * comparison would match nothing and say nothing about it.
  */
 test('lists only the reviews written about this profile', function () {
-    $profile = User::factory()->create();
+    $profile   = User::factory()->create();
     $aboutThem = Review::factory()->forUser($profile)->create();
     Review::factory()->for($profile)->create();
     Review::factory()->create();
 
-    $loaded = app(LoadProfileForDisplay::class)->handle($profile, null);
+    $loaded    = app(LoadProfileForDisplay::class)->handle($profile, null);
 
     expect($loaded['reviews']->pluck('id')->all())->toBe([$aboutThem->getKey()]);
 });
 
 test('marks the listings and the profile the viewer has already liked', function () {
     $profile = User::factory()->create();
-    $viewer = User::factory()->create();
-    $liked = Pet::factory()->for($profile)->create();
+    $viewer  = User::factory()->create();
+    $liked   = Pet::factory()->for($profile)->create();
     $unliked = Pet::factory()->for($profile)->create();
     Like::factory()->for($viewer)->forPet($liked)->create();
     Like::factory()->for($viewer)->forUser($profile)->create();
 
-    $loaded = app(LoadProfileForDisplay::class)->handle($profile, $viewer);
+    $loaded  = app(LoadProfileForDisplay::class)->handle($profile, $viewer);
 
     expect((bool) $loaded['user']->is_liked)->toBeTrue()
         ->and($loaded['listings']->firstWhere('id', $liked->getKey())->is_liked)->toBeTruthy()
@@ -196,8 +196,8 @@ test('marks the listings and the profile the viewer has already liked', function
  * would let a `where` on the wrong column pass.
  */
 test('marks a profile the viewer has already reviewed, and only for that viewer', function () {
-    $profile = User::factory()->create();
-    $author = User::factory()->create();
+    $profile   = User::factory()->create();
+    $author    = User::factory()->create();
     $bystander = User::factory()->create();
     Review::factory()->for($author)->forUser($profile)->create();
     Review::factory()->for($profile)->forUser($bystander)->create();
@@ -218,7 +218,7 @@ test('costs a signed in viewer no more than a guest, because both viewer flags a
     attachProfileAvatar($profile);
     seedProfileListings($profile, 2);
     seedProfileReviews($profile, 2);
-    $viewer = User::factory()->create();
+    $viewer  = User::factory()->create();
     Like::factory()->for($viewer)->forUser($profile)->create();
     Review::factory()->for($viewer)->forUser($profile)->create();
 

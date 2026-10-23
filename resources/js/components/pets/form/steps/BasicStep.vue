@@ -14,6 +14,7 @@ import type {
     PetListingType,
     PetStatus,
 } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * Identity, taxonomy and listing terms.
@@ -66,6 +67,8 @@ const errors = computed(() => petFormErrors(form.errors));
 
 const { locale } = useLocale();
 
+const { t } = useTranslations();
+
 /**
  * Both selects label their options with `taxonomyName`, never the raw `name`:
  * the option resources ship `name` and `name_ar` on every row and the reader's
@@ -92,9 +95,7 @@ const isSale = computed(() => form.listing_type === 'sale');
 const isAdoption = computed(() => form.listing_type === 'adoption');
 
 /** More than one animal on offer: only an adoption listing can be. */
-const isLitter = computed(
-    () => isAdoption.value && Number(form.quantity) > 1,
-);
+const isLitter = computed(() => isAdoption.value && Number(form.quantity) > 1);
 
 /** Today as `Y-m-d`, the ceiling for the birth-date picker. */
 const today = new Date().toISOString().slice(0, 10);
@@ -131,11 +132,11 @@ function pickCategory(value: string): void {
 <template>
     <div class="grid gap-5 sm:grid-cols-2">
         <FormField
-            label="Name"
+            :label="t('wizard.name')"
             field-id="pet-name"
             :error="errors.name"
             :required="!isLitter"
-            :hint="isLitter ? 'Optional for a litter.' : undefined"
+            :hint="isLitter ? t('wizard.optional_for_litter') : undefined"
             class="sm:col-span-2"
         >
             <Input
@@ -147,7 +148,7 @@ function pickCategory(value: string): void {
         </FormField>
 
         <FormField
-            label="Category"
+            :label="t('wizard.category')"
             field-id="pet-category"
             :error="errors.category_id"
             required
@@ -158,17 +159,19 @@ function pickCategory(value: string): void {
                     form.category_id === null ? '' : String(form.category_id)
                 "
                 :options="categoryOptions"
-                placeholder="Pick a category"
+                :placeholder="t('wizard.pick_category')"
                 @update:model-value="pickCategory"
             />
         </FormField>
 
         <FormField
-            label="Breed"
+            :label="t('wizard.breed')"
             field-id="pet-breed"
             :error="errors.breed_id"
             :hint="
-                form.category_id === null ? 'Pick a category first.' : undefined
+                form.category_id === null
+                    ? t('wizard.pick_category_first')
+                    : undefined
             "
         >
             <SelectInput
@@ -177,7 +180,7 @@ function pickCategory(value: string): void {
                     form.breed_id === null ? '' : String(form.breed_id)
                 "
                 :options="breedOptions"
-                placeholder="Any breed"
+                :placeholder="t('wizard.any_breed')"
                 :disabled="breedOptions.length === 0"
                 @update:model-value="
                     (value) =>
@@ -187,10 +190,10 @@ function pickCategory(value: string): void {
         </FormField>
 
         <FormField
-            label="Birth date"
+            :label="t('wizard.birth_date')"
             field-id="pet-birth-date"
             :error="errors.birth_date"
-            hint="Leave blank if unknown; the age is worked out from it."
+            :hint="t('wizard.birth_date_hint')"
         >
             <Input
                 id="pet-birth-date"
@@ -201,7 +204,7 @@ function pickCategory(value: string): void {
         </FormField>
 
         <FormField
-            label="Gender"
+            :label="t('wizard.gender')"
             field-id="pet-gender"
             :error="errors.gender"
             required
@@ -213,25 +216,29 @@ function pickCategory(value: string): void {
                     (value) => (form.gender = value as PetGender | '')
                 "
                 :options="options.genders"
-                placeholder="Pick a gender"
+                :placeholder="t('wizard.pick_gender')"
             />
         </FormField>
 
-        <FormField label="Colour" field-id="pet-color" :error="errors.color">
+        <FormField
+            :label="t('wizard.colour')"
+            field-id="pet-color"
+            :error="errors.color"
+        >
             <Input id="pet-color" v-model="form.color" maxlength="255" />
         </FormField>
 
         <FormField
-            label="Weight (kg)"
+            :label="t('wizard.weight_kg')"
             field-id="pet-weight"
             :error="errors.weight"
-            hint="Leave blank if you would rather not say."
+            :hint="t('wizard.weight_hint')"
         >
             <Input id="pet-weight" v-model="form.weight" inputmode="decimal" />
         </FormField>
 
         <FormField
-            label="Listing type"
+            :label="t('wizard.listing_type')"
             field-id="pet-listing-type"
             :error="errors.listing_type"
             required
@@ -244,16 +251,16 @@ function pickCategory(value: string): void {
                         (form.listing_type = value as PetListingType | '')
                 "
                 :options="options.listingTypes"
-                placeholder="Pick a listing type"
+                :placeholder="t('wizard.pick_listing_type')"
             />
         </FormField>
 
         <FormField
             v-if="isAdoption"
-            label="Quantity"
+            :label="t('wizard.quantity')"
             field-id="pet-quantity"
             :error="errors.quantity"
-            hint="How many animals you are giving away. More than one for a litter."
+            :hint="t('wizard.quantity_hint')"
             required
         >
             <Input
@@ -266,10 +273,10 @@ function pickCategory(value: string): void {
 
         <template v-if="isLitter">
             <FormField
-                label="Males"
+                :label="t('wizard.males')"
                 field-id="pet-male-count"
                 :error="errors.male_count"
-                hint="Males and females must add up to the quantity."
+                :hint="t('wizard.counts_hint')"
                 required
             >
                 <Input
@@ -281,7 +288,7 @@ function pickCategory(value: string): void {
             </FormField>
 
             <FormField
-                label="Females"
+                :label="t('wizard.females')"
                 field-id="pet-female-count"
                 :error="errors.female_count"
                 required
@@ -297,10 +304,10 @@ function pickCategory(value: string): void {
 
         <FormField
             v-if="isSale"
-            label="Price"
+            :label="t('pets.price')"
             field-id="pet-price"
             :error="errors.price"
-            hint="Price per pet."
+            :hint="t('wizard.price_hint')"
             required
         >
             <Input
@@ -312,7 +319,7 @@ function pickCategory(value: string): void {
         </FormField>
 
         <FormField
-            label="Status"
+            :label="t('wizard.status')"
             field-id="pet-status"
             :error="errors.status"
             required
@@ -324,7 +331,7 @@ function pickCategory(value: string): void {
                     (value) => (form.status = value as PetStatus | '')
                 "
                 :options="options.statuses"
-                placeholder="Pick a status"
+                :placeholder="t('wizard.select_status')"
             />
         </FormField>
     </div>

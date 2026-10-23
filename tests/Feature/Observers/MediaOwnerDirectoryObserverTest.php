@@ -28,7 +28,7 @@ beforeEach(function () {
  */
 test('stamps the owner directory on a listing photo attached without one', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
 
     $photo = $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
 
@@ -46,19 +46,19 @@ test('stamps the owner directory on a listing photo attached without one', funct
  * the question the stamp is supposed to answer.
  */
 test('builds the stored path from the stamped directory without a fallback query', function () {
-    $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
-    $photo = $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
+    $owner     = User::factory()->create();
+    $pet       = Pet::factory()->for($owner)->create();
+    $photo     = $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
 
-    $stored = Media::query()->findOrFail($photo->getKey());
+    $stored    = Media::query()->findOrFail($photo->getKey());
     app()->forgetInstance(OwnerDirectoryResolver::class);
     app()->forgetInstance(MediaPathGenerator::class);
     $generator = app(MediaPathGenerator::class);
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $path = $generator->getPath($stored);
-    $queries = DB::getQueryLog();
+    $path      = $generator->getPath($stored);
+    $queries   = DB::getQueryLog();
     DB::disableQueryLog();
 
     expect($path)->toBe("media/{$owner->media_directory_name}/pet/{$pet->getKey()}/{$stored->getKey()}/")
@@ -72,13 +72,13 @@ test('builds the stored path from the stamped directory without a fallback query
  * an admin uploaded was permanently unstamped.
  */
 test('stamps the owner directory on an avatar uploaded through Nova', function () {
-    $admin = Admin::factory()->create();
+    $admin  = Admin::factory()->create();
     $member = User::factory()->create();
 
     $this->actingAs($admin, 'admin')
         ->put("/nova-api/users/{$member->getKey()}", [
-            'name' => $member->name,
-            'locale' => $member->locale,
+            'name'      => $member->name,
+            'locale'    => $member->locale,
             '__media__' => ['users' => [UploadedFile::fake()->image('avatar.jpg')]],
         ])
         ->assertOk();
@@ -98,7 +98,7 @@ test('stamps the owner directory on an avatar uploaded through Nova', function (
  */
 test('keeps an owner directory the uploader supplied', function () {
     $owner = User::factory()->create();
-    $pet = Pet::factory()->for($owner)->create();
+    $pet   = Pet::factory()->for($owner)->create();
 
     $photo = $pet->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->withCustomProperties([MediaPathGenerator::OWNER_DIRECTORY_PROPERTY => 'supplied-by-the-uploader'])
@@ -115,7 +115,7 @@ test('keeps an owner directory the uploader supplied', function () {
 test('stamps nothing on a category icon, which belongs to no member', function () {
     $category = Category::factory()->create();
 
-    $icon = $category->addMedia(UploadedFile::fake()->image('icon.jpg'))->toMediaCollection('categories');
+    $icon     = $category->addMedia(UploadedFile::fake()->image('icon.jpg'))->toMediaCollection('categories');
 
     expect(Media::query()->findOrFail($icon->getKey())->getCustomProperty(MediaPathGenerator::OWNER_DIRECTORY_PROPERTY))
         ->toBeNull()

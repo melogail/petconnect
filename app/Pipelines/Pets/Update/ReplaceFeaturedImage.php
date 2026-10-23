@@ -37,7 +37,7 @@ class ReplaceFeaturedImage
             return $next($context);
         }
 
-        $pet = $context->pet();
+        $pet      = $context->pet();
 
         $replaced = $pet->featuredPhoto();
 

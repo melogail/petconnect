@@ -86,11 +86,31 @@ const name = computed(() => petTitle(pet, t, locale.value.current));
 const isSignedIn = computed(() => Boolean(page.props.auth.user));
 
 const canMessageOwner = computed(() => isSignedIn.value && !pet.is_owner);
+
+/** The description, flattened to one line and cut for a share card. */
+const excerpt = computed(() => {
+    const text = pet.description.replace(/\s+/g, ' ').trim();
+
+    return text.length > 160 ? `${text.slice(0, 157)}…` : text;
+});
 </script>
 
 <template>
     <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-        <Head :title="name" />
+        <!-- `og:url` and `og:image` are set in app.blade.php, where the brand default lives. -->
+        <Head :title="name">
+            <meta
+                name="description"
+                :content="excerpt"
+                head-key="description"
+            />
+            <meta property="og:title" :content="name" head-key="og:title" />
+            <meta
+                property="og:description"
+                :content="excerpt"
+                head-key="og:description"
+            />
+        </Head>
 
         <div class="mb-6">
             <Link

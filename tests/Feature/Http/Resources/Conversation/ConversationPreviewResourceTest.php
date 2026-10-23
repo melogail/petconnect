@@ -47,8 +47,8 @@ function previewRowFor(User $reader): array
 }
 
 test('emits exactly the six keys the menu reads', function () {
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create();
 
@@ -63,10 +63,10 @@ test('emits exactly the six keys the menu reads', function () {
  */
 test('names the peer and nulls the message half of a thread nobody has written into', function () {
     $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $peer   = User::factory()->create();
     Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
 
-    $row = previewRowFor($reader);
+    $row    = previewRowFor($reader);
 
     expect(array_keys($row))->toBe(PREVIEW_KEYS)
         ->and($row['peer']['id'])->toBe($peer->getKey())
@@ -87,12 +87,12 @@ test('names the peer and nulls the message half of a thread nobody has written i
  * (.ai/rules/app.md), so nothing else here would.
  */
 test('falls back on every key rather than dropping one when the loader loaded no relations', function () {
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create(['content' => 'Is she still available?']);
 
-    $payload = ConversationPreviewResource::make(Conversation::query()->findOrFail($conversation->getKey()))
+    $payload      = ConversationPreviewResource::make(Conversation::query()->findOrFail($conversation->getKey()))
         ->toArray(previewRequestFrom($reader));
 
     expect(array_keys($payload))->toBe(PREVIEW_KEYS)
@@ -109,12 +109,12 @@ test('falls back on every key rather than dropping one when the loader loaded no
  * one; without it the failure mode is a TypeError while rendering.
  */
 test('reports no peer and no unread flag when nobody is signed in', function () {
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create();
 
-    $payload = ConversationPreviewResource::make($conversation->load(['users', 'lastMessage']))
+    $payload      = ConversationPreviewResource::make($conversation->load(['users', 'lastMessage']))
         ->toArray(previewRequestFrom(null));
 
     expect(array_keys($payload))->toBe(PREVIEW_KEYS)
@@ -128,14 +128,14 @@ test('reports no peer and no unread flag when nobody is signed in', function () 
  * of five long messages is ~25 KB on every document load.
  */
 test('cuts the last message down to a snippet', function (string $content, string $expected) {
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create(['content' => $content]);
 
     expect(previewRowFor($reader)['last_message_snippet'])->toBe($expected);
 })->with([
-    'a message shorter than the limit, left exactly as it was written' => [
+    'a message shorter than the limit, left exactly as it was written'        => [
         'Is she still available?',
         'Is she still available?',
     ],
@@ -147,8 +147,8 @@ test('cuts the last message down to a snippet', function (string $content, strin
 
 test('takes the length of the snippet from the configured bound', function () {
     config(['petconnect.messaging.preview_snippet_length' => 20]);
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
     Message::factory()->for($conversation)->from($peer)->create(['content' => str_repeat('b', 300)]);
 

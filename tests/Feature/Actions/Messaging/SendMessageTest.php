@@ -26,7 +26,7 @@ function openThreadBetween(User $first, User $second): Conversation
  * RecipientNotAcceptingMessages.
  */
 test('refuses to send into an open thread whose recipient has since deactivated, and writes nothing', function () {
-    $sender = User::factory()->create();
+    $sender       = User::factory()->create();
     $conversation = openThreadBetween($sender, User::factory()->inactive()->create());
     Notification::fake();
 
@@ -42,18 +42,18 @@ test('refuses to send into an open thread whose recipient has since deactivated,
  * pass just as happily.
  */
 test('sends into the same thread when the recipient still accepts messages', function () {
-    $sender = User::factory()->create();
-    $recipient = User::factory()->create();
+    $sender       = User::factory()->create();
+    $recipient    = User::factory()->create();
     $conversation = openThreadBetween($sender, $recipient);
     Notification::fake();
 
-    $message = app(SendMessage::class)->handle($conversation, $sender, 'Are you still there?');
+    $message      = app(SendMessage::class)->handle($conversation, $sender, 'Are you still there?');
 
     $this->assertDatabaseHas('messages', [
-        'id' => $message->getKey(),
+        'id'              => $message->getKey(),
         'conversation_id' => $conversation->getKey(),
-        'sender_id' => $sender->getKey(),
-        'content' => 'Are you still there?',
+        'sender_id'       => $sender->getKey(),
+        'content'         => 'Are you still there?',
     ]);
     Notification::assertSentTo(
         $recipient,
@@ -68,7 +68,7 @@ test('sends into the same thread when the recipient still accepts messages', fun
  */
 test('refuses to send into a thread the sender is not part of, and writes nothing', function () {
     $conversation = openThreadBetween(User::factory()->create(), User::factory()->create());
-    $outsider = User::factory()->create();
+    $outsider     = User::factory()->create();
     Notification::fake();
 
     expect(fn () => app(SendMessage::class)->handle($conversation, $outsider, 'Let me in'))

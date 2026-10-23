@@ -264,10 +264,7 @@ const frame = cn(
                 :age="pet.age"
             />
 
-            <PetCardDescription
-                :description="pet.description"
-                :name="name"
-            />
+            <PetCardDescription :description="pet.description" :name="name" />
 
             <!-- A plain hairline; the guide retires legacy's people-glyph ornament. -->
             <div class="border-border border-t" aria-hidden="true"></div>

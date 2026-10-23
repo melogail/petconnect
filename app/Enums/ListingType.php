@@ -9,15 +9,15 @@ enum ListingType: string
     use HasOptions;
 
     case Adoption = 'adoption';
-    case Sale = 'sale';
-    case Mating = 'mating';
+    case Sale     = 'sale';
+    case Mating   = 'mating';
 
     public function label(): string
     {
         return match ($this) {
             self::Adoption => 'Adoption',
-            self::Sale => 'Sale',
-            self::Mating => 'Mating',
+            self::Sale     => 'Sale',
+            self::Mating   => 'Mating',
         };
     }
 
@@ -40,8 +40,8 @@ enum ListingType: string
     {
         return match ($this) {
             self::Adoption => 'primary',
-            self::Sale => 'success',
-            self::Mating => 'warning',
+            self::Sale     => 'success',
+            self::Mating   => 'warning',
         };
     }
 
@@ -57,8 +57,8 @@ enum ListingType: string
     {
         return match ($this) {
             self::Adoption => 'primary-foreground',
-            self::Sale => 'success-foreground',
-            self::Mating => 'warning-foreground',
+            self::Sale     => 'success-foreground',
+            self::Mating   => 'warning-foreground',
         };
     }
 }

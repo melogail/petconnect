@@ -31,9 +31,9 @@ class SaveFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id'       => User::factory(),
             'saveable_type' => Relation::getMorphAlias(Pet::class),
-            'saveable_id' => Pet::factory(),
+            'saveable_id'   => Pet::factory(),
         ];
     }
 
@@ -44,7 +44,7 @@ class SaveFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'saveable_type' => Relation::getMorphAlias(Pet::class),
-            'saveable_id' => $pet?->getKey() ?? Pet::factory(),
+            'saveable_id'   => $pet?->getKey() ?? Pet::factory(),
         ]);
     }
 }

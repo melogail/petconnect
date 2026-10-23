@@ -28,3 +28,12 @@ yarn-error.log
 /.vscode
 /.zed
 /storage/media-library
+
+# Claude Code local tooling (graphify, ponytail, playwright, obsidian MCP) - machine-local, not shared
+/CLAUDE.local.md
+/.claude/CLAUDE.md
+/.claude/settings.local.json
+/.claude/skills/graphify
+/graphify-out
+/.playwright-mcp
+/.claude/settings.json

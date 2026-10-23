@@ -53,8 +53,8 @@ trait ReportValidationRules
     protected function reportRules(): array
     {
         return [
-            'category' => ['required', Rule::enum(ReportCategory::class)],
-            'reason' => ['required', Rule::enum(ReportReason::class)],
+            'category'    => ['required', Rule::enum(ReportCategory::class)],
+            'reason'      => ['required', Rule::enum(ReportReason::class)],
             'description' => ['nullable', 'string', 'max:'.$this->maxDescriptionLength()],
         ];
     }

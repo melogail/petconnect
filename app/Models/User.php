@@ -60,6 +60,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string $location
+ * @property-read float|string|null $reviews_avg_rate Only present after HasReviews::withReviewStats(); a string on MySQL, a float on SQLite.
  */
 #[Appends(['location'])]
 #[Fillable([
@@ -259,12 +260,12 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
     public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
-            ->fit(Fit::Crop, 96, 96)
-            ->nonQueued();
+            ->nonQueued()
+            ->fit(Fit::Crop, 96, 96);
 
         $this->addMediaConversion('display')
-            ->fit(Fit::Crop, 512, 512)
-            ->nonQueued();
+            ->nonQueued()
+            ->fit(Fit::Crop, 512, 512);
     }
 
     /**
@@ -460,7 +461,10 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      */
     public function likeNotificationRecipients(): Collection
     {
-        return collect([$this]);
+        /** @var Collection<int, User> $recipients collect([$this]) infers `$this`, which the invariant TValue rejects. */
+        $recipients = collect([$this]);
+
+        return $recipients;
     }
 
     /**
@@ -475,6 +479,9 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      */
     public function reviewSubjects(): Collection
     {
-        return collect([$this]);
+        /** @var Collection<int, User> $subjects See likeNotificationRecipients(). */
+        $subjects = collect([$this]);
+
+        return $subjects;
     }
 }

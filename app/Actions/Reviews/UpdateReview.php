@@ -35,7 +35,7 @@ class UpdateReview
         /** @var list<string> $bannedWords */
         $bannedWords = config('bad-words.words', []);
 
-        $context = new ReviseReviewContext(
+        $context     = new ReviseReviewContext(
             review: $review,
             rate: $rate,
             comment: $comment,

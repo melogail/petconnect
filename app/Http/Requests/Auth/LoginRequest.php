@@ -18,10 +18,10 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string'],
-            'device_name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:10'],
+            'email'         => ['required', 'string', 'email', 'max:255'],
+            'password'      => ['required', 'string'],
+            'device_name'   => ['required', 'string', 'max:255'],
+            'code'          => ['nullable', 'string', 'max:10'],
             'recovery_code' => ['nullable', 'string', 'max:64'],
         ];
     }

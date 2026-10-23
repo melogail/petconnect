@@ -74,7 +74,7 @@ class DeleteAccountContext
      *
      * @var list<int>|null
      */
-    protected ?array $petIds = null;
+    protected ?array $petIds     = null;
 
     /**
      * Ids of every comment that is about to disappear: the ones the account
@@ -90,12 +90,12 @@ class DeleteAccountContext
      *
      * @var list<int>|null
      */
-    protected ?array $reviewIds = null;
+    protected ?array $reviewIds  = null;
 
     /**
      * Whether the user row was removed, once DeleteAccountRecord has run.
      */
-    protected bool $deleted = false;
+    protected bool $deleted      = false;
 
     public function __construct(
         public readonly User $user,
@@ -108,9 +108,9 @@ class DeleteAccountContext
      */
     public function setCollectedContent(array $petIds, array $commentIds, array $reviewIds): void
     {
-        $this->petIds = $petIds;
+        $this->petIds     = $petIds;
         $this->commentIds = $commentIds;
-        $this->reviewIds = $reviewIds;
+        $this->reviewIds  = $reviewIds;
     }
 
     /**

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, X } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * The chrome around a repeater: rows, a remove button per row, an add button.
@@ -20,6 +21,8 @@ const emit = defineEmits<{
     add: [];
     remove: [index: number];
 }>();
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -41,7 +44,7 @@ const emit = defineEmits<{
                 type="button"
                 variant="ghost"
                 size="icon"
-                :aria-label="`Remove row ${index + 1}`"
+                :aria-label="t('wizard.remove_row', { number: index + 1 })"
                 @click="emit('remove', index)"
             >
                 <X class="size-4" />

@@ -17,7 +17,7 @@ enum Reportable: string
     use ResolvesMorphTarget;
 
     case Comment = 'comment';
-    case Review = 'review';
+    case Review  = 'review';
 
     /**
      * @return class-string<Model>
@@ -26,7 +26,7 @@ enum Reportable: string
     {
         return match ($this) {
             self::Comment => Comment::class,
-            self::Review => Review::class,
+            self::Review  => Review::class,
         };
     }
 }

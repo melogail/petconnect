@@ -4,6 +4,7 @@ namespace App\Contracts;
 
 use App\Models\Like;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -19,7 +20,9 @@ use Illuminate\Support\Collection;
 interface Likeable
 {
     /**
-     * @return MorphMany<Like, static>
+     * `covariant Model`, not `static` — see App\Contracts\Commentable::comments().
+     *
+     * @return MorphMany<Like, covariant Model>
      */
     public function likes(): MorphMany;
 

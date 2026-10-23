@@ -23,11 +23,11 @@ class PetMediaResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'url' => $this->getUrl(),
-            'thumb' => $this->getUrl('thumb'),
-            'display' => $this->getUrl('display'),
+            'id'       => $this->id,
+            'name'     => $this->name,
+            'url'      => $this->getUrl(),
+            'thumb'    => $this->getUrl('thumb'),
+            'display'  => $this->getUrl('display'),
             'featured' => (bool) $this->getCustomProperty(Pet::FEATURED_PROPERTY, false),
         ];
     }

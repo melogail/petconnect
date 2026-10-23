@@ -24,7 +24,7 @@ class PetObserver
             return;
         }
 
-        $prefix    = Str::slug($pet->breed?->name ?? $pet->category?->name ?? '');
+        $prefix    = Str::slug($pet->breed->name ?? $pet->category->name ?? '');
 
         $pet->slug = ($prefix === '' ? 'pet' : $prefix).'-'.Str::lower(Str::random(8));
     }

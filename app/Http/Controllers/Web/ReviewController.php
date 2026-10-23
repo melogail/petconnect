@@ -6,6 +6,7 @@ use App\Actions\Reviews\CreateReview;
 use App\Actions\Reviews\DeleteReview;
 use App\Actions\Reviews\ListReviews;
 use App\Actions\Reviews\UpdateReview;
+use App\Concerns\ResolvesRequestUser;
 use App\Enums\Reviewable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Review\StoreReviewRequest;
@@ -64,6 +65,8 @@ use Inertia\Inertia;
  */
 class ReviewController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * A page of a reviewable's reviews.
      *
@@ -81,7 +84,7 @@ class ReviewController extends Controller
         return ReviewResource::collection($listReviews->handle(
             reviewableType: $reviewable_type,
             reviewableId: $reviewable_id,
-            viewer: $request->user(),
+            viewer: $this->viewer($request),
         ));
     }
 
@@ -115,7 +118,7 @@ class ReviewController extends Controller
         $this->authorize('create', ReviewModel::class);
 
         $createReview->handle(
-            author: $request->user(),
+            author: $this->actor($request),
             reviewableType: $reviewable_type,
             reviewableId: $reviewable_id,
             rate: $request->rate(),

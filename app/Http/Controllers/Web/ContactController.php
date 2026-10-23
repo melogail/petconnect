@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Contact\SubmitContactMessage;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Contact\StoreContactRequest;
 use Illuminate\Http\RedirectResponse;
@@ -25,10 +26,12 @@ use Inertia\Inertia;
  */
 class ContactController extends Controller
 {
+    use ResolvesRequestUser;
+
     public function store(StoreContactRequest $request, SubmitContactMessage $submitContactMessage): RedirectResponse
     {
         $submitContactMessage->handle(
-            sender: $request->user(),
+            sender: $this->viewer($request),
             name: $request->senderName(),
             email: $request->senderEmail(),
             ticketType: $request->ticketType(),

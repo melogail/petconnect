@@ -21,8 +21,8 @@ use Illuminate\Support\Facades\Hash;
  * against a policy returning true.
  */
 test('removes nothing when the built-in delete is aimed at a member account', function () {
-    $admin = Admin::factory()->create();
-    $user = User::factory()->create();
+    $admin   = Admin::factory()->create();
+    $user    = User::factory()->create();
     $listing = Pet::factory()->for($user)->create();
 
     $this->actingAs($admin, 'admin')
@@ -112,15 +112,15 @@ test('returns 403 to a member account stored through Nova', function () {
  */
 test('applies only the fields the resource exposes when a member profile is edited', function () {
     $admin = Admin::factory()->create();
-    $user = User::factory()->create(['name' => 'Original Name']);
+    $user  = User::factory()->create(['name' => 'Original Name']);
 
     $this->actingAs($admin, 'admin')
         ->putJson("/nova-api/users/{$user->getKey()}", [
-            'name' => 'Edited Name',
-            'locale' => 'en',
-            'email' => 'taken-over@example.com',
+            'name'      => 'Edited Name',
+            'locale'    => 'en',
+            'email'     => 'taken-over@example.com',
             'is_active' => false,
-            'password' => 'a-new-secret-password',
+            'password'  => 'a-new-secret-password',
         ])
         ->assertOk();
 

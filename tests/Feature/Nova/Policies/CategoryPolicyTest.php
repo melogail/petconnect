@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\DB;
  * refusal message and the clean delete.
  */
 test('removes nothing when the built-in delete is aimed at a category', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create();
-    $retired = Pet::factory()->for($category)->create();
+    $retired  = Pet::factory()->for($category)->create();
     $retired->delete();
 
     $this->actingAs($admin, 'admin')
@@ -31,7 +31,7 @@ test('removes nothing when the built-in delete is aimed at a category', function
 });
 
 test('removes nothing when the built-in delete is aimed at an empty category', function () {
-    $admin = Admin::factory()->create();
+    $admin    = Admin::factory()->create();
     $category = Category::factory()->create();
 
     $this->actingAs($admin, 'admin')

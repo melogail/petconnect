@@ -6,6 +6,7 @@ use App\MediaLibrary\ConvertibleImageTypes;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
+use Stringable;
 
 /**
  * Validation rules for everything that writes a user's own record.
@@ -86,7 +87,7 @@ trait ProfileValidationRules
     protected function profileRules(?int $userId = null): array
     {
         return [
-            'name' => $this->nameRules(),
+            'name'  => $this->nameRules(),
             'email' => $this->emailRules($userId),
         ];
     }
@@ -101,22 +102,22 @@ trait ProfileValidationRules
         return [
             ...$this->profileRules($userId),
             'username' => $this->usernameRules($userId),
-            'phone' => $this->phoneRules(),
-            'bio' => $this->bioRules(),
-            'address' => $this->addressLineRules(),
-            'city' => $this->addressLineRules(),
-            'state' => $this->addressLineRules(),
-            'country' => $this->addressLineRules(),
-            'lat' => $this->latitudeRules(),
-            'lng' => $this->longitudeRules(),
+            'phone'    => $this->phoneRules(),
+            'bio'      => $this->bioRules(),
+            'address'  => $this->addressLineRules(),
+            'city'     => $this->addressLineRules(),
+            'state'    => $this->addressLineRules(),
+            'country'  => $this->addressLineRules(),
+            'lat'      => $this->latitudeRules(),
+            'lng'      => $this->longitudeRules(),
             'timezone' => $this->timezoneRules(),
-            'locale' => $this->localeRules(),
-            'image' => $this->avatarRules(),
+            'locale'   => $this->localeRules(),
+            'image'    => $this->avatarRules(),
         ];
     }
 
     /**
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function nameRules(): array
     {
@@ -124,7 +125,7 @@ trait ProfileValidationRules
     }
 
     /**
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function emailRules(?int $userId = null): array
     {
@@ -143,7 +144,7 @@ trait ProfileValidationRules
      * The contact number. Free text: the column takes any international
      * shape and no part of the application parses it.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function phoneRules(): array
     {
@@ -155,7 +156,7 @@ trait ProfileValidationRules
      * rather than by a literal — the column is `text`, so this config value is
      * the only ceiling there is.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function bioRules(): array
     {
@@ -166,7 +167,7 @@ trait ProfileValidationRules
      * One line of a postal address: `address`, `city`, `state` or `country`.
      * All four are plain `varchar(255)` columns with no lookup behind them.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function addressLineRules(): array
     {
@@ -176,7 +177,7 @@ trait ProfileValidationRules
     /**
      * The IANA zone, checked against PHP's own list by the `timezone` rule.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function timezoneRules(): array
     {
@@ -213,7 +214,7 @@ trait ProfileValidationRules
      * `required_with` is ordered ahead of the rules that inspect the value so
      * the missing-pair message wins when both could fire.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function latitudeRules(): array
     {
@@ -224,7 +225,7 @@ trait ProfileValidationRules
      * Longitude, paired with latitude. See latitudeRules(), which carries the
      * whole reason neither of these may take a `sometimes`.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function longitudeRules(): array
     {
@@ -242,7 +243,7 @@ trait ProfileValidationRules
      * User keyed on `username` would have every one of those comparisons match
      * an integer id against a string column.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function usernameRules(?int $userId = null): array
     {
@@ -269,7 +270,7 @@ trait ProfileValidationRules
      * Actions\Profiles\ApplyUserLocale falls back from and what the SetLocale
      * middleware filters its candidates against.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function localeRules(bool $required = false): array
     {
@@ -289,7 +290,7 @@ trait ProfileValidationRules
      * .ai/rules/resources.md, exactly as the pet form's `images` / `photos`
      * split works.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function avatarRules(): array
     {
@@ -311,7 +312,7 @@ trait ProfileValidationRules
      * rules — a bare `image` rule is wider than GD and admits formats no
      * conversion can produce a derivative for.
      *
-     * @return array<int, ValidationRule|array<mixed>|string>
+     * @return array<int, ValidationRule|Stringable|string>
      */
     protected function avatarFileRules(): array
     {

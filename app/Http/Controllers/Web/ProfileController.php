@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Actions\Likes\ToggleLike;
 use App\Actions\Profiles\LoadProfileForDisplay;
 use App\Concerns\CommentValidationRules;
+use App\Concerns\ResolvesRequestUser;
 use App\Concerns\ReviewValidationRules;
 use App\Enums\ReportCategory;
 use App\Enums\ReportReason;
@@ -88,6 +89,7 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     use CommentValidationRules;
+    use ResolvesRequestUser;
     use ReviewValidationRules;
 
     /**
@@ -121,16 +123,16 @@ class ProfileController extends Controller
     ): Response {
         $this->authorize('view', $user);
 
-        $profile = $loadProfileForDisplay->handle($user, $request->user());
+        $profile = $loadProfileForDisplay->handle($user, $this->viewer($request));
 
         return Inertia::render('profile/Show', [
-            'profile' => ProfileResource::make($profile['user']),
-            'listings' => PetCardResource::collection($profile['listings']),
-            'reviews' => ReviewResource::collection($profile['reviews']),
+            'profile'          => ProfileResource::make($profile['user']),
+            'listings'         => PetCardResource::collection($profile['listings']),
+            'reviews'          => ReviewResource::collection($profile['reviews']),
             'reportCategories' => ReportCategory::options(),
-            'reportReasons' => ReportReason::options(),
-            'reviewBounds' => $this->reviewBounds(),
-            'commentBounds' => $this->commentBounds(),
+            'reportReasons'    => ReportReason::options(),
+            'reviewBounds'     => $this->reviewBounds(),
+            'commentBounds'    => $this->commentBounds(),
         ]);
     }
 
@@ -154,7 +156,7 @@ class ProfileController extends Controller
     {
         $this->authorize('like', $user);
 
-        $toggleLike->handle($user, $request->user());
+        $toggleLike->handle($user, $this->actor($request));
 
         return back();
     }

@@ -54,8 +54,8 @@ class Breed extends Model implements HasMedia
     public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
-            ->fit(Fit::Crop, 160, 160)
-            ->nonQueued();
+            ->nonQueued()
+            ->fit(Fit::Crop, 160, 160);
 
         $this->addMediaConversion('display')
             ->fit(Fit::Contain, 640, 640);

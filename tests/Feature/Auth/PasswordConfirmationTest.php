@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('confirm password screen can be rendered', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('password.confirm'));
 

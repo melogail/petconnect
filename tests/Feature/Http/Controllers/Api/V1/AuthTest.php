@@ -16,8 +16,8 @@ use PragmaRX\Google2FA\Google2FA;
 function loginPayload(User $user, array $overrides = []): array
 {
     return [
-        'email' => $user->email,
-        'password' => 'password',
+        'email'       => $user->email,
+        'password'    => 'password',
         'device_name' => 'Pixel 9',
         ...$overrides,
     ];
@@ -28,11 +28,11 @@ describe('register', function () {
         Notification::fake();
 
         $response = $this->postJson(route('api.v1.auth.register'), [
-            'name' => 'Sara',
-            'email' => 'sara@example.com',
-            'password' => 'password',
+            'name'                  => 'Sara',
+            'email'                 => 'sara@example.com',
+            'password'              => 'password',
             'password_confirmation' => 'password',
-            'device_name' => 'iPhone 16',
+            'device_name'           => 'iPhone 16',
         ]);
 
         $response->assertCreated()
@@ -40,7 +40,7 @@ describe('register', function () {
             ->assertJsonPath('user.email', 'sara@example.com')
             ->assertJsonPath('user.is_verified', false);
 
-        $user = User::query()->where('email', 'sara@example.com')->firstOrFail();
+        $user     = User::query()->where('email', 'sara@example.com')->firstOrFail();
 
         expect($response->json('token'))->toBeString()->not->toBeEmpty()
             ->and($user->tokens()->where('name', 'iPhone 16')->exists())->toBeTrue();
@@ -50,19 +50,19 @@ describe('register', function () {
 
     test('validates through the same rules as the browser form', function () {
         $this->postJson(route('api.v1.auth.register'), [
-            'name' => 'Sara',
-            'email' => 'not-an-email',
-            'password' => 'password',
+            'name'                  => 'Sara',
+            'email'                 => 'not-an-email',
+            'password'              => 'password',
             'password_confirmation' => 'different',
-            'device_name' => 'iPhone 16',
+            'device_name'           => 'iPhone 16',
         ])->assertInvalid(['email', 'password']);
     });
 
     test('requires a device name', function () {
         $this->postJson(route('api.v1.auth.register'), [
-            'name' => 'Sara',
-            'email' => 'sara@example.com',
-            'password' => 'password',
+            'name'                  => 'Sara',
+            'email'                 => 'sara@example.com',
+            'password'              => 'password',
             'password_confirmation' => 'password',
         ])->assertInvalid(['device_name']);
     });
@@ -70,7 +70,7 @@ describe('register', function () {
 
 describe('login', function () {
     test('issues a token for valid credentials', function () {
-        $user = User::factory()->create();
+        $user     = User::factory()->create();
 
         $response = $this->postJson(route('api.v1.auth.login'), loginPayload($user));
 
@@ -83,7 +83,7 @@ describe('login', function () {
     });
 
     test('the token authenticates the bearer', function () {
-        $user = User::factory()->create();
+        $user  = User::factory()->create();
 
         $token = $this->postJson(route('api.v1.auth.login'), loginPayload($user))->json('token');
 
@@ -154,7 +154,7 @@ describe('login', function () {
 
 describe('logout', function () {
     test('revokes only the token that made the request', function () {
-        $user = User::factory()->create();
+        $user  = User::factory()->create();
         $phone = $user->createToken('phone')->plainTextToken;
         $user->createToken('tablet');
 

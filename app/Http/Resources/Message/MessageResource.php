@@ -107,30 +107,30 @@ class MessageResource extends JsonResource
         $viewer = $request->user();
 
         return [
-            'id' => $this->id,
+            'id'              => $this->id,
             'conversation_id' => $this->conversation_id,
-            'content' => $this->content,
-            'type' => $this->type,
-            'status' => $this->status,
+            'content'         => $this->content,
+            'type'            => $this->type,
+            'status'          => $this->status,
 
-            'sender_id' => $this->sender_id,
-            'sender' => UserSummaryResource::make($this->whenLoaded('sender')),
-            'is_mine' => $viewer?->getKey() === $this->sender_id,
+            'sender_id'       => $this->sender_id,
+            'sender'          => UserSummaryResource::make($this->whenLoaded('sender')),
+            'is_mine'         => $viewer?->getKey() === $this->sender_id,
 
-            'is_edited' => $this->is_edited,
-            'edited_at' => $this->edited_at,
-            'is_pinned' => $this->is_pinned,
-            'pinned_at' => $this->pinned_at,
-            'pinned_by' => $this->pinned_by,
+            'is_edited'       => $this->is_edited,
+            'edited_at'       => $this->edited_at,
+            'is_pinned'       => $this->is_pinned,
+            'pinned_at'       => $this->pinned_at,
+            'pinned_by'       => $this->pinned_by,
 
-            'can_edit' => (bool) $viewer?->can('update', $this->resource),
-            'can_delete' => (bool) $viewer?->can('delete', $this->resource),
-            'can_pin' => $this->relationLoaded('conversation')
+            'can_edit'        => (bool) $viewer?->can('update', $this->resource),
+            'can_delete'      => (bool) $viewer?->can('delete', $this->resource),
+            'can_pin'         => $this->relationLoaded('conversation')
                 && $viewer !== null
                 && $viewer->can('pin', $this->resource),
 
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at'      => $this->created_at,
+            'updated_at'      => $this->updated_at,
         ];
     }
 }

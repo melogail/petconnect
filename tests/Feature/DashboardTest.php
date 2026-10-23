@@ -39,7 +39,7 @@ test('a successful sign-in lands on the feed', function () {
     $user = User::factory()->create();
 
     $this->post(route('login.store'), [
-        'email' => $user->email,
+        'email'    => $user->email,
         'password' => 'password',
     ])->assertRedirect(route('home', absolute: false));
 });

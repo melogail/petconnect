@@ -41,7 +41,7 @@ class ReportsFiled extends Trend
     public function ranges(): array
     {
         return [
-            7 => Nova::__('7 Days'),
+            7  => Nova::__('7 Days'),
             30 => Nova::__('30 Days'),
             60 => Nova::__('60 Days'),
             90 => Nova::__('90 Days'),

@@ -32,9 +32,9 @@ class LikeFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id'       => User::factory(),
             'likeable_type' => Relation::getMorphAlias(Pet::class),
-            'likeable_id' => Pet::factory(),
+            'likeable_id'   => Pet::factory(),
         ];
     }
 
@@ -45,7 +45,7 @@ class LikeFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'likeable_type' => Relation::getMorphAlias(Pet::class),
-            'likeable_id' => $pet?->getKey() ?? Pet::factory(),
+            'likeable_id'   => $pet?->getKey() ?? Pet::factory(),
         ]);
     }
 
@@ -56,7 +56,7 @@ class LikeFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'likeable_type' => Relation::getMorphAlias(Comment::class),
-            'likeable_id' => $comment?->getKey() ?? Comment::factory(),
+            'likeable_id'   => $comment?->getKey() ?? Comment::factory(),
         ]);
     }
 
@@ -67,7 +67,7 @@ class LikeFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'likeable_type' => Relation::getMorphAlias(User::class),
-            'likeable_id' => $user?->getKey() ?? User::factory(),
+            'likeable_id'   => $user?->getKey() ?? User::factory(),
         ]);
     }
 }

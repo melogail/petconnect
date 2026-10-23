@@ -14,7 +14,7 @@ class ConversationSeeder extends Seeder
     /**
      * How many direct threads the demo dataset should end up with.
      */
-    public const TARGET_COUNT = 15;
+    public const TARGET_COUNT      = 15;
 
     /**
      * How many of them the demo account takes part in.
@@ -24,7 +24,7 @@ class ConversationSeeder extends Seeder
     /**
      * Guard against an unlucky run of already-paired users.
      */
-    protected const MAX_ATTEMPTS = 200;
+    protected const MAX_ATTEMPTS   = 200;
 
     /**
      * Open direct threads between distinct pairs of users.
@@ -43,16 +43,16 @@ class ConversationSeeder extends Seeder
                 return;
             }
 
-            $demo = User::query()->where('email', UserSeeder::DEMO_EMAIL)->firstOrFail();
+            $demo    = User::query()->where('email', UserSeeder::DEMO_EMAIL)->firstOrFail();
 
             /** @var Collection<int, User> $others */
-            $others = User::query()->whereKeyNot($demo->getKey())->select(['id'])->get();
+            $others  = User::query()->whereKeyNot($demo->getKey())->select(['id'])->get();
 
             if ($others->count() < 2) {
                 throw new RuntimeException('At least three users are needed to open threads; run UserSeeder first.');
             }
 
-            $opened = $this->openDemoThreads($demo, $others, min(self::DEMO_THREAD_COUNT, $missing));
+            $opened  = $this->openDemoThreads($demo, $others, min(self::DEMO_THREAD_COUNT, $missing));
 
             $this->openMemberThreads($others, $missing - $opened);
         });
@@ -88,7 +88,7 @@ class ConversationSeeder extends Seeder
      */
     protected function openMemberThreads(Collection $others, int $count): void
     {
-        $opened = 0;
+        $opened   = 0;
         $attempts = 0;
 
         while ($opened < $count && $attempts < self::MAX_ATTEMPTS) {
@@ -102,7 +102,7 @@ class ConversationSeeder extends Seeder
         }
 
         if ($opened < $count) {
-            $this->command?->warn(sprintf(
+            $this->command->warn(sprintf(
                 'ConversationSeeder gave up after %d attempts with %d of %d member threads opened; too few unpaired users remain to reach %d conversations.',
                 $attempts,
                 $opened,

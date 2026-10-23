@@ -67,7 +67,7 @@ class ChangeReportStatus extends Action
     public function handle(ActionFields $fields, Collection $models): ActionResponse
     {
         try {
-            $status = ReportStatus::from((string) $fields->status);
+            $status = ReportStatus::from((string) $fields->get('status'));
 
             DB::transaction(function () use ($models, $status): void {
                 $models->each(function (Report $report) use ($status): void {

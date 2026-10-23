@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Actions\Reports\CreateReport;
+use App\Concerns\ResolvesRequestUser;
 use App\Enums\Reportable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Report\StoreReportRequest;
@@ -30,6 +31,8 @@ use Inertia\Inertia;
  */
 class ReportController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * File a report against a whitelisted target.
      *
@@ -55,7 +58,7 @@ class ReportController extends Controller
         $this->authorize('create', ReportModel::class);
 
         $createReport->handle(
-            reporter: $request->user(),
+            reporter: $this->actor($request),
             reportableType: $reportable_type,
             reportableId: $reportable_id,
             category: $request->category(),

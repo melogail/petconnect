@@ -73,8 +73,8 @@ class Report extends Model
     {
         return [
             'category' => ReportCategory::class,
-            'reason' => ReportReason::class,
-            'status' => ReportStatus::class,
+            'reason'   => ReportReason::class,
+            'status'   => ReportStatus::class,
             'metadata' => 'array',
         ];
     }

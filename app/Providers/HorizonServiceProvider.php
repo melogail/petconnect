@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Horizon\Horizon;
 use Laravel\Horizon\HorizonApplicationServiceProvider;
-use Illuminate\Support\Facades\Auth;
 
 class HorizonServiceProvider extends HorizonApplicationServiceProvider
 {
@@ -25,9 +25,13 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      * Register the Horizon gate.
      *
      * This gate determines who can access Horizon in non-local environments.
+     *
+     * The subject Horizon passes in is resolved from the default guard, so it is
+     * null for an admin; the answer must come from the `admin` guard's session
+     * alone. See tests/Feature/Providers/HorizonServiceProviderTest.php.
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', fn (mixed $user = null) : bool => Auth::guard('admin')->check() && $user?->hasRole('super-admin'));
+        Gate::define('viewHorizon', fn (mixed $user = null): bool => Auth::guard('admin')->check());
     }
 }

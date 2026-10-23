@@ -64,7 +64,7 @@ test('falls as reports are decided', function () {
     $this->actingAs($admin, 'admin')
         ->postJson('/nova-api/reports/action?action=change-status', [
             'resources' => [$queue->first()->getKey()],
-            'status' => ReportStatus::Resolved->value,
+            'status'    => ReportStatus::Resolved->value,
         ])
         ->assertOk();
 

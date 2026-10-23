@@ -34,12 +34,12 @@ class PublishCommentContext extends CommentContentContext
      * The resolved parent, once ValidateParentBelongsToCommentable has run.
      * Null for a top-level comment.
      */
-    protected ?Comment $parent = null;
+    protected ?Comment $parent    = null;
 
     /**
      * The written comment, once PersistComment has run.
      */
-    protected ?Comment $comment = null;
+    protected ?Comment $comment   = null;
 
     /**
      * @param  list<string>  $bannedWords

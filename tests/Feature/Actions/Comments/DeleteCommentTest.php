@@ -23,9 +23,9 @@ use App\Pipelines\Comments\DeleteCommentThread\DeleteCommentRoot;
  */
 function reactedCommentThread(): array
 {
-    $pet = Pet::factory()->create();
-    $root = Comment::factory()->for($pet, 'commentable')->create();
-    $reply = Comment::factory()->reply($root)->create();
+    $pet        = Pet::factory()->create();
+    $root       = Comment::factory()->for($pet, 'commentable')->create();
+    $reply      = Comment::factory()->reply($root)->create();
     $grandchild = Comment::factory()->reply($reply)->create();
 
     foreach ([$root, $reply, $grandchild] as $comment) {
@@ -39,7 +39,7 @@ function reactedCommentThread(): array
 test('removes the whole subtree together with the likes and reports of every comment in it', function () {
     ['root' => $root, 'reply' => $reply, 'grandchild' => $grandchild] = reactedCommentThread();
 
-    $deleted = app(DeleteComment::class)->handle($root);
+    $deleted                                                          = app(DeleteComment::class)->handle($root);
 
     expect($deleted)->toBeTrue();
 
@@ -47,20 +47,20 @@ test('removes the whole subtree together with the likes and reports of every com
         $this->assertModelMissing($comment);
         $this->assertDatabaseMissing('likes', [
             'likeable_type' => 'comment',
-            'likeable_id' => $comment->getKey(),
+            'likeable_id'   => $comment->getKey(),
         ]);
         $this->assertDatabaseMissing('reports', [
             'reportable_type' => 'comment',
-            'reportable_id' => $comment->getKey(),
+            'reportable_id'   => $comment->getKey(),
         ]);
     }
 });
 
 test('leaves the likes and reports of a comment outside the subtree alone', function () {
     ['root' => $root, 'pet' => $pet] = reactedCommentThread();
-    $bystander = Comment::factory()->for($pet, 'commentable')->create();
-    $bystanderLike = Like::factory()->forComment($bystander)->create();
-    $bystanderReport = Report::factory()->forReportable($bystander)->create();
+    $bystander                       = Comment::factory()->for($pet, 'commentable')->create();
+    $bystanderLike                   = Like::factory()->forComment($bystander)->create();
+    $bystanderReport                 = Report::factory()->forReportable($bystander)->create();
 
     app(DeleteComment::class)->handle($root);
 
@@ -71,8 +71,8 @@ test('leaves the likes and reports of a comment outside the subtree alone', func
 
 test('leaves a like on another model that happens to share an id with a deleted comment alone', function () {
     ['root' => $root, 'grandchild' => $grandchild] = reactedCommentThread();
-    $collidingPet = Pet::factory()->create(['id' => $grandchild->getKey()]);
-    $petLike = Like::factory()->forPet($collidingPet)->create();
+    $collidingPet                                  = Pet::factory()->create(['id' => $grandchild->getKey()]);
+    $petLike                                       = Like::factory()->forPet($collidingPet)->create();
 
     app(DeleteComment::class)->handle($root);
 
@@ -93,11 +93,11 @@ test('deletes nothing at all when a later step fails', function () {
         $this->assertModelExists($comment);
         $this->assertDatabaseHas('likes', [
             'likeable_type' => 'comment',
-            'likeable_id' => $comment->getKey(),
+            'likeable_id'   => $comment->getKey(),
         ]);
         $this->assertDatabaseHas('reports', [
             'reportable_type' => 'comment',
-            'reportable_id' => $comment->getKey(),
+            'reportable_id'   => $comment->getKey(),
         ]);
     }
 });
@@ -110,11 +110,11 @@ test('deleting a reply leaves its parent and the parent reactions in place', fun
     $this->assertModelExists($root);
     $this->assertDatabaseHas('likes', [
         'likeable_type' => 'comment',
-        'likeable_id' => $root->getKey(),
+        'likeable_id'   => $root->getKey(),
     ]);
     $this->assertDatabaseHas('reports', [
         'reportable_type' => 'comment',
-        'reportable_id' => $root->getKey(),
+        'reportable_id'   => $root->getKey(),
     ]);
     $this->assertModelMissing($reply);
     $this->assertModelMissing($grandchild);

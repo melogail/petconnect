@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { fromCoordinateInput } from '@/lib/coordinates';
 import { petFormErrors, type PetFormState } from '@/lib/petForm';
 import { reverseGeocode } from '@/lib/reverseGeocode';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * Where the listing is.
@@ -28,6 +29,8 @@ import { reverseGeocode } from '@/lib/reverseGeocode';
 const { form } = defineProps<{ form: InertiaForm<PetFormState> }>();
 
 const errors = computed(() => petFormErrors(form.errors));
+
+const { t } = useTranslations();
 
 const locating = ref(false);
 const locateFailed = ref(false);
@@ -121,7 +124,7 @@ async function useMyLocation(): Promise<void> {
                 >
                     <Spinner v-if="locating" />
                     <LocateFixed v-else class="size-4" />
-                    Use my location
+                    {{ t('wizard.use_my_location') }}
                 </Button>
 
                 <Button
@@ -131,21 +134,21 @@ async function useMyLocation(): Promise<void> {
                     @click="clearPin"
                 >
                     <MapPinOff class="size-4" />
-                    Clear pin
+                    {{ t('wizard.clear_pin') }}
                 </Button>
             </div>
 
             <p v-if="locateFailed" class="text-muted-foreground text-sm">
-                We could not read your location. Fill the address in by hand.
+                {{ t('wizard.locate_failed') }}
             </p>
         </div>
 
         <div class="grid gap-5 sm:grid-cols-2">
             <FormField
-                label="Latitude"
+                :label="t('wizard.latitude')"
                 field-id="pet-lat"
                 :error="errors['location.coordinates.lat']"
-                hint="A pin needs both boxes, or neither."
+                :hint="t('wizard.pin_hint')"
             >
                 <Input
                     id="pet-lat"
@@ -155,7 +158,7 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="Longitude"
+                :label="t('wizard.longitude')"
                 field-id="pet-lng"
                 :error="errors['location.coordinates.lng']"
             >
@@ -167,7 +170,7 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="City"
+                :label="t('wizard.city')"
                 field-id="pet-city"
                 :error="errors['location.city']"
                 required
@@ -181,7 +184,7 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="State or province"
+                :label="t('wizard.state_or_province')"
                 field-id="pet-state"
                 :error="errors['location.state']"
                 required
@@ -195,7 +198,7 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="Country"
+                :label="t('wizard.country')"
                 field-id="pet-country"
                 :error="errors['location.country']"
                 required
@@ -209,7 +212,7 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="Postal code"
+                :label="t('wizard.postal_code')"
                 field-id="pet-postal-code"
                 :error="errors['location.postalCode']"
             >
@@ -221,10 +224,10 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="Street address"
+                :label="t('wizard.street_address')"
                 field-id="pet-address"
                 :error="errors['location.address']"
-                hint="Only you ever see this."
+                :hint="t('wizard.only_you_see_this')"
                 class="sm:col-span-2"
             >
                 <Input
@@ -235,10 +238,10 @@ async function useMyLocation(): Promise<void> {
             </FormField>
 
             <FormField
-                label="Building detail"
+                :label="t('wizard.building_detail')"
                 field-id="pet-detailed-address"
                 :error="errors['location.detailedAddress']"
-                hint="Apartment, floor, landmark. Only you ever see this."
+                :hint="t('wizard.building_detail_hint')"
                 class="sm:col-span-2"
             >
                 <Textarea

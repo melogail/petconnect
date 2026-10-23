@@ -26,13 +26,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @var array<string, array{0: string, 1: string}>
  */
 const LISTING_MORPH_TABLES = [
-    'likes' => ['likeable_type', 'likeable_id'],
-    'saves' => ['saveable_type', 'saveable_id'],
-    'reports' => ['reportable_type', 'reportable_id'],
-    'reviews' => ['reviewable_type', 'reviewable_id'],
-    'comments' => ['commentable_type', 'commentable_id'],
+    'likes'         => ['likeable_type', 'likeable_id'],
+    'saves'         => ['saveable_type', 'saveable_id'],
+    'reports'       => ['reportable_type', 'reportable_id'],
+    'reviews'       => ['reviewable_type', 'reviewable_id'],
+    'comments'      => ['commentable_type', 'commentable_id'],
     'notifications' => ['notifiable_type', 'notifiable_id'],
-    'media' => ['model_type', 'model_id'],
+    'media'         => ['model_type', 'model_id'],
 ];
 
 /**
@@ -52,7 +52,7 @@ function strandedListingRows(): array
     foreach (LISTING_MORPH_TABLES as $table => [$typeColumn, $idColumn]) {
         foreach (DB::table($table)->get() as $row) {
             /** @var class-string<Model>|null $class */
-            $class = Relation::getMorphedModel($row->{$typeColumn});
+            $class  = Relation::getMorphedModel($row->{$typeColumn});
 
             if ($class === null) {
                 $stranded[] = "{$table} -> unmapped morph alias [{$row->{$typeColumn}}]";
@@ -92,11 +92,11 @@ function strandedListingRows(): array
  */
 function listingWithEveryChild(): array
 {
-    $owner = User::factory()->create();
-    $visitor = User::factory()->create();
+    $owner            = User::factory()->create();
+    $visitor          = User::factory()->create();
 
-    $listing = Pet::factory()->for($owner)->create();
-    $bystander = Pet::factory()->for($owner)->create();
+    $listing          = Pet::factory()->for($owner)->create();
+    $bystander        = Pet::factory()->for($owner)->create();
 
     $listing->addMedia(UploadedFile::fake()->image('cover.jpg'))
         ->withCustomProperties([Pet::FEATURED_PROPERTY => true])
@@ -104,9 +104,9 @@ function listingWithEveryChild(): array
     $listing->addMedia(UploadedFile::fake()->image('gallery.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
     $bystander->addMedia(UploadedFile::fake()->image('theirs.jpg'))->toMediaCollection(Pet::PHOTO_COLLECTION);
 
-    $root = Comment::factory()->for($visitor)->forPet($listing)->create();
-    $reply = Comment::factory()->for($owner)->reply($root)->create();
-    $deepReply = Comment::factory()->for($visitor)->reply($reply)->create();
+    $root             = Comment::factory()->for($visitor)->forPet($listing)->create();
+    $reply            = Comment::factory()->for($owner)->reply($root)->create();
+    $deepReply        = Comment::factory()->for($visitor)->reply($reply)->create();
     $bystanderComment = Comment::factory()->for($visitor)->forPet($bystander)->create();
 
     Like::factory()->for($visitor)->forPet($listing)->create();
@@ -124,14 +124,14 @@ function listingWithEveryChild(): array
     Report::factory()->for($owner)->forReportable($deepReply)->create();
     Report::factory()->for($owner)->forReportable($bystanderComment)->create();
 
-    $review = Review::factory()->for($visitor)->forUser($owner)->create();
+    $review           = Review::factory()->for($visitor)->forUser($owner)->create();
     Report::factory()->for($owner)->forReportable($review)->create();
 
     return [
-        'listing' => $listing,
+        'listing'   => $listing,
         'bystander' => $bystander,
-        'owner' => $owner,
-        'thread' => [$root, $reply, $deepReply],
+        'owner'     => $owner,
+        'thread'    => [$root, $reply, $deepReply],
     ];
 }
 
@@ -150,7 +150,7 @@ test('leaves no row in any morph table pointing at the purged listing', function
 
     expect(strandedListingRows())->toBe([]);
 
-    $purged = app(PurgePet::class)->handle($listing);
+    $purged                 = app(PurgePet::class)->handle($listing);
 
     expect($purged)->toBeTrue()
         ->and(strandedListingRows())->toBe([]);
@@ -160,7 +160,7 @@ test('leaves no row in any morph table pointing at the purged listing', function
 test('removes the comment subtree with every like and report on it', function () {
     ['listing' => $listing, 'thread' => $thread] = listingWithEveryChild();
 
-    $commentIds = collect($thread)->map->getKey()->all();
+    $commentIds                                  = collect($thread)->map->getKey()->all();
 
     app(PurgePet::class)->handle($listing);
 
@@ -192,11 +192,11 @@ test('removes the comment subtree with every like and report on it', function ()
 test('removes the stored photo files of the purged listing and no others', function () {
     ['listing' => $listing, 'bystander' => $bystander] = listingWithEveryChild();
 
-    $disk = Storage::disk(config('media-library.disk_name'));
-    $purgedPaths = $listing->getMedia(Pet::PHOTO_COLLECTION)
+    $disk                                              = Storage::disk(config('media-library.disk_name'));
+    $purgedPaths                                       = $listing->getMedia(Pet::PHOTO_COLLECTION)
         ->map(fn (Media $photo): string => $photo->getPathRelativeToRoot())
         ->all();
-    $keptPath = $bystander->getFirstMedia(Pet::PHOTO_COLLECTION)->getPathRelativeToRoot();
+    $keptPath                                          = $bystander->getFirstMedia(Pet::PHOTO_COLLECTION)->getPathRelativeToRoot();
 
     expect($purgedPaths)->toHaveCount(2);
 
@@ -219,7 +219,7 @@ test('removes the stored photo files of the purged listing and no others', funct
 test('keeps the other listing of the same owner with all of its content', function () {
     ['listing' => $listing, 'bystander' => $bystander, 'owner' => $owner] = listingWithEveryChild();
 
-    $bystanderCommentIds = Comment::query()
+    $bystanderCommentIds                                                  = Comment::query()
         ->where('commentable_type', Relation::getMorphAlias(Pet::class))
         ->where('commentable_id', $bystander->getKey())
         ->pluck('id');
@@ -246,7 +246,7 @@ test('purges a listing that was already retired', function () {
     ['listing' => $listing] = listingWithEveryChild();
     $listing->delete();
 
-    $purged = app(PurgePet::class)->handle($listing);
+    $purged                 = app(PurgePet::class)->handle($listing);
 
     expect($purged)->toBeTrue()
         ->and(Pet::withTrashed()->whereKey($listing->getKey())->exists())->toBeFalse()

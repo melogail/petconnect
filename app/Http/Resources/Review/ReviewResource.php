@@ -98,20 +98,20 @@ class ReviewResource extends JsonResource
         $viewer = $request->user();
 
         return [
-            'id' => $this->id,
-            'rate' => $this->rate,
-            'comment' => $this->comment,
+            'id'           => $this->id,
+            'rate'         => $this->rate,
+            'comment'      => $this->comment,
 
-            'author' => ReviewAuthorResource::make($this->whenLoaded('user')),
-            'is_author' => $viewer?->getKey() === $this->user_id,
+            'author'       => ReviewAuthorResource::make($this->whenLoaded('user')),
+            'is_author'    => $viewer?->getKey() === $this->user_id,
 
             'has_reported' => (bool) ($this->has_reported ?? false),
 
-            'can_edit' => (bool) $viewer?->can('update', $this->resource),
-            'can_delete' => (bool) $viewer?->can('delete', $this->resource),
+            'can_edit'     => (bool) $viewer?->can('update', $this->resource),
+            'can_delete'   => (bool) $viewer?->can('delete', $this->resource),
 
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at'   => $this->created_at,
+            'updated_at'   => $this->updated_at,
         ];
     }
 }

@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
@@ -91,13 +92,16 @@ class ListCommentThread
         return $commentable->rootComments()
             ->with([
                 'user.media',
-                'replies' => fn (Relation $replies): Relation => $replies
-                    ->with('user.media')
-                    ->withCount(['likes', 'replies'])
-                    ->withLikedBy($viewer)
-                    ->withReportedBy($viewer)
-                    ->latest()
-                    ->limit($replyPreview),
+                'replies' => function (Relation $replies) use ($viewer, $replyPreview): void {
+                    /** @var HasMany<Comment, Comment> $replies Narrowed inline: with() only accepts a bare Relation closure, and the scopes need the related model. */
+                    $replies
+                        ->with('user.media')
+                        ->withCount(['likes', 'replies'])
+                        ->withLikedBy($viewer)
+                        ->withReportedBy($viewer)
+                        ->latest()
+                        ->limit($replyPreview);
+                },
             ])
             ->withCount(['likes', 'replies'])
             ->withLikedBy($viewer)

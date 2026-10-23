@@ -73,12 +73,12 @@ class PersistReport
 
         try {
             $report = Report::create([
-                'user_id' => $context->reporter->getKey(),
+                'user_id'         => $context->reporter->getKey(),
                 'reportable_type' => Relation::getMorphAlias($reportable::class),
-                'reportable_id' => $reportable->getKey(),
-                'category' => $context->category,
-                'reason' => $context->reason,
-                'description' => $context->description,
+                'reportable_id'   => $reportable->getKey(),
+                'category'        => $context->category,
+                'reason'          => $context->reason,
+                'description'     => $context->description,
             ]);
         } catch (UniqueConstraintViolationException) {
             throw AlreadyReported::make();

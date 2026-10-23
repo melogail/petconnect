@@ -8,13 +8,13 @@ enum PetStatus: string
 {
     use HasOptions;
 
-    case Available = 'available';
+    case Available   = 'available';
     case Unavailable = 'unavailable';
 
     public function label(): string
     {
         return match ($this) {
-            self::Available => 'Available',
+            self::Available   => 'Available',
             self::Unavailable => 'Unavailable',
         };
     }

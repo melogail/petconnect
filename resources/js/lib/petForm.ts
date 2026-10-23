@@ -2,10 +2,12 @@ import { fromCoordinateInput, toCoordinateInput } from '@/lib/coordinates';
 import { type InputValue, trimmedInput } from '@/lib/inputValue';
 import type {
     PetDetail,
+    PetFormOptions,
     PetGender,
     PetHealthStatus,
     PetListingType,
     PetStatus,
+    SelectOption,
 } from '@/types';
 
 /** One row of the vaccination repeater, as the inputs bind to it. */
@@ -439,4 +441,38 @@ export function petFormErrors(
     errors: object,
 ): Record<string, string | undefined> {
     return errors as Record<string, string | undefined>;
+}
+
+/**
+ * The select options with their labels translated.
+ *
+ * The enums' `label()` is English only (.ai/rules/enums.md), so the client
+ * resolves each `value` through the catalogue keys the detail page already
+ * uses for the same vocabulary: `pets.male`, `listing_types.sale`,
+ * `pets.available`, `pets.health_status_healthy`. Categories carry `name_ar`
+ * and go through `taxonomyName()` at the call site instead.
+ */
+export function localisedPetFormOptions(
+    options: PetFormOptions,
+    t: (key: string) => string,
+): PetFormOptions {
+    const relabel = <T extends string>(
+        list: SelectOption<T>[],
+        key: (value: T) => string,
+    ): SelectOption<T>[] =>
+        list.map((option) => ({ ...option, label: t(key(option.value)) }));
+
+    return {
+        categories: options.categories,
+        genders: relabel(options.genders, (value) => `pets.${value}`),
+        listingTypes: relabel(
+            options.listingTypes,
+            (value) => `listing_types.${value}`,
+        ),
+        statuses: relabel(options.statuses, (value) => `pets.${value}`),
+        healthStatuses: relabel(
+            options.healthStatuses,
+            (value) => `pets.health_status_${value}`,
+        ),
+    };
 }

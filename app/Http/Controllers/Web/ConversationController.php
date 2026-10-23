@@ -10,6 +10,7 @@ use App\Actions\Messaging\MarkConversationAsRead;
 use App\Actions\Messaging\PaginateConversationMessages;
 use App\Actions\Messaging\StartConversation;
 use App\Concerns\MessageValidationRules;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Conversation\StoreConversationRequest;
 use App\Http\Resources\Conversation\ConversationPreviewResource;
@@ -128,6 +129,7 @@ use Inertia\Response;
 class ConversationController extends Controller
 {
     use MessageValidationRules;
+    use ResolvesRequestUser;
 
     /**
      * A page of the signed-in user's conversations, most recent first.
@@ -146,7 +148,7 @@ class ConversationController extends Controller
 
         return Inertia::render('messaging/Index', [
             'conversations' => ConversationResource::collection(
-                $buildInbox->handle($request->user())
+                $buildInbox->handle($this->actor($request))
             ),
         ]);
     }
@@ -174,7 +176,7 @@ class ConversationController extends Controller
     ): AnonymousResourceCollection {
         $this->authorize('viewAny', Conversation::class);
 
-        $user = $request->user();
+        $user = $this->actor($request);
 
         return ConversationPreviewResource::collection($listConversationPreviews->handle($user))
             ->additional(['meta' => ['unread_count' => $countUnreadConversations->handle($user)]]);
@@ -194,10 +196,10 @@ class ConversationController extends Controller
         $this->authorize('view', $conversation);
 
         return Inertia::render('messaging/Show', [
-            'conversation' => ConversationResource::make(
+            'conversation'  => ConversationResource::make(
                 $loadConversationParticipants->handle($conversation)
             ),
-            'messages' => MessageResource::collection(
+            'messages'      => MessageResource::collection(
                 $paginateConversationMessages->handle($conversation)
             ),
             'messageBounds' => $this->messageBounds(),
@@ -216,7 +218,7 @@ class ConversationController extends Controller
         $this->authorize('create', Conversation::class);
 
         $conversation = $startConversation->handle(
-            initiator: $request->user(),
+            initiator: $this->actor($request),
             recipientId: $request->recipientId(),
             initialMessage: $request->initialMessage(),
         );
@@ -238,7 +240,7 @@ class ConversationController extends Controller
     ): RedirectResponse {
         $this->authorize('view', $conversation);
 
-        $markConversationAsRead->handle($conversation, $request->user());
+        $markConversationAsRead->handle($conversation, $this->actor($request));
 
         return back();
     }

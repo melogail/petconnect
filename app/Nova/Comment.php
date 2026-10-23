@@ -47,6 +47,8 @@ use Laravel\Nova\ResourceTool;
  * first and clears those polymorphic children inside one transaction. The Nova
  * action delegates to it; the policy's `delete` returns false so nothing else
  * can take the shortcut. Same shape as the User rule in .ai/rules/actions.md.
+ *
+ * @extends \App\Nova\Resource<CommentModel>
  */
 class Comment extends Resource
 {
@@ -55,7 +57,7 @@ class Comment extends Resource
      *
      * @var class-string<CommentModel>
      */
-    public static $model = CommentModel::class;
+    public static $model  = CommentModel::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
@@ -69,7 +71,7 @@ class Comment extends Resource
      *
      * @var string
      */
-    public static $title = 'id';
+    public static $title  = 'id';
 
     /**
      * The label a comment is referred to by elsewhere in Nova.
@@ -94,7 +96,7 @@ class Comment extends Resource
      *
      * @var string
      */
-    public static $group = 'Moderation';
+    public static $group  = 'Moderation';
 
     /**
      * The columns that should be searched.
@@ -110,7 +112,7 @@ class Comment extends Resource
      *
      * @var array<int, string>
      */
-    public static $with = ['user', 'commentable'];
+    public static $with   = ['user', 'commentable'];
 
     /**
      * Get the fields displayed by the resource.
@@ -174,9 +176,6 @@ class Comment extends Resource
      * The three counters are aggregated here rather than resolved per row: a
      * 25-row index would otherwise issue 75 extra queries, and the reports
      * count in particular is the column a moderator sorts by.
-     *
-     * @param  Builder<CommentModel>  $query
-     * @return Builder<CommentModel>
      */
     public static function indexQuery(NovaRequest $request, Builder $query): Builder
     {

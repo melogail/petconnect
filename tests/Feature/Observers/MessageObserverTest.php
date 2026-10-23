@@ -6,7 +6,7 @@ use App\Models\Message;
 test('sets the conversation cursor to the created message time', function () {
     $conversation = Conversation::factory()->direct()->create();
 
-    $message = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+    $message      = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
 
     expect($conversation->fresh()->last_message_at->toDateTimeString())
         ->toBe($message->created_at->toDateTimeString());
@@ -29,8 +29,8 @@ test('leaves the cursor alone when a message older than the cursor is created', 
 
 test('falls back to the next newest message when the newest is deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $older = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
-    $newest = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
+    $older        = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+    $newest       = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
 
     $newest->delete();
 
@@ -40,7 +40,7 @@ test('falls back to the next newest message when the newest is deleted', functio
 
 test('clears the cursor when the last remaining message is deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $message = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+    $message      = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
 
     $message->delete();
 
@@ -50,7 +50,7 @@ test('clears the cursor when the last remaining message is deleted', function ()
 test('leaves the cursor alone when an older message is deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
     Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
-    $newest = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
+    $newest       = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
 
     $conversation->messages()->oldest('created_at')->first()->delete();
 
@@ -61,7 +61,7 @@ test('leaves the cursor alone when an older message is deleted', function () {
 test('restores the cursor when the newest message is restored', function () {
     $conversation = Conversation::factory()->direct()->create();
     Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
-    $newest = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
+    $newest       = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
     $newest->delete();
 
     $newest->restore();
@@ -72,8 +72,8 @@ test('restores the cursor when the newest message is restored', function () {
 
 test('recomputes the cursor when the newest message is force deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $older = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
-    $newest = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
+    $older        = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+    $newest       = Message::factory()->for($conversation)->create(['created_at' => '2026-01-02 10:00:00']);
 
     $newest->forceDelete();
 
@@ -83,7 +83,7 @@ test('recomputes the cursor when the newest message is force deleted', function 
 
 test('clears the cursor when the only message is force deleted', function () {
     $conversation = Conversation::factory()->direct()->create();
-    $message = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
+    $message      = Message::factory()->for($conversation)->create(['created_at' => '2026-01-01 10:00:00']);
 
     $message->forceDelete();
 

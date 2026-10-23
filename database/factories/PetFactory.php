@@ -139,16 +139,16 @@ class PetFactory extends Factory
      */
     protected function vaccinationRecords(): array
     {
-        return array_map(
+        return array_values(array_map(
             fn (string $name): array => [
                 'name' => $name,
-                'date' => fake()->optional(0.8)->dateTimeBetween('-2 years', 'now')?->format('Y-m-d'),
+                'date' => fake()->boolean(80) ? fake()->dateTimeBetween('-2 years', 'now')->format('Y-m-d') : null,
             ],
             fake()->randomElements(
                 ['Rabies', 'Distemper', 'Parvovirus', 'Leptospirosis'],
                 fake()->numberBetween(1, 3),
             ),
-        );
+        ));
     }
 
     /**
@@ -159,16 +159,18 @@ class PetFactory extends Factory
      */
     protected function medicationRecords(): array
     {
-        return array_map(
+        $usages = ['Daily', 'Weekly', 'Monthly', 'Twice daily', 'As needed'];
+
+        return array_values(array_map(
             fn (string $name): array => [
                 'name'  => $name,
-                'usage' => fake()->optional(0.8)->randomElement(['Daily', 'Weekly', 'Monthly', 'Twice daily', 'As needed']),
+                'usage' => fake()->boolean(80) ? $usages[array_rand($usages)] : null,
             ],
             fake()->randomElements(
                 ['Heartworm prevention', 'Flea treatment', 'Joint supplement'],
                 fake()->numberBetween(1, 2),
             ),
-        );
+        ));
     }
 
     /**

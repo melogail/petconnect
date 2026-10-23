@@ -30,10 +30,10 @@ class ResolveCategoryAndBreed
 {
     public function handle(PetAttributeContext $context, Closure $next): mixed
     {
-        $categoryId = (int) $context->input('category_id');
+        $categoryId       = (int) $context->input('category_id');
         $submittedBreedId = $context->input('breed_id');
 
-        $category = Category::query()->find($categoryId);
+        $category         = Category::query()->find($categoryId);
 
         if ($category === null) {
             throw CategoryNotFound::withId($categoryId);
@@ -47,9 +47,9 @@ class ResolveCategoryAndBreed
             return $next($context);
         }
 
-        $breedId = (int) $submittedBreedId;
+        $breedId          = (int) $submittedBreedId;
 
-        $breed = Breed::query()
+        $breed            = Breed::query()
             ->whereKey($breedId)
             ->where('category_id', $category->getKey())
             ->first();

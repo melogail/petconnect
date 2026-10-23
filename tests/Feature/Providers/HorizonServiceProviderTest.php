@@ -66,8 +66,8 @@ test('forbids a guest from the horizon dashboard', function () {
  * the passed user instead of the guard.
  */
 test('does not treat a member as the admin sharing their id', function () {
-    $admin = Admin::factory()->create();
-    $member = User::factory()->create();
+    $admin  = Admin::factory()->create();
+    $member = User::factory()->create(['id' => $admin->getKey()]);
 
     expect($member->getKey())->toBe($admin->getKey());
 

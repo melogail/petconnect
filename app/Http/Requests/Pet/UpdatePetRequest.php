@@ -28,7 +28,7 @@ class UpdatePetRequest extends FormRequest
     {
         return [
             ...$this->petRules(requiresFeaturedImage: false),
-            'deletedMediaIds' => ['nullable', 'array', 'max:20'],
+            'deletedMediaIds'   => ['nullable', 'array', 'max:20'],
             'deletedMediaIds.*' => ['integer', 'min:1'],
         ];
     }

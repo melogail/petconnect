@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Settings;
 
 use App\Actions\Profiles\DeleteUserAccount;
 use App\Actions\Profiles\UpdateProfile;
+use App\Concerns\ResolvesRequestUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\DeleteProfileRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Resources\Profile\ProfileFormResource;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,6 +52,8 @@ use Inertia\Response;
  */
 class ProfileController extends Controller
 {
+    use ResolvesRequestUser;
+
     /**
      * Show the user's profile settings page.
      *
@@ -72,15 +74,15 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $user = $request->user();
+        $user = $this->actor($request);
 
         $this->authorize('update', $user);
 
         return Inertia::render('settings/Profile', [
-            'profile' => ProfileFormResource::make($user->loadMissing('media')),
-            'locales' => $this->localeOptions(),
-            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
+            'profile'         => ProfileFormResource::make($user->loadMissing('media')),
+            'locales'         => $this->localeOptions(),
+            'mustVerifyEmail' => true, // App\Models\User implements Illuminate\Contracts\Auth\MustVerifyEmail, so an instanceof here is statically always true.
+            'status'          => $request->session()->get('status'),
         ]);
     }
 
@@ -106,7 +108,7 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request, UpdateProfile $updateProfile): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->actor($request);
 
         $this->authorize('update', $user);
 
@@ -138,7 +140,7 @@ class ProfileController extends Controller
      */
     public function destroy(DeleteProfileRequest $request, DeleteUserAccount $deleteUserAccount): RedirectResponse
     {
-        $user = $request->user();
+        $user = $this->actor($request);
 
         $this->authorize('delete', $user);
 
@@ -172,12 +174,12 @@ class ProfileController extends Controller
         /** @var list<string> $supported */
         $supported = config('petconnect.locales.supported', ['en']);
 
-        return array_values(array_map(
+        return array_map(
             fn (string $locale): array => [
                 'value' => $locale,
-                'label' => __("locales.{$locale}"),
+                'label' => (string) __("locales.{$locale}"),
             ],
             $supported,
-        ));
+        );
     }
 }

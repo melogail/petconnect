@@ -14,7 +14,7 @@ class MakePipelineCommand extends GeneratorCommand
      *
      * @var string
      */
-    protected $name = 'make:pipeline';
+    protected $name        = 'make:pipeline';
 
     /**
      * The console command description.
@@ -28,7 +28,7 @@ class MakePipelineCommand extends GeneratorCommand
      *
      * @var string
      */
-    protected $type = 'Pipeline';
+    protected $type        = 'Pipeline';
 
     /**
      * Get the stub file for the generator.

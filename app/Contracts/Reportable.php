@@ -4,6 +4,7 @@ namespace App\Contracts;
 
 use App\Models\Report;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 
@@ -33,7 +34,9 @@ use Illuminate\Support\Collection;
 interface Reportable
 {
     /**
-     * @return MorphMany<Report, static>
+     * `covariant Model`, not `static` — see App\Contracts\Commentable::comments().
+     *
+     * @return MorphMany<Report, covariant Model>
      */
     public function reports(): MorphMany;
 

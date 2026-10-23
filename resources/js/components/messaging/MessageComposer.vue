@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { store as storeMessage } from '@/routes/conversations/messages';
+import { useTranslations } from '@/composables/useTranslations';
 
 /**
  * Write a message.
@@ -29,6 +30,8 @@ const { conversationId, maxLength, canSend } = defineProps<{
     maxLength: number;
     canSend: boolean;
 }>();
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -36,7 +39,7 @@ const { conversationId, maxLength, canSend } = defineProps<{
         v-if="!canSend"
         class="text-muted-foreground border-border border-t p-4 text-sm"
     >
-        You cannot send messages in this conversation.
+        {{ t('messaging.cannot_send') }}
     </p>
 
     <Form
@@ -53,8 +56,8 @@ const { conversationId, maxLength, canSend } = defineProps<{
                 rows="1"
                 required
                 :maxlength="maxLength"
-                placeholder="Write a message…"
-                aria-label="Message"
+                :placeholder="t('messaging.write_message')"
+                :aria-label="t('messaging.message')"
                 class="bg-card max-h-40 min-h-10 resize-none rounded-[14px]"
             />
             <InputError :message="errors.content" />
@@ -65,7 +68,7 @@ const { conversationId, maxLength, canSend } = defineProps<{
             variant="default"
             size="icon"
             :disabled="processing"
-            aria-label="Send"
+            :aria-label="t('messaging.send')"
         >
             <Spinner v-if="processing" />
             <Send v-else class="size-4" />

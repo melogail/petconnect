@@ -33,9 +33,9 @@ class PersistContent
 {
     public function handle(ReviseMessageContext $context, Closure $next): mixed
     {
-        $message = $context->message();
+        $message            = $context->message();
 
-        $message->content = $context->content();
+        $message->content   = $context->content();
         $message->edited_at = now();
 
         $message->save();

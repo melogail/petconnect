@@ -26,12 +26,12 @@ class PetCategoryOptionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
+            'id'      => $this->id,
+            'name'    => $this->name,
             'name_ar' => $this->name_ar,
-            'slug' => $this->slug,
-            'image' => $this->getFirstMediaUrl('categories', 'thumb') ?: null,
-            'breeds' => PetBreedOptionResource::collection($this->whenLoaded('breeds')),
+            'slug'    => $this->slug,
+            'image'   => $this->getFirstMediaUrl('categories', 'thumb') ?: null,
+            'breeds'  => PetBreedOptionResource::collection($this->whenLoaded('breeds')),
         ];
     }
 }

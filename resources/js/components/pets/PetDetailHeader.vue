@@ -2,7 +2,11 @@
 import { Clock, Eye, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
-import { ageLabel, countLabel, litterLabel } from '@/components/pets/card/labels';
+import {
+    ageLabel,
+    countLabel,
+    litterLabel,
+} from '@/components/pets/card/labels';
 import PetLikeButton from '@/components/pets/PetLikeButton.vue';
 import PetOwnerActions from '@/components/pets/PetOwnerActions.vue';
 import { Badge } from '@/components/ui/badge';
@@ -218,7 +222,12 @@ const likeLabel = computed(
  * because the payload allows a listing with no owner resource.
  */
 const messageLabel = computed(() =>
-    pet.user ? `Message ${pet.user.name} about ${name.value}` : undefined,
+    pet.user
+        ? t('messaging.message_name_about', {
+              name: pet.user.name,
+              pet: name.value,
+          })
+        : undefined,
 );
 
 const breed = computed(() =>
@@ -256,9 +265,7 @@ const place = computed(() =>
  * keys in both catalogues. `age` is null when no birth date was given, and
  * the line is simply left off.
  */
-const age = computed(() =>
-    pet.age === null ? null : ageLabel(t, pet.age),
-);
+const age = computed(() => (pet.age === null ? null : ageLabel(t, pet.age)));
 
 /** `views` is a plain integer column; the grouping separator is the locale's. */
 const views = computed(() =>

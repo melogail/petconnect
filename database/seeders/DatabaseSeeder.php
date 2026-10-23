@@ -29,20 +29,25 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             BreedSeeder::class,
-
-            // UserSeeder::class,
             AdminSeeder::class,
+        ]);
 
-            // PetSeeder::class,
+        if (app()->isProduction()) {
+            return;
+        }
 
-            // CommentSeeder::class,
-            // LikeSeeder::class,
-            // SaveSeeder::class,
-            // ReviewSeeder::class,
-            // ReportSeeder::class,
+        $this->call([
+            UserSeeder::class,
+            PetSeeder::class,
 
-            // ConversationSeeder::class,
-            // MessageSeeder::class,
+            CommentSeeder::class,
+            LikeSeeder::class,
+            SaveSeeder::class,
+            ReviewSeeder::class,
+            ReportSeeder::class,
+
+            ConversationSeeder::class,
+            MessageSeeder::class,
         ]);
     }
 }

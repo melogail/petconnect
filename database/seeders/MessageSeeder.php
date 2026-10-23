@@ -23,12 +23,12 @@ class MessageSeeder extends Seeder
     /**
      * Share of threads with one pinned message.
      */
-    protected const PINNED_CHANCE = 30;
+    protected const PINNED_CHANCE     = 30;
 
     /**
      * Share of participants who have read to the end of their thread.
      */
-    protected const READ_CHANCE = 55;
+    protected const READ_CHANCE       = 55;
 
     /**
      * Fill every empty thread with a back and forth run of messages.
@@ -73,19 +73,19 @@ class MessageSeeder extends Seeder
      */
     protected function fill(Conversation $conversation, Collection $participants, ?int $demoUserId): void
     {
-        $ordered = $participants
+        $ordered     = $participants
             ->sortBy(fn (User $participant): int => $participant->getKey() === $demoUserId ? 0 : 1)
             ->values();
 
-        $count = fake()->numberBetween(self::MIN_PER_CONVERSATION, self::MAX_PER_CONVERSATION);
+        $count       = fake()->numberBetween(self::MIN_PER_CONVERSATION, self::MAX_PER_CONVERSATION);
         $pinnedIndex = fake()->boolean(self::PINNED_CHANCE) ? fake()->numberBetween(0, $count - 1) : null;
-        $offset = $count % 2;
+        $offset      = $count % 2;
 
-        $sentAt = now()->subDays(fake()->numberBetween(5, 30));
+        $sentAt      = now()->subDays(fake()->numberBetween(5, 30));
 
         for ($index = 0; $index < $count; $index++) {
-            $sentAt = $sentAt->addMinutes(fake()->numberBetween(2, 180));
-            $sender = $ordered[($index + $offset) % $ordered->count()];
+            $sentAt  = $sentAt->addMinutes(fake()->numberBetween(2, 180));
+            $sender  = $ordered[($index + $offset) % $ordered->count()];
 
             $factory = Message::factory()
                 ->for($conversation)
@@ -141,8 +141,8 @@ class MessageSeeder extends Seeder
 
         return match (true) {
             fake()->boolean(self::READ_CHANCE) => $lastSentAt->addMinute(),
-            fake()->boolean(50) => $lastSentAt->subHours(fake()->numberBetween(1, 48)),
-            default => null,
+            fake()->boolean(50)                => $lastSentAt->subHours(fake()->numberBetween(1, 48)),
+            default                            => null,
         };
     }
 }

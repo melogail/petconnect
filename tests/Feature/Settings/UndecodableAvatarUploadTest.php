@@ -51,7 +51,7 @@ function attachExistingAvatar(User $user, string $name = 'old-avatar.jpg'): Medi
 function avatarSavePayload(User $user): array
 {
     return [
-        'name' => $user->name,
+        'name'  => $user->name,
         'email' => $user->email,
         'image' => undecodableAvatarUpload(),
     ];
@@ -85,8 +85,8 @@ function avatarSavePayload(User $user): array
  */
 test('keeps the existing avatar and its file when the replacement cannot be decoded', function () {
     Storage::fake(config('media-library.disk_name'));
-    $user = User::factory()->create();
-    $existing = attachExistingAvatar($user);
+    $user         = User::factory()->create();
+    $existing     = attachExistingAvatar($user);
     $existingPath = $existing->getPathRelativeToRoot();
 
     $this->actingAs($user)->patch(route('profile.update'), avatarSavePayload($user));

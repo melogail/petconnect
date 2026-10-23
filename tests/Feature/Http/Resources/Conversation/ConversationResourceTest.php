@@ -72,10 +72,10 @@ test('closes the composer when the other side has been deactivated', function ()
 });
 
 test('closes the composer for a user who has not verified their email', function () {
-    $reader = User::factory()->unverified()->create();
+    $reader       = User::factory()->unverified()->create();
     $conversation = threadBetween($reader, User::factory()->create());
 
-    $payload = ConversationResource::make($conversation->load('users'))
+    $payload      = ConversationResource::make($conversation->load('users'))
         ->toArray(conversationRequestFrom($reader));
 
     expect($payload['can_send'])->toBeFalse();
@@ -88,10 +88,10 @@ test('closes the composer for a user who has not verified their email', function
  * participation query per row on the payload that holds fifty of them.
  */
 test('reports no send right when the participants were never loaded', function () {
-    $reader = User::factory()->create();
+    $reader       = User::factory()->create();
     $conversation = threadBetween($reader, User::factory()->create());
 
-    $payload = ConversationResource::make(Conversation::query()->findOrFail($conversation->getKey()))
+    $payload      = ConversationResource::make(Conversation::query()->findOrFail($conversation->getKey()))
         ->toArray(conversationRequestFrom($reader));
 
     expect($payload)->toHaveKey('can_send')
@@ -104,7 +104,7 @@ test('reports no send right when the participants were never loaded', function (
  * pinned.
  */
 test('offers the composer on the thread page as well as in the inbox', function () {
-    $reader = User::factory()->create();
+    $reader       = User::factory()->create();
     $conversation = threadBetween($reader, User::factory()->create());
 
     $this->actingAs($reader)

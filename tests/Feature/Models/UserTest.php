@@ -9,10 +9,10 @@ test('rejects a mass assigned privileged column', function (string $column, mixe
     expect(fn () => $user->fill([$column => $value]))
         ->toThrow(MassAssignmentException::class);
 })->with([
-    'account activation' => ['is_active', false],
-    'two factor secret' => ['two_factor_secret', 'secret'],
+    'account activation'        => ['is_active', false],
+    'two factor secret'         => ['two_factor_secret', 'secret'],
     'two factor recovery codes' => ['two_factor_recovery_codes', 'codes'],
-    'two factor confirmation' => ['two_factor_confirmed_at', '2026-01-01 00:00:00'],
+    'two factor confirmation'   => ['two_factor_confirmed_at', '2026-01-01 00:00:00'],
 ]);
 
 test('leaves a deactivated account deactivated when an update payload asks to reactivate it', function () {
@@ -26,9 +26,9 @@ test('leaves a deactivated account deactivated when an update payload asks to re
 
 test('creates no account when the payload carries a privileged column', function () {
     expect(fn () => User::create([
-        'name' => 'Sara',
-        'email' => 'sara@example.com',
-        'password' => 'password',
+        'name'                    => 'Sara',
+        'email'                   => 'sara@example.com',
+        'password'                => 'password',
         'two_factor_confirmed_at' => now(),
     ]))->toThrow(MassAssignmentException::class);
 

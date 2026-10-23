@@ -40,33 +40,33 @@ class BuildClientOptions
     public function handle(): array
     {
         return [
-            'listing_types' => ListingType::options(),
-            'statuses' => PetStatus::options(),
-            'genders' => PetGender::options(),
-            'health_statuses' => HealthStatus::options(),
+            'listing_types'     => ListingType::options(),
+            'statuses'          => PetStatus::options(),
+            'genders'           => PetGender::options(),
+            'health_statuses'   => HealthStatus::options(),
             'report_categories' => ReportCategory::options(),
-            'report_reasons' => ReportReason::options(),
-            'bounds' => [
-                'filters' => [
+            'report_reasons'    => ReportReason::options(),
+            'bounds'            => [
+                'filters'  => [
                     'default_radius_km' => (float) config('petconnect.nearby.default_radius_km', 20),
-                    'min_radius_km' => (float) config('petconnect.nearby.min_radius_km', 1),
-                    'max_radius_km' => (float) config('petconnect.nearby.max_radius_km', 100),
-                    'max_age_years' => (float) config('petconnect.filters.max_age_years', 15),
-                    'default_age_min' => (float) config('petconnect.filters.default_age_min', 0),
-                    'default_age_max' => (float) config('petconnect.filters.default_age_max', 15),
+                    'min_radius_km'     => (float) config('petconnect.nearby.min_radius_km', 1),
+                    'max_radius_km'     => (float) config('petconnect.nearby.max_radius_km', 100),
+                    'max_age_years'     => (float) config('petconnect.filters.max_age_years', 15),
+                    'default_age_min'   => (float) config('petconnect.filters.default_age_min', 0),
+                    'default_age_max'   => (float) config('petconnect.filters.default_age_max', 15),
                 ],
-                'photos' => $this->photoBounds(),
+                'photos'   => $this->photoBounds(),
                 'comments' => $this->commentBounds(),
-                'reviews' => $this->reviewBounds(),
+                'reviews'  => $this->reviewBounds(),
                 'messages' => ['max_length' => $this->maxMessageLength()],
                 'profiles' => [
-                    'bio_max_length' => (int) config('petconnect.profiles.bio_max_length', 1000),
+                    'bio_max_length'       => (int) config('petconnect.profiles.bio_max_length', 1000),
                     'max_avatar_kilobytes' => (int) config('petconnect.profiles.max_avatar_kilobytes', 2048),
                 ],
             ],
-            'locales' => [
+            'locales'           => [
                 'supported' => config('petconnect.locales.supported', ['en']),
-                'rtl' => config('petconnect.locales.rtl', []),
+                'rtl'       => config('petconnect.locales.rtl', []),
             ],
         ];
     }

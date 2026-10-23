@@ -136,7 +136,9 @@ function scrollTo(index: number): void {
             </div>
 
             <template v-if="slides.length > 1">
+                <!-- `dir="ltr"`: under RTL the bidi algorithm reorders "1 / 4" into "4 / 1". -->
                 <div
+                    dir="ltr"
                     class="bg-card/90 text-foreground absolute end-4 bottom-4 rounded-full px-3 py-1 text-[11px] font-medium backdrop-blur"
                 >
                     {{ selected + 1 }} / {{ slides.length }}

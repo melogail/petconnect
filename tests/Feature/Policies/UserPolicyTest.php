@@ -130,7 +130,7 @@ describe('like', function () {
  * calls are invisible to preventLazyLoading reasoning.
  */
 test('decides every question without a query', function () {
-    $viewer = User::factory()->create();
+    $viewer  = User::factory()->create();
     $subject = User::factory()->create();
 
     $queries = 0;

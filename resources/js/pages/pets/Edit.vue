@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useLocale } from '@/composables/useLocale';
 import { useTranslations } from '@/composables/useTranslations';
 import {
+    localisedPetFormOptions,
     petFormFromDetail,
     toPetPayload,
     type PetFormState,
@@ -64,15 +65,20 @@ const props = defineProps<{
     photoBounds: PetPhotoBounds;
 }>();
 
-const options = computed<PetFormOptions>(() => ({
-    categories: props.categories,
-    listingTypes: props.listingTypes,
-    statuses: props.statuses,
-    genders: props.genders,
-    healthStatuses: props.healthStatuses,
-}));
-
 const { t } = useTranslations();
+
+const options = computed<PetFormOptions>(() =>
+    localisedPetFormOptions(
+        {
+            categories: props.categories,
+            listingTypes: props.listingTypes,
+            statuses: props.statuses,
+            genders: props.genders,
+            healthStatuses: props.healthStatuses,
+        },
+        t,
+    ),
+);
 const { locale } = useLocale();
 
 /** The name, or a litter title when the listing has none. */
@@ -89,18 +95,20 @@ function submit(): void {
 
 <template>
     <div class="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
-        <Head :title="`Edit ${name}`" />
+        <Head :title="t('pets.edit_listing_named', { name })" />
 
         <!-- `Heading` renders an h2, so the page still owes the document an h1. -->
-        <h1 class="sr-only">Edit {{ name }}</h1>
+        <h1 class="sr-only">{{ t('pets.edit_listing_named', { name }) }}</h1>
 
         <div class="flex flex-wrap items-end justify-between gap-3">
             <Heading
-                :title="`Edit ${name}`"
-                description="Saving replaces the whole listing, so every field is posted."
+                :title="t('pets.edit_listing_named', { name })"
+                :description="t('wizard.edit_listing_desc')"
             />
             <Button as-child variant="outline">
-                <Link :href="showPet(pet.slug)">Back to listing</Link>
+                <Link :href="showPet(pet.slug)">{{
+                    t('wizard.back_to_listing')
+                }}</Link>
             </Button>
         </div>
 
@@ -110,7 +118,7 @@ function submit(): void {
             :photo-bounds="photoBounds"
             :photos="pet.photos"
             :current-featured-url="pet.featured_image"
-            submit-label="Save changes"
+            :submit-label="t('common.save_changes')"
             @submit="submit"
         />
     </div>

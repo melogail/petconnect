@@ -4,8 +4,11 @@ import EmptyState from '@/components/EmptyState.vue';
 import ConversationListItem from '@/components/messaging/ConversationListItem.vue';
 import Pagination from '@/components/Pagination.vue';
 import type { Conversation, Paginated } from '@/types';
+import { useTranslations } from '@/composables/useTranslations';
 
 defineProps<{ conversations: Paginated<Conversation> }>();
+
+const { t } = useTranslations();
 </script>
 
 <template>
@@ -13,8 +16,8 @@ defineProps<{ conversations: Paginated<Conversation> }>();
         <EmptyState
             v-if="conversations.data.length === 0"
             :icon="Inbox"
-            title="No conversations yet"
-            description="Open a thread from any member's profile or listing."
+            :title="t('messaging.no_conversations_yet')"
+            :description="t('messaging.no_conversations_hint')"
         />
 
         <template v-else>

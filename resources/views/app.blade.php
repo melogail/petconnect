@@ -54,12 +54,18 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        {{-- Share card: the brand lockup until a page supplies its own image. --}}
+        {{-- Share card: the listing's cover when the page carries one, else the brand lockup.
+             Decided here rather than in the page's <Head> because crawlers take the FIRST
+             og:image and this static tag would always beat one appended by Inertia. --}}
+        @php($shareImage = $page['props']['pet']['featured_image'] ?? null)
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:type" content="website">
-        <meta property="og:image" content="{{ asset('brand/sniffpal-og.png') }}">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:image" content="{{ $shareImage ?? asset('brand/sniffpal-og.png') }}">
+        @unless($shareImage)
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
+        @endunless
         <meta name="twitter:card" content="summary_large_image">
 
         @fonts

@@ -70,6 +70,8 @@ use Laravel\Nova\ResourceTool;
  * Actions\Profiles\DeleteUserAccount, and it is what DeleteCategory's "move or
  * permanently delete those listings first" now points at — before it existed,
  * that sentence named an operation the back office did not have.
+ *
+ * @extends \App\Nova\Resource<PetModel>
  */
 class Pet extends Resource
 {

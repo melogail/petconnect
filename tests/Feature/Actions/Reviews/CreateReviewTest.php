@@ -16,11 +16,11 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Notification;
 
 test('writes the review against the resolved target and tells the person it is about', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Notification::fake();
 
-    $review = app(CreateReview::class)->handle(
+    $review  = app(CreateReview::class)->handle(
         author: $author,
         reviewableType: Reviewable::User,
         reviewableId: $subject->getKey(),
@@ -29,12 +29,12 @@ test('writes the review against the resolved target and tells the person it is a
     );
 
     $this->assertDatabaseHas('reviews', [
-        'id' => $review->getKey(),
-        'user_id' => $author->getKey(),
-        'rate' => 4,
-        'comment' => 'Answered every question about the puppy.',
+        'id'              => $review->getKey(),
+        'user_id'         => $author->getKey(),
+        'rate'            => 4,
+        'comment'         => 'Answered every question about the puppy.',
         'reviewable_type' => Relation::getMorphAlias(User::class),
-        'reviewable_id' => $subject->getKey(),
+        'reviewable_id'   => $subject->getKey(),
     ]);
     Notification::assertSentTo($subject, ModelReviewedNotification::class);
     Notification::assertNotSentTo($author, ModelReviewedNotification::class);
@@ -84,7 +84,7 @@ test('refuses a review of the author themselves and writes nothing', function ()
 });
 
 test('refuses a second review of the same target by the same author and leaves one row', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Review::factory()->for($author)->forUser($subject)->create();
 
@@ -106,7 +106,7 @@ test('refuses a second review of the same target by the same author and leaves o
  * at once.
  */
 test('turns the unique index violation into the same refusal when the guard step is bypassed', function () {
-    $author = User::factory()->create();
+    $author  = User::factory()->create();
     $subject = User::factory()->create();
     Review::factory()->for($author)->forUser($subject)->create();
 

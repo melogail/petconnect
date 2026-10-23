@@ -17,14 +17,14 @@ class NormalizeLocation
     public function handle(PetAttributeContext $context, Closure $next): mixed
     {
         $context->merge([
-            'address' => $context->input('location.address'),
+            'address'          => $context->input('location.address'),
             'detailed_address' => $context->input('location.detailedAddress'),
-            'city' => $context->input('location.city'),
-            'state' => $context->input('location.state'),
-            'postal_code' => $context->input('location.postalCode'),
-            'country' => $context->input('location.country'),
-            'latitude' => $context->input('location.coordinates.lat'),
-            'longitude' => $context->input('location.coordinates.lng'),
+            'city'             => $context->input('location.city'),
+            'state'            => $context->input('location.state'),
+            'postal_code'      => $context->input('location.postalCode'),
+            'country'          => $context->input('location.country'),
+            'latitude'         => $context->input('location.coordinates.lat'),
+            'longitude'        => $context->input('location.coordinates.lng'),
         ]);
 
         return $next($context);

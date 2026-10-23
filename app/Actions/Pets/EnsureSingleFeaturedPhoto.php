@@ -56,7 +56,7 @@ class EnsureSingleFeaturedPhoto
             return 0;
         }
 
-        $demoted = $featured->slice(1);
+        $demoted  = $featured->slice(1);
 
         $demoted->each(function (Media $photo): void {
             $photo->forgetCustomProperty(Pet::FEATURED_PROPERTY);

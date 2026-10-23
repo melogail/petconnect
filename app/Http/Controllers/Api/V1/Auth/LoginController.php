@@ -39,16 +39,16 @@ class LoginController extends Controller
         if ($verifyTwoFactorCode->required($user, $request->code(), $request->recoveryCode())) {
             return response()->json([
                 'two_factor_required' => true,
-                'message' => __('Enter the code from your authenticator app to continue.'),
+                'message'             => __('Enter the code from your authenticator app to continue.'),
             ]);
         }
 
         $verifyTwoFactorCode->handle($user, $request->code(), $request->recoveryCode());
 
         return response()->json([
-            'token' => $issueAccessToken->handle($user, $request->deviceName()),
+            'token'      => $issueAccessToken->handle($user, $request->deviceName()),
             'token_type' => 'Bearer',
-            'user' => AccountResource::make($user->loadMissing('media')),
+            'user'       => AccountResource::make($user->loadMissing('media')),
         ]);
     }
 }

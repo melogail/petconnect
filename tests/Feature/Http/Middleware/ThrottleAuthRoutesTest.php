@@ -108,9 +108,9 @@ function submitPasswordReset(TestCase $test, string $email): TestResponse
 {
     return $test->from(route('password.reset', 'not-a-real-token'))
         ->post(route('password.update'), [
-            'token' => 'not-a-real-token',
-            'email' => $email,
-            'password' => 'a-brand-new-password',
+            'token'                 => 'not-a-real-token',
+            'email'                 => $email,
+            'password'              => 'a-brand-new-password',
             'password_confirmation' => 'a-brand-new-password',
         ]);
 }
@@ -128,9 +128,9 @@ function submitAdminPasswordReset(TestCase $test, string $email): TestResponse
 {
     return $test->from('/nova/password/reset/not-a-real-token')
         ->post('/nova/password/reset', [
-            'token' => 'not-a-real-token',
-            'email' => $email,
-            'password' => 'a-brand-new-password',
+            'token'                 => 'not-a-real-token',
+            'email'                 => $email,
+            'password'              => 'a-brand-new-password',
             'password_confirmation' => 'a-brand-new-password',
         ]);
 }
@@ -150,9 +150,9 @@ function registerFreshAccount(TestCase $test, int $attempt): TestResponse
     $test->flushSession();
 
     return $test->post(route('register.store'), [
-        'name' => 'Applicant '.$attempt,
-        'email' => "applicant{$attempt}@example.com",
-        'password' => 'password',
+        'name'                  => 'Applicant '.$attempt,
+        'email'                 => "applicant{$attempt}@example.com",
+        'password'              => 'password',
         'password_confirmation' => 'password',
     ]);
 }

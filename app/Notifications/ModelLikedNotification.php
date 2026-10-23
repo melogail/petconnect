@@ -55,31 +55,31 @@ class ModelLikedNotification extends Notification
     {
         $this->like->loadMissing(['user', 'likeable']);
 
-        $likerName = $this->like->user?->name;
-        $likeable = $this->like->likeable;
+        $likerName      = $this->like->user?->name;
+        $likeable       = $this->like->likeable;
 
-        $messageKey = match (true) {
-            $likeable instanceof Pet => 'notifications.liked_pet',
+        $messageKey     = match (true) {
+            $likeable instanceof Pet  => 'notifications.liked_pet',
             $likeable instanceof User => 'notifications.liked_profile',
-            default => 'notifications.liked_generic',
+            default                   => 'notifications.liked_generic',
         };
 
         $messageReplace = [
             'name' => (string) $likerName,
-            'pet' => $likeable instanceof Pet ? $likeable->name : '',
+            'pet'  => $likeable instanceof Pet ? $likeable->name : '',
         ];
 
         return [
-            'like_id' => $this->like->id,
-            'liker_id' => $this->like->user_id,
-            'liker_name' => $likerName,
-            'likeable_type' => $this->like->likeable_type,
-            'likeable_id' => $this->like->likeable_id,
-            'likeable_name' => $likeable instanceof Pet ? $likeable->name : null,
-            'message_key' => $messageKey,
+            'like_id'         => $this->like->id,
+            'liker_id'        => $this->like->user_id,
+            'liker_name'      => $likerName,
+            'likeable_type'   => $this->like->likeable_type,
+            'likeable_id'     => $this->like->likeable_id,
+            'likeable_name'   => $likeable instanceof Pet ? $likeable->name : null,
+            'message_key'     => $messageKey,
             'message_replace' => $messageReplace,
-            'url' => $this->likeableUrl(),
-            'type' => 'like',
+            'url'             => $this->likeableUrl(),
+            'type'            => 'like',
         ];
     }
 
@@ -91,9 +91,9 @@ class ModelLikedNotification extends Notification
         $likeable = $this->like->likeable;
 
         return match (true) {
-            $likeable instanceof Pet => $this->routeIfDefined('pets.show', $likeable),
+            $likeable instanceof Pet  => $this->routeIfDefined('pets.show', $likeable),
             $likeable instanceof User => $this->routeIfDefined('profile.show', $likeable),
-            default => null,
+            default                   => null,
         };
     }
 

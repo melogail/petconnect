@@ -95,7 +95,7 @@ test('every key in the English catalogue has an Arabic counterpart', function ()
  * keys.
  */
 test('the catalogue declares no key twice', function (string $locale) {
-    $written = translationCatalogueKeysAsWritten($locale);
+    $written    = translationCatalogueKeysAsWritten($locale);
 
     $duplicated = array_keys(array_filter(
         array_count_values($written),

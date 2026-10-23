@@ -51,7 +51,7 @@ function moveReadCursor(Conversation $conversation, User $reader, ?DateTimeInter
 function seedUnreadThreadsFor(User $reader, int $conversations): void
 {
     for ($index = 0; $index < $conversations; $index++) {
-        $peer = User::factory()->create();
+        $peer         = User::factory()->create();
 
         $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
 
@@ -68,19 +68,19 @@ function seedUnreadThreadsFor(User $reader, int $conversations): void
  * is what makes this a drift guard rather than a restatement of either.
  */
 dataset('unread edge cases', [
-    'a thread nobody has written into yet' => [
+    'a thread nobody has written into yet'                                        => [
         function (User $reader, User $peer, Conversation $conversation): void {},
         false,
     ],
 
-    'a message from the peer the reader has never opened' => [
+    'a message from the peer the reader has never opened'                         => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create();
         },
         true,
     ],
 
-    'a cursor written in the same instant as the message it acknowledges' => [
+    'a cursor written in the same instant as the message it acknowledges'         => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create();
 
@@ -89,7 +89,7 @@ dataset('unread edge cases', [
         false,
     ],
 
-    'a cursor one second older than the message' => [
+    'a cursor one second older than the message'                                  => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create();
 
@@ -98,7 +98,7 @@ dataset('unread edge cases', [
         true,
     ],
 
-    'the reader own message last, on a stale cursor' => [
+    'the reader own message last, on a stale cursor'                              => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create(['created_at' => now()->subMinute()]);
             Message::factory()->for($conversation)->from($reader)->create();
@@ -119,7 +119,7 @@ dataset('unread edge cases', [
         true,
     ],
 
-    'that deleted message restored again' => [
+    'that deleted message restored again'                                         => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create(['created_at' => now()->subMinute()]);
             $ownMessage = Message::factory()->for($conversation)->from($reader)->create();
@@ -131,7 +131,7 @@ dataset('unread edge cases', [
         false,
     ],
 
-    'every message in the thread deleted' => [
+    'every message in the thread deleted'                                         => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->count(2)->for($conversation)->from($peer)->create()
                 ->each(fn (Message $message) => $message->delete());
@@ -139,7 +139,7 @@ dataset('unread edge cases', [
         false,
     ],
 
-    'an unread thread that has since been deleted' => [
+    'an unread thread that has since been deleted'                                => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create();
 
@@ -148,7 +148,7 @@ dataset('unread edge cases', [
         false,
     ],
 
-    'two messages in the same second, the reader holding the higher id' => [
+    'two messages in the same second, the reader holding the higher id'           => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($peer)->create();
             Message::factory()->for($conversation)->from($reader)->create();
@@ -156,7 +156,7 @@ dataset('unread edge cases', [
         false,
     ],
 
-    'two messages in the same second, the peer holding the higher id' => [
+    'two messages in the same second, the peer holding the higher id'             => [
         function (User $reader, User $peer, Conversation $conversation): void {
             Message::factory()->for($conversation)->from($reader)->create();
             Message::factory()->for($conversation)->from($peer)->create();
@@ -167,22 +167,22 @@ dataset('unread edge cases', [
 
 test('counts a thread unread exactly when the model does', function (Closure $arrange, bool $unread) {
     $this->freezeTime();
-    $reader = User::factory()->create();
-    $peer = User::factory()->create();
+    $reader       = User::factory()->create();
+    $peer         = User::factory()->create();
     $conversation = Conversation::factory()->direct()->withParticipants($reader, $peer)->create();
 
     $arrange($reader, $peer, $conversation);
 
-    $counted = app(CountUnreadConversations::class)->handle($reader);
+    $counted      = app(CountUnreadConversations::class)->handle($reader);
 
     expect($counted)->toBe($unread ? 1 : 0)
         ->and($counted)->toBe(unreadCountedByTheModel($reader));
 })->with('unread edge cases');
 
 test('counts every unread thread the reader is in and none of anybody else', function () {
-    $reader = User::factory()->create();
+    $reader   = User::factory()->create();
     seedUnreadThreadsFor($reader, conversations: 2);
-    $read = Conversation::factory()->direct()->withParticipants($reader, $peer = User::factory()->create())->create();
+    $read     = Conversation::factory()->direct()->withParticipants($reader, $peer = User::factory()->create())->create();
     Message::factory()->for($read)->from($peer)->create();
     $read->markAsReadFor($reader);
 
@@ -194,20 +194,20 @@ test('counts every unread thread the reader is in and none of anybody else', fun
 });
 
 test('answers in one query however many threads the reader is in', function () {
-    $reader = User::factory()->create();
+    $reader                = User::factory()->create();
     seedUnreadThreadsFor($reader, conversations: 2);
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $atTwoThreads = app(CountUnreadConversations::class)->handle($reader);
-    $queriesAtTwoThreads = count(DB::getQueryLog());
+    $atTwoThreads          = app(CountUnreadConversations::class)->handle($reader);
+    $queriesAtTwoThreads   = count(DB::getQueryLog());
     DB::disableQueryLog();
 
     seedUnreadThreadsFor($reader, conversations: 6);
 
     DB::flushQueryLog();
     DB::enableQueryLog();
-    $atEightThreads = app(CountUnreadConversations::class)->handle($reader);
+    $atEightThreads        = app(CountUnreadConversations::class)->handle($reader);
     $queriesAtEightThreads = count(DB::getQueryLog());
     DB::disableQueryLog();
 

@@ -12,7 +12,7 @@ beforeEach(function () {
 });
 
 test('email verification screen can be rendered', function () {
-    $user = User::factory()->unverified()->create();
+    $user     = User::factory()->unverified()->create();
 
     $response = $this->actingAs($user)->get(route('verification.notice'));
 
@@ -20,7 +20,7 @@ test('email verification screen can be rendered', function () {
 });
 
 test('email can be verified', function () {
-    $user = User::factory()->unverified()->create();
+    $user            = User::factory()->unverified()->create();
 
     Event::fake();
 
@@ -30,7 +30,7 @@ test('email can be verified', function () {
         ['id' => $user->id, 'hash' => sha1($user->email)],
     );
 
-    $response = $this->actingAs($user)->get($verificationUrl);
+    $response        = $this->actingAs($user)->get($verificationUrl);
 
     Event::assertDispatched(Verified::class);
 
@@ -39,7 +39,7 @@ test('email can be verified', function () {
 });
 
 test('email is not verified with invalid hash', function () {
-    $user = User::factory()->unverified()->create();
+    $user            = User::factory()->unverified()->create();
 
     Event::fake();
 
@@ -56,7 +56,7 @@ test('email is not verified with invalid hash', function () {
 });
 
 test('email is not verified with invalid user id', function () {
-    $user = User::factory()->unverified()->create();
+    $user            = User::factory()->unverified()->create();
 
     Event::fake();
 
@@ -73,7 +73,7 @@ test('email is not verified with invalid user id', function () {
 });
 
 test('verified user is redirected to the feed from verification prompt', function () {
-    $user = User::factory()->create();
+    $user     = User::factory()->create();
 
     Event::fake();
 
@@ -84,7 +84,7 @@ test('verified user is redirected to the feed from verification prompt', functio
 });
 
 test('already verified user visiting verification link is redirected without firing event again', function () {
-    $user = User::factory()->create();
+    $user            = User::factory()->create();
 
     Event::fake();
 

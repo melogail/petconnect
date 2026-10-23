@@ -39,14 +39,14 @@ class ReportFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'user_id'         => User::factory(),
             'reportable_type' => Relation::getMorphAlias(Review::class),
-            'reportable_id' => Review::factory(),
-            'category' => fake()->randomElement(ReportCategory::cases()),
-            'reason' => fake()->randomElement(ReportReason::cases()),
-            'description' => fake()->optional(0.7)->paragraph(),
-            'status' => fake()->randomElement(ReportStatus::cases()),
-            'metadata' => fake()->optional(0.5)->passthrough(
+            'reportable_id'   => Review::factory(),
+            'category'        => fake()->randomElement(ReportCategory::cases()),
+            'reason'          => fake()->randomElement(ReportReason::cases()),
+            'description'     => fake()->optional(0.7)->paragraph(),
+            'status'          => fake()->randomElement(ReportStatus::cases()),
+            'metadata'        => fake()->optional(0.5)->passthrough(
                 fn (array $attributes): array => [
                     'ip_address' => fake()->ipv4(),
                     'user_agent' => fake()->userAgent(),
@@ -63,7 +63,7 @@ class ReportFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'reportable_type' => $reportable->getMorphClass(),
-            'reportable_id' => $reportable->getKey(),
+            'reportable_id'   => $reportable->getKey(),
         ]);
     }
 

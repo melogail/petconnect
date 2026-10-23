@@ -75,7 +75,7 @@ class BuildNotificationInbox
 
         return [
             'notifications' => $user->notifications()->paginate($perPage),
-            'unread_count' => $user->unreadNotifications()->count(),
+            'unread_count'  => $user->unreadNotifications()->count(),
         ];
     }
 }
