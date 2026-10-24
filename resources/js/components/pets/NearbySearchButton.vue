@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { MapPin, X } from '@lucide/vue';
-import { computed, ref } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { useGeolocation } from '@/composables/useGeolocation';
-import { useTranslations } from '@/composables/useTranslations';
-import { home } from '@/routes';
+import { router } from "@inertiajs/vue3";
+import { Check, ChevronDown, MapPin, X } from "@lucide/vue";
+import { computed, ref } from "vue";
+import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
+import { useGeolocation } from "@/composables/useGeolocation";
+import { useTranslations } from "@/composables/useTranslations";
+import { home } from "@/routes";
+import type { HomeFeedBounds } from "@/types/pets";
 
 /**
  * The feed's location control: "Show near me" on the recency feed, and
@@ -106,42 +114,73 @@ import { home } from '@/routes';
  * **absent**, URL `/`, **12** cards — not 17, so the reset did drop the nearby
  * page rather than letting the recency page append under it. Unchanged 4s
  * later.
+ *
+ * ## Radius choices (2026-10-23)
+ *
+ * Both halves are now one trigger opening one menu of radii. On the recency
+ * feed a choice asks for the location and lands on the nearby feed at that
+ * radius; on the nearby feed a choice rewrites only `radius` — the coordinate
+ * pair already in the query string is kept by `mergeQuery` — and a last row
+ * clears the three keys. The list is a frontend constant unioned with the
+ * configured default (so the auto-mount radius is always selectable) and cut
+ * to the request's min/max bounds, which is why the component takes the whole
+ * `filterBounds` bag. Rows are plain `DropdownMenuItem`s with a leading
+ * `Check`, not `DropdownMenuRadioItem`, for the RTL reason recorded in
+ * `shell/ShellPreferenceItems.vue`.
  */
-const { nearby, radius, defaultRadius } = defineProps<{
+const { nearby, radius, bounds } = defineProps<{
     nearby: boolean;
     radius: number | null;
-    /** `filterBounds.default_radius_km`, the radius a fresh nearby feed gets. */
-    defaultRadius: number;
+    bounds: HomeFeedBounds;
 }>();
+
+const RADIUS_CHOICES_KM = [5, 10, 25, 50, 100];
 
 const { t } = useTranslations();
 
 const { requestLocation } = useGeolocation();
 
-/** The browser prompt is up, or the visit is on its way out. */
 const locating = ref(false);
 
-/** The last press produced no position. Cleared by the next press. */
 const failed = ref(false);
 
-const clearLabel = computed(() =>
-    t('home.within_radius', { radius: radius ?? 0 }),
+const choices = computed(() =>
+    [...new Set([...RADIUS_CHOICES_KM, bounds.default_radius_km])]
+        .filter(
+            (km) => km >= bounds.min_radius_km && km <= bounds.max_radius_km,
+        )
+        .sort((a, b) => a - b),
 );
 
-/**
- * The accessible name **extends** the visible text rather than replacing it,
- * the convention `card/PetCardActions` records: "Within 20 km" stays a
- * substring, so speech input still matches the words on screen. It is needed
- * because the visible label is a statement, not an action — the `X` that says
- * "clear" is `aria-hidden`, so without this the chip announces as
- * "Within 20 km, button" and nothing conveys what pressing it does.
- */
-const clearName = computed(() =>
-    t('home.clear_nearby_search', { radius: radius ?? 0 }),
-);
-
-async function showNearMe(): Promise<void> {
+const triggerLabel = computed(() => {
     if (locating.value) {
+        return t("home.locating");
+    }
+
+    return nearby
+        ? t("home.within_radius", { radius: radius ?? 0 })
+        : t("home.show_near_me");
+});
+
+const visitOptions = {
+    only: ["pets", "nearby", "radius"],
+    reset: ["pets"],
+    preserveState: true,
+    preserveScroll: true,
+};
+
+async function select(km: number): Promise<void> {
+    if (locating.value) {
+        return;
+    }
+
+    if (nearby) {
+        router.get(
+            home.url({ mergeQuery: { radius: km, page: null } }),
+            {},
+            visitOptions,
+        );
+
         return;
     }
 
@@ -162,17 +201,12 @@ async function showNearMe(): Promise<void> {
                 mergeQuery: {
                     latitude: coordinates.latitude,
                     longitude: coordinates.longitude,
-                    radius: defaultRadius,
+                    radius: km,
                     page: null,
                 },
             }),
             {},
-            {
-                only: ['pets', 'nearby', 'radius'],
-                reset: ['pets'],
-                preserveState: true,
-                preserveScroll: true,
-            },
+            visitOptions,
         );
     } finally {
         locating.value = false;
@@ -191,8 +225,8 @@ function clear(): void {
         }),
         {},
         {
-            only: ['pets', 'nearby', 'radius'],
-            reset: ['pets'],
+            only: ["pets", "nearby", "radius"],
+            reset: ["pets"],
             preserveScroll: false,
         },
     );
@@ -202,34 +236,48 @@ function clear(): void {
 <template>
     <div class="flex flex-wrap items-center gap-2">
         <!--
-            Both halves are the guide's filter chip (§5.4): `h-10
-            rounded-[14px] px-3.5 text-[13px] font-medium`. The clear chip is
-            the lavender `secondary` wash because it states an applied filter;
-            "Show near me" is the `outline` chip beside the Filters trigger.
+            The guide's filter chip (§5.4): `h-10 rounded-[14px] px-3.5
+            text-[13px] font-medium`. Lavender `secondary` while a radius is
+            applied, `outline` beside the Filters trigger otherwise.
         -->
-        <Button
-            v-if="nearby"
-            variant="secondary"
-            class="h-10 px-3.5 text-[13px] font-medium"
-            :aria-label="clearName"
-            @click="clear"
-        >
-            <X class="size-4" aria-hidden="true" />
-            {{ clearLabel }}
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+                <Button
+                    :variant="nearby ? 'secondary' : 'outline'"
+                    class="h-10 px-3.5 text-[13px] font-medium"
+                    :disabled="locating"
+                    :aria-busy="locating"
+                >
+                    <Spinner v-if="locating" />
+                    <MapPin v-else class="size-4" aria-hidden="true" />
+                    {{ triggerLabel }}
+                    <ChevronDown class="size-4 opacity-60" aria-hidden="true" />
+                </Button>
+            </DropdownMenuTrigger>
 
-        <Button
-            v-else
-            variant="outline"
-            class="h-10 px-3.5 text-[13px] font-medium"
-            :disabled="locating"
-            :aria-busy="locating"
-            @click="showNearMe"
-        >
-            <Spinner v-if="locating" />
-            <MapPin v-else class="size-4" aria-hidden="true" />
-            {{ locating ? t('home.locating') : t('home.show_near_me') }}
-        </Button>
+            <DropdownMenuContent align="start" class="w-44">
+                <DropdownMenuItem
+                    v-for="km in choices"
+                    :key="km"
+                    :aria-current="nearby && km === radius ? 'true' : undefined"
+                    class="cursor-pointer"
+                    @select="select(km)"
+                >
+                    <Check v-if="nearby && km === radius" class="size-4" />
+                    <span v-else class="size-4" aria-hidden="true" />
+                    {{ t("home.within_radius", { radius: km }) }}
+                </DropdownMenuItem>
+
+                <template v-if="nearby">
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem class="cursor-pointer" @select="clear">
+                        <X class="size-4" />
+                        {{ t("home.clear_nearby_search") }}
+                    </DropdownMenuItem>
+                </template>
+            </DropdownMenuContent>
+        </DropdownMenu>
 
         <!--
             One status line, only after a press that produced nothing: the
@@ -240,7 +288,7 @@ function clear(): void {
             role="status"
             class="text-destructive text-sm"
         >
-            {{ t('home.location_unavailable') }}
+            {{ t("home.location_unavailable") }}
         </p>
     </div>
 </template>

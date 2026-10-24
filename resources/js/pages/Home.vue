@@ -373,7 +373,7 @@ onMounted(async () => {
             <NearbySearchButton
                 :nearby="nearby"
                 :radius="radius"
-                :default-radius="filterBounds.default_radius_km"
+                :bounds="filterBounds"
             />
         </div>
 

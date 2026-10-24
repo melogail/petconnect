@@ -107,7 +107,7 @@
     "home.nearby_pets": "حيوانات أليفة قريبة",
     "home.search_results": "نتائج البحث عن \":term\"",
     "home.within_radius": "ضمن :radius كم",
-    "home.clear_nearby_search": "ضمن :radius كم، مسح البحث القريب",
+    "home.clear_nearby_search": "مسح البحث القريب",
     "home.show_near_me": "أظهر القريب مني",
     "home.locating": "جارٍ تحديد موقعك…",
     "home.location_unavailable": "تعذّر قراءة موقعك. تأكد من السماح لهذا الموقع باستخدامه.",

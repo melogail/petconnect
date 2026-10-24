@@ -107,7 +107,7 @@
     "home.nearby_pets": "Nearby Pets",
     "home.search_results": "Results for \":term\"",
     "home.within_radius": "Within :radius km",
-    "home.clear_nearby_search": "Within :radius km, clear nearby search",
+    "home.clear_nearby_search": "Clear nearby search",
     "home.show_near_me": "Show near me",
     "home.locating": "Finding your location…",
     "home.location_unavailable": "We could not read your location. Check that this site is allowed to use it.",
