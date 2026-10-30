@@ -2,14 +2,16 @@
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import type { LucideIcon } from '@lucide/vue';
-import { Palette, ShieldCheck, User } from '@lucide/vue';
+import { LifeBuoy, Lock, Palette, ShieldCheck, User } from '@lucide/vue';
 import { computed } from 'vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { useTranslations } from '@/composables/useTranslations';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editPrivacy } from '@/routes/privacy';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { index as ticketsIndex } from '@/routes/tickets';
 
 /**
  * The settings shell: the legacy profile edit screen, with routes where legacy
@@ -81,10 +83,22 @@ const sections = computed<SettingsSection[]>(() => [
         icon: ShieldCheck,
     },
     {
+        title: t('settings.privacy'),
+        description: t('settings.privacy_description'),
+        href: editPrivacy(),
+        icon: Lock,
+    },
+    {
         title: t('settings.appearance'),
         description: t('settings.appearance_description'),
         href: editAppearance(),
         icon: Palette,
+    },
+    {
+        title: t('settings.tickets'),
+        description: t('settings.tickets_description'),
+        href: ticketsIndex(),
+        icon: LifeBuoy,
     },
 ]);
 

@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
-import { countLabel } from '@/components/pets/card/labels';
-import PetCardCommentButton from '@/components/pets/card/PetCardCommentButton.vue';
-import PetCardShareMenu from '@/components/pets/card/PetCardShareMenu.vue';
-import PetLikeButton from '@/components/pets/PetLikeButton.vue';
-import { Button } from '@/components/ui/button';
-import { useLocale } from '@/composables/useLocale';
-import { useTranslations } from '@/composables/useTranslations';
-import { petTitle } from '@/lib/petTitle';
-import { show as showPet } from '@/routes/pets';
+import { Link } from "@inertiajs/vue3";
+import { computed } from "vue";
+import StartConversationButton from "@/components/messaging/StartConversationButton.vue";
+import { countLabel } from "@/components/pets/card/labels";
+import PetCardCommentButton from "@/components/pets/card/PetCardCommentButton.vue";
+import PetCardShareMenu from "@/components/pets/card/PetCardShareMenu.vue";
+import PetLikeButton from "@/components/pets/PetLikeButton.vue";
+import WhatsAppButton from "@/components/pets/WhatsAppButton.vue";
+import { Button } from "@/components/ui/button";
+import { useLocale } from "@/composables/useLocale";
+import { useTranslations } from "@/composables/useTranslations";
+import { petTitle } from "@/lib/petTitle";
+import { show as showPet } from "@/routes/pets";
 import type {
     PetCard,
     ReportCategory,
     ReportReason,
     SelectOption,
-} from '@/types';
+} from "@/types";
 
 /**
  * The card's action rows, laid out as legacy's (`components/web/PetCard.vue`,
@@ -125,7 +126,7 @@ const owner = computed(() =>
  * state, so the label stays the same in both.
  */
 const likeLabel = computed(
-    () => `Like ${name.value}, ${countLabel(pet.likes_count, 'like')}`,
+    () => `Like ${name.value}, ${countLabel(pet.likes_count, "like")}`,
 );
 
 /**
@@ -142,7 +143,7 @@ const likeLabel = computed(
  */
 const messageLabel = computed(() =>
     owner.value
-        ? t('messaging.message_name_about', {
+        ? t("messaging.message_name_about", {
               name: owner.value.name,
               pet: name.value,
           })
@@ -150,7 +151,7 @@ const messageLabel = computed(() =>
 );
 
 const viewDetailsLabel = computed(
-    () => `${t('pets.view_details')}: ${name.value}`,
+    () => `${t("pets.view_details")}: ${name.value}`,
 );
 </script>
 
@@ -188,13 +189,19 @@ const viewDetailsLabel = computed(
                 appearance="icon"
             />
 
+            <WhatsAppButton
+                v-if="owner?.whatsapp"
+                :url="owner.whatsapp"
+                :owner-name="owner.name"
+            />
+
             <Button
                 as-child
                 variant="secondary"
                 class="h-11 flex-1 rounded-[14px]"
             >
                 <Link :href="showPet(pet.slug)" :aria-label="viewDetailsLabel">
-                    {{ t('pets.view_details') }}
+                    {{ t("pets.view_details") }}
                 </Link>
             </Button>
         </div>

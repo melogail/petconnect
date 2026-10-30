@@ -43,6 +43,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $phone
+ * @property bool $show_phone
+ * @property bool $whatsapp_enabled
  * @property string|null $country
  * @property string|null $state
  * @property string|null $city
@@ -70,6 +72,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'email',
     'password',
     'phone',
+    'show_phone',
+    'whatsapp_enabled',
     'country',
     'state',
     'city',
@@ -100,8 +104,10 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'is_active' => true,
-        'locale'    => 'en',
+        'is_active'        => true,
+        'locale'           => 'en',
+        'show_phone'       => false,
+        'whatsapp_enabled' => false,
     ];
 
     /**
@@ -115,6 +121,8 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
             'email_verified_at'       => 'datetime',
             'last_seen_at'            => 'datetime',
             'is_active'               => 'boolean',
+            'show_phone'              => 'boolean',
+            'whatsapp_enabled'        => 'boolean',
             'password'                => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
@@ -293,6 +301,17 @@ class User extends Authenticatable implements HasLocalePreference, HasMedia, Lik
      * `admins` guard, and self-service deactivation would be its own flow with
      * its own confirmation.
      */
+    /**
+     * The `wa.me` link for the member's phone, only while they opted in to
+     * direct WhatsApp contact on their listings.
+     */
+    public function whatsappUrl(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $this->phone);
+
+        return $this->whatsapp_enabled && $digits !== '' ? 'https://wa.me/'.$digits : null;
+    }
+
     public function isActive(): bool
     {
         return $this->is_active;

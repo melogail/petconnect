@@ -67,14 +67,14 @@ use Symfony\Component\HttpFoundation\Response;
  * selects its named-limiter path (it branches on `func_num_args() === 3`), so
  * these routes behave exactly like a route declared `->middleware('throttle:x')`
  * in routes/web.php, and a limiter defined here is defined the same way as
- * every other one in AppServiceProvider::configureRateLimiters().
+ * every other one in RateLimitServiceProvider::configureRateLimiters().
  *
  * ## It runs ahead of the route's own `guest` — documented, not fixed
  *
  * Because this middleware is attached to the *group* the packages apply, it runs
  * before `RedirectIfAuthenticated`. So an already-authenticated caller POSTing
  * to `register`, `forgot-password` or `reset-password` has their hit recorded
- * against `AppServiceProvider::unauthenticatedCallerKey()` — their IP — rather
+ * against `RateLimitServiceProvider::unauthenticatedCallerKey()` — their IP — rather
  * than the user id `rateLimitKey()` would have produced.
  *
  * That asymmetry is real and it is **deliberately left alone**. It has no

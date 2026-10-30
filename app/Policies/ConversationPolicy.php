@@ -43,7 +43,7 @@ use App\Models\User;
  *    App\Models\User::acceptsMessagesFrom(), which is where a block list lands
  *    when it is built.
  * 3. **How many, how fast?** Neither — the `conversations` rate limiter, 5 a
- *    minute and 30 a day, defined in AppServiceProvider::configureRateLimiters().
+ *    minute and 30 a day, defined in RateLimitServiceProvider::configureRateLimiters().
  *    A limit's only outcome is a 429 with Retry-After, which is transport.
  *
  * `update`, `delete`, `restore` and `forceDelete` are not ported. The legacy

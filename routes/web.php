@@ -49,7 +49,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 | `{provider}` binds to App\Enums\SocialProvider: an unknown name is a 404
 | before the controller runs. Both routes are `guest`, like Fortify's login
 | and register, and both spend `social-logins`
-| (AppServiceProvider::configureRateLimiters) — IP-keyed through
+| (RateLimitServiceProvider::configureRateLimiters) — IP-keyed through
 | unauthenticatedCallerKey(), because the callback can create an account and
 | the redirect is where a script would start.
 |
@@ -104,11 +104,12 @@ Route::inertia('help', 'Help')->name('help');
 Route::inertia('support', 'Support')->name('support');
 
 /*
-| The support page's contact form posts here. Public, like the page: a guest
-| sends their name and address with the message, a member's come off the
-| account (StoreContactRequest decides which form it is validating from
-| `$request->user()`). A public write is keyed by IP — `contact-messages`
-| in AppServiceProvider::configureRateLimiters() — never by rateLimitKey().
+| The guest channel: the support page's contact form posts here. Public,
+| like the page — a visitor without an account sends their name and address
+| with a one-off message that the team reads in Nova. A public write is keyed
+| by IP — `contact-messages` in RateLimitServiceProvider::configureRateLimiters()
+| — never by rateLimitKey(). A member is offered a support ticket instead,
+| which is routes/settings.php.
 */
 Route::post('contact', [ContactController::class, 'store'])
     ->middleware('throttle:contact-messages')
@@ -351,7 +352,7 @@ Route::get('reviews/{reviewable_type}/{reviewable_id}', [ReviewController::class
 |
 | `pets.destroy` and `pets.status.toggle` carry `content-edits`, the shared
 | 30-a-minute ceiling described with the group in
-| AppServiceProvider::configureRateLimiters(). Neither is expensive and
+| RateLimitServiceProvider::configureRateLimiters(). Neither is expensive and
 | neither notifies anybody — the ceiling is there so that the next route added
 | beside them inherits one.
 |
@@ -401,7 +402,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | rather than a comment nobody can read.
 |
 | `comments.store` and `comments.like` are throttled by named limiters
-| (AppServiceProvider::configureRateLimiters). Both writes send the owner or
+| (RateLimitServiceProvider::configureRateLimiters). Both writes send the owner or
 | the author a database notification, so an unthrottled loop is a
 | notification flood; the legacy routes were throttled by nothing.
 |
@@ -463,7 +464,7 @@ Route::middleware(['auth', 'verified'])
 | and the legacy shape put every method at a URI that repeated it.
 |
 | `reviews.store` is throttled by a named limiter
-| (AppServiceProvider::configureRateLimiters). A review is public content
+| (RateLimitServiceProvider::configureRateLimiters). A review is public content
 | that notifies the person it is about, so an unthrottled loop is a
 | notification flood. The legacy review routes had no throttle of any kind.
 |
@@ -585,7 +586,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 | while the page it belongs to 404'd. Same fix, same reason, as
 | Comment::resolveRouteBinding().
 |
-| Two named limiters (AppServiceProvider::configureRateLimiters) guard the
+| Two named limiters (RateLimitServiceProvider::configureRateLimiters) guard the
 | writes that reach another person. `conversations` is the tightest in the
 | app — 5 a minute and 30 a day — because opening a thread is the only write
 | that puts something in the inbox of somebody who never asked for it, which
@@ -730,3 +731,4 @@ Route::middleware(['auth', 'verified'])
     });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/docs.php';

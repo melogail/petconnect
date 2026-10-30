@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Message;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -28,8 +30,10 @@ use Illuminate\Support\Str;
  * by the framework, so a queue worker and Reverb must be running for an open
  * tab to hear it; `NotificationBell.vue` listens.
  */
-class NewMessageNotification extends Notification
+class NewMessageNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
     /**
      * How much of the message travels in the payload.
      *

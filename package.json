@@ -8,7 +8,9 @@
         "dev": "vp dev",
         "check": "vp check",
         "check:fix": "vp check --fix",
-        "types:check": "vue-tsc --noEmit"
+        "types:check": "vue-tsc --noEmit",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs"
     },
     "dependencies": {
         "@googlemaps/js-api-loader": "^2.1.1",
@@ -42,6 +44,7 @@
         "typescript": "^5.2.2",
         "vite": "^8.0.0",
         "vite-plus": "0.3.0",
+        "vitepress": "^1.6.4",
         "vue-tsc": "^2.2.4"
     },
     "optionalDependencies": {

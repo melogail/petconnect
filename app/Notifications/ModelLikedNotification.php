@@ -5,6 +5,8 @@ namespace App\Notifications;
 use App\Models\Like;
 use App\Models\Pet;
 use App\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
 
@@ -13,8 +15,13 @@ use Illuminate\Support\Facades\Route;
  * their profile — was liked. Stored, and broadcast so an open tab hears it;
  * `NotificationBell.vue` listens.
  */
-class ModelLikedNotification extends Notification
+class ModelLikedNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
+    // shortcut: a like undone before the worker runs fails the job on the missing
+    // Like model instead of being dropped; revisit if failed_jobs fills with these.
+
     public function __construct(
         public Like $like,
     ) {}

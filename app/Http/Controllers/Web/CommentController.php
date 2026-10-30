@@ -60,7 +60,7 @@ use Inertia\Inertia;
  * ## Throttling is on the routes, not in the pipeline
  *
  * `comments` and `comment-likes` are named limiters defined in
- * AppServiceProvider::configureRateLimiters(), following the `pet-likes`
+ * RateLimitServiceProvider::configureRateLimiters(), following the `pet-likes`
  * precedent. Both writes send a database notification, so an unthrottled tap
  * loop is a notification flood; the legacy app throttled nothing anywhere. They
  * are middleware rather than a pipeline step on purpose: a rate limit's only

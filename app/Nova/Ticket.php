@@ -2,51 +2,60 @@
 
 namespace App\Nova;
 
-use App\Concerns\ContactValidationRules;
-use App\Enums\TicketType;
-use App\Models\Contact as ContactModel;
-use App\Nova\Policies\ContactPolicy;
+use App\Concerns\TicketValidationRules;
+use App\Enums\TicketCategory;
+use App\Enums\TicketStatus;
+use App\Models\Ticket as TicketModel;
+use App\Nova\Actions\ChangeTicketStatus;
+use App\Nova\Actions\ReplyToTicket;
+use App\Nova\Policies\TicketPolicy;
+use Laravel\Nova\Actions\Action;
+use Laravel\Nova\Fields\Badge;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\Field;
+use Laravel\Nova\Fields\HasMany;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Select;
 use Laravel\Nova\Fields\Text;
-use Laravel\Nova\Fields\Textarea;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 /**
- * The support inbox: messages sent through the support page's contact form.
+ * The support desk: every ticket, with its thread underneath.
  *
- * Every field is read only. A message is what somebody wrote, so there is no
- * create form and no update form (ContactPolicy); the admin reads it, replies
- * from their own mail client to the address on the row, and deletes it when it
- * is dealt with. Unlike a report, a contact message carries no decision and
- * nothing hangs off it, so Nova's ordinary delete is the right tool here and
- * no DestructiveAction stands in for it.
+ * Every field is read only. A ticket is what somebody wrote, so there is no
+ * create form and no update form (TicketPolicy); the team works a ticket with
+ * two actions — Actions\ReplyToTicket, which appends to the thread and marks
+ * it Answered, and Actions\ChangeTicketStatus, for closing or reopening
+ * without writing. Both notify the member. Tickets are members-only; a
+ * visitor's one-off message is the ContactMessage resource beside this one.
  *
- * `user` is the account that sent it, when there was one; a guest's row has
- * none and shows the name and address they typed instead.
+ * The queue is the Open badge in the menu (NovaServiceProvider::menu) and the
+ * Status filter here: Open is "waiting on us", Answered is "waiting on them".
  *
- * @extends \App\Nova\Resource<ContactModel>
+ * `user` is the account that opened it; a row whose account has since been
+ * deleted keeps the name and address copied at the time, and the team's
+ * replies go to that address.
+ *
+ * @extends \App\Nova\Resource<TicketModel>
  */
-class Contact extends Resource
+class Ticket extends Resource
 {
-    use ContactValidationRules;
+    use TicketValidationRules;
 
     /**
      * The model the resource corresponds to.
      *
-     * @var class-string<ContactModel>
+     * @var class-string<TicketModel>
      */
-    public static $model  = ContactModel::class;
+    public static $model  = TicketModel::class;
 
     /**
      * The Nova-only policy the resource corresponds to.
      *
-     * @var class-string<ContactPolicy>
+     * @var class-string<TicketPolicy>
      */
-    public static $policy = ContactPolicy::class;
+    public static $policy = TicketPolicy::class;
 
     /**
      * The single value that should be used to represent the resource when being displayed.
@@ -68,7 +77,7 @@ class Contact extends Resource
      * @var array<int, string>
      */
     public static $search = [
-        'id', 'name', 'email', 'subject', 'message',
+        'id', 'name', 'email', 'subject',
     ];
 
     /**
@@ -93,18 +102,18 @@ class Contact extends Resource
                 ->readonly(),
 
             Text::make('Name')
-                ->rules($this->contactNameRules())
+                ->rules($this->senderNameRules())
                 ->readonly()
                 ->sortable(),
 
             Text::make('Email')
-                ->rules($this->contactEmailRules())
+                ->rules($this->senderEmailRules())
                 ->readonly()
                 ->copyable(),
 
-            Select::make('Ticket type', 'ticket_type')
-                ->options(self::ticketTypeOptions())
-                ->rules($this->ticketTypeRules())
+            Select::make('Category')
+                ->options(self::enumOptions(TicketCategory::class))
+                ->rules($this->categoryRules())
                 ->displayUsingLabels()
                 ->readonly()
                 ->sortable()
@@ -115,25 +124,55 @@ class Contact extends Resource
                 ->readonly()
                 ->sortable(),
 
-            Textarea::make('Message')
-                ->rules($this->contactMessageRules())
-                ->readonly()
-                ->alwaysShow(),
+            Badge::make('Status')
+                ->map([
+                    TicketStatus::Open->value     => 'warning',
+                    TicketStatus::Answered->value => 'success',
+                    TicketStatus::Closed->value   => 'info',
+                ])
+                ->labels(self::enumOptions(TicketStatus::class))
+                ->sortable()
+                ->filterable(),
 
-            DateTime::make('Sent', 'created_at')
+            DateTime::make('Opened', 'created_at')
                 ->readonly()
                 ->sortable()
                 ->exceptOnForms(),
+
+            DateTime::make('Last activity', 'last_activity_at')
+                ->readonly()
+                ->sortable()
+                ->exceptOnForms(),
+
+            DateTime::make('Closed', 'closed_at')
+                ->readonly()
+                ->onlyOnDetail(),
+
+            HasMany::make('Messages', 'messages', TicketMessage::class),
         ];
     }
 
     /**
-     * The Select's options, keyed by backing value.
+     * Get the actions available for the resource.
      *
+     * @return array<int, Action>
+     */
+    public function actions(NovaRequest $request): array
+    {
+        return [
+            ReplyToTicket::make(),
+            ChangeTicketStatus::make(),
+        ];
+    }
+
+    /**
+     * An enum's options keyed by backing value, as Select and Badge want them.
+     *
+     * @param  class-string<TicketCategory|TicketStatus>  $enum
      * @return array<string, string>
      */
-    private static function ticketTypeOptions(): array
+    private static function enumOptions(string $enum): array
     {
-        return array_column(TicketType::options(), 'label', 'value');
+        return array_column($enum::options(), 'label', 'value');
     }
 }

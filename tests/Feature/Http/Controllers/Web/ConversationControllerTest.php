@@ -59,7 +59,7 @@ function seedMenuThreadsFor(User $reader, int $threads): void
  * as agreement — but "did this request change it" is.
  *
  * Each call takes a fresh initiator on purpose. `conversations` is throttled per
- * user (AppServiceProvider::configureRateLimiters), so reusing one caller would
+ * user (RateLimitServiceProvider::configureRateLimiters), so reusing one caller would
  * make `x-ratelimit-remaining` count down between the two requests and force a
  * normalisation of a header that has nothing to do with the oracle. A separate
  * initiator leaves both requests first in their own bucket and the header

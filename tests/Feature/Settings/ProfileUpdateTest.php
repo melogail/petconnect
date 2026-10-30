@@ -379,3 +379,37 @@ test('deleting the account invalidates the session', function () {
 
     expect(session('_token'))->not->toBe('token-from-before');
 });
+
+test('privacy flags can be toggled from the profile form', function () {
+    $user = User::factory()->create();
+
+    expect($user->show_phone)->toBeFalse()
+        ->and($user->whatsapp_enabled)->toBeFalse();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name'             => $user->name,
+            'email'            => $user->email,
+            'show_phone'       => true,
+            'whatsapp_enabled' => true,
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $user->refresh();
+
+    expect($user->show_phone)->toBeTrue()
+        ->and($user->whatsapp_enabled)->toBeTrue();
+});
+
+test('privacy flags reject a non-boolean value', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'show_phone' => 'yes please',
+        ])
+        ->assertSessionHasErrors('show_phone');
+});

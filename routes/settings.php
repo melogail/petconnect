@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Settings\PrivacyController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\TicketController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -11,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | `profile.update` is throttled by `profile-updates`
-| (AppServiceProvider::configureRateLimiters). It is one of the writes in the
+| (RateLimitServiceProvider::configureRateLimiters). It is one of the writes in the
 | application that cost image-conversion CPU rather than a row: an avatar
 | upload is stored and put through two conversions, and it carried no ceiling
 | at all — measured, one account uploaded and converted 25 avatars in a single
@@ -35,6 +37,36 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])
         ->middleware('throttle:profile-updates')
         ->name('profile.update');
+
+    Route::get('settings/privacy', [PrivacyController::class, 'edit'])->name('privacy.edit');
+
+    /*
+    | The member's support desk — members only; a guest's message is
+    | `contact.store` in routes/web.php. Opening a ticket is throttled by
+    | `ticket-messages` (RateLimitServiceProvider::configureRateLimiters): it
+    | creates two rows and is the one write here not bounded to an existing
+    | owned row. The follow-up and close on a ticket the caller owns
+    | (TicketPolicy) sit on `content-edits` like every other owned-row write.
+    */
+    Route::get('settings/tickets', [TicketController::class, 'index'])->name('tickets.index');
+
+    Route::post('settings/tickets', [TicketController::class, 'store'])
+        ->middleware('throttle:ticket-messages')
+        ->name('tickets.store');
+
+    Route::get('settings/tickets/{ticket}', [TicketController::class, 'show'])
+        ->whereNumber('ticket')
+        ->name('tickets.show');
+
+    Route::post('settings/tickets/{ticket}/reply', [TicketController::class, 'reply'])
+        ->whereNumber('ticket')
+        ->middleware('throttle:content-edits')
+        ->name('tickets.reply');
+
+    Route::post('settings/tickets/{ticket}/close', [TicketController::class, 'close'])
+        ->whereNumber('ticket')
+        ->middleware('throttle:content-edits')
+        ->name('tickets.close');
 });
 
 /*
@@ -44,7 +76,7 @@ Route::middleware(['auth'])->group(function () {
 |
 | `profile.destroy` was the last mutating route in the application with no
 | ceiling of any kind. It is throttled by `account-deletions`
-| (AppServiceProvider::configureRateLimiters) — 10 a minute, 20 an hour, keyed
+| (RateLimitServiceProvider::configureRateLimiters) — 10 a minute, 20 an hour, keyed
 | on the caller like every other authenticated limiter here.
 |
 | It is the heaviest write in the app: Actions\Profiles\DeleteUserAccount runs

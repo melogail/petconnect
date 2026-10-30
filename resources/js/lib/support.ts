@@ -13,9 +13,10 @@
  * grep away and there is exactly one of it the day a footer, an error page or a
  * "report a problem" link wants the same address.
  *
- * The contact form itself (`components/support/ContactDialog.vue`) does not
- * need this: it posts to `contact.store` and the address only matters to the
- * back office. This is the `mailto:` fallback shown under it.
+ * Neither dialog on that page (`components/support/NewTicketDialog.vue` for a
+ * member, `ContactDialog.vue` for a guest) needs this: they post to
+ * `tickets.store` / `contact.store` and the address only matters to the back
+ * office. This is the `mailto:` fallback shown under them.
  *
  * When it does become configurable — a per-environment address, an office-hours
  * line — it becomes a shared prop on `HandleInertiaRequests` and this file

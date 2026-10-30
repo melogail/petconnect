@@ -23,7 +23,7 @@ use Inertia\Inertia;
  * same as every other write in this application.
  *
  * `reports` is a named limiter defined in
- * AppServiceProvider::configureRateLimiters(). The legacy report route had no
+ * RateLimitServiceProvider::configureRateLimiters(). The legacy report route had no
  * throttle at all, which matters more here than on any other write in the app:
  * an unthrottled report endpoint is a way to bury a moderation queue under
  * noise, and every accepted report now also writes a notification row per

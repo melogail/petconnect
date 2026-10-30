@@ -101,18 +101,20 @@ trait ProfileValidationRules
     {
         return [
             ...$this->profileRules($userId),
-            'username' => $this->usernameRules($userId),
-            'phone'    => $this->phoneRules(),
-            'bio'      => $this->bioRules(),
-            'address'  => $this->addressLineRules(),
-            'city'     => $this->addressLineRules(),
-            'state'    => $this->addressLineRules(),
-            'country'  => $this->addressLineRules(),
-            'lat'      => $this->latitudeRules(),
-            'lng'      => $this->longitudeRules(),
-            'timezone' => $this->timezoneRules(),
-            'locale'   => $this->localeRules(),
-            'image'    => $this->avatarRules(),
+            'username'         => $this->usernameRules($userId),
+            'phone'            => $this->phoneRules(),
+            'show_phone'       => ['sometimes', 'boolean'],
+            'whatsapp_enabled' => ['sometimes', 'boolean'],
+            'bio'              => $this->bioRules(),
+            'address'          => $this->addressLineRules(),
+            'city'             => $this->addressLineRules(),
+            'state'            => $this->addressLineRules(),
+            'country'          => $this->addressLineRules(),
+            'lat'              => $this->latitudeRules(),
+            'lng'              => $this->longitudeRules(),
+            'timezone'         => $this->timezoneRules(),
+            'locale'           => $this->localeRules(),
+            'image'            => $this->avatarRules(),
         ];
     }
 

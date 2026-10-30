@@ -242,7 +242,7 @@ return [
         'initial_message'            => 'الرسالة الأولى',
         'subject'                    => 'الموضوع',
         'message'                    => 'الرسالة',
-        'ticket_type'                => 'نوع الطلب',
+        'body'                       => 'الرد',
         'category'                   => 'الفئة',
         'reason'                     => 'السبب',
     ],

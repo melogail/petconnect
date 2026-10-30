@@ -4,15 +4,18 @@ namespace App\Providers;
 
 use App\Models\Admin;
 use App\Models\Report;
+use App\Models\Ticket;
 use App\Nova\Admin as AdminResource;
 use App\Nova\Breed;
 use App\Nova\Category;
 use App\Nova\Comment;
+use App\Nova\ContactMessage;
 use App\Nova\Dashboards\Main;
 use App\Nova\Dashboards\Moderation;
 use App\Nova\Pet;
 use App\Nova\Report as ReportResource;
 use App\Nova\Review;
+use App\Nova\Ticket as TicketResource;
 use App\Nova\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -74,6 +77,7 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
     public function menu(Request $request): array
     {
         $pendingReports = Report::query()->pending()->count();
+        $openTickets    = Ticket::query()->open()->count();
 
         return [
             MenuSection::dashboard(Main::class)->icon('chart-bar'),
@@ -95,6 +99,18 @@ class NovaServiceProvider extends NovaApplicationServiceProvider
                 MenuItem::resource(Category::class),
                 MenuItem::resource(Breed::class),
             ])->icon('rectangle-group')->collapsable(),
+
+            // The support desk, badged with what is waiting on the team the
+            // same way Reports is badged with what is pending.
+            MenuSection::make('Support', [
+                MenuItem::resource(TicketResource::class)
+                    ->withBadgeIf(
+                        fn (): string => (string) $openTickets,
+                        'warning',
+                        fn (): bool => $openTickets > 0,
+                    ),
+                MenuItem::resource(ContactMessage::class),
+            ])->icon('lifebuoy')->collapsable(),
 
             MenuSection::make('Accounts', [
                 MenuItem::resource(User::class),

@@ -56,7 +56,7 @@ use Inertia\Inertia;
  * ## Throttling is on the route, not in the pipeline
  *
  * `reviews` is a named limiter defined in
- * AppServiceProvider::configureRateLimiters(). A review is public content that
+ * RateLimitServiceProvider::configureRateLimiters(). A review is public content that
  * notifies the person it is about, so an unthrottled loop is a notification
  * flood; the legacy routes were throttled by nothing. It is middleware rather
  * than a pipeline step on purpose: a rate limit's only meaningful outcome is a

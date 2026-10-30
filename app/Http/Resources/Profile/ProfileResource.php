@@ -109,6 +109,8 @@ class ProfileResource extends JsonResource
             'username'         => $this->username,
             'bio'              => $this->bio,
             'location'         => $this->location,
+            'phone'            => $this->when($this->show_phone, fn (): ?string => $this->phone),
+            'whatsapp'         => $viewer ? $this->whatsappUrl() : null,
             'avatar'           => $this->getFirstMediaUrl('users', 'display') ?: null,
 
             'is_verified'      => $this->isVerified(),

@@ -35,6 +35,10 @@ export type ProfileSummary = {
     bio: string | null;
     /** The coarse "City, State, Country" accessor. */
     location: string;
+    /** Only present when the member chose to show it (settings → Privacy). */
+    phone?: string | null;
+    /** A `wa.me` link for a signed-in viewer, while the member enabled WhatsApp contact. */
+    whatsapp: string | null;
     avatar: string | null;
     is_verified: boolean;
     is_self: boolean;
@@ -70,6 +74,8 @@ export type ProfileFormData = {
     username: string | null;
     email: string;
     phone: string | null;
+    show_phone: boolean;
+    whatsapp_enabled: boolean;
     bio: string | null;
     address: string | null;
     city: string | null;
@@ -87,6 +93,6 @@ export type ProfileFormData = {
 /** The `locale` shared prop, present on every page. */
 export type LocaleState = {
     current: string;
-    direction: 'ltr' | 'rtl';
+    direction: "ltr" | "rtl";
     supported: string[];
 };

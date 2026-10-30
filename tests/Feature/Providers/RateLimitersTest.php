@@ -10,7 +10,7 @@ use App\Models\User;
 /**
  * Four of the named rate limiters this application's own routes attach:
  * `content-edits`, `inbox-actions`, `locale-switches` and `pet-listing-edits`.
- * They are declared in AppServiceProvider::configureRateLimiters() and attached
+ * They are declared in RateLimitServiceProvider::configureRateLimiters() and attached
  * with `throttle:` in routes/web.php, which is why the tests live under
  * Providers rather than beside one controller — no single controller owns any
  * of them.
@@ -120,7 +120,7 @@ describe('content-edits', function () {
      * through.
      *
      * The second caller at the end is the other half of the key. `content-edits`
-     * is keyed by AppServiceProvider::rateLimitKey(), so a bucket exhausted by
+     * is keyed by RateLimitServiceProvider::rateLimitKey(), so a bucket exhausted by
      * one account must not touch anybody else's — a limiter keyed on a constant
      * would satisfy every assertion above it.
      */
@@ -172,7 +172,7 @@ describe('inbox-actions', function () {
      *
      * The second reader at the end is the key half, the same shape the
      * `content-edits` test uses: `inbox-actions` is keyed by
-     * AppServiceProvider::rateLimitKey(), and a limiter keyed on a constant
+     * RateLimitServiceProvider::rateLimitKey(), and a limiter keyed on a constant
      * would satisfy every assertion above it while one busy client locked every
      * other account out of its own bell.
      */

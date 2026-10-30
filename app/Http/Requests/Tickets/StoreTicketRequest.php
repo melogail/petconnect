@@ -1,59 +1,37 @@
 <?php
 
-namespace App\Http\Requests\Contact;
+namespace App\Http\Requests\Tickets;
 
-use App\Concerns\ContactValidationRules;
-use App\Enums\TicketType;
+use App\Concerns\TicketValidationRules;
+use App\Enums\TicketCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Validates a message sent through the support page's contact form.
+ * Validates a member's new support ticket.
  *
- * The route is public, so the sender may be a guest or a member, and the two
- * send different forms: a guest fills in `name` and `email`, a member does
- * not see those fields. The rules follow the caller — see
- * ContactValidationRules for why a member's `name`/`email` are excluded rather
- * than prohibited.
+ * No name or address: the route is behind `auth` and the account supplies
+ * both (Actions\Tickets\OpenTicket). A guest's message is a different form
+ * and a different model — Contact\StoreContactRequest.
  *
  * No `authorize()`: there is no policy-governed model here, and the Form
  * Request validates only (.ai/rules/controllers.md).
  */
-class StoreContactRequest extends FormRequest
+class StoreTicketRequest extends FormRequest
 {
-    use ContactValidationRules;
+    use TicketValidationRules;
 
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return $this->contactRules(identified: $this->user() !== null);
+        return $this->ticketRules();
     }
 
-    /**
-     * The guest's name, or null for a member (the Action reads the account).
-     */
-    public function senderName(): ?string
+    public function category(): TicketCategory
     {
-        $name = $this->validated('name');
-
-        return $name === null ? null : (string) $name;
-    }
-
-    /**
-     * The guest's reply address, or null for a member.
-     */
-    public function senderEmail(): ?string
-    {
-        $email = $this->validated('email');
-
-        return $email === null ? null : (string) $email;
-    }
-
-    public function ticketType(): TicketType
-    {
-        return TicketType::from((string) $this->validated('ticket_type'));
+        return TicketCategory::from((string) $this->validated('category'));
     }
 
     public function subject(): string

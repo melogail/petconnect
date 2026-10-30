@@ -108,7 +108,7 @@ use Inertia\Response;
  * ## Throttling is on the routes, not in the pipeline
  *
  * `conversations` is a named limiter defined in
- * AppServiceProvider::configureRateLimiters(), attached to `store` only. It is
+ * RateLimitServiceProvider::configureRateLimiters(), attached to `store` only. It is
  * middleware rather than a pipeline step on purpose: a rate limit's only
  * meaningful outcome is a 429 with Retry-After, which is transport, and
  * .ai/rules/pipelines.md keeps steps HTTP-free. The legacy app throttled

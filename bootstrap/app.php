@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Middleware\DisallowRobots;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\ForgetForeignIntendedUrl;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UseSanctumGuard;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +31,13 @@ return Application::configure(basePath: dirname(__DIR__))
          * sidebar shell was removed on 2026-09-06 (resources/js/app.ts).
          */
         $middleware->encryptCookies(except: ['appearance', 'locale']);
+
+        /*
+         * The priority sort (see the long comment below) would otherwise pull
+         * the docs host's admin `Authenticate` ahead of `DisallowRobots`, and
+         * the login redirect a guest gets would leave without X-Robots-Tag.
+         */
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, DisallowRobots::class);
 
         /*
          * Order matters here, and the order these are written in is not the
@@ -80,6 +90,7 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->web(append: [
             EnsureAccountIsActive::class,
+            ForgetForeignIntendedUrl::class,
             SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,

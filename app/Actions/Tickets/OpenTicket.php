@@ -1,41 +1,48 @@
 <?php
 
-namespace App\Actions\Contact;
+namespace App\Actions\Tickets;
 
-use App\Enums\TicketType;
-use App\Models\Contact;
+use App\Enums\TicketCategory;
+use App\Models\Ticket;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 /**
- * Record a message sent through the support page's contact form.
+ * Open a support ticket for a member: the header row plus its first message,
+ * in one transaction.
  *
- * A member's identity comes off the account, never off the request: the form
- * hides the name and email fields for a signed-in sender and the Form Request
- * excludes them, so `$name` and `$email` are only consulted for a guest. The
- * row still carries both columns for a member so the back office reads every
- * message the same way, and so a message outlives a later change of address
- * or a deleted account (`user_id` is nulled on delete).
+ * The sender's identity comes off the account, never off the request. The row
+ * still carries `name` and `email` so the back office reads every ticket the
+ * same way, and so a ticket outlives a later change of address or a deleted
+ * account (`user_id` is nulled on delete; the address on the row is then
+ * where the team's replies go).
  *
- * Throttling is a named limiter on the route (`throttle:contact-messages`),
- * keyed by IP because the route is public.
+ * Tickets are members-only by design — a ticket has a thread and a page to
+ * follow it on, neither of which a guest has. A guest's message is
+ * Actions\Contact\SubmitContactMessage.
  */
-class SubmitContactMessage
+class OpenTicket
 {
-    public function handle(
-        ?User $sender,
-        ?string $name,
-        ?string $email,
-        TicketType $ticketType,
-        string $subject,
-        string $message,
-    ): Contact {
-        return Contact::create([
-            'user_id'     => $sender?->getKey(),
-            'name'        => $sender->name ?? (string) $name,
-            'email'       => $sender->email ?? (string) $email,
-            'ticket_type' => $ticketType,
-            'subject'     => $subject,
-            'message'     => $message,
-        ]);
+    public function handle(User $sender, TicketCategory $category, string $subject, string $message): Ticket
+    {
+        return DB::transaction(function () use ($sender, $category, $subject, $message): Ticket {
+            $ticket                   = new Ticket([
+                'user_id'  => $sender->getKey(),
+                'name'     => $sender->name,
+                'email'    => $sender->email,
+                'category' => $category,
+                'subject'  => $subject,
+            ]);
+            $ticket->last_activity_at = now();
+            $ticket->save();
+
+            $ticket->messages()->create([
+                'author_type' => $sender->getMorphClass(),
+                'author_id'   => $sender->getKey(),
+                'body'        => $message,
+            ]);
+
+            return $ticket;
+        });
     }
 }

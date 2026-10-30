@@ -278,7 +278,7 @@ return [
         'initial_message'            => 'first message',
         'subject'                    => 'subject',
         'message'                    => 'message',
-        'ticket_type'                => 'request type',
+        'body'                       => 'reply',
         'category'                   => 'category',
         'reason'                     => 'reason',
     ],

@@ -205,6 +205,25 @@ describe('the payload', function () {
                 ->missing('profile.lng'));
     });
 
+    test('publishes the phone number only when the member opted in', function () {
+        $profile = User::factory()->create(['phone' => '+20-100-000-0000', 'show_phone' => true]);
+
+        $this->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('profile.phone', '+20-100-000-0000'));
+    });
+
+    test('ships the WhatsApp link to a signed-in viewer only when the member opted in', function () {
+        $profile = User::factory()->create(['phone' => '+20-100-000-0000', 'whatsapp_enabled' => true]);
+
+        $this->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('profile.whatsapp', null));
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('profile.show', $profile))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('profile.whatsapp', 'https://wa.me/201000000000'));
+    });
+
     test('summarises the reputation from subqueries rather than loaded rows', function () {
         Storage::fake(config('media-library.disk_name'));
         $profile = User::factory()->create();

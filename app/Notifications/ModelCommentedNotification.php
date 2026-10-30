@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Models\Comment;
 use App\Models\Pet;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -24,8 +26,10 @@ use Illuminate\Support\Str;
  * queued by the framework, so a queue worker and Reverb must be running for an
  * open tab to hear it; `NotificationBell.vue` listens.
  */
-class ModelCommentedNotification extends Notification
+class ModelCommentedNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
     /**
      * How much of the comment travels in the payload.
      */

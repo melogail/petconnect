@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { Bell, Flag, Heart, Mail, MessageSquare, Star } from '@lucide/vue';
+import {
+    Bell,
+    Flag,
+    Heart,
+    LifeBuoy,
+    Mail,
+    MessageSquare,
+    Star,
+} from '@lucide/vue';
 import { computed, type Component } from 'vue';
 import { notificationMessage } from '@/components/notifications/message';
 import { useLocale } from '@/composables/useLocale';
@@ -81,6 +89,7 @@ const ICONS: Record<string, Component> = {
     review: Star,
     message: Mail,
     report: Flag,
+    ticket: LifeBuoy,
 };
 
 const icon = computed<Component>(() => ICONS[notification.type] ?? Bell);

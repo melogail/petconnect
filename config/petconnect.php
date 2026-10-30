@@ -195,9 +195,9 @@ return [
     | Support
     |--------------------------------------------------------------------------
     |
-    | `max_message_length` is the ceiling on the body of a message sent through
-    | the support page's contact form. The ticket type is a closed enum
-    | (TicketType) and carries no configuration.
+    | `max_message_length` is the ceiling on the body of a support ticket
+    | message — the opening one and every follow-up, from either side. The
+    | category is a closed enum (TicketCategory) and carries no configuration.
     |
     */
 

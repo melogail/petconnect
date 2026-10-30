@@ -2,6 +2,8 @@
 /bootstrap/ssr
 /node_modules
 /public/build
+/docs/.vitepress/dist
+/docs/.vitepress/cache
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
@@ -34,6 +36,7 @@ yarn-error.log
 /.claude/CLAUDE.md
 /.claude/settings.local.json
 /.claude/skills/graphify
+/.agents/skills/graphify
 /graphify-out
 /.playwright-mcp
 /.claude/settings.json

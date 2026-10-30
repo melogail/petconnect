@@ -131,25 +131,27 @@ class ProfileFormResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'          => $this->id,
-            'name'        => $this->name,
-            'username'    => $this->username,
-            'email'       => $this->email,
-            'phone'       => $this->phone,
-            'bio'         => $this->bio,
+            'id'               => $this->id,
+            'name'             => $this->name,
+            'username'         => $this->username,
+            'email'            => $this->email,
+            'phone'            => $this->phone,
+            'show_phone'       => $this->show_phone,
+            'whatsapp_enabled' => $this->whatsapp_enabled,
+            'bio'              => $this->bio,
 
-            'address'     => $this->address,
-            'city'        => $this->city,
-            'state'       => $this->state,
-            'country'     => $this->country,
-            'lat'         => $this->lat,
-            'lng'         => $this->lng,
-            'timezone'    => $this->timezone,
+            'address'          => $this->address,
+            'city'             => $this->city,
+            'state'            => $this->state,
+            'country'          => $this->country,
+            'lat'              => $this->lat,
+            'lng'              => $this->lng,
+            'timezone'         => $this->timezone,
 
-            'locale'      => $this->locale,
+            'locale'           => $this->locale,
 
-            'avatar'      => $this->getFirstMediaUrl('users', 'display') ?: null,
-            'is_verified' => $this->isVerified(),
+            'avatar'           => $this->getFirstMediaUrl('users', 'display') ?: null,
+            'is_verified'      => $this->isVerified(),
         ];
     }
 }

@@ -22,6 +22,32 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('home', absolute: false));
 });
 
+test('login ignores an intended url stored by another host', function () {
+    $user     = User::factory()->create();
+
+    $response = $this->withSession(['url.intended' => 'https://nova.'.request()->getHost().'/dashboards/main'])
+        ->post(route('login.store'), [
+            'email'    => $user->email,
+            'password' => 'password',
+        ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('home', absolute: false));
+    $response->assertSessionMissing('url.intended');
+});
+
+test('login still honours an intended url on its own host', function () {
+    $user     = User::factory()->create();
+
+    $response = $this->withSession(['url.intended' => route('pets.create')])
+        ->post(route('login.store'), [
+            'email'    => $user->email,
+            'password' => 'password',
+        ]);
+
+    $response->assertRedirect(route('pets.create'));
+});
+
 test('users with two factor enabled are redirected to two factor challenge', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 

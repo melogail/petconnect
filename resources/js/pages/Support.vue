@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { Mail } from '@lucide/vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { LifeBuoy, Mail } from '@lucide/vue';
+import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import ContactDialog from '@/components/support/ContactDialog.vue';
+import NewTicketDialog from '@/components/support/NewTicketDialog.vue';
 import SupportChannel from '@/components/support/SupportChannel.vue';
+import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/composables/useTranslations';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support';
+import { login } from '@/routes';
+import { index as ticketsIndex } from '@/routes/tickets';
 
 /**
  * How to reach a human. `Route::inertia('support', 'Support')`, so **no props
@@ -14,26 +19,26 @@ import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support';
  * Public, and therefore mapped to `PublicLayout` in `app.ts` — "how do I reach
  * somebody" is a question a guest is more likely to have than a member.
  *
- * ## One channel: the contact form
+ * ## One channel each, decided by who is looking
  *
- * "Email us" opens `ContactDialog`, which posts to `contact.store`; the
- * address underneath is a plain `mailto:` for anyone who would rather use
- * their own mail client. The live chat card that used to sit above this one
- * is gone: there was never a chat backend behind it (`conversations.*` is
- * member-to-member messaging about a listing, not a support desk), and a
- * permanently disabled button is a promise the page cannot keep.
+ * A signed-in member gets **support tickets**: `NewTicketDialog` posts to
+ * `tickets.store`, which lands them on the ticket's own page under their
+ * settings, where the conversation continues. A guest gets the **contact
+ * form**: `ContactDialog` posts to `contact.store`, a one-off message the team
+ * answers by email, with a nudge to sign in for the ticket experience.
  *
- * ## The copy
+ * `auth.user` is typed non-nullable and is null for guests (.ai/rules/types.md);
+ * this is a public page, so it is guarded at runtime and is the one switch.
  *
- * Every `support.*` key goes through `t()`, so this page renders
- * `lang/ar.json` when the locale is `ar`; the address is not copy at all.
- *
- * ## The address
- *
- * `SUPPORT_EMAIL` in `lib/support.ts`, not a prop — see that file for why a
- * `Route::inertia()` route cannot carry one.
+ * The address underneath is a plain `mailto:` for anyone who would rather use
+ * their own mail client — `SUPPORT_EMAIL` in `lib/support.ts`, not a prop; see
+ * that file for why a `Route::inertia()` route cannot carry one. Every
+ * `support.*` key goes through `t()`.
  */
+const page = usePage();
 const { t } = useTranslations();
+
+const isSignedIn = computed(() => Boolean(page.props.auth.user));
 </script>
 
 <template>
@@ -57,20 +62,45 @@ const { t } = useTranslations();
 
             <div class="grid gap-4">
                 <SupportChannel
-                    :icon="Mail"
-                    :title="t('support.email_support')"
-                    :description="t('support.email_support_desc')"
+                    v-if="isSignedIn"
+                    :icon="LifeBuoy"
+                    :title="t('support.tickets_channel')"
+                    :description="t('support.tickets_channel_desc')"
                 >
-                    <ContactDialog />
-                    <p class="text-muted-foreground mt-2 text-xs">
-                        <a
-                            :href="SUPPORT_MAILTO"
-                            class="hover:text-foreground underline-offset-4 hover:underline"
-                        >
-                            {{ SUPPORT_EMAIL }}
-                        </a>
-                    </p>
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                        <NewTicketDialog />
+                        <Button as-child variant="secondary">
+                            <Link :href="ticketsIndex()">
+                                {{ t('support.my_tickets') }}
+                            </Link>
+                        </Button>
+                    </div>
                 </SupportChannel>
+
+                <SupportChannel
+                    v-else
+                    :icon="Mail"
+                    :title="t('support.contact_channel')"
+                    :description="t('support.contact_channel_desc')"
+                >
+                    <div class="mt-4 flex flex-wrap items-center gap-3">
+                        <ContactDialog />
+                        <Button as-child variant="secondary">
+                            <Link :href="login()">
+                                {{ t('support.sign_in_for_tickets') }}
+                            </Link>
+                        </Button>
+                    </div>
+                </SupportChannel>
+
+                <p class="text-muted-foreground px-1 text-xs">
+                    <a
+                        :href="SUPPORT_MAILTO"
+                        class="hover:text-foreground underline-offset-4 hover:underline"
+                    >
+                        {{ SUPPORT_EMAIL }}
+                    </a>
+                </p>
             </div>
         </section>
     </div>

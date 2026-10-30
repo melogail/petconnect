@@ -1,40 +1,43 @@
 <script setup lang="ts">
-import { ChevronDown } from '@lucide/vue';
+import { ChevronDown } from "@lucide/vue";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 /**
  * One question, with its answer in the default slot.
  *
- * A native `<details>` rather than a `Collapsible`: this is a static page with
- * no state to coordinate, and `<details>` opens without JavaScript, is
- * keyboard-operable and is announced correctly by a screen reader for free.
- * The legacy rows were a `<button>` and a chevron with no handler at all, so
- * the answer was never anywhere.
- *
- * The summary carries `list-none` **and**
- * `[&::-webkit-details-marker]:hidden`: WebKit draws its disclosure triangle
- * through `::-webkit-details-marker` rather than through `list-style`, so
- * `list-none` on its own leaves Safari rendering the native triangle next to
- * this component's chevron — two disclosure affordances pointing opposite ways.
+ * The house `Collapsible` (reka-ui) rather than a native `<details>`: reka
+ * measures the content and exposes `--reka-collapsible-content-height`, which
+ * is what `animate-collapsible-down/up` from tw-animate-css animate, so the
+ * answer slides open and closed instead of snapping. Keyboard operation and
+ * the `aria-expanded` wiring come with the primitive.
  */
 defineProps<{ question: string }>();
 </script>
 
 <template>
-    <details
+    <Collapsible
         class="border-border bg-card shadow-card group rounded-[20px] border"
     >
-        <summary
-            class="hover:bg-accent/40 focus-visible:ring-ring focus-visible:ring-offset-background flex cursor-pointer list-none items-center justify-between gap-3 rounded-[20px] p-4 font-medium transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden"
+        <CollapsibleTrigger
+            class="hover:bg-accent/40 focus-visible:ring-ring focus-visible:ring-offset-background flex w-full cursor-pointer items-center justify-between gap-3 rounded-[20px] p-4 text-start font-medium transition-[background-color,border-color,box-shadow,transform] duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         >
             {{ question }}
             <ChevronDown
-                class="text-muted-foreground size-5 shrink-0 transition-transform group-open:rotate-180"
+                class="text-muted-foreground size-5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                 aria-hidden="true"
             />
-        </summary>
+        </CollapsibleTrigger>
 
-        <div class="text-muted-foreground px-4 pb-4 text-sm">
-            <slot />
-        </div>
-    </details>
+        <CollapsibleContent
+            class="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+        >
+            <div class="text-muted-foreground px-4 pb-4 text-sm">
+                <slot />
+            </div>
+        </CollapsibleContent>
+    </Collapsible>
 </template>

@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Models\Review;
 use App\Models\User;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -22,8 +24,10 @@ use Illuminate\Support\Str;
  * Not queued, matching every other notification here: the app has no queue
  * worker configured yet.
  */
-class ModelReviewedNotification extends Notification
+class ModelReviewedNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
     /**
      * How much of the review comment travels in the payload.
      */

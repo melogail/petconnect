@@ -1,11 +1,11 @@
-import type { Comment, CommentPreview } from './comments';
-import type { Coordinate, DecimalColumn } from './profile';
+import type { Comment, CommentPreview } from "./comments";
+import type { Coordinate, DecimalColumn } from "./profile";
 
-export type PetListingType = 'adoption' | 'sale' | 'mating';
-export type PetStatus = 'available' | 'unavailable';
+export type PetListingType = "adoption" | "sale" | "mating";
+export type PetStatus = "available" | "unavailable";
 /** `mixed` is a litter with both sexes in it; see `PetCard.male_count`. */
-export type PetGender = 'male' | 'female' | 'mixed';
-export type PetHealthStatus = 'healthy' | 'minor_issues' | 'chronic_condition';
+export type PetGender = "male" | "female" | "mixed";
+export type PetHealthStatus = "healthy" | "minor_issues" | "chronic_condition";
 
 /**
  * One `{value, label}` pair from a backing enum's `options()`.
@@ -65,6 +65,8 @@ export type PetOwner = {
     username: string | null;
     location: string | null;
     avatar: string | null;
+    /** A `wa.me` link, only while the owner enabled direct WhatsApp contact. */
+    whatsapp: string | null;
 };
 
 export type PetMedia = {

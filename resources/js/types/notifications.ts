@@ -22,8 +22,8 @@ export type InboxNotification = {
     /**
      * The payload's own label, which the row's icon is keyed off.
      *
-     * `like`, `comment`, `review`, `message` and `report` are what the five
-     * notification classes write today, but the resource falls back to the
+     * `like`, `comment`, `review`, `message`, `report` and `ticket` are what
+     * the notification classes write today, but the resource falls back to the
      * notification class's basename for a row written before the convention,
      * so this is an open set and must not be treated as exhaustive.
      */

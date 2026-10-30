@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Report;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
@@ -50,8 +52,10 @@ use Illuminate\Support\Str;
  * keep: the row stores keys and identifiers, and every user-visible word is
  * rendered at read time in the reader's own locale.
  */
-class ReportFiledNotification extends Notification
+class ReportFiledNotification extends Notification implements ShouldQueueAfterCommit
 {
+    use Queueable;
+
     /**
      * How much of the reporter's description travels in the payload.
      */

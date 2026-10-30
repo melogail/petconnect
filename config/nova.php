@@ -209,15 +209,28 @@ return [
     |
     */
 
-    // 'brand' => [
-    //     'logo' => resource_path('/img/example-logo.svg'),
+    'brand'            => [
+        'logo'   => public_path('brand/sniffpal-logo.svg'),
 
-    //     'colors' => [
-    //         "400" => "24, 182, 155, 0.5",
-    //         "500" => "24, 182, 155",
-    //         "600" => "24, 182, 155, 0.75",
-    //     ]
-    // ],
+        /*
+         * The "Aubergine & Lavender" ramp from resources/css/app.css, as
+         * the "r, g, b" strings Nova's CSS variables expect. 950 is the
+         * app's --foreground, which the ramp itself stops short of.
+         */
+        'colors' => [
+            '50'  => '246, 244, 251',
+            '100' => '238, 234, 251',
+            '200' => '222, 214, 247',
+            '300' => '205, 189, 255',
+            '400' => '167, 139, 255',
+            '500' => '124, 92, 242',
+            '600' => '90, 63, 224',
+            '700' => '74, 50, 196',
+            '800' => '58, 39, 153',
+            '900' => '38, 29, 69',
+            '950' => '28, 21, 38',
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

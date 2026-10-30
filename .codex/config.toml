@@ -1,3 +1,16 @@
 [mcp_servers.laravel-boost]
 command = "php"
-args = ["artisan", "boost:mcp"]
+args = [
+    "artisan",
+    "boost:mcp",
+]
+
+[mcp_servers.obsidian]
+command = "npx"
+args = [
+    "-y",
+    "obsidian-mcp@2",
+    "serve",
+    "--vault",
+    "sniffpal=/home/asciisd/sites/sniffpal/graphify-out/obsidian",
+]

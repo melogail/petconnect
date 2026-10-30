@@ -25,8 +25,8 @@ import { help, support } from '@/routes';
  * at the bottom of `Help` links `support` at all. They came from the target's
  * own footer, not the legacy one, and they stay first in the row.
  *
- * `nav.contacts` beside them goes to `support` too: the contact form is the
- * only contact channel and it lives on that page (`ContactDialog`). The other
+ * `nav.contacts` beside them goes to `support` too: the contact and ticket
+ * dialogs are the only contact channels and both live on that page. The other
  * four legacy footer entries (`privacy`, `terms`, `cookies`, `report_issue`)
  * were `href="#"` anchors in the legacy app, then plain text here; there is
  * still no route behind any of them, so they are gone rather than rendered as

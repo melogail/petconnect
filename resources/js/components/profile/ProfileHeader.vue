@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BadgeCheck, CalendarDays, MapPin, Settings } from '@lucide/vue';
-import { computed } from 'vue';
-import StartConversationButton from '@/components/messaging/StartConversationButton.vue';
-import ProfileLikeButton from '@/components/profile/ProfileLikeButton.vue';
-import ProfileStat from '@/components/profile/ProfileStat.vue';
-import RatingStars from '@/components/reviews/RatingStars.vue';
-import UserAvatar from '@/components/UserAvatar.vue';
-import { Button } from '@/components/ui/button';
-import { useLocale } from '@/composables/useLocale';
-import { formatDate } from '@/lib/datetime';
-import { edit as editProfile } from '@/routes/profile';
-import type { ProfileSummary, ReviewBounds } from '@/types';
+import { Link } from "@inertiajs/vue3";
+import { BadgeCheck, CalendarDays, MapPin, Phone, Settings } from "@lucide/vue";
+import { computed } from "vue";
+import StartConversationButton from "@/components/messaging/StartConversationButton.vue";
+import ProfileLikeButton from "@/components/profile/ProfileLikeButton.vue";
+import ProfileStat from "@/components/profile/ProfileStat.vue";
+import RatingStars from "@/components/reviews/RatingStars.vue";
+import UserAvatar from "@/components/UserAvatar.vue";
+import { Button } from "@/components/ui/button";
+import { useLocale } from "@/composables/useLocale";
+import { formatDate } from "@/lib/datetime";
+import { edit as editProfile } from "@/routes/profile";
+import type { ProfileSummary, ReviewBounds } from "@/types";
 
 /**
  * The identity block at the top of a public profile.
@@ -36,7 +36,7 @@ const { tag } = useLocale();
 const joinedOn = computed(() => formatDate(profile.created_at, tag.value));
 const rating = computed(() =>
     profile.reviews_avg_rate === null
-        ? '—'
+        ? "—"
         : profile.reviews_avg_rate.toFixed(1),
 );
 </script>
@@ -84,6 +84,14 @@ const rating = computed(() =>
                     <CalendarDays class="size-4" />
                     Joined {{ joinedOn }}
                 </span>
+                <a
+                    v-if="profile.phone"
+                    :href="`tel:${profile.phone}`"
+                    class="hover:text-foreground flex items-center gap-1.5"
+                >
+                    <Phone class="size-4" />
+                    {{ profile.phone }}
+                </a>
             </div>
 
             <p
@@ -125,6 +133,13 @@ const rating = computed(() =>
                 v-if="canInteract"
                 :recipient-id="profile.id"
                 :recipient-name="profile.name"
+            />
+
+            <WhatsAppButton
+                v-if="canInteract && profile.whatsapp"
+                :url="profile.whatsapp"
+                :owner-name="profile.name"
+                appearance="default"
             />
         </div>
     </header>

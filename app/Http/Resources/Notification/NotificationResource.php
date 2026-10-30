@@ -39,7 +39,7 @@ use Illuminate\Notifications\DatabaseNotification;
  *
  * ## `type` is the payload's own label
  *
- * `like`, `comment`, `review`, `message`, `report` — set by each notification's
+ * `like`, `comment`, `review`, `message`, `report`, `ticket` — set by each notification's
  * `toArray()`. It falls back to the notification class's basename, which is
  * what a row written before the convention carries. The client keys its icon
  * and its grouping off this, so it is deliberately not the FQCN in
